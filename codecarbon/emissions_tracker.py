@@ -446,7 +446,7 @@ class BaseEmissionsTracker(ABC):
                                    EmissionsTracker(output_methods=[OutputMethod.CSV, OutputMethod.API])
 
                                Available values: ``CSV``, ``API``, ``LOGGER``,
-                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``.
+                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``, ``SCI``.
                                When provided, the individual ``save_to_*`` flags are
                                ignored. Defaults to ``[OutputMethod.CSV]``.
                                Can also be set in config as a comma-separated string:
@@ -620,6 +620,7 @@ class BaseEmissionsTracker(ABC):
         from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
         from codecarbon.output_methods.metrics.logfire import LogfireOutput
         from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
+        from codecarbon.output_methods.sci import SCIOutput
 
         methods = set(self._output_methods) if self._output_methods else set()
 
@@ -667,6 +668,23 @@ class BaseEmissionsTracker(ABC):
 
         if OutputMethod.BOAMPS in methods:
             self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
+
+        if OutputMethod.SCI in methods:
+            context_file = self._external_conf.get("sci_context_file")
+            handler = None
+            if context_file:
+                try:
+                    handler = SCIOutput.from_file(
+                        context_file, output_dir=self._output_dir
+                    )
+                except (OSError, TypeError, ValueError) as e:
+                    logger.error(
+                        f"Could not read sci_context_file {context_file}: {e}. "
+                        "Writing an SCI report without the declarations."
+                    )
+            self._output_handlers.append(
+                handler or SCIOutput(output_dir=self._output_dir)
+            )
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """
