@@ -12,6 +12,20 @@ Parameters can be set via `EmissionsTracker()`, `OfflineEmissionsTracker()`, the
     If you use `CUDA_VISIBLE_DEVICES` or `ROCR_VISIBLE_DEVICES` to set GPUs, CodeCarbon will automatically
     populate `gpu_ids`. Manual `gpu_ids` overrides this.
 
+## Product telemetry
+
+Optional library telemetry is controlled by **`telemetry_level`** on the tracker (same parameter on `OfflineEmissionsTracker` and `@track_emissions`):
+
+| Value | Behavior |
+|-------|----------|
+| `disabled` | No product telemetry |
+| `minimal` (default) | Private telemetry at each `stop()` |
+| `extensive` | Private telemetry plus public run summary at each `stop()` |
+
+**Resolution order:** tracker argument → `.codecarbon.config` → `CODECARBON_TELEMETRY_LEVEL` → default `minimal`. The tracker argument overrides config and environment.
+
+This is separate from `save_to_api` (your dashboard experiment). See [Product telemetry](../how-to/telemetry.md).
+
 ## EmissionsTracker / BaseEmissionsTracker
 
 `EmissionsTracker` and `OfflineEmissionsTracker` inherit from `BaseEmissionsTracker`.
