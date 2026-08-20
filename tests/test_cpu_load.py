@@ -1,3 +1,4 @@
+import threading
 import unittest
 from time import sleep
 from unittest import mock
@@ -171,6 +172,40 @@ class TestCPULoad(unittest.TestCase):
         self.assertEqual(result.W, 42)
         mocked_get_power_from_cpus.assert_called_once()
         self.assertEqual(cpu._power_history, [])
+
+    @mock.patch(
+        "codecarbon.external.hardware.CPU._get_power_from_cpus",
+        return_value=Power.from_watts(1),
+    )
+    def test_cpu_total_power_keeps_samples_added_while_draining(
+        self,
+        mocked_get_power_from_cpus,
+        mocked_is_psutil_available,
+        mocked_is_powergadget_available,
+        mocked_is_rapl_available,
+    ):
+        """A sample appended by the monitor thread while total_power drains the
+        history must not be lost (see issue #1315)."""
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+        )
+        cpu._power_history = [Power.from_watts(1)]
+        appended = threading.Event()
+
+        def monitor():
+            cpu.monitor_power()
+            appended.set()
+
+        monitor_thread = threading.Thread(target=monitor)
+        with cpu._power_history_lock:
+            monitor_thread.start()
+            # The monitor thread must wait instead of appending to a history
+            # total_power is about to discard.
+            self.assertFalse(appended.wait(0.2))
+        monitor_thread.join(1)
+
+        self.assertTrue(appended.is_set())
+        self.assertEqual(len(cpu._power_history), 2)
 
     @mock.patch(
         "codecarbon.external.hardware.CPU._get_power_from_cpus",
