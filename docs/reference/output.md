@@ -65,6 +65,15 @@ The package has an in-built logger that logs data into a CSV file named `emissio
 | ram_utilization_percent | Average RAM utilization during tracking period (%) |
 | ram_used_gb | Average RAM used during tracking period (GB) |
 
+!!! note "PUE and the power columns"
+    Since v3.4.0, the `pue` multiplier is applied to the reported power columns
+    (`cpu_power`, `gpu_power`, `ram_power`) as well as to the energy columns, so
+    that `energy_consumed` stays reconstructible from the reported power. Before
+    that, only the energy was scaled. With `pue=1.5`, a machine measured at 100 W
+    is reported as 150 W, and that also applies to forced values: `force_cpu_power=100`
+    with `pue=1.5` reports a 150 W CPU. This is intended: the columns describe the
+    power drawn at the facility level, not at the socket.
+
 !!! note
     Developers can enhance the Output interface by implementing a custom class that extends `BaseOutput` at `codecarbon/output.py`. For example, to log into a database.
 
