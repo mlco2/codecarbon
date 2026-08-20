@@ -8,6 +8,7 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
+import time
 from datetime import timedelta, tzinfo
 
 import requests
@@ -33,6 +34,17 @@ def get_datetime_with_timezone():
     return str(arrow.now().isoformat())
 
 
+def _round_coordinate_or_zero(value, decimals: int = 1) -> float:
+    """Round a coordinate for telemetry, coercing None to 0.0.
+
+    Unlike ``_round_or_none``, this never returns None: the telemetry payload
+    wants a number rather than a null.
+    """
+    if value is None:
+        return round(0.0, decimals)
+    return round(float(value), decimals)
+
+
 class ApiClient:  # (AsyncClient)
     """
     This class call the Code Carbon API
@@ -48,6 +60,7 @@ class ApiClient:  # (AsyncClient)
         access_token=None,
         conf=None,
         create_run_automatically=True,
+        deadline=None,
     ):
         """
         :endpoint_url: URL of the API endpoint
@@ -56,8 +69,12 @@ class ApiClient:  # (AsyncClient)
         :access_token: Code Carbon API access token
         :conf: Metadata of the experiment
         :create_run_automatically: If False, do not create a run. To use API in read only mode.
+        :deadline: Optional ``time.monotonic()`` value after which every request,
+            including the automatic run creation, gives up. Callers use it to cap
+            the total time a sequence of calls may take.
         """
         # super().__init__(base_url=endpoint_url) # (AsyncClient)
+        self.deadline = deadline
         self.url = endpoint_url
         self.experiment_id = experiment_id
         self.api_key = api_key
@@ -85,7 +102,14 @@ class ApiClient:  # (AsyncClient)
         :expected_status: the http code the API returns when the call succeeds
         """
         headers = self._get_headers()
-        response = method(url=url, json=payload, timeout=2, headers=headers)
+        timeout = 2
+        if self.deadline is not None:
+            timeout = min(timeout, self.deadline - time.monotonic())
+            if timeout <= 0:
+                raise requests.exceptions.Timeout(
+                    f"Time budget exhausted before calling {url}"
+                )
+        response = method(url=url, json=payload, timeout=timeout, headers=headers)
         if response.status_code != expected_status:
             self._raise_api_error(url, payload or {}, response)
         return response
