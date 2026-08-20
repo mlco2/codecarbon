@@ -1,3 +1,4 @@
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -11,6 +12,7 @@ class FakeTracker:
         self.kwargs = kwargs
         self.stopped = 0
         self._conf = {"output_file": "emissions.csv"}
+        self._output_handlers = [SimpleNamespace(save_file_path="emissions.csv")]
 
     def start(self):
         return None
@@ -178,3 +180,41 @@ def test_run_and_monitor_handles_keyboard_interrupt(monkeypatch):
     assert exc_info.value.exit_code == 130
     assert process_info["terminated"] == 1
     assert process_info["killed"] == 1
+
+
+def _run_and_capture(monkeypatch, capsys, handlers):
+    class FakePopen:
+        def __init__(self, command, text=True):
+            pass
+
+        def wait(self):
+            return 0
+
+    class FakeTrackerWithHandlers(FakeTracker):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self._output_handlers = handlers
+
+    _patch_trackers(monkeypatch, online_cls=FakeTrackerWithHandlers)
+    monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
+
+    with pytest.raises(typer.Exit):
+        monitor_module.run_and_monitor(SimpleNamespace(args=["echo", "hi"]))
+
+    # rich wraps long lines to the terminal width, so strip all whitespace
+    return "".join(capsys.readouterr().out.split())
+
+
+def test_run_and_monitor_reports_output_dir(monkeypatch, capsys, tmp_path):
+    save_file_path = os.path.join(str(tmp_path), "emissions.csv")
+    out = _run_and_capture(
+        monkeypatch, capsys, [SimpleNamespace(save_file_path=save_file_path)]
+    )
+
+    assert f"Savedto:{save_file_path}" in out
+
+
+def test_run_and_monitor_reports_no_path_without_file_output(monkeypatch, capsys):
+    out = _run_and_capture(monkeypatch, capsys, [SimpleNamespace()])
+
+    assert "Savedto:" not in out
