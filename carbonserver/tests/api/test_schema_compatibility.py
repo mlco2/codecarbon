@@ -118,3 +118,27 @@ def test_client_create_payloads_validate_against_server_schemas(
     client_payload, server_schema
 ):
     server_schema.model_validate(dataclasses.asdict(client_payload))
+
+
+def test_millisecond_duration_survives_client_to_server():
+    """A single FastAPI request lasts milliseconds and must not be rounded away."""
+    payload = client_schemas.EmissionCreate(
+        timestamp="2021-04-04T08:43:00+02:00",
+        run_id="40088f1a-d28e-4980-8d80-bf5600056a14",
+        duration=0.0042,
+        emissions_sum=1544.54,
+        emissions_rate=1.548444,
+        cpu_power=0.3,
+        gpu_power=0.0,
+        ram_power=0.15,
+        cpu_energy=55.21874,
+        gpu_energy=0.0,
+        ram_energy=2.0,
+        energy_consumed=57.21874,
+    )
+
+    validated = server_schemas.EmissionCreate.model_validate(
+        dataclasses.asdict(payload)
+    )
+
+    assert validated.duration == 0.0042
