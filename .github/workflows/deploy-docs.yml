@@ -7,7 +7,7 @@ name: Deploy documentation
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - "docs/**"
       - "mkdocs.yml"

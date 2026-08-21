@@ -5,7 +5,7 @@ permissions:
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -14,7 +14,7 @@ on:
       - "scripts/check_docs_links.py"
       - ".github/workflows/build-docs.yml"
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   build:

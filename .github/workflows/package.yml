@@ -6,12 +6,12 @@ on:
     paths:
       - "codecarbon/**"
       - "pyproject.toml"
-    branches: [master]
+    branches: [main]
   push:
     paths:
       - "codecarbon/**"
       - "pyproject.toml"
-    branches: [master]
+    branches: [main]
 jobs:
   validate-package:
     uses: ./.github/workflows/package-validation-reusable.yml
