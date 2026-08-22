@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import { AddAPhotoIcon } from "@/components/icons/figma-icons";
+import { AddAPhotoIcon } from "@/components/icons/add-a-photo-icon";
 import { DateRangePicker } from "@/components/date-range-picker";
 import ConsumedEnergyGauge from "@/components/consumed-energy-gauge";
 

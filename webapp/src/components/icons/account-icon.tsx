@@ -1,18 +1,11 @@
+import { FigmaIconProps } from "./types";
+
 /*
  * Account icon — a head and shoulders in a circle, drawn in the same pixel-art
  * style as the rail's other icons.
- *
- * Supplied directly rather than exported from Figma, which is why it sits
- * outside `figma-icons.tsx` — everything in that file traces to a Figma node.
- * The glyph takes its colour from `currentColor`, so the rail's hover and
- * pressed states drive it exactly as they do the other items.
  */
 
-type IconProps = {
-    className?: string;
-};
-
-export function AccountIcon({ className }: IconProps) {
+export function AccountIcon({ className }: FigmaIconProps) {
     return (
         <svg
             viewBox="0 0 32 32"

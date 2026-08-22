@@ -5,7 +5,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Organization } from "@/api/schemas";
 import { cn } from "@/helpers/utils";
 import AccountMenu from "./account-menu";
-import { GlobalIcon, ProjectsIcon } from "./icons/figma-icons";
+import { GlobalIcon } from "./icons/global-icon";
+import { ProjectsIcon } from "./icons/projects-icon";
 import { AccountIcon } from "./icons/account-icon";
 import { MembersIcon } from "./icons/members-icon";
 
@@ -112,7 +113,7 @@ type RailItem = {
 /*
  * The third item is Members, matching the destination it has always pointed at
  * (`/:organizationId/members`). Figma labels it "Glossary" and draws a different
- * glyph; `GlossaryIcon` is still exported from `figma-icons.tsx` for whenever a
+ * glyph; `GlossaryIcon` is still exported from its own module for whenever a
  * glossary page exists.
  */
 const ITEMS: RailItem[] = [

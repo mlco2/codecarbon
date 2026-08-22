@@ -1,22 +1,11 @@
+import { FigmaIconProps } from "./types";
+
 /*
- * Members icon — two figures side by side, drawn in the same pixel-art style as
- * the rail's other icons.
- *
- * Unlike the icons in `figma-icons.tsx`, this one was supplied directly rather
- * than exported from the Figma file, which is why it lives in its own module:
- * that file's contents are all traceable to a Figma node, and this is not.
- *
- * `shape-rendering="crispEdges"` keeps the pixel grid sharp by disabling
- * anti-aliasing, which matters for artwork built from whole-pixel rectangles.
- * The glyph takes its colour from `currentColor`, so the rail's selected and
- * hover states drive it exactly as they do the others.
+ * Members icon — three figures side by side, middle one popping out,
+ * drawn in the same pixel-art style as the rail's other icons.
  */
 
-type IconProps = {
-    className?: string;
-};
-
-export function MembersIcon({ className }: IconProps) {
+export function MembersIcon({ className }: FigmaIconProps) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

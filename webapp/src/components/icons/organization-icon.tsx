@@ -1,22 +1,10 @@
+import { FigmaIconProps } from "./types";
+
 /*
- * Organization icon — an office building, used for each organization in the
- * account menu.
- *
- * Supplied directly rather than exported from Figma, which is why it sits
- * outside `figma-icons.tsx` — everything in that file traces to a Figma node.
- * Every drawn element carries `currentColor`, so the menu row's hover and
- * selected colours drive it like the other glyphs.
- *
- * The source also contains a `<path d="M0 0h24v24H0z" fill="none" />`, the usual
- * bounding-box spacer. It draws nothing and the viewBox already covers the same
- * 24x24 area, so it is left out.
+ * Organization icon — an office building.
  */
 
-type IconProps = {
-    className?: string;
-};
-
-export function OrganizationIcon({ className }: IconProps) {
+export function OrganizationIcon({ className }: FigmaIconProps) {
     return (
         <svg
             viewBox="0 0 24 24"

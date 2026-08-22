@@ -6,11 +6,9 @@ import { fetcher } from "@/api/swr";
 import SettingsNavItem from "@/components/settings-nav-item";
 import { FormField } from "@/components/ui/form-field";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import {
-    AccountCircleIcon,
-    ArrowBackIosIcon,
-    LockIcon,
-} from "@/components/icons/figma-icons";
+import { AccountCircleIcon } from "@/components/icons/account-circle-icon";
+import { ArrowBackIosIcon } from "@/components/icons/arrow-back-ios-icon";
+import { LockIcon } from "@/components/icons/lock-icon";
 
 const USER_PROFILE_URL = import.meta.env.VITE_OIDC_PROFILE_URL;
 

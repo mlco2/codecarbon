@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import { Project } from "@/api/schemas";
 import { cn } from "@/helpers/utils";
-import { MoreVertIcon } from "./icons/figma-icons";
+import { MoreVertIcon } from "./icons/more-vert-icon";
 import { DropdownMenu, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { MenuItem, MenuPanel } from "./ui/menu";
 import { TableCell, TableRow } from "./ui/table";

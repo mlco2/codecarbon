@@ -110,7 +110,10 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                     /* The redesign's primary action. The rest of this table is
                        not restyled yet, so this is the one control that follows
                        the new treatment for now. */
-                    <PrimaryButton onClick={() => setIsCreatingToken(true)}>
+                    <PrimaryButton
+                        onClick={() => setIsCreatingToken(true)}
+                        className="gap-4"
+                    >
                         <PlusIcon className="size-5 shrink-0" />
                         Create a new token
                     </PrimaryButton>
