@@ -13,6 +13,7 @@ const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
 const ProjectDashboardPage = lazy(() => import("./pages/ProjectDashboardPage"));
 const ProjectSettingsPage = lazy(() => import("./pages/ProjectSettingsPage"));
 const MembersPage = lazy(() => import("./pages/MembersPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
     return <Suspense fallback={<Loader />}>{children}</Suspense>;
@@ -41,6 +42,21 @@ export const router = createBrowserRouter([
             <SuspenseWrapper>
                 <PublicProjectPage />
             </SuspenseWrapper>
+        ),
+    },
+    /*
+     * Settings sits outside DashboardLayout: Figma frame 77:762 has no sidebar
+     * rail and provides its own "Go back" control, so it is a standalone
+     * authenticated page.
+     */
+    {
+        path: "/settings",
+        element: (
+            <AuthGuard>
+                <SuspenseWrapper>
+                    <SettingsPage />
+                </SuspenseWrapper>
+            </AuthGuard>
         ),
     },
     {

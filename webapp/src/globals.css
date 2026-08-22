@@ -1,8 +1,60 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+/*
+ * Disket Mono (Bold) is the display face in the Figma design — every heading,
+ * stat value and gauge value uses it (e.g. nodes 218:14436, 218:14443,
+ * 218:14465, 218:14520).
+ *
+ * The face has no distinct lowercase: all 26 lowercase codepoints map to glyphs
+ * whose outlines are byte-identical to the capitals, which is why Figma renders
+ * "Equal to" as "EQUAL TO". The `.type-display` class below therefore sets
+ * `text-transform: uppercase`, so the rendering is the same whether this file
+ * loads or a fallback stands in.
+ *
+ * Only Bold is bundled, since it is the only weight the design uses.
+ */
+@font-face {
+    font-family: "Disket Mono";
+    src: url("/fonts/DisketMono-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 @layer base {
     :root {
+        /*
+         * Figma variables from `Code Carbon - Master` (frame 218:7838),
+         * verbatim. Namespaced `--cc-*` so they sit alongside the existing
+         * shadcn HSL tokens without altering any of them.
+         */
+        --cc-background: #181818; /* Figma "Background Color" */
+        /*
+         * The Global dashboard's own surface. Figma paints the frame #181818
+         * like the rest of the shell; this is a deliberate override so the
+         * content area reads slightly darker than the rail.
+         */
+        --cc-page-background: #0e0e0e;
+        --cc-lime: #bffb4f; /* Figma "Main/Lime" / "primary color" */
+        --cc-white: #ffffff; /* Figma "White" */
+        --cc-dark-gray: #464646; /* Figma "Dark gray" */
+        --cc-darkest-gray: #2b2b2b; /* Figma "Darkest gray" */
+        --cc-gray: #949494; /* Figma "Gray" */
+        --cc-button-hover: #a0c55b; /* Figma "Button-hover" */
+        --cc-text-input-gray: #666666; /* Figma "text input gray" */
+
+        /* Literal fills in the frame that are not bound to a Figma variable. */
+        --cc-breadcrumb-gray: #7c7c7c; /* 218:14433 */
+        --cc-rule: #505050; /* 218:14434 header rule */
+        --cc-gauge-track: #3b4041; /* 218:14518 gauge ring */
+        --cc-gauge-label: #8a8a8a; /* 218:14521 gauge caption */
+
+        /* Type families. IBM Plex Mono stays in the display stack purely as a
+           fallback for the brief moment before the @font-face resolves. */
+        --font-display: "Disket Mono", "IBM Plex Mono", ui-monospace, monospace;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
         --background: 0 0% 10.2%; /* Equivalent to #181818 */
         --foreground: 240 10% 3.9%; /* Adjusted for good contrast */
         --card: 0 0% 10.2%; /* Matching card to background for consistency */
@@ -64,5 +116,156 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/*
+ * Typography classes mirroring the Figma text styles one-for-one, so no text
+ * node can accidentally inherit a different family or size, and no font size
+ * appears as an arbitrary value in markup.
+ *
+ * Sizes are the exact Figma values. Several are fractional because the design's
+ * type ramp is scaled; those are genuine type metrics, not layout noise, so they
+ * are kept — but they live only here. Every node in the design uses line-height
+ * "normal" and letter-spacing 0, which is what these classes set: vertical
+ * rhythm comes from parent gaps, never from a pinned line box.
+ */
+@layer components {
+    /* Disket Mono Bold. Disket Mono has no lowercase glyphs, so Figma renders
+       these nodes in caps; `uppercase` reproduces that with the fallback too. */
+    .type-display {
+        font-family: var(--font-display);
+        font-weight: 700;
+        line-height: normal;
+        letter-spacing: 0;
+        text-transform: uppercase;
+    }
+
+    /* 218:14436 — page title */
+    .type-page-title {
+        font-size: 31.295px;
+    }
+    /* 218:14443 / 218:14515 — section headings */
+    .type-section-title {
+        font-size: 19.744px;
+    }
+    /* 218:14465 / 218:14483 / 218:14511 — equivalence values */
+    .type-stat-value {
+        font-size: 33.357px;
+    }
+    /* 218:14520 / 218:14525 / 218:14530 — gauge values */
+    .type-gauge-value {
+        font-size: 26px;
+    }
+
+    /* IBM Plex Mono Medium (500) */
+    .type-mono-medium {
+        font-family: var(--font-mono);
+        font-weight: 500;
+        line-height: normal;
+        letter-spacing: 0;
+    }
+    /* IBM Plex Mono Regular (400) — Figma "Desktop/Text LG" */
+    .type-mono-regular {
+        font-family: var(--font-mono);
+        font-weight: 400;
+        line-height: normal;
+        letter-spacing: 0;
+    }
+
+    /* 218:14433 — breadcrumb */
+    .type-breadcrumb {
+        font-size: 18px;
+    }
+    /* 218:14435 — page subtitle */
+    .type-page-subtitle {
+        font-size: 16.274px;
+    }
+    /* 218:14466 / 218:14484 / 218:14512 — equivalence captions */
+    .type-stat-caption {
+        font-size: 14px;
+    }
+    /* 218:14521 / 218:14526 / 218:14531 — gauge unit captions */
+    .type-gauge-label {
+        font-size: 13.343px;
+    }
+    /* I218:14364;79:3295 / 218:14601 — sidebar rail labels */
+    .type-rail-label {
+        font-size: 14px;
+    }
+    /* 73:881 — account menu row labels */
+    .type-menu-item {
+        font-size: 12px;
+    }
+    /* 77:951 — settings page title (Disket Mono Bold) */
+    .type-settings-title {
+        font-size: 40px;
+    }
+    /* 77:952 — settings section heading (IBM Plex Mono Medium) */
+    .type-settings-section {
+        font-size: 32px;
+    }
+    /* I77:1054;73:812 — settings sub-nav labels (Disket Mono Bold) */
+    .type-settings-nav {
+        font-size: 14px;
+    }
+
+    /* I218:14532;71:2617 / 73:173 — field label and field value */
+    .type-field {
+        font-size: 16px;
+    }
+
+    /* 218:14543 — the one Inter node in the design */
+    .type-menu-heading {
+        font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+        font-weight: 500;
+        font-size: 10px;
+        line-height: normal;
+        letter-spacing: 0;
+    }
+}
+
+/*
+ * Mobile type scale.
+ *
+ * The Figma frames are all 1440-wide desktop views, so their sizes are tuned for
+ * that width — the 40px settings title and 33px stat values are far too large on
+ * a phone. These step the display sizes down below the `md` breakpoint. Only the
+ * sizes change: family, weight, colour and letter-spacing stay as designed, and
+ * nothing in the markup needs a responsive class.
+ */
+@media (max-width: 767px) {
+    @layer components {
+        .type-page-title {
+            font-size: 24px;
+        }
+        .type-page-subtitle {
+            font-size: 14px;
+        }
+        .type-section-title {
+            font-size: 16px;
+        }
+        .type-stat-value {
+            font-size: 24px;
+        }
+        .type-stat-caption {
+            font-size: 13px;
+        }
+        .type-breadcrumb {
+            font-size: 14px;
+        }
+        /* The bottom navigation bar's labels. */
+        .type-rail-label {
+            font-size: 12px;
+        }
+        .type-settings-title {
+            font-size: 28px;
+        }
+        .type-settings-section {
+            font-size: 22px;
+        }
+        .type-field {
+            font-size: 14px;
+        }
     }
 }
