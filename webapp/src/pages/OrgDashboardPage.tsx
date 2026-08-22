@@ -20,7 +20,7 @@ import { DateRange } from "react-day-picker";
 import useSWR from "swr";
 
 /*
- * The Global dashboard from Figma frame 218:7838.
+ * The Global dashboard from the design.
  *
  * The page is one fluid content column: a breadcrumb, a header, then two
  * sections below a rule. Its structure is expressed as flex regions with the
@@ -154,7 +154,7 @@ export default function OrgDashboardPage() {
             {/* Breadcrumb and header, with the space below them separating the
                 group from the rule. */}
             <div className="flex flex-col gap-8 pb-5 lg:gap-24 lg:pb-6">
-                {/* Breadcrumb — Figma 218:14433 */}
+                {/* Breadcrumb */}
                 <nav
                     aria-label="Breadcrumb"
                     className="type-mono-medium type-breadcrumb"
@@ -165,7 +165,7 @@ export default function OrgDashboardPage() {
                     <span className="text-cc-button-hover">Global</span>
                 </nav>
 
-                {/* Header — Figma 218:14437 / 218:14436 / 218:14435 / 218:14532 */}
+                {/* Header */}
                 <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-5 lg:gap-y-8">
                     <div className="flex min-w-0 flex-col gap-2">
                         <h1 className="type-display type-page-title text-cc-white">
@@ -189,16 +189,16 @@ export default function OrgDashboardPage() {
             </div>
 
             {/* Sections, separated from the header by the design's rule
-                (Figma 218:14434). */}
+                rule. */}
             <div className="flex flex-col gap-10 border-t border-cc-rule pt-6 lg:gap-20 lg:pt-8">
-                {/* Equal to — Figma 218:14441 */}
+                {/* Equal to */}
                 <section className="flex flex-col gap-6 lg:gap-heading">
                     <div className="flex items-center justify-between gap-4">
                         <h2 className="type-display type-section-title text-cc-white">
                             Equal to
                         </h2>
                         {/*
-                         * Figma 218:14444. A plain vector frame in the design,
+                         * A plain vector frame in the design,
                          * not a component instance, with no prototype
                          * interaction — so there is no defined action behind it
                          * and the app has no matching feature. Rendered as drawn,
@@ -239,7 +239,7 @@ export default function OrgDashboardPage() {
                     </ul>
                 </section>
 
-                {/* Consumed energy — Figma 218:14513 */}
+                {/* Consumed energy */}
                 <section className="flex flex-col gap-6 lg:gap-heading">
                     <h2 className="type-display type-section-title text-cc-white">
                         Consumed energy

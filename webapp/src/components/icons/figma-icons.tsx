@@ -1,5 +1,5 @@
 /*
- * Icons exported verbatim from the Code Carbon Figma file (frame 218:7838).
+ * Icons exported verbatim from the Code Carbon Figma file.
  *
  * Every path below is the exact "d" attribute Figma produced — nothing was
  * redrawn, simplified, or swapped for a Lucide/Heroicons equivalent. Figma
@@ -19,7 +19,7 @@ type IconProps = {
     className?: string;
 };
 
-/** Figma 218:16025 — 32x32. Lime (#BFFB4F) in the selected rail item. */
+/** 32x32. Lime (#BFFB4F) in the selected rail item. */
 export function GlobalIcon({ className }: IconProps) {
     return (
         <svg
@@ -47,7 +47,7 @@ export function GlobalIcon({ className }: IconProps) {
     );
 }
 
-/** Figma 218:16027 (Projects) — 32x32. */
+/** Projects — 32x32. */
 export function ProjectsIcon({ className }: IconProps) {
     return (
         <svg
@@ -77,7 +77,7 @@ export function ProjectsIcon({ className }: IconProps) {
     );
 }
 
-/** Figma 218:16027 (Glossary) — 32x32. */
+/** Glossary — 32x32. */
 export function GlossaryIcon({ className }: IconProps) {
     return (
         <svg
@@ -111,7 +111,7 @@ export function GlossaryIcon({ className }: IconProps) {
     );
 }
 
-/** Figma 79:3335 — 24x24 hamburger, fill #666666 in the design. */
+/** 24x24 hamburger, fill #666666 in the design. */
 export function MenuIcon({ className }: IconProps) {
     return (
         <svg
@@ -130,7 +130,7 @@ export function MenuIcon({ className }: IconProps) {
 }
 
 /**
- * Figma 73:876 — 24x24 outer box holding an 18.792x19 glyph, inset 10.85%
+ * 24x24 outer box holding an 18.792x19 glyph, inset 10.85%
  * horizontally (2.604px) and 10.42% vertically (2.5px). Fill #949494.
  */
 export function SettingsIcon({ className }: IconProps) {
@@ -153,7 +153,7 @@ export function SettingsIcon({ className }: IconProps) {
 }
 
 /**
- * Figma 73:870 — 24x24 outer box holding a 16.596x16.596 glyph, inset 15.43%
+ * 24x24 outer box holding a 16.596x16.596 glyph, inset 15.43%
  * on every side (3.701px). Fill #949494.
  */
 export function ExitToAppIcon({ className }: IconProps) {
@@ -175,7 +175,7 @@ export function ExitToAppIcon({ className }: IconProps) {
     );
 }
 
-/** Figma 218:14444 — 21.5384x21.5384, fill #7C7C7C. */
+/** 21.5384x21.5384, fill #7C7C7C. */
 export function AddAPhotoIcon({ className }: IconProps) {
     return (
         <svg
@@ -194,7 +194,7 @@ export function AddAPhotoIcon({ className }: IconProps) {
 }
 
 /**
- * Figma 77:1053 — 24x24 outer box holding an 11.073x19.3075 chevron, inset
+ * 24x24 outer box holding an 11.073x19.3075 chevron, inset
  * 1.44% left (0.346px) and 9.78% top/bottom (2.346px). Used by "Go back" on the
  * settings sub-nav.
  */
@@ -218,7 +218,7 @@ export function ArrowBackIosIcon({ className }: IconProps) {
 }
 
 /**
- * Figma 218:13714 — 24x24 outer box holding an 18x18 glyph, inset 12.5% (3px)
+ * 24x24 outer box holding an 18x18 glyph, inset 12.5% (3px)
  * on every side. Lime when its sub-nav row is selected.
  */
 export function AccountCircleIcon({ className }: IconProps) {
@@ -240,7 +240,7 @@ export function AccountCircleIcon({ className }: IconProps) {
     );
 }
 
-/** Figma 77:900 — 24x24; the glyph already fills its box in the design. */
+/** 24x24; the glyph already fills its box in the design. */
 export function LockIcon({ className }: IconProps) {
     return (
         <svg
@@ -254,6 +254,31 @@ export function LockIcon({ className }: IconProps) {
             className={className}
         >
             <path d="M6.30775 21.5C5.80908 21.5 5.38308 21.3234 5.02975 20.9703C4.67658 20.6169 4.5 20.1909 4.5 19.6923V10.3077C4.5 9.80908 4.67658 9.38308 5.02975 9.02975C5.38308 8.67658 5.80908 8.5 6.30775 8.5H7.5V6.5C7.5 5.25133 7.93783 4.18917 8.8135 3.3135C9.68917 2.43783 10.7513 2 12 2C13.2487 2 14.3108 2.43783 15.1865 3.3135C16.0622 4.18917 16.5 5.25133 16.5 6.5V8.5H17.6923C18.1909 8.5 18.6169 8.67658 18.9703 9.02975C19.3234 9.38308 19.5 9.80908 19.5 10.3077V19.6923C19.5 20.1909 19.3234 20.6169 18.9703 20.9703C18.6169 21.3234 18.1909 21.5 17.6923 21.5H6.30775ZM6.30775 20H17.6923C17.7821 20 17.8558 19.9712 17.9135 19.9135C17.9712 19.8558 18 19.7821 18 19.6923V10.3077C18 10.2179 17.9712 10.1442 17.9135 10.0865C17.8558 10.0288 17.7821 10 17.6923 10H6.30775C6.21792 10 6.14417 10.0288 6.0865 10.0865C6.02883 10.1442 6 10.2179 6 10.3077V19.6923C6 19.7821 6.02883 19.8558 6.0865 19.9135C6.14417 19.9712 6.21792 20 6.30775 20ZM12 16.75C12.4858 16.75 12.899 16.5798 13.2395 16.2395C13.5798 15.899 13.75 15.4858 13.75 15C13.75 14.5142 13.5798 14.101 13.2395 13.7605C12.899 13.4202 12.4858 13.25 12 13.25C11.5142 13.25 11.101 13.4202 10.7605 13.7605C10.4202 14.101 10.25 14.5142 10.25 15C10.25 15.4858 10.4202 15.899 10.7605 16.2395C11.101 16.5798 11.5142 16.75 12 16.75ZM9 8.5H15V6.5C15 5.66667 14.7083 4.95833 14.125 4.375C13.5417 3.79167 12.8333 3.5 12 3.5C11.1667 3.5 10.4583 3.79167 9.875 4.375C9.29167 4.95833 9 5.66667 9 6.5V8.5Z" />
+        </svg>
+    );
+}
+
+/**
+ * The overflow trigger on a project row — 24x24.
+ *
+ * Ships from the design as a glyph clipped by an alpha mask whose only content is
+ * the bounding-box rect; that mask is a no-op and is flattened away, as with the
+ * other Material-derived icons above. The glyph already spans its box, so there is
+ * no inner offset to preserve.
+ */
+export function MoreVertIcon({ className }: IconProps) {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            width="24"
+            height="24"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            focusable="false"
+            className={className}
+        >
+            <path d="M12 20C11.45 20 10.9792 19.8042 10.5875 19.4125C10.1958 19.0208 10 18.55 10 18C10 17.45 10.1958 16.9792 10.5875 16.5875C10.9792 16.1958 11.45 16 12 16C12.55 16 13.0208 16.1958 13.4125 16.5875C13.8042 16.9792 14 17.45 14 18C14 18.55 13.8042 19.0208 13.4125 19.4125C13.0208 19.8042 12.55 20 12 20ZM12 14C11.45 14 10.9792 13.8042 10.5875 13.4125C10.1958 13.0208 10 12.55 10 12C10 11.45 10.1958 10.9792 10.5875 10.5875C10.9792 10.1958 11.45 10 12 10C12.55 10 13.0208 10.1958 13.4125 10.5875C13.8042 10.9792 14 11.45 14 12C14 12.55 13.8042 13.0208 13.4125 13.4125C13.0208 13.8042 12.55 14 12 14ZM12 8C11.45 8 10.9792 7.80417 10.5875 7.4125C10.1958 7.02083 10 6.55 10 6C10 5.45 10.1958 4.97917 10.5875 4.5875C10.9792 4.19583 11.45 4 12 4C12.55 4 13.0208 4.19583 13.4125 4.5875C13.8042 4.97917 14 5.45 14 6C14 6.55 13.8042 7.02083 13.4125 7.4125C13.0208 7.80417 12.55 8 12 8Z" />
         </svg>
     );
 }

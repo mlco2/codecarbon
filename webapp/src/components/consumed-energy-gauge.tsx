@@ -1,7 +1,7 @@
 import { cn } from "@/helpers/utils";
 
 /*
- * The "Consumed energy" gauge from Figma 218:14517 / 218:14522 / 218:14527.
+ * The "Consumed energy" gauge from the design.
  *
  * The whole gauge is one SVG, so its geometry lives in the viewBox rather than
  * in CSS offsets: the ring, the value and the caption are all placed in the
@@ -14,7 +14,7 @@ import { cn } from "@/helpers/utils";
  * Figma values, identical for all three gauges:
  *   viewBox      199.23 x 199.23
  *   ring         cx = cy = 99.6152, r = 87.0511, 25.1281 stroke
- *   track        #3B4041 (218:14518)
+ *   track        #3B4041
  *   value arc    #BFFB4F, butt caps, sweeping anti-clockwise from 12 o'clock
  *   value        Disket Mono Bold 26, #BFFB4F, at 40.384 / 75.384
  *   caption      IBM Plex Mono Medium 13.343, #8A8A8A, at 43.974 / 115.769

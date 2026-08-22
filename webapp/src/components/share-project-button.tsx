@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SecondaryButton } from "@/components/ui/secondary-button";
 import {
     Popover,
     PopoverContent,
@@ -13,11 +14,19 @@ import { toast } from "sonner";
 interface ShareProjectButtonProps {
     projectId: string;
     isPublic: boolean;
+    /*
+     * How the control presents itself. `icon` is the round icon button the
+     * project dashboard has always shown; `labelled` is the redesign's outlined
+     * "Copy link" button, used where the control sits in a form beside the
+     * setting that produces the link. Both open the same panel.
+     */
+    trigger?: "icon" | "labelled";
 }
 
 export default function ShareProjectButton({
     projectId,
     isPublic,
+    trigger = "icon",
 }: ShareProjectButtonProps) {
     const [copied, setCopied] = useState(false);
     const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,14 +60,21 @@ export default function ShareProjectButton({
         <div className="flex items-center gap-2">
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label="Share project"
-                        className="flex items-center gap-2 rounded-full"
-                    >
-                        <Share2Icon className="h-4 w-4" />
-                    </Button>
+                    {trigger === "labelled" ? (
+                        <SecondaryButton>
+                            <Share2Icon className="size-4 shrink-0" />
+                            Copy link
+                        </SecondaryButton>
+                    ) : (
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            aria-label="Share project"
+                            className="flex items-center gap-2 rounded-full"
+                        >
+                            <Share2Icon className="h-4 w-4" />
+                        </Button>
+                    )}
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                     <div className="space-y-4">

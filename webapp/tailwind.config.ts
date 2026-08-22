@@ -34,6 +34,8 @@ const config = {
             boxShadow: {
                 /* Figma 218:14541 — account menu panel. */
                 menu: "0 4px 10px rgba(0, 0, 0, 0.25)",
+                /* Figma 218:11927 — modal panel. */
+                dialog: "0 4px 20px rgba(0, 0, 0, 0.25)",
             },
             fontFamily: {
                 // IBM Plex Mono. `font-mono` is already applied on <body>.

@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -9,7 +10,7 @@ import { AccountIcon } from "./icons/account-icon";
 import { MembersIcon } from "./icons/members-icon";
 
 /*
- * The "Side Menu closed" rail from Figma 218:14364.
+ * The "Side Menu closed" rail from the design.
  *
  * Figma positions the rail's groups as absolutely placed children with
  * percentage insets, but they are structurally just a column: the destinations
@@ -58,10 +59,48 @@ import { MembersIcon } from "./icons/members-icon";
  * icon and its label together with no extra rules.
  */
 
-/** Shared hover/pressed colouring for every control in the rail. */
-export const RAIL_INTERACTIVE =
-    "cursor-pointer transition-colors hover:text-cc-button-hover " +
-    "active:text-cc-lime motion-reduce:transition-none";
+/*
+ * A control in the rail: an icon above its label, green when it is the page you
+ * are on and white otherwise.
+ *
+ * Hover and pressed are not drawn in the design, so they are built from the
+ * palette it already uses — hover goes to its own "Button-hover" (#a0c55b) and
+ * pressing to the selected green. The icons take their fill from `currentColor`,
+ * so colouring the control moves the icon and its label together.
+ *
+ * It renders a plain button and forwards its props, so the destinations use it for
+ * navigation and the account control uses it as a menu trigger.
+ */
+const RailButton = React.forwardRef<
+    HTMLButtonElement,
+    React.ComponentPropsWithoutRef<"button"> & {
+        icon: (props: { className?: string }) => React.JSX.Element;
+        label: string;
+        isSelected?: boolean;
+    }
+>(({ icon: Icon, label, isSelected, className, ...props }, ref) => (
+    <button
+        ref={ref}
+        type="button"
+        aria-current={isSelected ? "page" : undefined}
+        className={cn(
+            "flex flex-1 cursor-pointer flex-col items-center gap-1 p-1.5 outline-none transition-colors",
+            "md:flex-none md:gap-2 md:p-2.5",
+            "hover:text-cc-button-hover active:text-cc-lime",
+            "focus-visible:ring-2 focus-visible:ring-cc-lime",
+            isSelected ? "text-cc-lime" : "text-cc-white",
+            "motion-reduce:transition-none",
+            className,
+        )}
+        {...props}
+    >
+        <Icon className="size-6 shrink-0 md:size-8" />
+        <span className="type-mono-medium type-rail-label text-center">
+            {label}
+        </span>
+    </button>
+));
+RailButton.displayName = "RailButton";
 
 type RailItem = {
     key: string;
@@ -165,43 +204,29 @@ export default function SidebarRail({
                 // groups below collapse to `display: contents` and let the nav
                 // itself space them.
                 "flex w-full flex-row items-stretch justify-around border-t-2 border-black px-2 py-1.5",
-                // From `md`: the vertical rail from Figma 218:14364.
+                // From `md`: the design's vertical rail.
                 "md:h-full md:w-rail md:flex-col md:items-center md:justify-start md:overflow-y-auto md:border-r-2 md:border-t-0 md:px-4 md:pb-4 md:pt-6",
                 className,
             )}
         >
-            {/* Destinations — Figma I218:14364;218:7831 */}
+            {/* Destinations */}
             <div className="contents md:flex md:w-full md:flex-col md:gap-6">
-                {ITEMS.map(({ key, label, Icon, path }) => {
-                    const isSelected = key === selectedKey;
-                    return (
-                        <button
-                            key={key}
-                            type="button"
-                            onClick={() => {
-                                if (!selectedOrg) return;
-                                navigate(path(selectedOrg));
-                            }}
-                            aria-current={isSelected ? "page" : undefined}
-                            className={cn(
-                                "flex flex-1 flex-col items-center gap-1 p-1.5 outline-none",
-                                "md:flex-none md:gap-2 md:p-2.5",
-                                "focus-visible:ring-2 focus-visible:ring-cc-lime",
-                                RAIL_INTERACTIVE,
-                                isSelected ? "!text-cc-lime" : "text-cc-white",
-                            )}
-                        >
-                            <Icon className="size-6 shrink-0 md:size-8" />
-                            <span className="type-mono-medium type-rail-label text-center">
-                                {label}
-                            </span>
-                        </button>
-                    );
-                })}
+                {ITEMS.map(({ key, label, Icon, path }) => (
+                    <RailButton
+                        key={key}
+                        icon={Icon}
+                        label={label}
+                        isSelected={key === selectedKey}
+                        onClick={() => {
+                            if (!selectedOrg) return;
+                            navigate(path(selectedOrg));
+                        }}
+                    />
+                ))}
             </div>
 
             {/*
-             * Account item — Figma I218:14364;79:3291, pinned to the bottom of
+             * Account item, pinned to the bottom of
              * the rail. Triggers the account menu, which opens upward from it.
              *
              * The `mt-auto` and the minimum separation live on this wrapper, not
@@ -217,19 +242,11 @@ export default function SidebarRail({
                         navigate(`/${organizationId}`);
                     }}
                 >
-                    <button
-                        type="button"
-                        className={cn(
-                            "flex w-full flex-col items-center gap-1 p-1.5 text-cc-white outline-none focus-visible:ring-2 focus-visible:ring-cc-lime",
-                            "md:gap-2 md:p-0",
-                            RAIL_INTERACTIVE,
-                        )}
-                    >
-                        <AccountIcon className="size-6 shrink-0 md:size-8" />
-                        <span className="type-mono-medium type-rail-label text-center">
-                            Account
-                        </span>
-                    </button>
+                    <RailButton
+                        icon={AccountIcon}
+                        label="Account"
+                        className="w-full flex-none md:p-0"
+                    />
                 </AccountMenu>
             </div>
         </nav>

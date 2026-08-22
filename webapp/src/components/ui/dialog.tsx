@@ -21,7 +21,7 @@ const DialogOverlay = React.forwardRef<
     <DialogPrimitive.Overlay
         ref={ref}
         className={cn(
-            "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+            "cc-dialog-overlay fixed inset-0 z-50 bg-black/80",
             className,
         )}
         {...props}
@@ -29,26 +29,53 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+/*
+ * The panel is centred by a flex wrapper rather than by
+ * `translate(-50%, -50%)`.
+ *
+ * That is what fixes the old transition. `tailwindcss-animate`'s enter/exit
+ * keyframes animate `transform`, which replaced the centring translate, so the
+ * default had to restore it with `slide-in-from-left-1/2` and
+ * `slide-in-from-top-[48%]` — which is why the dialog flew in from the top-left
+ * and left the same way. With the centring done by layout instead, `transform`
+ * belongs to the animation alone and the panel simply fades and rises in place
+ * (see `cc-dialog-panel` in globals.css).
+ *
+ * The wrapper is `pointer-events-none` so clicks in the space around the panel
+ * still reach the overlay and dismiss the dialog; the panel turns them back on
+ * for itself. It also scrolls, so a panel taller than the viewport can be read
+ * rather than being clipped at both ends.
+ */
 const DialogContent = React.forwardRef<
     React.ElementRef<typeof DialogPrimitive.Content>,
-    React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+    React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+        /**
+         * Omits the built-in corner close button, for dialogs whose own header
+         * provides one (e.g. the redesigned Create-project modal).
+         */
+        hideClose?: boolean;
+    }
+>(({ className, children, hideClose = false, ...props }, ref) => (
     <DialogPortal>
         <DialogOverlay />
-        <DialogPrimitive.Content
-            ref={ref}
-            className={cn(
-                "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-                className,
-            )}
-            {...props}
-        >
-            {children}
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
-        </DialogPrimitive.Content>
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+            <DialogPrimitive.Content
+                ref={ref}
+                className={cn(
+                    "cc-dialog-panel pointer-events-auto relative my-auto grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
+                    className,
+                )}
+                {...props}
+            >
+                {children}
+                {!hideClose && (
+                    <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
+                    </DialogPrimitive.Close>
+                )}
+            </DialogPrimitive.Content>
+        </div>
     </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;

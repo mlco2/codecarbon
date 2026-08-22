@@ -8,7 +8,7 @@ import Loader from "@/components/loader";
 import SidebarRail from "@/components/sidebar-rail";
 
 /*
- * Shell for the redesigned dashboard (Figma frame 218:7838).
+ * Shell for the redesigned dashboard.
  *
  * The design is an application viewport rather than a scrolling document: the
  * rail runs the full height with its "Account" item at the bottom, and the page
@@ -55,7 +55,7 @@ export default function DashboardLayout() {
                 Skip to main content
             </a>
 
-            {/* Figma "Side Menu closed" (218:14364) — the vertical rail from
+            {/* The design's "Side Menu closed" — the vertical rail from
                 `md` up, a bottom navigation bar below it. */}
             <SidebarRail orgs={orgs || []} />
 

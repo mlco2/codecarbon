@@ -3,8 +3,7 @@
 
 /*
  * Disket Mono (Bold) is the display face in the Figma design — every heading,
- * stat value and gauge value uses it (e.g. nodes 218:14436, 218:14443,
- * 218:14465, 218:14520).
+ * stat value and gauge value uses it.
  *
  * The face has no distinct lowercase: all 26 lowercase codepoints map to glyphs
  * whose outlines are byte-identical to the capitals, which is why Figma renders
@@ -25,7 +24,7 @@
 @layer base {
     :root {
         /*
-         * Figma variables from `Code Carbon - Master` (frame 218:7838),
+         * Figma variables from `Code Carbon - Master`,
          * verbatim. Namespaced `--cc-*` so they sit alongside the existing
          * shadcn HSL tokens without altering any of them.
          */
@@ -45,10 +44,10 @@
         --cc-text-input-gray: #666666; /* Figma "text input gray" */
 
         /* Literal fills in the frame that are not bound to a Figma variable. */
-        --cc-breadcrumb-gray: #7c7c7c; /* 218:14433 */
-        --cc-rule: #505050; /* 218:14434 header rule */
-        --cc-gauge-track: #3b4041; /* 218:14518 gauge ring */
-        --cc-gauge-label: #8a8a8a; /* 218:14521 gauge caption */
+        --cc-breadcrumb-gray: #7c7c7c; /* breadcrumb */
+        --cc-rule: #505050; /* header rule */
+        --cc-gauge-track: #3b4041; /* gauge ring */
+        --cc-gauge-label: #8a8a8a; /* gauge caption */
 
         /* Type families. IBM Plex Mono stays in the display stack purely as a
            fallback for the brief moment before the @font-face resolves. */
@@ -141,19 +140,19 @@
         text-transform: uppercase;
     }
 
-    /* 218:14436 — page title */
+    /* Page title */
     .type-page-title {
         font-size: 31.295px;
     }
-    /* 218:14443 / 218:14515 — section headings */
+    /* Section headings */
     .type-section-title {
         font-size: 19.744px;
     }
-    /* 218:14465 / 218:14483 / 218:14511 — equivalence values */
+    /* Equivalence values */
     .type-stat-value {
         font-size: 33.357px;
     }
-    /* 218:14520 / 218:14525 / 218:14530 — gauge values */
+    /* Gauge values */
     .type-gauge-value {
         font-size: 26px;
     }
@@ -173,49 +172,57 @@
         letter-spacing: 0;
     }
 
-    /* 218:14433 — breadcrumb */
+    /* Breadcrumb */
     .type-breadcrumb {
         font-size: 18px;
     }
-    /* 218:14435 — page subtitle */
+    /* Page subtitle */
     .type-page-subtitle {
         font-size: 16.274px;
     }
-    /* 218:14466 / 218:14484 / 218:14512 — equivalence captions */
+    /* Equivalence captions */
     .type-stat-caption {
         font-size: 14px;
     }
-    /* 218:14521 / 218:14526 / 218:14531 — gauge unit captions */
+    /* Gauge unit captions */
     .type-gauge-label {
         font-size: 13.343px;
     }
-    /* I218:14364;79:3295 / 218:14601 — sidebar rail labels */
+    /* Sidebar rail labels */
     .type-rail-label {
         font-size: 14px;
     }
-    /* 73:881 — account menu row labels */
+    /* Account menu row labels */
     .type-menu-item {
         font-size: 12px;
     }
-    /* 77:951 — settings page title (Disket Mono Bold) */
+    /* Settings page title (Disket Mono Bold) */
     .type-settings-title {
         font-size: 40px;
     }
-    /* 77:952 — settings section heading (IBM Plex Mono Medium) */
+    /* Settings section heading (IBM Plex Mono Medium) */
     .type-settings-section {
         font-size: 32px;
     }
-    /* I77:1054;73:812 — settings sub-nav labels (Disket Mono Bold) */
+    /* Settings sub-nav labels (Disket Mono Bold) */
     .type-settings-nav {
         font-size: 14px;
     }
 
-    /* I218:14532;71:2617 / 73:173 — field label and field value */
+    /* Field label and field value */
     .type-field {
         font-size: 16px;
     }
 
-    /* 218:14543 — the one Inter node in the design */
+    /* A project row's name, and its secondary text. */
+    .type-row-title {
+        font-size: 16px;
+    }
+    .type-row-meta {
+        font-size: 12px;
+    }
+
+    /* The one Inter node in the design */
     .type-menu-heading {
         font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
         font-weight: 500;
@@ -266,6 +273,96 @@
         }
         .type-field {
             font-size: 14px;
+        }
+        .type-row-title {
+            font-size: 14px;
+        }
+    }
+}
+
+/*
+ * Dialog transitions.
+ *
+ * The shadcn default animates a dialog with `tailwindcss-animate`'s enter/exit
+ * keyframes, whose `transform` replaces the element's own — including the
+ * `translate(-50%, -50%)` that centres it. It compensates with
+ * `slide-in-from-left-1/2` and `slide-in-from-top-[48%]`, so the panel travels in
+ * from the top-left corner and leaves the same way, at a slight diagonal because
+ * 48% is not 50%.
+ *
+ * These replace it. `DialogContent` is flex-centred rather than transform-centred
+ * (see dialog.tsx), which frees `transform` entirely: the panel only has to fade
+ * and rise a few pixels in place, so there is no centring for the animation to
+ * fight. Opening eases out of a fast-start curve and closing is quicker and
+ * plainer, which is the usual asymmetry — appearing wants to feel arrived,
+ * dismissing wants to be out of the way.
+ */
+@keyframes cc-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes cc-dialog-out {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(4px) scale(0.99);
+    }
+}
+
+@keyframes cc-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes cc-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@layer components {
+    .cc-dialog-panel[data-state="open"] {
+        animation: cc-dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cc-dialog-panel[data-state="closed"] {
+        animation: cc-dialog-out 140ms ease-in;
+    }
+
+    .cc-dialog-overlay[data-state="open"] {
+        animation: cc-fade-in 200ms ease-out;
+    }
+    .cc-dialog-overlay[data-state="closed"] {
+        animation: cc-fade-out 140ms ease-in;
+    }
+
+    /*
+     * With reduced motion the movement goes but the transition does not: a panel
+     * that appears instantly is harder to follow than one that fades. Only the
+     * translate and scale are dropped.
+     */
+    @media (prefers-reduced-motion: reduce) {
+        .cc-dialog-panel[data-state="open"] {
+            animation: cc-fade-in 120ms ease-out;
+        }
+        .cc-dialog-panel[data-state="closed"] {
+            animation: cc-fade-out 100ms ease-in;
         }
     }
 }

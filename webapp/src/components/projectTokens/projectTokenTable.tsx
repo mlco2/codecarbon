@@ -6,6 +6,8 @@ import CustomRowToken from "@/components/projectTokens/custom-row-token";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Loader2, ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PlusIcon } from "@/components/icons/plus-icon";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import copy from "copy-to-clipboard";
@@ -103,14 +105,15 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
 
     return (
         <div className="flex-col p-4 md:gap-8 md:p-4 justify-between">
-            <div className="flex-1 mb-4">
+            <div className="flex-1 mb-8">
                 {!isCreatingToken && !createdToken ? (
-                    <Button
-                        className="bg-primary text-primary-foreground"
-                        onClick={() => setIsCreatingToken(true)}
-                    >
-                        + Create a new token
-                    </Button>
+                    /* The redesign's primary action. The rest of this table is
+                       not restyled yet, so this is the one control that follows
+                       the new treatment for now. */
+                    <PrimaryButton onClick={() => setIsCreatingToken(true)}>
+                        <PlusIcon className="size-5 shrink-0" />
+                        Create a new token
+                    </PrimaryButton>
                 ) : createdToken ? (
                     <Card className="p-4 mb-4">
                         <h2 className="text-xl font-bold mb-4">

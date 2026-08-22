@@ -11,16 +11,12 @@ import CreateOrganizationModal from "./createOrganizationModal";
 import { ExitToAppIcon, SettingsIcon } from "./icons/figma-icons";
 import { OrganizationIcon } from "./icons/organization-icon";
 import { PlusIcon } from "./icons/plus-icon";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { MenuItem, MenuPanel } from "./ui/menu";
 
 /*
- * The account menu from Figma 218:14541 ("menu"), the subject of frame
- * 218:7838 — "Changing organization from side bar".
+ * The account menu, the subject of the design's "Changing organization from side
+ * bar".
  *
  * The panel is one of the few places where fixed dimensions are the right answer:
  * its width and row height are the component's own size, not a position, so they
@@ -32,13 +28,10 @@ import {
  * Figma values:
  *   panel   203px wide, #181818, 2px #a0c55b border, 4px radius,
  *           drop-shadow 0 4px 10px rgba(0,0,0,0.25)
- *   heading Inter Medium 10px, centred, 15px vertical padding (218:14542)
+ *   heading Inter Medium 10px, centred, 15px vertical padding
  *   row     46px tall, 15px/8px padding, 4px gap, 24px avatar,
  *           IBM Plex Mono Medium 12px label
- *   rule    1px #949494 with 10px either side (218:14547)
- *
- * Deviation from the frame: the design's rows carry a 2px #a0c55b edge on both
- * the left and the right when highlighted; only the right edge is kept here.
+ *   rule    1px #949494 with 10px either side
  *
  * Anchoring is expressed as a relationship to the trigger rather than as frame
  * coordinates. In the design the panel occupies x 49..252, y 621..959 and the
@@ -60,69 +53,6 @@ import {
  * hover/focus state.
  */
 
-/*
- * The row label fills the remaining width instead of carrying Figma's fixed
- * 121px text box, so long organization names wrap rather than overflow.
- */
-const ROW =
-    "min-h-control w-full flex items-center gap-1 px-4 py-2 " +
-    "cursor-pointer select-none outline-none rounded-none " +
-    "border-y-0 border-l-0 border-r-0 border-transparent " +
-    // Reaches only the icons: every label sets its own colour below.
-    "text-cc-gray";
-
-/*
- * The highlight treatment, from Figma 218:14545: a #2b2b2b fill with a 2px
- * #a0c55b right edge and a #a0c55b label. The design also draws a matching left
- * edge; that one is dropped here by request. It serves two purposes
- * — it marks the organization you are currently viewing, and it is the
- * hover/focus state for any row. Focus is bound as well as hover so the menu is
- * fully operable from the keyboard; Radix moves focus with the arrow keys and
- * also sets it on hover.
- */
-const ROW_HIGHLIGHT =
-    "bg-cc-darkest-gray border-cc-button-hover text-cc-button-hover";
-const ROW_HOVER =
-    "focus:bg-cc-darkest-gray focus:border-cc-button-hover focus:text-cc-button-hover " +
-    "data-[highlighted]:bg-cc-darkest-gray data-[highlighted]:border-cc-button-hover " +
-    "data-[highlighted]:text-cc-button-hover";
-
-const ROW_LABEL =
-    "type-mono-medium type-menu-item min-w-0 flex-1 break-words " +
-    "group-focus:text-cc-button-hover " +
-    "group-data-[highlighted]:text-cc-button-hover";
-
-function MenuRow({
-    onSelect,
-    children,
-    icon,
-    /** Marks the organization currently being viewed. */
-    isCurrent,
-}: Readonly<{
-    onSelect: () => void;
-    children: React.ReactNode;
-    icon: React.ReactNode;
-    isCurrent?: boolean;
-}>) {
-    return (
-        <DropdownMenuItem
-            className={cn("group", ROW, ROW_HOVER, isCurrent && ROW_HIGHLIGHT)}
-            onSelect={onSelect}
-            aria-current={isCurrent ? "true" : undefined}
-        >
-            {icon}
-            <span
-                className={cn(
-                    ROW_LABEL,
-                    isCurrent ? "text-cc-button-hover" : "text-cc-white",
-                )}
-            >
-                {children}
-            </span>
-        </DropdownMenuItem>
-    );
-}
-
 export default function AccountMenu({
     orgs,
     selectedOrg,
@@ -136,6 +66,14 @@ export default function AccountMenu({
     children: React.ReactNode;
 }>) {
     const [open, setOpen] = useState(false);
+    /*
+     * Latched on the first open, and never cleared. The admin lookup below is
+     * keyed on it rather than on `open` so that closing the menu does not drop the
+     * result: with the key gone, SWR reports no data, every dashboard falls back
+     * into the "invited" group, and the one the user administers visibly jumps up
+     * out of its section while the menu is animating out.
+     */
+    const [hasOpened, setHasOpened] = useState(false);
     const navigate = useNavigate();
     const newOrgModal = useModal();
     /*
@@ -164,13 +102,13 @@ export default function AccountMenu({
      * them only per organization via its member list (`is_admin` on
      * `GET /organizations/{id}/users`), so this asks each organization in turn.
      *
-     * Deferred until the menu is opened, to keep it off the page-load path, and
-     * cached by SWR after that. Until it resolves every dashboard sits in the
-     * invited section, which is how the menu behaved before the split.
+     * Deferred until the menu is first opened, to keep it off the page-load path,
+     * and kept from then on — see `hasOpened`. Until it resolves every dashboard
+     * sits in the invited section, which is how the menu behaved before the split.
      */
     const userId = auth?.user?.id;
     const { data: adminOrgIds } = useSWR(
-        open && userId && list && list.length > 0
+        hasOpened && userId && list && list.length > 0
             ? ["organization-admin", userId, list.map((o) => o.id).join(",")]
             : null,
         async () => {
@@ -206,9 +144,15 @@ export default function AccountMenu({
 
     return (
         <>
-            <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenu
+                open={open}
+                onOpenChange={(next) => {
+                    setOpen(next);
+                    if (next) setHasOpened(true);
+                }}
+            >
                 <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-                <DropdownMenuContent
+                <MenuPanel
                     side="top"
                     align="start"
                     sideOffset={0}
@@ -225,11 +169,6 @@ export default function AccountMenu({
                         // placement. Not applied on the bottom bar, where it
                         // would push the panel off the right of the screen.
                         "md:ml-[calc(var(--radix-dropdown-menu-trigger-width)/2)]",
-                        "flex min-w-0 flex-col overflow-hidden px-0 py-2",
-                        "rounded-menu border-2 border-cc-button-hover bg-cc-background",
-                        "shadow-menu",
-                        // Respect a reduced-motion preference.
-                        "motion-reduce:animate-none motion-reduce:transition-none",
                     )}
                 >
                     {invited.length > 0 && (
@@ -239,7 +178,7 @@ export default function AccountMenu({
                     )}
 
                     {invited.map((org) => (
-                        <MenuRow
+                        <MenuItem
                             key={org.id}
                             isCurrent={org.id === selectedOrg}
                             onSelect={() => onSelectOrg(org.id)}
@@ -248,7 +187,7 @@ export default function AccountMenu({
                             }
                         >
                             {org.name}
-                        </MenuRow>
+                        </MenuItem>
                     ))}
 
                     {/*
@@ -258,23 +197,23 @@ export default function AccountMenu({
                      * working functionality, so it is kept here using the
                      * design's own row styling.
                      */}
-                    <MenuRow
+                    <MenuItem
                         onSelect={() => newOrgModal.open()}
                         icon={<PlusIcon className="size-6 shrink-0" />}
                     >
                         Add new organization
-                    </MenuRow>
+                    </MenuItem>
 
-                    {/* Figma 218:14547 — a rule with 10px of space either side. */}
+                    {/* A rule with 10px of space either side. */}
                     <div className="my-2.5 border-t border-cc-gray" />
 
                     {/*
                      * The dashboards the user administers — their own. Figma
-                     * 218:14548 shows a person's name here. They select like any
+                     * The design shows a person's name here. They select like any
                      * other dashboard and highlight when one is being viewed.
                      */}
                     {owned.map((org) => (
-                        <MenuRow
+                        <MenuItem
                             key={org.id}
                             isCurrent={org.id === selectedOrg}
                             onSelect={() => onSelectOrg(org.id)}
@@ -283,27 +222,27 @@ export default function AccountMenu({
                             }
                         >
                             {org.name}
-                        </MenuRow>
+                        </MenuItem>
                     ))}
 
-                    {/* Figma 218:14549 — sits between the profile row and
+                    {/* Sits between the profile row and
                         "Log out", as the design orders them. */}
-                    <MenuRow
+                    <MenuItem
                         onSelect={() => navigate("/settings")}
                         icon={<SettingsIcon className="size-6 shrink-0" />}
                     >
                         Settings
-                    </MenuRow>
+                    </MenuItem>
 
-                    <MenuRow
+                    <MenuItem
                         onSelect={() => {
                             window.location.href = `${import.meta.env.VITE_API_URL}/auth/logout`;
                         }}
                         icon={<ExitToAppIcon className="size-6 shrink-0" />}
                     >
                         Log out
-                    </MenuRow>
-                </DropdownMenuContent>
+                    </MenuItem>
+                </MenuPanel>
             </DropdownMenu>
 
             <CreateOrganizationModal

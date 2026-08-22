@@ -16,7 +16,7 @@ interface DateRangePickerProps {
     onDateChange: (newDate: DateRange | undefined) => void;
     /**
      * `default` keeps the outline button used elsewhere in the app.
-     * `dashboard` matches the Figma "Input" component (218:14532): a 16px
+     * `dashboard` matches the design's "Input" component: a 16px
      * IBM Plex Mono Regular "Dates" label above a 46px field with a
      * rgba(255,255,255,0.05) fill, 2px radius, 16px horizontal padding and a
      * #666666 numeric value. The design shows no calendar glyph in the field.
