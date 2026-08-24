@@ -222,6 +222,18 @@
         font-size: 12px;
     }
 
+    /* A member row's name, which the design sets larger than a project's. */
+    .type-member-name {
+        font-size: 18px;
+    }
+    .type-member-meta {
+        font-size: 14px;
+    }
+    /* A table's column heading (Disket Mono Bold) */
+    .type-column-head {
+        font-size: 18px;
+    }
+
     /* The one Inter node in the design */
     .type-menu-heading {
         font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -276,6 +288,15 @@
         }
         .type-row-title {
             font-size: 14px;
+        }
+        .type-member-name {
+            font-size: 16px;
+        }
+        .type-member-meta {
+            font-size: 12px;
+        }
+        .type-column-head {
+            font-size: 15px;
         }
     }
 }

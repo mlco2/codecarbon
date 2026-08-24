@@ -204,7 +204,6 @@ export interface ProjectDashboardProps {
     selectedRunId: string;
     onExperimentClick: (experimentId: string) => void;
     onRunClick: (runId: string) => void;
-    onSettingsClick: () => void;
     onRefresh: () => void;
     isLoading?: boolean;
 }

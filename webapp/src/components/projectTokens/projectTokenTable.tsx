@@ -7,8 +7,9 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { Loader2, ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "@/components/icons/plus-icon";
+import { FormField } from "@/components/ui/form-field";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { Input } from "@/components/ui/input";
+import { SecondaryButton } from "@/components/ui/secondary-button";
 import { toast } from "sonner";
 import copy from "copy-to-clipboard";
 
@@ -107,9 +108,8 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         <div className="flex-col p-4 md:gap-8 md:p-4 justify-between">
             <div className="flex-1 mb-8">
                 {!isCreatingToken && !createdToken ? (
-                    /* The redesign's primary action. The rest of this table is
-                       not restyled yet, so this is the one control that follows
-                       the new treatment for now. */
+                    /* The table itself is not restyled yet; the controls around
+                       it follow the redesign. */
                     <PrimaryButton
                         onClick={() => setIsCreatingToken(true)}
                         className="gap-4"
@@ -158,36 +158,44 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                         <h2 className="text-xl font-bold mb-4">
                             Create new token
                         </h2>
-                        <div className="flex gap-2">
-                            <Input
-                                type="text"
+                        {/* A real form, so Enter submits. The field and the two
+                            actions share a row from `sm` and stack below it. */}
+                        <form
+                            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                handleCreateToken();
+                            }}
+                        >
+                            <FormField
+                                id="token-name"
+                                label="Token name"
+                                hideLabel
+                                placeholder="Token name"
+                                required
                                 value={tokenName}
                                 onChange={(e) => setTokenName(e.target.value)}
-                                placeholder="Token Name"
-                                className="flex-grow"
                                 disabled={isSubmitting}
+                                containerClassName="min-w-0 flex-1"
                             />
-                            <Button
-                                onClick={handleCreateToken}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Creating...
-                                    </>
-                                ) : (
-                                    "Create"
-                                )}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsCreatingToken(false)}
-                                disabled={isSubmitting}
-                            >
-                                Cancel
-                            </Button>
-                        </div>
+                            <div className="flex shrink-0 gap-2">
+                                <PrimaryButton
+                                    type="submit"
+                                    disabled={isSubmitting || !tokenName.trim()}
+                                >
+                                    {isSubmitting && (
+                                        <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
+                                    )}
+                                    {isSubmitting ? "Creating..." : "Create"}
+                                </PrimaryButton>
+                                <SecondaryButton
+                                    onClick={() => setIsCreatingToken(false)}
+                                    disabled={isSubmitting}
+                                >
+                                    Cancel
+                                </SecondaryButton>
+                            </div>
+                        </form>
                     </Card>
                 )}
             </div>

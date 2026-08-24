@@ -8,25 +8,15 @@ import Loader from "@/components/loader";
 import SidebarRail from "@/components/sidebar-rail";
 
 /*
- * Shell for the redesigned dashboard.
+ * Shell for the redesigned dashboard: exactly one viewport tall, with the rail
+ * and the content area as siblings in a row and the content column owning the
+ * only scroll.
  *
- * The design is an application viewport rather than a scrolling document: the
- * rail runs the full height with its "Account" item at the bottom, and the page
- * content fits without the page scrolling. So the shell is exactly one viewport
- * tall and distributes that height structurally — the rail and the content area
- * are siblings in a row, and the content column owns the only scroll.
- *
- * The `min-h-0` / `min-w-0` on the flex children is what makes that work: without
- * them the content's intrinsic size would stretch the shell and push the rail's
- * Account item off-screen. Nothing here subtracts the rail's width; the rail
- * declares its own width and the content takes what is left via `flex-1`.
- *
- * One navigation, two presentations, from a single `SidebarRail` instance: a
- * vertical rail beside the content from `md` up, and a bottom bar beneath it
- * below that. `flex-col-reverse` is what places it — the rail stays first in the
- * DOM, so it keeps its natural reading and tab order, while appearing last on
- * screen. Being in normal flow, the bar takes its own space instead of covering
- * the content.
+ * The `min-h-0` / `min-w-0` on the flex children is what makes that work —
+ * without them the content's intrinsic size stretches the shell and pushes the
+ * rail's Account item off-screen. `flex-col-reverse` puts the mobile bar below
+ * the content while leaving the rail first in the DOM, so it keeps its reading
+ * and tab order.
  */
 export default function DashboardLayout() {
     const [initialLoad, setInitialLoad] = useState(true);

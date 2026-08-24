@@ -53,7 +53,7 @@ export const MenuItem = React.forwardRef<
         ref={ref}
         aria-current={isCurrent ? "true" : undefined}
         className={cn(
-            "group min-h-control w-full cursor-pointer select-none items-center gap-1 rounded-none px-4 py-2 outline-none",
+            "group min-h-control w-full cursor-pointer select-none items-center gap-3 rounded-none px-4 py-2 outline-none",
             // Only the icons take this; the label sets its own colour below.
             "border-y-0 border-l-0 border-r-0 border-transparent text-cc-gray",
             "focus:border-cc-button-hover focus:bg-cc-darkest-gray focus:text-cc-button-hover",

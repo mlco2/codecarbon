@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ShareIcon } from "@/components/icons/share-icon";
+import { IconButton } from "@/components/ui/icon-button";
 import { SecondaryButton } from "@/components/ui/secondary-button";
 import {
     Popover,
@@ -7,7 +9,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import copy from "copy-to-clipboard";
-import { CheckIcon, CopyIcon, Share2Icon } from "lucide-react";
+import { CheckIcon, CopyIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -62,18 +64,13 @@ export default function ShareProjectButton({
                 <PopoverTrigger asChild>
                     {trigger === "labelled" ? (
                         <SecondaryButton>
-                            <Share2Icon className="size-4 shrink-0" />
+                            <ShareIcon className="size-5 shrink-0" />
                             Copy link
                         </SecondaryButton>
                     ) : (
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            aria-label="Share project"
-                            className="flex items-center gap-2 rounded-full"
-                        >
-                            <Share2Icon className="h-4 w-4" />
-                        </Button>
+                        <IconButton aria-label="Share project">
+                            <ShareIcon className="size-6" />
+                        </IconButton>
                     )}
                 </PopoverTrigger>
                 <PopoverContent className="w-80">

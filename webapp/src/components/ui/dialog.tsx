@@ -31,20 +31,13 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 /*
  * The panel is centred by a flex wrapper rather than by
- * `translate(-50%, -50%)`.
+ * `translate(-50%, -50%)`, which frees `transform` for the animation alone: the
+ * panel fades and rises in place instead of flying in from the top-left the way
+ * `tailwindcss-animate`'s enter/exit keyframes made it.
  *
- * That is what fixes the old transition. `tailwindcss-animate`'s enter/exit
- * keyframes animate `transform`, which replaced the centring translate, so the
- * default had to restore it with `slide-in-from-left-1/2` and
- * `slide-in-from-top-[48%]` — which is why the dialog flew in from the top-left
- * and left the same way. With the centring done by layout instead, `transform`
- * belongs to the animation alone and the panel simply fades and rises in place
- * (see `cc-dialog-panel` in globals.css).
- *
- * The wrapper is `pointer-events-none` so clicks in the space around the panel
- * still reach the overlay and dismiss the dialog; the panel turns them back on
- * for itself. It also scrolls, so a panel taller than the viewport can be read
- * rather than being clipped at both ends.
+ * The wrapper is `pointer-events-none` so clicks around the panel still reach
+ * the overlay and dismiss the dialog, and it scrolls, so a panel taller than
+ * the viewport can be read rather than clipped.
  */
 const DialogContent = React.forwardRef<
     React.ElementRef<typeof DialogPrimitive.Content>,

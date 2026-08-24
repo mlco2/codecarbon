@@ -2,13 +2,6 @@ import { ExperimentReport } from "@/api/schemas";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
     ChartConfig,
     ChartContainer,
     ChartTooltip,
@@ -16,6 +9,7 @@ import {
 } from "@/components/ui/chart";
 import { exportExperimentsToCsv } from "@/utils/export";
 import { useMemo, useState } from "react";
+import ChartSection from "./chart-section";
 import ChartSkeleton from "./chart-skeleton";
 import { ExportCsvButton } from "./export-csv-button";
 
@@ -84,16 +78,11 @@ export default function ExperimentsBarChart({
     }
 
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Project experiment runs</CardTitle>
-                    <CardDescription>
-                        Click an experiment to see the runs on the chart on the
-                        right
-                    </CardDescription>
-                </div>
-                {!isPublicView && (
+        <ChartSection
+            title="Project experiment runs"
+            description="Click an experiment to see the runs on the chart on the right"
+            action={
+                !isPublicView && (
                     <ExportCsvButton
                         isDisabled={
                             isExporting || experimentsReportData.length === 0
@@ -110,44 +99,38 @@ export default function ExperimentsBarChart({
                         successMessage="Experiments exported successfully"
                         errorMessage="Failed to export experiments"
                     />
+                )
+            }
+        >
+            <ChartContainer config={chartConfig}>
+                {experimentsReportData.length > 0 ? (
+                    <BarChart accessibilityLayer data={experimentsReportData}>
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                            dataKey="name"
+                            tickLine={false}
+                            tickMargin={10}
+                            axisLine={false}
+                            tickFormatter={(value) => value.slice(0, 3)}
+                        />
+                        <ChartTooltip
+                            cursor={false}
+                            content={<ChartTooltipContent indicator="dashed" />}
+                        />
+                        <Bar
+                            dataKey="emissions"
+                            shape={<CustomBar />}
+                            radius={4}
+                        />
+                    </BarChart>
+                ) : (
+                    <div className="flex items-center justify-center h-full">
+                        <p className="text-sm text-muted-foreground">
+                            No data available
+                        </p>
+                    </div>
                 )}
-            </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig}>
-                    {experimentsReportData.length > 0 ? (
-                        <BarChart
-                            accessibilityLayer
-                            data={experimentsReportData}
-                        >
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="name"
-                                tickLine={false}
-                                tickMargin={10}
-                                axisLine={false}
-                                tickFormatter={(value) => value.slice(0, 3)}
-                            />
-                            <ChartTooltip
-                                cursor={false}
-                                content={
-                                    <ChartTooltipContent indicator="dashed" />
-                                }
-                            />
-                            <Bar
-                                dataKey="emissions"
-                                shape={<CustomBar />}
-                                radius={4}
-                            />
-                        </BarChart>
-                    ) : (
-                        <div className="flex items-center justify-center h-full">
-                            <p className="text-sm text-muted-foreground">
-                                No data available
-                            </p>
-                        </div>
-                    )}
-                </ChartContainer>
-            </CardContent>
-        </Card>
+            </ChartContainer>
+        </ChartSection>
     );
 }

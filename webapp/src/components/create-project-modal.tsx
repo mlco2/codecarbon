@@ -8,42 +8,12 @@ import { FormField } from "./ui/form-field";
 import { PrimaryButton } from "./ui/primary-button";
 
 /*
- * Create a project.
+ * Create a project: a dialog holding a name and a description.
  *
- * Proportions are taken from the design rather than copied off it. Its fixed
- * 664x524 panel cannot be reproduced as a size — its own numbers do not add up,
- * with the form starting below where the panel ends — but its proportion, a little
- * wider than tall, is what makes it read as a dialog rather than as a bar. So the
- * panel is built to land near it:
- *
- *   - the maximum width is 560, not 664. Reproducing 664 against a height that
- *     follows the content gave a distinctly wider box; pulling the width in
- *     recovers the near-square proportion, and it costs nothing because the form
- *     is two single-line fields
- *   - the title stays at display size while the box around it narrows, at 24px
- *     rather than the design's 32
- *   - the vertical padding is generous, but bounded by how it looks rather than by
- *     the ratio it produces. Pushed far enough to force the design's exact
- *     proportion it just looks empty, so the panel sits a little wider than tall
- *
- * The design's two horizontal measurements disagree — the title row is inset 33px
- * from the panel edge while the form is a 466px column centred in the 664px panel,
- * 99px either side. They are normalised to a single gutter here, as the redesigned
- * pages do, so the title and the fields share one left edge instead of stepping in
- * twice.
- *
- * Below its maximum the panel narrows, and `DialogContent` scrolls it if it ever
- * exceeds the viewport, so the modal is usable on a phone.
- *
- * The design's ✕ is its "add" glyph rotated 45 degrees — that is how the file
- * builds it — so it renders as the same `PlusIcon` under a `rotate-45`, rather
- * than as a second asset that would have to stay in step with the first.
- *
- * Two things in the design were confirmed as component defaults rather than
- * intent: the envelope icon inside the Name field (its Input component was built
- * for an email address, and the Description field below it has no icon), which is
- * dropped; and the absence of a Cancel button, which is kept — the ✕, the Esc key
- * and a click outside all still close the dialog.
+ * The design's fixed 664x524 panel is not reproduced as a size — its own
+ * numbers do not add up, with the form starting below where the panel ends — so
+ * the panel keeps its proportion instead, a little wider than tall, and narrows
+ * below its maximum.
  */
 
 interface ModalProps {

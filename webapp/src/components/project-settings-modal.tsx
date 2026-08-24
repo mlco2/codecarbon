@@ -15,29 +15,14 @@ import { TabNavList, TabNavTrigger } from "./ui/tab-nav";
 import { Tabs, TabsContent } from "./ui/tabs";
 
 /*
- * Project settings.
+ * Project settings: the Create-project modal's panel, fields and button, wider
+ * because it also holds the API-tokens table. The design has no frame for this
+ * dialog, so it is the redesign's vocabulary applied to the controls it had.
  *
- * The panel, the title, the fields and the primary button are the Create-project
- * modal's — the two dialogs are the same object in the design system, so they
- * share the same components rather than each describing the treatment. This one is
- * wider because it holds the API-tokens table, and that width is the only
- * dimension it sets for itself.
- *
- * The design has no frame for this dialog, so nothing here is traced: it is the
- * redesign's own vocabulary applied to the controls the dialog already had.
- *
- * Two things are deliberately untouched, since they are not redesigned yet: the
- * `Switch` and the API-tokens table. Both are shared with screens outside this
- * dialog, so restyling them belongs to their own pass.
- *
- * Two things save independently. "Save changes" writes the fields and closes the
- * dialog, as it did before. The public toggle writes itself the moment it is
- * flipped, which is what lets the sharing link it controls appear and disappear
- * with it — a link is not something to hold in a draft state, since it either
- * works or it does not.
- *
- * Only a failed submit keeps the dialog open, so edits that did not save are still
- * there to retry rather than being discarded.
+ * The fields save on submit; the public toggle saves the moment it is flipped,
+ * which is what lets the sharing link it controls appear and disappear with it.
+ * Only a failed submit keeps the dialog open, so edits that did not save are
+ * still there to retry.
  */
 
 interface ProjectSettingsModalProps {

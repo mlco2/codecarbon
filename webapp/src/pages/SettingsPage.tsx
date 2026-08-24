@@ -13,26 +13,12 @@ import { LockIcon } from "@/components/icons/lock-icon";
 const USER_PROFILE_URL = import.meta.env.VITE_OIDC_PROFILE_URL;
 
 /*
- * The Settings page from the design.
+ * The Settings page: a hugging sub-nav beside a bounded content column, both
+ * starting at the same top edge.
  *
- * The frame has no sidebar rail and carries its own "Go back" control, so this is
- * a standalone page rather than a child of DashboardLayout — it is routed under
- * AuthGuard only.
- *
- * Layout: a hugging sub-nav beside a bounded content column, both starting at the
- * same top edge (the design aligns "Go back" with the "Profile" title). Figma
- * positions everything absolutely; here the design's measurements map onto
- * container padding and gaps:
- *   sub-nav      rows 20px/10px padding, 4px radius, 4px gap; 24px icon then a
- *                10px-padded label. Its 163px width in the frame is exactly its
- *                hug-content width, so no width is set.
- *   content      the input row is 466 + 4 + 106 = 576px wide, which is `max-w-xl`
- *                to the pixel, so that bounds the column. The frame's rule is
- *                drawn 627px wide; it spans the column here instead.
- *   nav <-> body 35px in the frame -> gap-9
- *
- * Selected sub-nav row: #2b2b2b fill with a #BFFB4F label. Unselected rows are
- * white at 50% opacity, exactly as the design draws them.
+ * The frame has no sidebar rail and carries its own "Go back" control, so this
+ * is a standalone page routed under AuthGuard rather than a child of
+ * DashboardLayout.
  */
 
 export default function SettingsPage() {

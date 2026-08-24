@@ -3,9 +3,9 @@ import { useParams } from "react-router-dom";
 
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import { AddAPhotoIcon } from "@/components/icons/add-a-photo-icon";
 import { DateRangePicker } from "@/components/date-range-picker";
-import ConsumedEnergyGauge from "@/components/consumed-energy-gauge";
+import ConsumedEnergyGauges from "@/components/consumed-energy-gauges";
+import EquivalenceList, { equivalences } from "@/components/equivalence-list";
 
 import {
     getEquivalentCarKm,
@@ -20,23 +20,9 @@ import { DateRange } from "react-day-picker";
 import useSWR from "swr";
 
 /*
- * The Global dashboard from the design.
- *
- * The page is one fluid content column: a breadcrumb, a header, then two
- * sections below a rule. Its structure is expressed as flex regions with the
- * spacing on their parents, so it holds together at any width rather than only
- * at the frame's 1440x1024.
- *
- * Where the design's own measurements were internally inconsistent they have
- * been normalised to a single value, since they clearly describe one gutter:
- *   - the breadcrumb, rule and sections sit at x 178 / 170 / 163 in the frame;
- *     all three now share the container's horizontal padding
- *   - the three equivalence items have 26 / 22 / 21px icon gaps; all now use one
- *
- * Text metrics are untouched: the exact Figma families, weights and sizes live in
- * the `type-*` classes in globals.css, at line-height "normal" as the design
- * specifies. Vertical rhythm comes from gaps, so nothing depends on a pinned line
- * box and the layout holds as the display face loads.
+ * The Global dashboard: one fluid content column — a breadcrumb, a header, then
+ * two sections below a rule — built as flex regions with the spacing on their
+ * parents, so it holds at any width rather than only at the frame's 1440x1024.
  */
 export default function OrgDashboardPage() {
     const { organizationId } = useParams<{ organizationId: string }>();
@@ -109,32 +95,15 @@ export default function OrgDashboardPage() {
         },
     };
 
-    const equivalences = [
-        {
-            icon: "/icons/household_consumption.svg",
-            alt: "Household consumption icon",
-            value: `${getEquivalentCitizenPercentage(
-                RadialChartData.emissions.value,
-            ).toFixed(2)}%`,
-            caption: "Of an american household weekly energy consumption",
-        },
-        {
-            icon: "/icons/transportation.svg",
-            alt: "Transportation icon",
-            value: `${getEquivalentCarKm(
-                RadialChartData.emissions.value,
-            ).toFixed(2)} km`,
-            caption: "Kilometers ridden",
-        },
-        {
-            icon: "/icons/tv.svg",
-            alt: "TV icon",
-            value: `${getEquivalentTvTime(RadialChartData.energy.value).toFixed(
-                2,
-            )} days`,
-            caption: "Of watching TV",
-        },
-    ];
+    const equivalenceItems = equivalences({
+        citizen: getEquivalentCitizenPercentage(
+            RadialChartData.emissions.value,
+        ).toFixed(2),
+        transportation: getEquivalentCarKm(
+            RadialChartData.emissions.value,
+        ).toFixed(2),
+        tvTime: getEquivalentTvTime(RadialChartData.energy.value).toFixed(2),
+    });
 
     const gauges = [
         RadialChartData.energy,
@@ -153,7 +122,7 @@ export default function OrgDashboardPage() {
         <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-cc-page-background px-5 pb-10 pt-4 sm:px-10 lg:px-20 lg:pb-8 lg:pt-5">
             {/* Breadcrumb and header, with the space below them separating the
                 group from the rule. */}
-            <div className="flex flex-col gap-8 pb-5 lg:gap-24 lg:pb-6">
+            <div className="flex flex-col gap-8 pb-5 lg:gap-16 lg:pb-6">
                 {/* Breadcrumb */}
                 <nav
                     aria-label="Breadcrumb"
@@ -193,50 +162,11 @@ export default function OrgDashboardPage() {
             <div className="flex flex-col gap-10 border-t border-cc-rule pt-6 lg:gap-20 lg:pt-8">
                 {/* Equal to */}
                 <section className="flex flex-col gap-6 lg:gap-heading">
-                    <div className="flex items-center justify-between gap-4">
-                        <h2 className="type-display type-section-title text-cc-white">
-                            Equal to
-                        </h2>
-                        {/*
-                         * A plain vector frame in the design,
-                         * not a component instance, with no prototype
-                         * interaction — so there is no defined action behind it
-                         * and the app has no matching feature. Rendered as drawn,
-                         * non-interactive, rather than wired to a guess.
-                         */}
-                        <AddAPhotoIcon className="shrink-0 text-cc-breadcrumb-gray" />
-                    </div>
+                    <h2 className="type-display type-section-title text-cc-white">
+                        Equal to
+                    </h2>
 
-                    {/*
-                     * Figma distributes the three equivalences with
-                     * space-between; they wrap instead of overflowing once the
-                     * column is too narrow to hold them.
-                     */}
-                    <ul className="flex flex-wrap justify-between gap-x-12 gap-y-6 lg:gap-y-8">
-                        {equivalences.map((item) => (
-                            <li
-                                key={item.caption}
-                                className="flex min-w-0 items-center gap-4 lg:gap-6"
-                            >
-                                <img
-                                    src={item.icon}
-                                    alt={item.alt}
-                                    width={50}
-                                    height={50}
-                                    className="size-10 shrink-0 lg:size-[50px]"
-                                />
-                                <div className="flex min-w-0 flex-col gap-2">
-                                    <p className="type-display type-stat-value text-cc-lime">
-                                        {item.value}
-                                    </p>
-                                    {/* Measure from the design, which wraps this caption to two lines. */}
-                                    <p className="type-mono-medium type-stat-caption max-w-[15.5rem] text-cc-white">
-                                        {item.caption}
-                                    </p>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                    <EquivalenceList items={equivalenceItems} />
                 </section>
 
                 {/* Consumed energy */}
@@ -244,21 +174,7 @@ export default function OrgDashboardPage() {
                     <h2 className="type-display type-section-title text-cc-white">
                         Consumed energy
                     </h2>
-                    {/* Fixed-size gauges in a wrapping row, as the design lays
-                        them out (a gap, not space-between). */}
-                    <ul className="flex flex-wrap gap-6 lg:gap-9">
-                        {gauges.map((gauge) => (
-                            <li
-                                key={gauge.label}
-                                className="w-40 max-w-full sm:w-gauge"
-                            >
-                                <ConsumedEnergyGauge
-                                    value={gauge.value}
-                                    label={gauge.label}
-                                />
-                            </li>
-                        ))}
-                    </ul>
+                    <ConsumedEnergyGauges gauges={gauges} />
                 </section>
             </div>
         </div>

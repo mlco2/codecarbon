@@ -19,34 +19,15 @@ import { Organization, Project } from "@/api/schemas";
 import { useModal } from "@/hooks/useModal";
 
 /*
- * The Projects page, in its empty and populated states.
+ * The Projects page, in its empty and populated states, which differ only in
+ * where the primary action sits: centred in the empty area, or on the heading
+ * row beside the title.
  *
- * Both of the design's frames still draw the older navigation — an in-page "Code
- * carbon" header, a "Your projects / Members" tab row and an account dropdown
- * pinned top right. All of that now lives in `SidebarRail`, so it is deliberately
- * not rebuilt here; the page opens with the breadcrumb and background of the
- * redesigned Global dashboard instead. Confirmed with the project owners.
+ * The design's frames still draw the older in-page navigation; that lives in
+ * `SidebarRail` and `AccountMenu` now and is not rebuilt here.
  *
- * The two states differ only in where the primary action sits: with no projects it
- * is centred in the empty area above the explanatory line, and with projects it
- * sits on the heading row. Both render from the same shell below, so the page never
- * changes structure — only which of the two regions is present.
- *
- * As with the other redesigned pages, the design's absolute coordinates are not
- * reproduced: horizontal placement comes from the container's padding and vertical
- * rhythm from gaps, so the page holds at any width rather than only at the frame's
- * 1440x1024.
- *
- * The rows are a table, as the page used before the redesign: one record per line
- * with the same fields in the same order, so they line up down the page instead of
- * each row placing them wherever its own content falls. Columns size to their
- * content and wrap, so a narrow screen compresses them rather than scrolling the
- * table sideways. There is no `thead`, because the design labels no columns.
- *
- * The design labels a row's secondary text "Last updated on 02/02/24"; the project
- * API carries no timestamp, so that slot keeps the description the page has always
- * shown. Its overflow menu keeps the existing Settings and Delete actions — the
- * design draws the trigger but never the open menu.
+ * A row's secondary text is the project's description — the design labels it
+ * "Last updated on 02/02/24", and the API carries no timestamp.
  */
 export default function ProjectsPage() {
     const { organizationId } = useParams<{ organizationId: string }>();

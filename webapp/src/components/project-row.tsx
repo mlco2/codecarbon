@@ -11,18 +11,10 @@ import { TableCell, TableRow } from "./ui/table";
  * One project in the list: its name, its secondary text, and a menu of the
  * actions that apply to it.
  *
- * The name and the secondary text are both links to the project, and each fills
- * its cell — the row's vertical padding is on the links, so the whole height and
- * width of a cell is a click target rather than just the glyphs.
- *
- * The two light together on hover, because they are one item rather than two
- * independently hoverable cells. The actions cell is excluded from that: its
- * trigger is a small glyph in a padded cell, so if the cell lit the row along
- * with it there would be no way to tell whether the pointer is on the button or
- * merely near it. The trigger keeps its own hover, and that is the only thing
- * reporting its hitbox — which is also why an open menu lights the button alone.
- *
- * Focus stays per-control, since focus really is on one thing at a time.
+ * Both texts are links filling their cells, so the whole band is a click
+ * target, and they light together on hover as one item. The actions cell is
+ * excluded from that: its trigger is a small glyph, and if the cell lit with it
+ * there would be no way to tell the button from merely being near it.
  */
 
 /** Lets the row's hover exclude the actions cell. */

@@ -3,20 +3,13 @@ import { DialogClose, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/helpers/utils";
 
 /*
- * A dialog's header, as the design draws it: the title in the display face with
- * the close control beside it, above the rule that separates it from the body.
+ * A dialog's header: the title in the display face with the close control
+ * beside it, above the rule that separates it from the body. Dialogs using this
+ * pass `hideClose` to `DialogContent`, since this is their close control.
  *
- * The ✕ is the design's "add" glyph rotated 45 degrees — that is how the file
- * builds it — so it renders as the same `PlusIcon` under a `rotate-45`, rather
- * than a second asset that would have to stay in step with the first. Dialogs
- * using this header pass `hideClose` to `DialogContent`, since this is their close
- * control.
- *
- * The title's size is set here with utilities rather than through a `type-*`
- * class, deliberately: `DialogTitle` ships a `text-lg` of its own, and because
- * `twMerge` cannot tell that a project class is a font-size it leaves both in
- * place — then `text-lg` wins, being a utility, and the title renders at 18px.
- * Naming the size as a utility is what lets the merge drop the one it replaces.
+ * The title's size is a utility rather than a `type-*` class deliberately:
+ * `DialogTitle` ships its own `text-lg`, which `twMerge` cannot tell is the
+ * same property as a project class, so both survive and the utility wins.
  */
 export default function ModalHeader({
     title,

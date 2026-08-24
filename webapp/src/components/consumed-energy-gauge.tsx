@@ -1,35 +1,15 @@
 import { cn } from "@/helpers/utils";
 
 /*
- * The "Consumed energy" gauge from the design.
+ * The "Consumed energy" gauge: one SVG whose ring, value and caption are placed
+ * in the design's own coordinate space, so the geometry lives in the viewBox
+ * and the gauge scales to whatever box its parent gives it.
  *
- * The whole gauge is one SVG, so its geometry lives in the viewBox rather than
- * in CSS offsets: the ring, the value and the caption are all placed in the
- * design's own coordinate space, exactly as Figma specifies them. That keeps the
- * numbers where they are meaningful (vector coordinates) instead of turning them
- * into layout margins, and — because the SVG scales to its box rather than
- * carrying a fixed pixel size — it lets the parent shrink the gauge on narrow
- * screens.
- *
- * Figma values, identical for all three gauges:
- *   viewBox      199.23 x 199.23
- *   ring         cx = cy = 99.6152, r = 87.0511, 25.1281 stroke
- *   track        #3B4041
- *   value arc    #BFFB4F, butt caps, sweeping anti-clockwise from 12 o'clock
- *   value        Disket Mono Bold 26, #BFFB4F, at 40.384 / 75.384
- *   caption      IBM Plex Mono Medium 13.343, #8A8A8A, at 43.974 / 115.769
- *
- * The arc is a fixed decorative sweep, not a proportion of the value. That is
- * deliberate and matches what this dashboard has always drawn: the previous
- * recharts gauges swept a constant 100 degrees regardless of their data, and
- * Figma gives the three gauges different arbitrary sweeps even where two show the
- * same number. These metrics are unbounded running totals with no maximum
- * anywhere in the API, so there is nothing to take a fraction of — the number in
- * the middle is the data.
- *
- * What changed from the old gauges is presentation only: the arc was rendering
- * black (its fill never resolved), and it started at 3 o'clock. It is now the
- * design's lime and starts at 12 o'clock.
+ * The arc is a fixed decorative sweep, not a proportion of the value: these
+ * metrics are unbounded running totals with no maximum anywhere in the API, so
+ * there is nothing to take a fraction of. The number in the middle is the data.
+ * It is drawn only when there is a value — a zero gauge shows bare track, so an
+ * empty range reads as empty rather than as some amount.
  */
 
 const VIEWBOX = 199.23;
@@ -83,12 +63,19 @@ export default function ConsumedEnergyGauge({
                 stroke="var(--cc-gauge-track)"
                 strokeWidth={STROKE}
             />
-            <path
-                d={arcPath(ARC_SWEEP)}
-                stroke="var(--cc-lime)"
-                strokeWidth={STROKE}
-                strokeLinecap="butt"
-            />
+            {/*
+             * The arc is decorative, so it stands for "there is something here"
+             * rather than for a proportion: at zero there is nothing to mark and
+             * the ring is left as bare track.
+             */}
+            {value > 0 && (
+                <path
+                    d={arcPath(ARC_SWEEP)}
+                    stroke="var(--cc-lime)"
+                    strokeWidth={STROKE}
+                    strokeLinecap="butt"
+                />
+            )}
             {/*
              * Figma left-aligns both labels from their own x offsets, with the
              * value's baseline box starting at y 75.384 and the caption's at
