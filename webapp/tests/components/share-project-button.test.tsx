@@ -40,9 +40,9 @@ describe("ShareProjectButton", () => {
             screen.getByRole("button", { name: /share project/i }),
         );
 
-        const input = await screen.findByDisplayValue(
-            /\/public\/projects\/p1$/,
-        );
-        expect(input).toBeInTheDocument();
+        // The link is shown as text, not in a field: it is read and copied,
+        // never typed into.
+        const link = await screen.findByText(/\/public\/projects\/p1$/);
+        expect(link).toBeInTheDocument();
     });
 });
