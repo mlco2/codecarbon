@@ -791,6 +791,25 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertFalse(tracker._scheduler._stopped)
         tracker.stop()
 
+        # A second start_task on an already measuring tracker must not clear the
+        # "paused by task" flag, otherwise the scheduler is never resumed.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start()
+        tracker.start_task("first-task")
+        tracker.start_task("ignored-second-task")
+        self.assertTrue(tracker._scheduler._stopped)
+        tracker.stop_task()
+        self.assertFalse(tracker._scheduler._stopped)
+        tracker.stop()
+
+        # An unknown task name must not leave the scheduler paused either.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start()
+        tracker.start_task("known-task")
+        self.assertIsNone(tracker.stop_task("unknown-task"))
+        self.assertFalse(tracker._scheduler._stopped)
+        tracker.stop()
+
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
     @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
     @mock.patch(
