@@ -2220,6 +2220,10 @@
 
 
 <h1 id="installation">Installing CodeCarbon<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Python Support</p>
+<p>We recommend using a <a href="https://devguide.python.org/versions/">supported Python version</a>.</p>
+</div>
 <h2 id="from-pypi-repository">From PyPi repository<a class="headerlink" href="#from-pypi-repository" title="Permanent link">&para;</a></h2>
 <p>The package is hosted on the pip repository
 <a href="https://pypi.org/project/codecarbon/">here</a>.</p>
@@ -2233,13 +2237,12 @@ CodeCarbon with pip in your Conda environment:</p>
 conda<span class="w"> </span>activate<span class="w"> </span>codecarbon
 pip<span class="w"> </span>install<span class="w"> </span>codecarbon
 </code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Conda Support</p>
-<p>While CodeCarbon can be used in Conda environments, we no longer maintain official Conda packages. We recommend using <code>pip install codecarbon</code> within your Conda environment, which works seamlessly. The conda package may be outdated and is not officially supported.</p>
-</div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>We recommend using Python 3.8 or above.</p>
+<p class="admonition-title">Conda Support</p>
+<p>Starting from 3.3.0 we start to maintain again an official Conda packages on <a href="https://anaconda.org/channels/conda-forge/packages/codecarbon/overview">conda-forge</a>:</p>
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>codecarbon
+</code></pre></div>
+<p>The <a href="https://anaconda.org/channels/codecarbon/packages/codecarbon/overview">channel <code>codecarbon</code></a> is outdated.</p>
 </div>
 <h2 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h2>
 <p>The following packages are used by the CodeCarbon package, and will be

@@ -1667,6 +1667,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#conda-forge-packaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Conda-forge packaging
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conda-forge packaging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-a-release-reaches-conda-forge" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How a release reaches conda-forge
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updating-the-recipe-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Updating the recipe by hand
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#contribute-to-a-fork-branch" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2657,6 +2696,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#conda-forge-packaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Conda-forge packaging
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conda-forge packaging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-a-release-reaches-conda-forge" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How a release reaches conda-forge
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updating-the-recipe-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Updating the recipe by hand
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#contribute-to-a-fork-branch" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2951,6 +3029,9 @@
 <li><a href="#build-documentation">Build Documentation 🖨️</a></li>
 <li><a href="#release-process">Release process</a></li>
 <li><a href="#test-the-build-in-docker">Test the build in Docker</a></li>
+<li><a href="#conda-forge-packaging">Conda-forge packaging</a></li>
+<li><a href="#how-a-release-reaches-conda-forge">How a release reaches conda-forge</a></li>
+<li><a href="#updating-the-recipe-by-hand">Updating the recipe by hand</a></li>
 </ul>
 </li>
 <li><a href="#api-and-dashboard">API and Dashboard</a><ul>
@@ -3193,6 +3274,7 @@ git<span class="w"> </span>rebase<span class="w"> </span><span class="nv">$TARGE
 <li>Wait for the Github Action <code>ReleaseDrafter</code> to finish running on the merge commit.</li>
 <li><a href="https://github.com/mlco2/codecarbon/releases/">Edit the Draft release</a> on Github and give it a tag, <code>v1.0.0</code> for the version 1.0.0. Github will automatically create a Git tag for it. Complete help <a href="https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository">here</a>.</li>
 <li>A <a href="https://github.com/mlco2/codecarbon/actions">Github Action</a> <em>Upload Python Package</em> will be run automaticaly to upload the package.</li>
+<li>Nothing to do for conda: the <a href="#conda-forge-packaging">conda-forge</a> package is built from PyPI a few hours later.</li>
 </ul>
 <h4 id="test-the-release">Test the release<a class="headerlink" href="#test-the-release" title="Permanent link">&para;</a></h4>
 <p>After the release on PyPi, please test it in a fresh environment:</p>
@@ -3221,6 +3303,66 @@ pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span cl
 cp<span class="w"> </span>/data/tests/test_package_integrity.py<span class="w"> </span>.
 pytest<span class="w"> </span>test_package_integrity.py
 </code></pre></div>
+<!-- TOC -->
+<p><a name="conda-forge-packaging"></a></p>
+<h3 id="conda-forge-packaging">Conda-forge packaging<a class="headerlink" href="#conda-forge-packaging" title="Permanent link">&para;</a></h3>
+<p>CodeCarbon is distributed on <a href="https://anaconda.org/conda-forge/codecarbon">conda-forge</a>
+in addition to PyPI, so that conda users can install it with:</p>
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>codecarbon
+</code></pre></div>
+<p>Nothing in this repository builds that package. Conda-forge builds every package from
+a dedicated repository called a <em>feedstock</em>, ours being
+<a href="https://github.com/conda-forge/codecarbon-feedstock">conda-forge/codecarbon-feedstock</a>.
+The build instructions live there in <code>recipe/meta.yaml</code>, and the people allowed to
+approve changes are listed at the bottom of that file under <code>extra: recipe-maintainers</code>.</p>
+<!-- TOC -->
+<p><a name="how-a-release-reaches-conda-forge"></a></p>
+<h4 id="how-a-release-reaches-conda-forge">How a release reaches conda-forge<a class="headerlink" href="#how-a-release-reaches-conda-forge" title="Permanent link">&para;</a></h4>
+<ol>
+<li>We publish to PyPI, as described in <a href="#release-process">Release process</a>.</li>
+<li>A few hours later <code>regro-cf-autotick-bot</code> notices the new version, and opens a PR on
+   the feedstock bumping the version and the source <code>sha256</code>. It also re-reads the
+   dependencies from the published package and updates the recipe accordingly.</li>
+<li>Conda-forge CI builds the package and runs the tests declared in the recipe, which
+   for us are <code>pip check</code> plus <code>codecarbon --help</code>.</li>
+<li><code>conda-forge.yml</code> sets <code>bot: automerge: true</code>, so the PR merges itself once CI is
+   green and the package is uploaded to the <code>conda-forge</code> channel.</li>
+</ol>
+<p>A normal release therefore needs <strong>no action</strong> from us. <code>pip check</code> is the safety net:
+if a dependency is missing or is named differently on conda-forge, CI fails, the PR
+stays open, and a maintainer has to step in.</p>
+<!-- TOC -->
+<p><a name="updating-the-recipe-by-hand"></a></p>
+<h4 id="updating-the-recipe-by-hand">Updating the recipe by hand<a class="headerlink" href="#updating-the-recipe-by-hand" title="Permanent link">&para;</a></h4>
+<p>Needed when the bot PR fails, or when the recipe has drifted from <code>pyproject.toml</code>
+(a new dependency, a dropped Python version, a renamed entry point).</p>
+<p>Two conda-forge rules make this different from a normal PR:</p>
+<ul>
+<li><strong>Always work from a personal fork.</strong> Conda-forge refuses PRs opened from a branch of
+  the feedstock itself, and its bot cannot push to a fork owned by an organisation. Fork
+  to your own account, not to <code>mlco2</code>.</li>
+<li><strong>Never edit the generated files by hand.</strong> <code>README.md</code>, <code>.ci_support/</code>, and the CI
+  workflows are produced by <code>conda-smithy</code>. To refresh them, comment on the PR:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>@conda-forge-admin, please rerender
+</code></pre></div>
+<p>The bot pushes the regenerated files to your branch. A feedstock that has not been
+  rerendered for a long time will fail to build at all, because its pinned CI container
+  eventually becomes too old for conda-forge tooling.</p>
+<p>To update the recipe itself:</p>
+<ul>
+<li>Set <code>version</code>, and take the matching <code>sha256</code> from the sdist on
+  <a href="https://pypi.org/project/codecarbon/#files">PyPI</a>.</li>
+<li>Mirror the <code>dependencies</code> of our <code>pyproject.toml</code> into <code>requirements: run</code>. Conda
+  package names occasionally differ from PyPI ones, and environment markers such as
+  <code>python_version &gt;= "3.14"</code> cannot be expressed in a <code>noarch: python</code> recipe.</li>
+<li>Do not hardcode a Python version: use <code>{{ python_min }}</code>, which comes from
+  conda-forge's global pinning.</li>
+<li>The optional <code>carbonboard</code> extra is shipped as a separate <code>codecarbon-viz</code>
+  metapackage, so its dependencies must be updated there too.</li>
+</ul>
+<p>Adding someone to <code>extra: recipe-maintainers</code> requires that person to comment on the PR
+to confirm.</p>
 <h3 id="contribute-to-a-fork-branch">Contribute to a fork branch<a class="headerlink" href="#contribute-to-a-fork-branch" title="Permanent link">&para;</a></h3>
 <p>When a user open a PR from a fork, we are allowed to push to the fork branch.</p>
 <p>If you want to do so, do the following:</p>
