@@ -2321,6 +2321,16 @@ with a section header <code>[codecarbon]</code> as the first line in the file.</
 <span class="p">}</span>
 </code></pre></div>
 <div class="admonition note">
+<p class="admonition-title">Where does a value come from?</p>
+<p>CodeCarbon logs one line listing every configuration key read from the files
+and the environment, with the layer it came from, so you can trace a
+surprising value back to its source:</p>
+<div class="highlight"><pre><span></span><code>[codecarbon INFO @ 09:30:00] Codecarbon configuration: experiment_id from CODECARBON_EXPERIMENT_ID, measure_power_secs from /home/victor/.codecarbon.config
+</code></pre></div>
+<p>Only the key names and their source are logged, never the values, as this
+configuration holds secrets such as <code>api_key</code>.</p>
+</div>
+<div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If you're wondering about the configuration files' syntax, be aware
 that under the hood <code>codecarbon</code> uses
