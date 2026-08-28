@@ -86,8 +86,15 @@ def _discover_endpoints():
 
 def _save_credentials(tokens):
     """Save OAuth tokens to the local credentials file."""
-    with open(_CREDENTIALS_FILE, "w") as f:
-        json.dump(tokens, f)
+    try:
+        with open(_CREDENTIALS_FILE, "w") as f:
+            json.dump(tokens, f)
+    except OSError as e:
+        raise ValueError(
+            f"Could not write the credentials file {_CREDENTIALS_FILE.resolve()} "
+            f"(error: {e}). Please run the command from a directory you can "
+            "write to."
+        )
 
 
 def _load_credentials():
@@ -169,6 +176,7 @@ def authorize():
     server = HTTPServer(("localhost", _REDIRECT_PORT), _CallbackHandler)
 
     print("Opening browser for authentication...")
+    print(f"If no browser opens, copy this URL into your browser:\n{uri}")
     webbrowser.open(uri)
 
     server.handle_request()
