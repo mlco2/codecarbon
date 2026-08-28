@@ -358,6 +358,34 @@ def config():
     )
 
 
+def _cli_provided(ctx, name: str) -> bool:
+    """
+    Whether the option `name` was typed on the command line (or set through its
+    environment variable) rather than left at its Typer default.
+
+    Options left at their default must not be forwarded to the tracker: doing so
+    would silently override the values coming from `.codecarbon.config` and the
+    `CODECARBON_*` environment variables, which the tracker reads itself.
+    """
+    get_source = getattr(ctx, "get_parameter_source", None)
+    if get_source is None:
+        # `monitor` called directly from Python, not through Click: every value
+        # given is explicit.
+        return True
+    source = get_source(name)
+    return source is None or source.name in ("COMMANDLINE", "ENVIRONMENT")
+
+
+def _external_config() -> dict:
+    """The configuration files and CODECARBON_* variables, as a plain dict."""
+    from codecarbon.core.config import get_hierarchical_config
+
+    try:
+        return dict(get_hierarchical_config())
+    except Exception:
+        return {}
+
+
 @codecarbon.command(
     "monitor",
     short_help="Monitor your machine's carbon emissions.",
@@ -393,15 +421,27 @@ def monitor(
 ):
     """Monitor your machine's carbon emissions."""
 
-    # Shared tracker args so monitor and run_and_monitor behave the same
+    external_conf = _external_config()
+
+    # Shared tracker args so monitor and run_and_monitor behave the same.
+    # Only the options actually given are forwarded: the others are left to the
+    # tracker, which resolves them from the configuration file and environment.
     tracker_args = {
-        "measure_power_secs": measure_power_secs,
-        "api_call_interval": api_call_interval,
-        "log_level": log_level,
+        name: value
+        for name, value in (
+            ("measure_power_secs", measure_power_secs),
+            ("api_call_interval", api_call_interval),
+            ("log_level", log_level),
+        )
+        if _cli_provided(ctx, name)
     }
+    if "log_level" not in tracker_args and "log_level" not in external_conf:
+        # Nothing configures it: keep the unattended monitor quiet.
+        tracker_args["log_level"] = log_level
+
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
-        if not country_iso_code:
+        if not country_iso_code and "country_iso_code" not in external_conf:
             print(
                 "ERROR: Country ISO code is required for offline mode. Add it to your configuration or provide it via the command line: `--country-iso-code FRA`",
                 file=sys.stderr,
@@ -410,8 +450,8 @@ def monitor(
 
         tracker_args = {
             **tracker_args,
-            "country_iso_code": country_iso_code,
-            "region": region,
+            **({"country_iso_code": country_iso_code} if country_iso_code else {}),
+            **({"region": region} if region else {}),
         }
     else:
         experiment_id = get_existing_exp_id()
