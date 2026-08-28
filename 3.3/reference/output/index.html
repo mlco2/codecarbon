@@ -2576,6 +2576,16 @@ is provided, the <code>save_to_*</code> flags are ignored.</p>
 </tbody>
 </table>
 <div class="admonition note">
+<p class="admonition-title">PUE and the power columns</p>
+<p>Since v3.3.1, the <code>pue</code> multiplier is applied to the reported power columns
+(<code>cpu_power</code>, <code>gpu_power</code>, <code>ram_power</code>) as well as to the energy columns, so
+that <code>energy_consumed</code> stays reconstructible from the reported power. Before
+that, only the energy was scaled. With <code>pue=1.5</code>, a machine measured at 100 W
+is reported as 150 W, and that also applies to forced values: <code>force_cpu_power=100</code>
+with <code>pue=1.5</code> reports a 150 W CPU. This is intended: the columns describe the
+power drawn at the facility level, not at the socket.</p>
+</div>
+<div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Developers can enhance the Output interface by implementing a custom class that extends <code>BaseOutput</code> at <code>codecarbon/output.py</code>. For example, to log into a database.</p>
 </div>

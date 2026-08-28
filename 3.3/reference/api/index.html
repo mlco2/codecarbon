@@ -2817,7 +2817,9 @@ then RAM power (W) = Number of RAM Slots × 5 Watts.</p>
             <td>
               <div class="doc-md-description">
                 <p>PUE (Power Usage Effectiveness) of the data center where the
-experiment is being run.</p>
+experiment is being run. It multiplies both the reported power
+and the reported energy, including forced values: with
+<code>force_cpu_power=100</code> and <code>pue=1.5</code> the CPU is reported at 150 W.</p>
               </div>
             </td>
             <td>
@@ -3769,7 +3771,9 @@ then RAM power (W) = Number of RAM Slots × 5 Watts.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>PUE (Power Usage Effectiveness) of the data center.</p>
+                <p>PUE (Power Usage Effectiveness) of the data center. It multiplies both
+the reported power and the reported energy, including forced values:
+with <code>force_cpu_power=100</code> and <code>pue=1.5</code> the CPU is reported at 150 W.</p>
               </div>
             </td>
             <td>
