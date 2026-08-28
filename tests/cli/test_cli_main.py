@@ -568,6 +568,16 @@ def test_monitor_passes_log_level_to_run_and_monitor(monkeypatch):
     assert captured["kwargs"]["log_level"] == "debug"
 
 
+def test_external_config_returns_empty_dict_on_error(monkeypatch):
+    """A malformed config file must not crash `monitor`: fall back to `{}`."""
+
+    def raise_error():
+        raise ValueError("malformed config file")
+
+    monkeypatch.setattr("codecarbon.core.config.get_hierarchical_config", raise_error)
+    assert cli_main._external_config() == {}
+
+
 def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
     monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
 
