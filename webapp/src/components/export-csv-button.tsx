@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { DownloadIcon } from "@/components/icons/download-icon";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -45,19 +45,19 @@ export function ExportCsvButton({
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
+                    <button
+                        type="button"
                         aria-label="Download CSV export"
                         disabled={isExporting || isDisabled}
                         onClick={handleDownload}
+                        className="cursor-pointer text-cc-gray outline-none transition-colors hover:text-cc-button-hover focus-visible:ring-2 focus-visible:ring-cc-lime disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-cc-gray motion-reduce:transition-none"
                     >
                         {isExporting ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="size-5 animate-spin motion-reduce:animate-none" />
                         ) : (
-                            <Download className="h-4 w-4" />
+                            <DownloadIcon className="size-5" />
                         )}
-                    </Button>
+                    </button>
                 </TooltipTrigger>
                 <TooltipContent>
                     <p>Download .csv export</p>

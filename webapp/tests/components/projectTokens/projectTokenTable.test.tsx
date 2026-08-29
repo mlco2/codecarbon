@@ -32,7 +32,7 @@ describe("ProjectTokensTable", () => {
         renderWithRouter(<ProjectTokensTable projectId="p1" />);
         await userEvent.click(
             await screen.findByRole("button", {
-                name: /\+ create a new token/i,
+                name: /create a new token/i,
             }),
         );
         expect(screen.getByPlaceholderText(/token name/i)).toBeInTheDocument();

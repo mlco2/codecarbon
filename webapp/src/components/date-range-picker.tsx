@@ -14,9 +14,24 @@ import { format } from "date-fns";
 interface DateRangePickerProps {
     date: DateRange;
     onDateChange: (newDate: DateRange | undefined) => void;
+    /**
+     * `default` keeps the outline button used elsewhere in the app.
+     * `dashboard` matches the design's "Input" component: a 16px
+     * IBM Plex Mono Regular "Dates" label above a 46px field with a
+     * rgba(255,255,255,0.05) fill, 2px radius, 16px horizontal padding and a
+     * #666666 numeric value. The design shows no calendar glyph in the field.
+     */
+    variant?: "default" | "dashboard";
+    /** Field label, used by the `dashboard` variant. */
+    label?: string;
 }
 
-export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
+export function DateRangePicker({
+    date,
+    onDateChange,
+    variant = "default",
+    label = "Dates",
+}: DateRangePickerProps) {
     const [open, setOpen] = useState(false);
     const [tempDateRange, setTempDateRange] = useState<DateRange | undefined>(
         date,
@@ -35,8 +50,40 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
         setOpen(false);
     };
 
-    return (
-        <Popover open={open} onOpenChange={handleOpenChange}>
+    /*
+     * The design renders the range as "01/01/2021 - 01/02/2021". A one-month
+     * span is dd/MM/yyyy (1 Jan to 1 Feb), which also matches this dashboard's
+     * default 30-day range; read as MM/dd/yyyy it would be a single day.
+     */
+    const formatted = (pattern: string) =>
+        date?.from
+            ? date.to
+                ? `${format(date.from, pattern)} - ${format(date.to, pattern)}`
+                : format(date.from, pattern)
+            : null;
+
+    const trigger =
+        variant === "dashboard" ? (
+            <div className="flex w-full flex-col gap-1">
+                <label
+                    htmlFor="date"
+                    className="type-mono-regular type-field text-cc-white"
+                >
+                    {label}
+                </label>
+                <PopoverTrigger asChild>
+                    <button
+                        id="date"
+                        type="button"
+                        className="flex h-control w-full items-center rounded-field bg-white/5 px-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-cc-lime"
+                    >
+                        <span className="type-mono-regular type-field truncate text-cc-text-input-gray">
+                            {formatted("dd/MM/yyyy") ?? "Pick a date"}
+                        </span>
+                    </button>
+                </PopoverTrigger>
+            </div>
+        ) : (
             <PopoverTrigger asChild>
                 <Button
                     id="date"
@@ -47,20 +94,14 @@ export function DateRangePicker({ date, onDateChange }: DateRangePickerProps) {
                     )}
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date?.from ? (
-                        date.to ? (
-                            <>
-                                {format(date.from, "LLL dd, y")} -{" "}
-                                {format(date.to, "LLL dd, y")}
-                            </>
-                        ) : (
-                            format(date.from, "LLL dd, y")
-                        )
-                    ) : (
-                        <span>Pick a date</span>
-                    )}
+                    {formatted("LLL dd, y") ?? <span>Pick a date</span>}
                 </Button>
             </PopoverTrigger>
+        );
+
+    return (
+        <Popover open={open} onOpenChange={handleOpenChange}>
+            {trigger}
             <PopoverContent className="w-auto p-0" align="start">
                 <div className="p-0">
                     <Calendar

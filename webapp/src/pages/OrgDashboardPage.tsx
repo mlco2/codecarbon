@@ -1,12 +1,11 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-
-const RadialChart = lazy(() => import("@/components/radial-chart"));
+import { DateRangePicker } from "@/components/date-range-picker";
+import ConsumedEnergyGauges from "@/components/consumed-energy-gauges";
+import EquivalenceList, { equivalences } from "@/components/equivalence-list";
 
 import {
     getEquivalentCarKm,
@@ -20,6 +19,11 @@ import { Organization, OrganizationReport } from "@/api/schemas";
 import { DateRange } from "react-day-picker";
 import useSWR from "swr";
 
+/*
+ * The Global dashboard: one fluid content column — a breadcrumb, a header, then
+ * two sections below a rule — built as flex regions with the spacing on their
+ * parents, so it holds at any width rather than only at the frame's 1440x1024.
+ */
 export default function OrgDashboardPage() {
     const { organizationId } = useParams<{ organizationId: string }>();
     const {
@@ -29,7 +33,7 @@ export default function OrgDashboardPage() {
     } = useSWR<Organization>(`/organizations/${organizationId}`, fetcher);
 
     const today = new Date();
-    const [date] = useState<DateRange | undefined>({
+    const [date, setDate] = useState<DateRange | undefined>({
         from: new Date(today.getTime() - THIRTY_DAYS_MS),
         to: today,
     });
@@ -62,6 +66,10 @@ export default function OrgDashboardPage() {
         return <ErrorMessage />;
     }
 
+    if (!organization) {
+        return <ErrorMessage />;
+    }
+
     const RadialChartData = {
         energy: {
             label: "kWh",
@@ -70,7 +78,7 @@ export default function OrgDashboardPage() {
                 : 0,
         },
         emissions: {
-            label: "kg eq CO2",
+            label: "Kg. Eq. CO2",
             value: organizationReport?.emissions
                 ? parseFloat(organizationReport.emissions.toFixed(2))
                 : 0,
@@ -87,92 +95,88 @@ export default function OrgDashboardPage() {
         },
     };
 
-    const citizen_converted_value = getEquivalentCitizenPercentage(
-        RadialChartData.emissions.value,
-    ).toFixed(2);
-    const transportation_converted_value = getEquivalentCarKm(
-        RadialChartData.emissions.value,
-    ).toFixed(2);
-    const tv_time_converted_value = getEquivalentTvTime(
-        RadialChartData.energy.value,
-    ).toFixed(2);
+    const equivalenceItems = equivalences({
+        citizen: getEquivalentCitizenPercentage(
+            RadialChartData.emissions.value,
+        ).toFixed(2),
+        transportation: getEquivalentCarKm(
+            RadialChartData.emissions.value,
+        ).toFixed(2),
+        tvTime: getEquivalentTvTime(RadialChartData.energy.value).toFixed(2),
+    });
 
-    const radialFallback = (
-        <Card className="flex flex-col h-full items-center justify-center">
-            <CardContent className="p-0">
-                <Skeleton className="h-44 w-44 rounded-full" />
-            </CardContent>
-        </Card>
-    );
+    const gauges = [
+        RadialChartData.energy,
+        RadialChartData.emissions,
+        RadialChartData.duration,
+    ];
 
     return (
-        <div className="h-full w-full overflow-auto">
-            {!organization && <ErrorMessage />}
-            {organization && (
-                <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="flex flex-col items-center justify-center">
-                            <img
-                                src="/icons/household_consumption.svg"
-                                alt="Household consumption icon"
-                                width={64}
-                                height={64}
-                                className="h-16 w-16"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                {citizen_converted_value} %
-                            </p>
-                            <p className="text-sm font-medium">
-                                Of a U.S citizen weekly energy emissions
-                            </p>
-                        </div>
-                        <div className="flex flex-col items-center justify-center">
-                            <img
-                                src="/icons/transportation.svg"
-                                alt="Transportation icon"
-                                width={64}
-                                height={64}
-                                className="h-16 w-16"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                {transportation_converted_value}
-                            </p>
-                            <p className="text-sm font-medium">
-                                Kilometers ridden
-                            </p>
-                        </div>
-                        <div className="flex flex-col items-center justify-center">
-                            <img
-                                src="/icons/tv.svg"
-                                alt="TV icon"
-                                width={64}
-                                height={64}
-                                className="h-16 w-16"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                {tv_time_converted_value} days
-                            </p>
-                            <p className="text-sm font-medium">
-                                Of watching TV
-                            </p>
-                            <p className="text-sm font-medium">
-                                Of watching TV
-                            </p>
-                        </div>
+        /*
+         * One scrolling content column. All horizontal placement comes from this
+         * container's padding, and all vertical rhythm from the gaps between its
+         * regions — so the rule, the header and the sections share a single
+         * gutter instead of carrying three different Figma left offsets
+         * (163 / 170 / 178px in the frame, normalised to one here).
+         */
+        <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-cc-page-background px-5 pb-10 pt-4 sm:px-10 lg:px-20 lg:pb-8 lg:pt-5">
+            {/* Breadcrumb and header, with the space below them separating the
+                group from the rule. */}
+            <div className="flex flex-col gap-8 pb-5 lg:gap-16 lg:pb-6">
+                {/* Breadcrumb */}
+                <nav
+                    aria-label="Breadcrumb"
+                    className="type-mono-medium type-breadcrumb"
+                >
+                    <span className="text-cc-breadcrumb-gray">
+                        {organization.name}/
+                    </span>
+                    <span className="text-cc-button-hover">Global</span>
+                </nav>
+
+                {/* Header */}
+                <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-5 lg:gap-y-8">
+                    <div className="flex min-w-0 flex-col gap-2">
+                        <h1 className="type-display type-page-title text-cc-white">
+                            {organization.name} Global
+                        </h1>
+                        <p className="type-mono-medium type-page-subtitle text-cc-white">
+                            This section has the impact of all projects combined
+                        </p>
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                        <Suspense fallback={radialFallback}>
-                            <RadialChart data={RadialChartData.energy} />
-                        </Suspense>
-                        <Suspense fallback={radialFallback}>
-                            <RadialChart data={RadialChartData.emissions} />
-                        </Suspense>
-                        <Suspense fallback={radialFallback}>
-                            <RadialChart data={RadialChartData.duration} />
-                        </Suspense>
+
+                    {/* Bounded so the field keeps the design's proportions on wide
+                    screens instead of stretching with the viewport. */}
+                    <div className="w-full max-w-sm">
+                        <DateRangePicker
+                            variant="dashboard"
+                            date={date as DateRange}
+                            onDateChange={setDate}
+                        />
                     </div>
-                </div>
-            )}
+                </header>
+            </div>
+
+            {/* Sections, separated from the header by the design's rule
+                rule. */}
+            <div className="flex flex-col gap-10 border-t border-cc-rule pt-6 lg:gap-20 lg:pt-8">
+                {/* Equal to */}
+                <section className="flex flex-col gap-6 lg:gap-heading">
+                    <h2 className="type-display type-section-title text-cc-white">
+                        Equal to
+                    </h2>
+
+                    <EquivalenceList items={equivalenceItems} />
+                </section>
+
+                {/* Consumed energy */}
+                <section className="flex flex-col gap-6 lg:gap-heading">
+                    <h2 className="type-display type-section-title text-cc-white">
+                        Consumed energy
+                    </h2>
+                    <ConsumedEnergyGauges gauges={gauges} />
+                </section>
+            </div>
         </div>
     );
 }
