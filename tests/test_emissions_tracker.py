@@ -765,6 +765,51 @@ class TestCarbonTracker(unittest.TestCase):
             any("Tracker not initialized" in message for message in logs.output)
         )
 
+    def test_stop_task_resumes_scheduler_only_if_start_task_paused_it(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # Pure start_task/stop_task usage: no periodic scheduler must be left running.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start_task("task-only")
+        tracker.stop_task()
+        self.assertTrue(tracker._scheduler._stopped)
+        tracker.stop()
+
+        # start() then start_task/stop_task: the paused scheduler must be resumed.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start()
+        tracker.start_task("task-in-run")
+        self.assertTrue(tracker._scheduler._stopped)
+        tracker.stop_task()
+        self.assertFalse(tracker._scheduler._stopped)
+        tracker.stop()
+
+        # A second start_task on an already measuring tracker must not clear the
+        # "paused by task" flag, otherwise the scheduler is never resumed.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start()
+        tracker.start_task("first-task")
+        tracker.start_task("ignored-second-task")
+        self.assertTrue(tracker._scheduler._stopped)
+        tracker.stop_task()
+        self.assertFalse(tracker._scheduler._stopped)
+        tracker.stop()
+
+        # An unknown task name must not leave the scheduler paused either.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start()
+        tracker.start_task("known-task")
+        self.assertIsNone(tracker.stop_task("unknown-task"))
+        self.assertFalse(tracker._scheduler._stopped)
+        tracker.stop()
+
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
     @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
     @mock.patch(

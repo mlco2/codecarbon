@@ -296,6 +296,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._scheduler_paused_by_task = False
         self._hardware = []
         self._hardware_initialized = False
 
@@ -501,7 +502,9 @@ class BaseEmissionsTracker(ABC):
                                 `sudo lshw -C memory -short | grep DIMM` to get RAM slots,
                                 then RAM power (W) = Number of RAM Slots × 5 Watts.
         :param pue: PUE (Power Usage Effectiveness) of the data center where the
-                    experiment is being run.
+                    experiment is being run. It multiplies both the reported power
+                    and the reported energy, including forced values: with
+                    `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
         :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
                     litres of water consumed per kilowatt-hour of electricity consumed.
         :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
@@ -752,6 +755,13 @@ class BaseEmissionsTracker(ABC):
 
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
+            # Only resume it in stop_task if it was actually running, i.e. the tracker
+            # was started with start(). Pure start_task/stop_task usage must not leave
+            # a periodic measurement running behind. The flag is sticky: a second
+            # start_task call sees an already stopped scheduler and must not clear it.
+            self._scheduler_paused_by_task = (
+                self._scheduler_paused_by_task or not self._scheduler._stopped
+            )
             self._scheduler.stop()
 
         # Task background thread for measuring power
@@ -792,6 +802,16 @@ class BaseEmissionsTracker(ABC):
         )
         self._active_task = task_name
 
+    def _resume_scheduler_if_paused_by_task(self) -> None:
+        """
+        Restart the periodic scheduler if, and only if, start_task paused a running
+        one. No-op for pure start_task/stop_task usage, and when called from stop()
+        where the scheduler has already been released.
+        """
+        if self._scheduler is not None and self._scheduler_paused_by_task:
+            self._scheduler_paused_by_task = False
+            self._scheduler.start()
+
     def stop_task(self, task_name: str = None) -> EmissionsData:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
@@ -804,6 +824,9 @@ class BaseEmissionsTracker(ABC):
         task_name = task_name if task_name else self._active_task
         if self._tasks.get(task_name) is None:
             logger.warning("stop_task : No active task to stop.")
+            # Still resume, so an unknown task name does not leave the periodic
+            # scheduler paused for the rest of the run.
+            self._resume_scheduler_if_paused_by_task()
             return None
         self._measure_power_and_energy()
         emissions_data = (
@@ -847,6 +870,8 @@ class BaseEmissionsTracker(ABC):
         self._tasks[task_name].is_active = False
         self._active_task = None
         self._active_task_emissions_at_start = None  # Clear task-specific start data
+
+        self._resume_scheduler_if_paused_by_task()
 
         return task_emission_data
 
@@ -1174,7 +1199,8 @@ class BaseEmissionsTracker(ABC):
                 power,
                 energy,
             ) = hardware.measure_power_and_energy(last_duration=last_duration)
-            # Apply the PUE of the datacenter to the consumed energy
+            # Apply the PUE of the datacenter
+            power *= self._pue
             energy *= self._pue
             water = Water.from_litres(litres=self._wue * energy.kWh)
             self._total_energy += energy
@@ -1584,7 +1610,9 @@ def track_emissions(
     :param force_ram_power: Force the RAM power consumption in watts. Estimate with
                             `sudo lshw -C memory -short | grep DIMM` for RAM slots,
                             then RAM power (W) = Number of RAM Slots × 5 Watts.
-    :param pue: PUE (Power Usage Effectiveness) of the data center.
+    :param pue: PUE (Power Usage Effectiveness) of the data center. It multiplies both
+                the reported power and the reported energy, including forced values:
+                with `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
     :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
                 litres of water consumed per kilowatt-hour of electricity consumed.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
