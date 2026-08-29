@@ -1300,10 +1300,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-3-authenticate-with-codecarbon" class="md-nav__link">
+  <a href="#step-3-get-your-dashboard-credentials" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Step 3: Authenticate with CodeCarbon
+        Step 3: Get Your Dashboard Credentials
       </span>
     </span>
   </a>
@@ -2242,10 +2242,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#step-3-authenticate-with-codecarbon" class="md-nav__link">
+  <a href="#step-3-get-your-dashboard-credentials" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Step 3: Authenticate with CodeCarbon
+        Step 3: Get Your Dashboard Credentials
       </span>
     </span>
   </a>
@@ -2467,11 +2467,25 @@ sudo<span class="w"> </span>-u<span class="w"> </span>codecarbon<span class="w">
 <p>Install CodeCarbon in the virtual environment:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>-u<span class="w"> </span>codecarbon<span class="w"> </span>/opt/codecarbon/.venv/bin/pip<span class="w"> </span>install<span class="w"> </span>codecarbon
 </code></pre></div>
-<h3 id="step-3-authenticate-with-codecarbon">Step 3: Authenticate with CodeCarbon<a class="headerlink" href="#step-3-authenticate-with-codecarbon" title="Permanent link">&para;</a></h3>
-<p>Go to <a href="https://dashboard.codecarbon.io/">https://dashboard.codecarbon.io/</a> and create an account to get your API key. Then authenticate locally:</p>
-<p>Configure CodeCarbon:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>-u<span class="w"> </span>codecarbon<span class="w"> </span>/opt/codecarbon/.venv/bin/codecarbon<span class="w"> </span>login
+<h3 id="step-3-get-your-dashboard-credentials">Step 3: Get Your Dashboard Credentials<a class="headerlink" href="#step-3-get-your-dashboard-credentials" title="Permanent link">&para;</a></h3>
+<p>Go to <a href="https://dashboard.codecarbon.io/">https://dashboard.codecarbon.io/</a> and create an account.</p>
+<p>Run the login and configuration wizard <strong>as your own user</strong>, not as the <code>codecarbon</code>
+service user: <code>codecarbon login</code> needs a web browser and writes a <code>credentials.json</code>
+file in the current directory, two things the service user does not have. The service
+itself never uses those credentials, only the <code>api_key</code> you will write in its
+configuration file at Step 6.</p>
+<p>From your own account, in a directory you can write to:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>codecarbon<span class="w">  </span><span class="c1"># or run it with `uvx codecarbon`</span>
+codecarbon<span class="w"> </span>login
+codecarbon<span class="w"> </span>config
 </code></pre></div>
+<p><code>codecarbon config</code> asks you to pick or create an organization, a project and an
+experiment, then writes their ids and an API key to <code>~/.codecarbon.config</code>. Keep that
+file at hand, you will copy its values into the service configuration at Step 6.</p>
+<p>If the machine has no browser (headless server), <code>codecarbon login</code> prints the
+authentication URL: open it in a browser on the same machine, or forward the callback
+port over SSH with <code>ssh -L 8090:localhost:8090 user@server</code> and open the URL on your
+laptop, so that the <code>http://localhost:8090/callback</code> redirect reaches the CLI.</p>
 <h3 id="step-4-create-a-systemd-service-file">Step 4: Create a Systemd Service File<a class="headerlink" href="#step-4-create-a-systemd-service-file" title="Permanent link">&para;</a></h3>
 <p>Create the service configuration file for systemd:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/systemd/system/codecarbon.service<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
@@ -2510,7 +2524,8 @@ sudo<span class="w"> </span>udevadm<span class="w"> </span>trigger<span class="w
 rationale and for the <code>sysfsutils</code> alternative). Keeping them restricted to the service
 group means no other local account gains anything from this change.</p>
 <h3 id="step-6-create-the-codecarbon-configuration-file">Step 6: Create the CodeCarbon Configuration File<a class="headerlink" href="#step-6-create-the-codecarbon-configuration-file" title="Permanent link">&para;</a></h3>
-<p>Configure CodeCarbon with your dashboard credentials:</p>
+<p>Copy the ids and the API key from the <code>~/.codecarbon.config</code> written at Step 3 into the
+service configuration file:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/opt/codecarbon/.codecarbon.config<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
 <span class="s">[codecarbon]</span>
 <span class="s">api_endpoint = https://api.codecarbon.io</span>
