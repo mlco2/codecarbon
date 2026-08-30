@@ -1,40 +1,44 @@
 {
   "data": {
     "SE1": {
-      "emission_factor": 20.6,
+      "emission_factor": 25.9,
       "unit": "gCO2eq/kWh",
       "description": "Sweden Bidding Zone 1 (Northern Sweden)",
       "year": 2025,
-      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
-      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
-      "note": "Mix drifting (hydro-to-wind shift, 2022-2025: hydro -6.2pp, wind +6.4pp); CI stable (-3.8% 2022-2025) because hydro and wind share similar lifecycle factors. More frequent than annual updates recommended."
+      "method": "production-based generation-mix (ENTSO-E A75 2025 x CodeCarbon carbon_intensity_per_source.json)",
+      "source": "ENTSO-E Transparency generation-per-type (A75) 2025 x CodeCarbon carbon_intensity_per_source.json; derived reproducibly by Khepri (avalyset/khepri)",
+      "coverage": "99.59% of 2025 generation has a factor in carbon_intensity_per_source.json; remainder carried in the denominator at 0 (Other 0.41 %)",
+      "note": "Hydro-and-wind. Mix drifting (hydro -6.2pp, wind +6.4pp 2022-2025), but hydro and wind carry the same 26 gCO2eq/kWh factor in this table, so the mix shift barely moves the value."
     },
     "SE2": {
-      "emission_factor": 20.1,
+      "emission_factor": 25.7,
       "unit": "gCO2eq/kWh",
       "description": "Sweden Bidding Zone 2 (North-central Sweden)",
       "year": 2025,
-      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
-      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
-      "note": "Stable: CI -2.4% and mix shifts <5pp 2022-2025. Annual update sufficient. Only SE zone below both materiality thresholds."
+      "method": "production-based generation-mix (ENTSO-E A75 2025 x CodeCarbon carbon_intensity_per_source.json)",
+      "source": "ENTSO-E Transparency generation-per-type (A75) 2025 x CodeCarbon carbon_intensity_per_source.json; derived reproducibly by Khepri (avalyset/khepri)",
+      "coverage": "98.92% of 2025 generation has a factor in carbon_intensity_per_source.json; remainder carried in the denominator at 0 (Other 1.08 %)",
+      "note": "Hydro-and-wind. Most stable SE zone; mix shifts <5pp 2022-2025."
     },
     "SE3": {
-      "emission_factor": 14.5,
+      "emission_factor": 27.0,
       "unit": "gCO2eq/kWh",
       "description": "Sweden Bidding Zone 3 (South-central Sweden, includes Stockholm)",
       "year": 2025,
-      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
-      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
-      "note": "Nuclear-dominant zone (SE3 only; IPCC AR5 factor 12 gCO2eq/kWh). Nuclear share eroding (-6.4pp 2022-2025); CI +7.8% but below 15% threshold. Mix-drift warrants more frequent than annual updates."
+      "method": "production-based generation-mix (ENTSO-E A75 2025 x CodeCarbon carbon_intensity_per_source.json)",
+      "source": "ENTSO-E Transparency generation-per-type (A75) 2025 x CodeCarbon carbon_intensity_per_source.json; derived reproducibly by Khepri (avalyset/khepri)",
+      "coverage": "94.58% of 2025 generation has a factor in carbon_intensity_per_source.json; remainder carried in the denominator at 0 (Other 5.42 %)",
+      "note": "Sweden's only nuclear zone (nuclear 63.1% of all 2025 generation at 29 gCO2eq/kWh). Nuclear share eroding -6.4pp 2022-2025."
     },
     "SE4": {
-      "emission_factor": 17.4,
+      "emission_factor": 24.7,
       "unit": "gCO2eq/kWh",
       "description": "Sweden Bidding Zone 4 (Southern Sweden)",
       "year": 2025,
-      "method": "production-based generation-mix (ENTSO-E A75 x IPCC AR5 lifecycle factors)",
-      "source": "ENTSO-E Transparency generation-per-type + IPCC AR5 Annex III; derived by Khepri (avalyset/khepri)",
-      "note": "Material drift: CI +15.2% 2022-2025 (solar growth, Solar=48 gCO2eq/kWh vs wind=11). Monotonically rising. More frequent than annual updates required."
+      "method": "production-based generation-mix (ENTSO-E A75 2025 x CodeCarbon carbon_intensity_per_source.json)",
+      "source": "ENTSO-E Transparency generation-per-type (A75) 2025 x CodeCarbon carbon_intensity_per_source.json; derived reproducibly by Khepri (avalyset/khepri)",
+      "coverage": "85.05% of 2025 generation has a factor in carbon_intensity_per_source.json; remainder carried in the denominator at 0 (Other 14.95 %)",
+      "note": "Lowest coverage in this set: 14.95% of SE4 generation is ENTSO-E 'Other' (B20), which has no entry in carbon_intensity_per_source.json and is therefore carried in the denominator at 0. The value is correspondingly a lower bound - see the coverage field. Solar growing (Solar=48 vs wind=26)."
     },
     "NO1": {
       "emission_factor": 18.0,
@@ -74,10 +78,13 @@
     }
   },
   "metadata": {
-    "source": "SE1-SE4: ENTSO-E Transparency actual generation per production type, weighted by IPCC AR5 Annex III lifecycle emission factors (production-based generation-mix), derived reproducibly by Khepri (avalyset/khepri). NO1-NO5 and FI: prior values, unchanged.",
-    "method": "production-based: weighted average of generation-mix per source x lifecycle emission factor. The emission factors are IPCC AR5 Annex III lifecycle medians. This is a different factor basis from CodeCarbon's static carbon_intensity_per_source.json, which carries different values for some sources (natural gas: 743 there, 490 in AR5). NOT consumption-based; the Electricity Maps API path remains the consumption-based source.",
-    "provenance": "SE1-SE4 values are taken from Khepri v1.2, archived at https://doi.org/10.5281/zenodo.21097430 (versioned record).",
-    "last_updated": "2026-06-29",
-    "notes": "SE1-SE4 replace the prior uniform 18.0 placeholder with per-zone derived values (2025 annual means). The 18.0 placeholder is systematically wrong in both directions: it undervalues SE1/SE2 (production-based CI ~20 gCO2eq/kWh, ~+12-15% error) and overvalues SE3 (production-based CI ~14.5, ~-19% error) and SE4 (production-based CI ~17.4, ~-3% error). A single uniform constant cannot represent structurally different zones. Drift characterization: SE2 stable (annual update sufficient); SE1/SE3/SE4 show mix or CI drift (more frequent updates recommended, especially SE4). NO1-NO5 and FI retained from prior data pending equivalent per-zone derivation (see companion PR for Norwegian zones)."
+    "source": "SE1-SE4: ENTSO-E Transparency actual generation per production type (A75), full year 2025, weighted by CodeCarbon's own carbon_intensity_per_source.json emission factors (production-based generation-mix), derived reproducibly by Khepri (avalyset/khepri). NO1-NO5 and FI: prior values, unchanged.",
+    "method": "production-based generation-mix: energy-weighted average over ENTSO-E Actual Generation per Production Type (A75), full year 2025, using CodeCarbon's own carbon_intensity_per_source.json factors. NOT consumption-based; the Electricity Maps API path remains the consumption-based source.",
+    "factor_basis": "CodeCarbon's own carbon_intensity_per_source.json - NOT IPCC AR5. These values were re-derived on this project's table so they are internally consistent with the rest of CodeCarbon. The two bases differ materially for the sources that dominate the Nordic mix, not only for gas: nuclear 29 here vs 12 in AR5; wind 26 vs 11; hydroelectricity 26 vs 24; natural gas 743 vs 490. Because hydro and wind carry the same 26 in this table, per-zone spread is much narrower here than on an AR5 basis.",
+    "coverage": "Each zone carries a 'coverage' field: the share of that zone's 2025 generation that has an entry in carbon_intensity_per_source.json. Production types with no entry (ENTSO-E 'Other' B20, 'Other renewable', 'Waste', 'Biomass') are kept in the denominator with factor 0 and contribute nothing to the numerator, so the stored number is a complete gCO2eq/kWh factor applicable to all consumed energy, as CodeCarbon uses it. Where coverage is well below 100% the value is a lower bound; SE4 (85.05%) is the weakest case in this set. No factor was invented for the uncovered types.",
+    "alternative_basis": "The upstream derivation also publishes these zones on IPCC AR5 Annex III lifecycle medians (nuclear 12, wind 11, hydro 24, gas 490), which excludes factor-less types from both numerator and denominator instead of carrying them at 0. That is a different factor basis and a different treatment of uncovered generation, and it yields lower values (e.g. SE3 14.5 and NO4 39.6 on AR5, vs 27.0 and 51.7 here). Published and archived at https://doi.org/10.5281/zenodo.21097430 (Khepri v1.2). The AR5 figures are NOT what this file ships.",
+    "provenance": "SE1-SE4 values are derived by Khepri v1.2, archived at https://doi.org/10.5281/zenodo.21097430 (versioned record), re-derived on CodeCarbon's factor table for this file.",
+    "last_updated": "2026-08-30",
+    "notes": "SE1-SE4 replace the prior uniform 18.0 placeholder with per-zone derived values (2025 annual, energy-weighted). On this factor table the placeholder is too LOW for every zone in this set. Per-zone spread on CodeCarbon's factors is narrow for the Swedish zones (24.7-27.0) because hydro and wind share the same 26 gCO2eq/kWh factor; the Norwegian spread is wider (25.8-51.7) and driven almost entirely by NO4's fossil-gas share. NO1-NO5 and FI retained from prior data pending equivalent per-zone derivation."
   }
 }
