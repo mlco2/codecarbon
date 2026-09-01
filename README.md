@@ -113,6 +113,7 @@ You can visualize your experiment emissions on the [dashboard](https://dashboard
 - [mlco2 on GitHub](https://github.com/mlco2) for our other open-source projects.
 - [GitHub](https://github.com/mlco2/codecarbon) to look at the source code and contribute.
 - [Discord](https://discord.gg/GS9js2XkJR) to chat with us.
+- [3R Urban Solutions UK ROI & Carbon Calculator](https://3rurban.co.uk/commercial-composting-machines-roi-calculator/) - Free calculator for UK businesses to estimate the ROI and CO2e savings of switching from food waste collection to on-site in-vessel composting.
 
 ## Contributing
 
