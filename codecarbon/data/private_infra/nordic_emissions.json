@@ -62,7 +62,7 @@
       "method": "production-based generation-mix (ENTSO-E A75 2025 x CodeCarbon carbon_intensity_per_source.json)",
       "source": "ENTSO-E Transparency generation-per-type (A75) 2025 x CodeCarbon carbon_intensity_per_source.json; derived reproducibly by Khepri (avalyset/khepri)",
       "coverage": "98.65% of 2025 generation has a factor in carbon_intensity_per_source.json; remainder carried in the denominator at 0 (Other renewable 1.35 %)",
-      "note": "Highest Norwegian zone, and the only one where the per-zone signal is large: persistent fossil-gas generation (3.63% of all 2025 generation at 743 gCO2eq/kWh) contributes roughly half the value. Event-driven rather than a stable constant - the Hammerfest LNG turbines were offline after a Sept-2020 fire and restarted June 2022, so the value is period-dependent."
+      "note": "Highest Norwegian zone, and the only one where the per-zone signal is large: persistent fossil-gas generation (3.63% of all 2025 generation at 743 gCO2eq/kWh) contributes roughly half the value. Event-driven rather than a stable constant - that gas share moves between years (near zero in 2021, 6.23% in 2024, 3.63% in 2025) and carries about 52% of this zone's carbon intensity on this factor table, so the value is period-dependent."
     },
     "NO5": {
       "emission_factor": 26.6,
