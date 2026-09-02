@@ -11,46 +11,90 @@ import sys
 import pytest
 
 from codecarbon.core.cpu import IntelRAPL, is_rapl_available
+from codecarbon.core.units import Time
+
+
+def _make_rapl_tree(tmp_path, domains):
+    """Create a fake powercap tree with the given (name, energy_uj) domains."""
+    provider = tmp_path / "intel-rapl"
+    provider.mkdir()
+    paths = []
+    for index, (name, energy) in enumerate(domains):
+        domain = provider / f"intel-rapl:{index}"
+        domain.mkdir()
+        (domain / "name").write_text(name)
+        (domain / "energy_uj").write_text(str(energy))
+        (domain / "max_energy_range_uj").write_text("262143328850")
+        paths.append(domain / "energy_uj")
+    return paths
+
+
+def _counted_domains(details):
+    """The domains measured in a get_cpu_details() result (one key per domain,
+    ignoring the extra Power keys mirroring the Energy ones)."""
+    return [key for key in details if "Power" not in key]
 
 
 @pytest.mark.parametrize(
-    ("energies", "expected_count"),
-    [((1000000, 1000000), 1), ((1000000, 2000000), 2), ((0, 0), 2)],
+    ("energies", "expected_candidates"),
+    [((1000000, 1000000), 1), ((1000000, 2000000), 0), ((0, 0), 0)],
 )
-def test_rapl_start_deduplicates_only_nonzero_mirrored_package_counters(
-    tmp_path, monkeypatch, energies, expected_count
+def test_rapl_start_flags_only_nonzero_mirrored_package_counters(
+    tmp_path, monkeypatch, energies, expected_candidates
 ):
     monkeypatch.setattr(sys, "platform", "linux")
-    provider = tmp_path / "intel-rapl"
-    provider.mkdir()
-    for index, energy in enumerate(energies):
-        domain = provider / f"intel-rapl:{index}"
-        domain.mkdir()
-        (domain / "name").write_text(f"package-{index}-die-0")
-        (domain / "energy_uj").write_text(str(energy))
-        (domain / "max_energy_range_uj").write_text("262143328850")
+    _make_rapl_tree(
+        tmp_path,
+        [(f"package-{index}-die-0", energy) for index, energy in enumerate(energies)],
+    )
 
     rapl = IntelRAPL(rapl_dir=str(tmp_path))
     rapl.start()
 
-    assert len(rapl._rapl_files) == expected_count
+    # Suspected mirrors are flagged, not dropped: the files are all kept so
+    # a wrongly flagged counter can be restored later.
+    assert len(rapl._rapl_files) == len(energies)
+    assert len(rapl._mirrored_candidates) == expected_candidates
+
+    details = rapl.get_cpu_details(Time.from_seconds(1))
+    assert len(_counted_domains(details)) == len(energies) - expected_candidates
 
 
 def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "platform", "linux")
-    provider = tmp_path / "intel-rapl"
-    provider.mkdir()
-    for index, name in enumerate(("package-0-die-0", "package-0-die-1", "dram")):
-        domain = provider / f"intel-rapl:{index}"
-        domain.mkdir()
-        (domain / "name").write_text(name)
-        (domain / "energy_uj").write_text("1000000")
-        (domain / "max_energy_range_uj").write_text("262143328850")
+    _make_rapl_tree(
+        tmp_path,
+        [("package-0-die-0", 1000000), ("package-0-die-1", 1000000), ("dram", 1000000)],
+    )
 
     rapl = IntelRAPL(rapl_dir=str(tmp_path), rapl_include_dram=True)
     rapl.start()
 
+    assert len(rapl._mirrored_candidates) == 1
+    details = rapl.get_cpu_details(Time.from_seconds(1))
+    assert len(_counted_domains(details)) == 2
+    assert "dram" in details
+
+
+def test_rapl_start_reevaluates_mirror_candidates(tmp_path, monkeypatch):
+    """A new start() re-runs the detection instead of compounding drops."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0", 1000000), ("package-1", 1000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+    assert len(rapl._mirrored_candidates) == 1
+
+    # The counters diverge: they were two independent meters after all
+    energy_files[1].write_text("5000000")
+    rapl.start()
+
     assert len(rapl._rapl_files) == 2
+    assert len(rapl._mirrored_candidates) == 0
+    details = rapl.get_cpu_details(Time.from_seconds(1))
+    assert len(_counted_domains(details)) == 2
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")

@@ -450,6 +450,10 @@ class IntelRAPL:
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
         self._rapl_files = []
+        # Files that look like a duplicate of another counter, but whose
+        # energy deltas have not confirmed it yet. They are left out of the
+        # measurement while pending. Maps file path -> mirrored file path.
+        self._mirrored_candidates: Dict[str, str] = {}
         self.rapl_include_dram = rapl_include_dram
         self.rapl_prefer_psys = rapl_prefer_psys
         self._setup_rapl()
@@ -843,6 +847,9 @@ class IntelRAPL:
                 rapl_file.delta(duration)
 
             for rapl_file in self._rapl_files:
+                if rapl_file.path in self._mirrored_candidates:
+                    # Still suspected of duplicating another counter
+                    continue
                 logger.debug(rapl_file)
                 cpu_details[rapl_file.name] = rapl_file.energy_delta.kWh
                 # We fake the name used by Power Gadget when using RAPL
@@ -880,18 +887,14 @@ class IntelRAPL:
             for rapl_file in self._rapl_files
             if "dram" not in rapl_file.name.lower()
         ]
-        mirrored = find_mirrored_counters(counters)
-        for path in mirrored:
+        self._mirrored_candidates = find_mirrored_counters(counters)
+        for path, reference_path in self._mirrored_candidates.items():
             logger.warning(
-                "\tRAPL - Ignoring mirrored energy counter at %s to avoid double-counting",
+                "\tRAPL - Energy counter at %s looks like a mirror of %s, it is "
+                "left out of the measurement to avoid double-counting",
                 path,
+                reference_path,
             )
-        if mirrored:
-            self._rapl_files = [
-                rapl_file
-                for rapl_file in self._rapl_files
-                if rapl_file.path not in mirrored
-            ]
 
 
 class TDP:
