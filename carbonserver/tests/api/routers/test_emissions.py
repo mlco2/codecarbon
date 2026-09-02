@@ -40,6 +40,7 @@ EMISSION_TO_CREATE = {
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
     "wue": 0,
+    "water_consumed": 0.0,
 }
 
 EMISSION_1 = {
@@ -57,6 +58,7 @@ EMISSION_1 = {
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
     "wue": 0,
+    "water_consumed": 0.0,
     "cpu_utilization_percent": None,
     "gpu_utilization_percent": None,
     "ram_utilization_percent": None,
@@ -77,6 +79,7 @@ EMISSION_2 = {
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
     "wue": 0,
+    "water_consumed": 0.0,
 }
 
 
@@ -95,6 +98,7 @@ EMISSION_3 = {
     "ram_energy": 2.0,
     "energy_consumed": 57.21874,
     "wue": 0,
+    "water_consumed": 0.0,
 }
 
 
@@ -229,7 +233,7 @@ def test_add_emission_with_default_wue_value(client, custom_test_server):
         "gpu_energy": 0.0,
         "ram_energy": 2.0,
         "energy_consumed": 57.21874,
-        # Note: wue is not provided, should default to 0
+        # Note: wue and water_consumed are not provided, should default to 0
     }
 
     repository_mock = mock.Mock(spec=EmissionRepository)
@@ -266,6 +270,9 @@ def test_add_emission_with_default_wue_value(client, custom_test_server):
     # Verify that the repository was called with WUE defaulting to 0
     called_emission = repository_mock.add_emission.call_args[0][0]
     assert called_emission.wue == 0, "WUE should default to 0 when not provided"
+    assert (
+        called_emission.water_consumed == 0
+    ), "water_consumed should default to 0 when not provided"
 
 
 def test_add_emission_with_custom_wue_value(client, custom_test_server):
@@ -285,6 +292,7 @@ def test_add_emission_with_custom_wue_value(client, custom_test_server):
         "ram_energy": 2.0,
         "energy_consumed": 57.21874,
         "wue": 1.5,
+        "water_consumed": 12.5,
     }
 
     repository_mock = mock.Mock(spec=EmissionRepository)
@@ -321,3 +329,6 @@ def test_add_emission_with_custom_wue_value(client, custom_test_server):
     # Verify that the repository was called with the correct WUE value
     called_emission = repository_mock.add_emission.call_args[0][0]
     assert called_emission.wue == 1.5, "WUE should be set to the provided value"
+    assert (
+        called_emission.water_consumed == 12.5
+    ), "water_consumed should be set to the provided value"
