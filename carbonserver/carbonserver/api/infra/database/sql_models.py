@@ -25,6 +25,7 @@ class Emission(Base):
     gpu_utilization_percent = Column(Float, nullable=True)
     ram_utilization_percent = Column(Float, nullable=True)
     wue = Column(Float, nullable=False, default=0)
+    water_consumed = Column(Float, nullable=False, default=0)
     run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id", ondelete="CASCADE"))
     run = relationship("Run", back_populates="emissions")
 

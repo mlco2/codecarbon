@@ -41,6 +41,8 @@ class SqlAlchemyRepository(Emissions):
                 gpu_energy=emission.gpu_energy,
                 ram_energy=emission.ram_energy,
                 energy_consumed=emission.energy_consumed,
+                # coalesce None to 0: the column is NOT NULL
+                water_consumed=emission.water_consumed or 0,
                 cpu_utilization_percent=emission.cpu_utilization_percent,
                 gpu_utilization_percent=emission.gpu_utilization_percent,
                 ram_utilization_percent=emission.ram_utilization_percent,
@@ -108,6 +110,7 @@ class SqlAlchemyRepository(Emissions):
             gpu_energy=emission.gpu_energy,
             ram_energy=emission.ram_energy,
             energy_consumed=emission.energy_consumed,
+            water_consumed=emission.water_consumed,
             cpu_utilization_percent=emission.cpu_utilization_percent,
             gpu_utilization_percent=emission.gpu_utilization_percent,
             ram_utilization_percent=emission.ram_utilization_percent,

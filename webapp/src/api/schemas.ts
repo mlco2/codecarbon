@@ -95,6 +95,7 @@ export const ExperimentReportSchema = z.object({
     name: z.string(),
     emissions: z.number(),
     energy_consumed: z.number(),
+    water_consumed: z.number().default(0),
     duration: z.number(),
     description: z.string().nullish(),
 });
@@ -105,6 +106,7 @@ export const RunReportSchema = z.object({
     emissions: z.number(),
     timestamp: z.string(),
     energy_consumed: z.number(),
+    water_consumed: z.number().default(0),
     duration: z.number(),
 });
 export type RunReport = z.infer<typeof RunReportSchema>;
@@ -121,6 +123,7 @@ export const EmissionSchema = z.object({
     gpu_energy: z.number(),
     ram_energy: z.number(),
     energy_consumed: z.number(),
+    water_consumed: z.number().default(0),
 });
 export type Emission = z.infer<typeof EmissionSchema>;
 
@@ -147,6 +150,7 @@ export const OrganizationReportSchema = z.object({
     name: z.string(),
     emissions: z.number(),
     energy_consumed: z.number(),
+    water_consumed: z.number().default(0),
     duration: z.number(),
 });
 export type OrganizationReport = z.infer<typeof OrganizationReportSchema>;
@@ -161,6 +165,7 @@ export type EmissionsTimeSeries = z.infer<typeof EmissionsTimeSeriesSchema>;
 // Dashboard prop types (not API responses, but shared across components)
 export interface RadialChartData {
     energy: { label: string; value: number };
+    water: { label: string; value: number };
     emissions: { label: string; value: number };
     duration: { label: string; value: number };
 }

@@ -53,6 +53,11 @@ def _load_static_data() -> None:
     with open(path) as f:
         _CACHE["carbon_intensity_per_source"] = json.load(f)
 
+    # Water consumption per source
+    path = _get_resource_path("data/private_infra/water_consumption_per_source.json")
+    with open(path) as f:
+        _CACHE["water_consumption_per_source"] = json.load(f)
+
     # CPU power data
     path = _get_resource_path("data/hardware/cpu_power.csv")
     _CACHE["cpu_power"] = pd.read_csv(path)
@@ -84,6 +89,7 @@ class DataSource:
             "can_energy_mix_data_path": "data/private_infra/2023/canada_energy_mix.json",  # noqa: E501
             "global_energy_mix_data_path": "data/private_infra/global_energy_mix.json",  # noqa: E501
             "carbon_intensity_per_source_path": "data/private_infra/carbon_intensity_per_source.json",
+            "water_consumption_per_source_path": "data/private_infra/water_consumption_per_source.json",
             "cpu_power_path": "data/hardware/cpu_power.csv",
         }
         self.module_name = "codecarbon"
@@ -117,6 +123,15 @@ class DataSource:
         """
         return self.get_ressource_path(
             self.module_name, self.config["carbon_intensity_per_source_path"]
+        )
+
+    @property
+    def water_consumption_per_source_path(self):
+        """
+        Get the path from the package resources.
+        """
+        return self.get_ressource_path(
+            self.module_name, self.config["water_consumption_per_source_path"]
         )
 
     def country_emissions_data_path(self, country: str):
@@ -194,6 +209,14 @@ class DataSource:
         """
         _ensure_static_data_loaded()
         return _CACHE["carbon_intensity_per_source"]
+
+    def get_water_consumption_per_source_data(self) -> Dict:
+        """
+        Returns water consumption per energy source. In gal us Water.eq/MWh.
+        Data is loaded on first access and cached for all tracker instances.
+        """
+        _ensure_static_data_loaded()
+        return _CACHE["water_consumption_per_source"]
 
     def get_cpu_power_data(self) -> pd.DataFrame:
         """

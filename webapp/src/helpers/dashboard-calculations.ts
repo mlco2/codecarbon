@@ -1,4 +1,8 @@
-import { ExperimentReport } from "@/api/schemas";
+import {
+    ConvertedValues,
+    ExperimentReport,
+    RadialChartData,
+} from "@/api/schemas";
 import {
     getEquivalentCarKm,
     getEquivalentCitizenPercentage,
@@ -6,17 +10,7 @@ import {
 } from "./constants";
 import { SECONDS_PER_DAY } from "./time-constants";
 
-export type RadialChartData = {
-    energy: { label: string; value: number };
-    emissions: { label: string; value: number };
-    duration: { label: string; value: number };
-};
-
-export type ConvertedValues = {
-    citizen: string;
-    transportation: string;
-    tvTime: string;
-};
+export type { ConvertedValues, RadialChartData };
 
 /**
  * Calculate radial chart data from experiment reports
@@ -30,6 +24,14 @@ export function calculateRadialChartData(
             value: parseFloat(
                 report
                     .reduce((n, { energy_consumed }) => n + energy_consumed, 0)
+                    .toFixed(2),
+            ),
+        },
+        water: {
+            label: "L",
+            value: parseFloat(
+                report
+                    .reduce((n, { water_consumed }) => n + water_consumed, 0)
                     .toFixed(2),
             ),
         },
@@ -78,6 +80,7 @@ export function calculateConvertedValues(
 export function getDefaultRadialChartData(): RadialChartData {
     return {
         energy: { label: "kWh", value: 0 },
+        water: { label: "L", value: 0 },
         emissions: { label: "kg eq CO2", value: 0 },
         duration: { label: "days", value: 0 },
     };

@@ -78,6 +78,62 @@ As you can see, we try to be as accurate as possible in estimating
 carbon intensity of electricity. Still there is room for improvement and
 all contributions are welcome.
 
+## Water Consumption
+
+Computing also consumes water, and CodeCarbon reports it in the
+`water_consumed` field (in litres). Two contributions are summed:
+
+- **Direct water**: the water evaporated on-site by the data center
+  cooling systems. It is computed from the WUE (Water Usage
+  Effectiveness, in L/kWh) that you can provide with the `wue`
+  parameter, as `wue × energy_consumed`. It defaults to 0 because
+  a machine outside of a data center consumes no cooling water.
+- **Indirect water**: the water consumed by power plants to generate
+  the electricity that you use (cooling of thermal and nuclear plants,
+  evaporation from hydroelectric reservoirs...). Like the carbon
+  intensity, it is estimated as a weighted average of the water
+  consumption of the energy sources in the local Energy Mix:
+
+| Energy Source | Water Consumption (gal US/MWh) |
+|---------------|-------------------------------|
+| Coal | 550 |
+| Natural Gas | 210 |
+| Oil | 550 (approximated with the coal value) |
+| Nuclear | 775 |
+| Hydroelectricity | 4,491 |
+| Biofuel | 553 |
+| Geothermal | 290 |
+| Solar | 85 |
+| Wind | 11 |
+
+*Operational water consumption across energy sources
+([data](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/water_consumption_per_source.json))*
+
+Sources:
+
+- [Meldrum et al. 2013, Life cycle water use for electricity generation](https://iopscience.iop.org/article/10.1088/1748-9326/8/1/015031)
+- [Macknick et al. 2012, Operational water consumption and withdrawal factors for electricity generating technologies](https://iopscience.iop.org/article/10.1088/1748-9326/7/4/045802)
+
+When the energy mix of a country is unknown, or when sources with known
+water consumption cover less than 90% of its electricity production
+(e.g. geothermal-heavy countries such as Kenya or Iceland), we apply a
+world average of about 3.75 L/kWh, computed from the table above
+weighted by the world energy mix so that the fallback is consistent
+with the computed country values.
+
+!!! note "Uncertainty"
+    Water intensity values are much more uncertain than carbon
+    intensity values: they depend heavily on the cooling technology of
+    each plant, and the hydroelectricity value (reservoir evaporation)
+    is highly site-dependent and debated in the literature. Treat
+    `water_consumed` as an order-of-magnitude estimate. For example, a
+    hydro-heavy country like Norway gets a water intensity of about
+    15 L/kWh, while its carbon intensity is among the lowest.
+
+Cloud providers do not publish water usage data per region, so on cloud
+the water intensity of the country hosting your machine (or the world
+average) is used.
+
 ## Power Usage
 
 Power supply to the underlying hardware is tracked at frequent time

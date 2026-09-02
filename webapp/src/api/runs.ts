@@ -37,6 +37,7 @@ export async function getRunEmissionsByExperiment(
                     emissions: z.number(),
                     timestamp: z.string(),
                     energy_consumed: z.number(),
+                    water_consumed: z.number().default(0),
                     duration: z.number(),
                 }),
             ),
@@ -47,6 +48,7 @@ export async function getRunEmissionsByExperiment(
             emissions: runReport.emissions,
             timestamp: runReport.timestamp,
             energy_consumed: runReport.energy_consumed,
+            water_consumed: runReport.water_consumed,
             duration: runReport.duration,
         }));
     } catch (error) {
@@ -77,6 +79,7 @@ export async function getEmissionsTimeSeries(
                             gpu_energy: z.number(),
                             ram_energy: z.number(),
                             energy_consumed: z.number(),
+                            water_consumed: z.number().default(0),
                         }),
                     ),
                 }),

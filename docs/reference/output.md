@@ -43,6 +43,7 @@ The package has an in-built logger that logs data into a CSV file named `emissio
 | gpu_energy | Energy used per GPU (kWh) |
 | ram_energy | Energy used per RAM (kWh) |
 | energy_consumed | Sum of cpu_energy, gpu_energy and ram_energy (kWh) |
+| water_consumed | Water consumed (L): direct data center cooling water (`wue` × energy) plus the water consumed to generate the electricity, estimated from the local energy mix. See [Methodology](../explanation/methodology.md#water-consumption) |
 | country_name | Name of the country where the infrastructure is hosted |
 | country_iso_code | 3-letter alphabet ISO Code of the respective country |
 | region | Province/State/City where the compute infrastructure is hosted |

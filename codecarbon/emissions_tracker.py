@@ -356,6 +356,7 @@ class BaseEmissionsTracker(ABC):
         self._data_source = DataSource()
         self._geo = None
         self._emissions = None
+        self._water_consumption = None
 
     def _ensure_cloud_conf(self) -> None:
         if self._conf.get("_cloud_conf_initialized"):
@@ -375,6 +376,9 @@ class BaseEmissionsTracker(ABC):
             self._electricitymaps_api_token,
             force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
         )
+        from codecarbon.core.water_consumption import WaterConsumption
+
+        self._water_consumption = WaterConsumption(self._data_source)
 
     def _ensure_geo_metadata(self) -> None:
         """Load geo metadata on first use to avoid blocking tracker construction."""
@@ -506,7 +510,10 @@ class BaseEmissionsTracker(ABC):
                     and the reported energy, including forced values: with
                     `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
         :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
-                    litres of water consumed per kilowatt-hour of electricity consumed.
+                    litres of water consumed on-site (cooling) per kilowatt-hour of
+                    electricity consumed. This direct water consumption is added to
+                    the indirect water consumed to generate the electricity, which
+                    is estimated from the local energy mix.
         :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                                                   in gCO2e/kWh for emissions calculations.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
@@ -847,6 +854,7 @@ class BaseEmissionsTracker(ABC):
             emissions_data_delta.gpu_energy = 0.0
             emissions_data_delta.ram_energy = 0.0
             emissions_data_delta.energy_consumed = 0.0
+            emissions_data_delta.water_consumed = 0.0
         else:
             emissions_data_delta = dataclasses.replace(emissions_data)
             emissions_data_delta.compute_delta_emission(
@@ -998,7 +1006,31 @@ class BaseEmissionsTracker(ABC):
                     delta_energy, cloud, self._geo
                 )
             self._total_emissions += delta_emissions
+            self._update_water(delta_energy, cloud)
             self._last_energy_covered = self._total_energy
+
+    def _update_water(self, delta_energy: Energy, cloud: CloudMetadata) -> None:
+        """
+        Estimate the water consumed to produce the electricity used since the
+        last update and add it to the total. This comes on top of the direct
+        water consumption of the data center accumulated from the WUE in
+        _do_measurements(). A failure of this auxiliary estimation must never
+        break the emissions tracking.
+        """
+        try:
+            if cloud.is_on_private_infra:
+                delta_water = (
+                    self._water_consumption.get_private_infra_water_consumption(
+                        delta_energy, self._geo
+                    )
+                )  # float: L
+            else:
+                delta_water = self._water_consumption.get_cloud_water_consumption(
+                    delta_energy, cloud, self._geo
+                )  # float: L
+            self._total_water += Water.from_litres(litres=delta_water)
+        except Exception as e:
+            logger.warning(f"Failed to estimate the water consumption: {e}")
 
     def _prepare_emissions_data(self) -> EmissionsData:
         """
@@ -1614,7 +1646,10 @@ def track_emissions(
                 the reported power and the reported energy, including forced values:
                 with `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
     :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
-                litres of water consumed per kilowatt-hour of electricity consumed.
+                litres of water consumed on-site (cooling) per kilowatt-hour of
+                electricity consumed. This direct water consumption is added to
+                the indirect water consumed to generate the electricity, which
+                is estimated from the local energy mix.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                          in gCO2e/kWh for emissions calculations.
     :param rapl_include_dram: Include DRAM in the counter-based CPU measurements
