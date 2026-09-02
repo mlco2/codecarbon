@@ -37,7 +37,7 @@ def _counted_domains(details):
 
 @pytest.mark.parametrize(
     ("energies", "expected_candidates"),
-    [((1000000, 1000000), 1), ((1000000, 2000000), 0), ((0, 0), 0)],
+    [((1000000000, 1000000000), 1), ((1000000000, 2000000000), 0), ((0, 0), 0)],
 )
 def test_rapl_start_flags_only_nonzero_mirrored_package_counters(
     tmp_path, monkeypatch, energies, expected_candidates
@@ -95,6 +95,101 @@ def test_rapl_start_reevaluates_mirror_candidates(tmp_path, monkeypatch):
     assert len(rapl._mirrored_candidates) == 0
     details = rapl.get_cpu_details(Time.from_seconds(1))
     assert len(_counted_domains(details)) == 2
+
+
+def test_rapl_confirmed_mirror_is_dropped_after_identical_deltas(tmp_path, monkeypatch):
+    """A candidate accumulating the very same energy as its reference is a
+    true mirror and is dropped for good."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0-die-0", 1000000000), ("package-0-die-1", 1000000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+    assert len(rapl._mirrored_candidates) == 1
+
+    # Both views advance by the same 500 J: same underlying counter
+    for energy_file in energy_files:
+        energy_file.write_text("1500000000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._rapl_files) == 1
+    assert len(rapl._mirrored_candidates) == 0
+
+
+def test_rapl_coincidental_match_is_restored_after_diverging_deltas(
+    tmp_path, monkeypatch
+):
+    """Two independent packages that coincidentally held the same counter at
+    start() are both measured again once their deltas diverge."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0", 1000000000), ("package-1", 1000000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+    assert len(rapl._mirrored_candidates) == 1
+
+    # One package accumulates 10 J while the other accumulates 1000 J
+    energy_files[0].write_text("1010000000")
+    energy_files[1].write_text("2000000000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+
+    # The restored counter is measured from this very interval on
+    assert len(_counted_domains(details)) == 2
+    assert len(rapl._rapl_files) == 2
+    assert len(rapl._mirrored_candidates) == 0
+
+
+def test_rapl_mirrors_near_counter_wrap_are_still_detected(tmp_path, monkeypatch):
+    """Right after a wrap the counters are tiny, so mirrored views read
+    sequentially can differ by more than the relative tolerance. The absolute
+    sequential-read tolerance still flags them, and the identical deltas
+    confirm the drop."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0-die-0", 1000), ("package-0-die-1", 30000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+    assert len(rapl._mirrored_candidates) == 1
+
+    # Both views advance by the same 400 J
+    energy_files[0].write_text("400001000")
+    energy_files[1].write_text("400030000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._rapl_files) == 1
+
+
+def test_rapl_inconclusive_candidate_stays_pending(tmp_path, monkeypatch):
+    """A candidate that has not accumulated anything is neither dropped nor
+    restored, and is resolved by a later conclusive interval."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0", 1000000000), ("package-1", 1000000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+
+    # No energy accumulated: the interval is not conclusive
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._rapl_files) == 2
+    assert len(rapl._mirrored_candidates) == 1
+
+    # The counters then diverge: the candidate was an independent meter
+    energy_files[0].write_text("1010000000")
+    energy_files[1].write_text("2000000000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 2
+    assert len(rapl._mirrored_candidates) == 0
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")

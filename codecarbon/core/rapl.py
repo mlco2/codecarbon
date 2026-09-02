@@ -11,6 +11,14 @@ from codecarbon.external.logger import logger
 # See https://github.com/mlco2/codecarbon/issues/1274
 MIRRORED_COUNTER_TOLERANCE = 1e-6
 
+# Unlike EMI, which snapshots all the channels of a device atomically, the
+# powercap sysfs files are read one after the other: two views of the same
+# hardware counter differ by the energy the package accrued between the two
+# reads. One joule covers several milliseconds at full load, while staying
+# far below what independent packages drift apart by over a measurement
+# interval.
+SEQUENTIAL_READ_TOLERANCE_KWH = float(Energy.from_ujoules(1_000_000))  # 1 J
+
 
 def counters_match(first, second, abs_tolerance=0.0) -> bool:
     """Tell whether two cumulative counter values are indistinguishable."""

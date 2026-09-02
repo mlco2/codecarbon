@@ -17,7 +17,12 @@ from typing import TYPE_CHECKING, Dict, Optional, Tuple
 import psutil
 from rapidfuzz import fuzz, process, utils
 
-from codecarbon.core.rapl import RAPLFile, find_mirrored_counters
+from codecarbon.core.rapl import (
+    SEQUENTIAL_READ_TOLERANCE_KWH,
+    RAPLFile,
+    counters_match,
+    find_mirrored_counters,
+)
 from codecarbon.core.units import Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
@@ -846,6 +851,8 @@ class IntelRAPL:
             for rapl_file in self._rapl_files:
                 rapl_file.delta(duration)
 
+            self._confirm_mirrored_files()
+
             for rapl_file in self._rapl_files:
                 if rapl_file.path in self._mirrored_candidates:
                     # Still suspected of duplicating another counter
@@ -887,7 +894,9 @@ class IntelRAPL:
             for rapl_file in self._rapl_files
             if "dram" not in rapl_file.name.lower()
         ]
-        self._mirrored_candidates = find_mirrored_counters(counters)
+        self._mirrored_candidates = find_mirrored_counters(
+            counters, SEQUENTIAL_READ_TOLERANCE_KWH
+        )
         for path, reference_path in self._mirrored_candidates.items():
             logger.warning(
                 "\tRAPL - Energy counter at %s looks like a mirror of %s, it is "
@@ -895,6 +904,55 @@ class IntelRAPL:
                 path,
                 reference_path,
             )
+
+    def _confirm_mirrored_files(self) -> None:
+        """
+        Decide the fate of the files flagged as duplicates at ``start()``.
+
+        Two independent meters could hold indistinguishable counters at the
+        single instant of the initial reading, so a candidate is only dropped
+        for good once it has also accumulated the very same energy over a
+        measurement interval. A candidate whose energy delta differs is a real
+        meter and is restored, and a candidate that has not accumulated
+        anything yet stays pending until an interval is conclusive.
+        """
+        if not self._mirrored_candidates:
+            return
+        files_by_path = {rapl_file.path: rapl_file for rapl_file in self._rapl_files}
+        pending = {}
+        confirmed = set()
+        for path, reference_path in self._mirrored_candidates.items():
+            rapl_file = files_by_path.get(path)
+            reference = files_by_path.get(reference_path)
+            if rapl_file is None or reference is None:
+                continue
+            delta = float(rapl_file.energy_delta)
+            reference_delta = float(reference.energy_delta)
+            if delta <= 0 and reference_delta <= 0:
+                # Nothing was accumulated: the interval is not conclusive
+                pending[path] = reference_path
+            elif counters_match(delta, reference_delta, SEQUENTIAL_READ_TOLERANCE_KWH):
+                confirmed.add(path)
+                logger.warning(
+                    "\tRAPL - Energy counter at %s mirrors the one at %s, it is "
+                    "dropped to avoid double-counting the CPU power (multi-die "
+                    "CPUs mirror the package counter on each die)",
+                    path,
+                    reference_path,
+                )
+            else:
+                logger.info(
+                    "\tRAPL - Energy counter at %s accumulates energy on its own, "
+                    "it is an independent meter and is measured again",
+                    path,
+                )
+        self._mirrored_candidates = pending
+        if confirmed:
+            self._rapl_files = [
+                rapl_file
+                for rapl_file in self._rapl_files
+                if rapl_file.path not in confirmed
+            ]
 
 
 class TDP:
