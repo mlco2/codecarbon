@@ -311,8 +311,10 @@ Despite the name "Intel RAPL", it supports AMD processors since Linux
 kernel 5.8.
 
 On multi-die CPUs, package domains can mirror the same socket-wide energy
-counter. CodeCarbon detects matching nonzero counters at startup and keeps one
-of them, preventing CPU energy from being counted once per die.
+counter. CodeCarbon flags counters holding the same value at startup and drops
+a duplicate only once it has also accumulated the very same energy over a
+measurement interval, so CPU energy is neither counted once per die nor
+missing a genuine package that coincidentally held the same value.
 
 Read more about how we use it in [RAPL Metrics](rapl.md).
 
