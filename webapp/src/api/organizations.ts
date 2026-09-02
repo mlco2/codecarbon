@@ -21,7 +21,13 @@ export async function getOrganizationEmissionsByProject(
         return await fetchApi(endpoint, OrganizationReportSchema);
     } catch (error) {
         console.error("[getOrganizationEmissionsByProject] failed", error);
-        return { name: "", emissions: 0, energy_consumed: 0, duration: 0 };
+        return {
+            name: "",
+            emissions: 0,
+            energy_consumed: 0,
+            water_consumed: 0,
+            duration: 0,
+        };
     }
 }
 

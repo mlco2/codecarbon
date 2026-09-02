@@ -159,6 +159,7 @@ const handlers: Handler[] = [
                     gpu_energy: e.gpu_energy,
                     ram_energy: e.ram_energy,
                     energy_consumed: e.energy_consumed,
+                    water_consumed: e.water_consumed,
                 }),
             );
             return ok({ items });

@@ -106,6 +106,14 @@ export default function ProjectDashboardBase({
         }
     };
 
+    const radialFallback = (
+        <Card className="flex flex-col h-full items-center justify-center">
+            <CardContent className="p-0">
+                <Skeleton className="h-44 w-44 rounded-full" />
+            </CardContent>
+        </Card>
+    );
+
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -128,7 +136,7 @@ export default function ProjectDashboardBase({
                     />
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-4">
                 <div className="grid grid-cols-1 gap-4">
                     {isLoading ? (
                         <>
@@ -200,63 +208,36 @@ export default function ProjectDashboardBase({
                 </div>
                 <div className="col-span-1 items-center justify-center w-full h-full">
                     {isLoading ? (
-                        <Card className="flex flex-col h-full items-center justify-center">
-                            <CardContent className="p-0">
-                                <Skeleton className="h-44 w-44 rounded-full" />
-                            </CardContent>
-                        </Card>
+                        radialFallback
                     ) : (
-                        <Suspense
-                            fallback={
-                                <Card className="flex flex-col h-full items-center justify-center">
-                                    <CardContent className="p-0">
-                                        <Skeleton className="h-44 w-44 rounded-full" />
-                                    </CardContent>
-                                </Card>
-                            }
-                        >
+                        <Suspense fallback={radialFallback}>
                             <RadialChart data={radialChartData.energy} />
                         </Suspense>
                     )}
                 </div>
                 <div className="col-span-1 items-center justify-center w-full h-full">
                     {isLoading ? (
-                        <Card className="flex flex-col h-full items-center justify-center">
-                            <CardContent className="p-0">
-                                <Skeleton className="h-44 w-44 rounded-full" />
-                            </CardContent>
-                        </Card>
+                        radialFallback
                     ) : (
-                        <Suspense
-                            fallback={
-                                <Card className="flex flex-col h-full items-center justify-center">
-                                    <CardContent className="p-0">
-                                        <Skeleton className="h-44 w-44 rounded-full" />
-                                    </CardContent>
-                                </Card>
-                            }
-                        >
+                        <Suspense fallback={radialFallback}>
+                            <RadialChart data={radialChartData.water} />
+                        </Suspense>
+                    )}
+                </div>
+                <div className="col-span-1 items-center justify-center w-full h-full">
+                    {isLoading ? (
+                        radialFallback
+                    ) : (
+                        <Suspense fallback={radialFallback}>
                             <RadialChart data={radialChartData.emissions} />
                         </Suspense>
                     )}
                 </div>
                 <div className="col-span-1 items-center justify-center w-full h-full">
                     {isLoading ? (
-                        <Card className="flex flex-col h-full items-center justify-center">
-                            <CardContent className="p-0">
-                                <Skeleton className="h-44 w-44 rounded-full" />
-                            </CardContent>
-                        </Card>
+                        radialFallback
                     ) : (
-                        <Suspense
-                            fallback={
-                                <Card className="flex flex-col h-full items-center justify-center">
-                                    <CardContent className="p-0">
-                                        <Skeleton className="h-44 w-44 rounded-full" />
-                                    </CardContent>
-                                </Card>
-                            }
-                        >
+                        <Suspense fallback={radialFallback}>
                             <RadialChart data={radialChartData.duration} />
                         </Suspense>
                     )}
