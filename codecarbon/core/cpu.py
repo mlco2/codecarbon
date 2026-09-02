@@ -6,7 +6,6 @@ https://software.intel.com/content/www/us/en/develop/articles/intel-power-gadget
 
 from __future__ import annotations
 
-import math
 import os
 import re
 import shutil
@@ -18,7 +17,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Tuple
 import psutil
 from rapidfuzz import fuzz, process, utils
 
-from codecarbon.core.rapl import RAPLFile
+from codecarbon.core.rapl import RAPLFile, find_mirrored_counters
 from codecarbon.core.units import Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
@@ -873,30 +872,26 @@ class IntelRAPL:
         """
         Starts monitoring CPU energy consumption.
         """
-        retained_rapl_files = []
-        observed_energies = []
         for rapl_file in self._rapl_files:
             rapl_file.start()
-            energy = float(rapl_file.last_energy)
-            is_dram = "dram" in rapl_file.name.lower()
-            is_mirrored = (
-                energy
-                and not is_dram
-                and any(
-                    math.isclose(energy, observed_energy, rel_tol=1e-6)
-                    for observed_energy in observed_energies
-                )
+        # DRAM domains are a different measurement, never a duplicate
+        counters = [
+            (rapl_file.path, float(rapl_file.last_energy))
+            for rapl_file in self._rapl_files
+            if "dram" not in rapl_file.name.lower()
+        ]
+        mirrored = find_mirrored_counters(counters)
+        for path in mirrored:
+            logger.warning(
+                "\tRAPL - Ignoring mirrored energy counter at %s to avoid double-counting",
+                path,
             )
-            if is_mirrored:
-                logger.warning(
-                    "\tRAPL - Ignoring mirrored energy counter at %s to avoid double-counting",
-                    rapl_file.path,
-                )
-                continue
-            retained_rapl_files.append(rapl_file)
-            if energy and not is_dram:
-                observed_energies.append(energy)
-        self._rapl_files = retained_rapl_files
+        if mirrored:
+            self._rapl_files = [
+                rapl_file
+                for rapl_file in self._rapl_files
+                if rapl_file.path not in mirrored
+            ]
 
 
 class TDP:

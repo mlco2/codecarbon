@@ -3,6 +3,46 @@ from dataclasses import dataclass, field
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.external.logger import logger
 
+# Maximum relative difference between two cumulative energy counters for them
+# to be considered two views of the same hardware counter. Multi-die CPUs
+# (e.g. AMD Ryzen Threadripper / EPYC) can expose one package domain per die
+# that all mirror the same socket-wide counter, which would multiply the
+# reported CPU power by the number of dies.
+# See https://github.com/mlco2/codecarbon/issues/1274
+MIRRORED_COUNTER_TOLERANCE = 1e-6
+
+
+def counters_match(first, second, abs_tolerance=0.0) -> bool:
+    """Tell whether two cumulative counter values are indistinguishable."""
+    return abs(first - second) <= max(
+        MIRRORED_COUNTER_TOLERANCE * max(first, second), abs_tolerance
+    )
+
+
+def find_mirrored_counters(counters, abs_tolerance=0.0) -> dict:
+    """
+    Identify the counters that report the same underlying energy value.
+
+    ``counters`` is an ordered list of ``(key, absolute_energy)`` pairs whose
+    energies share a unit. Two independent meters are extremely unlikely to
+    hold the very same cumulative count, so equal counters point at duplicated
+    ones. A zero counter carries no information and is never flagged.
+
+    Returns a mapping of each duplicating key to the earlier key it mirrors.
+    """
+    references = []
+    mirrored = {}
+    for key, energy in counters:
+        if energy <= 0:
+            continue
+        for reference_key, reference in references:
+            if counters_match(energy, reference, abs_tolerance):
+                mirrored[key] = reference_key
+                break
+        else:
+            references.append((key, energy))
+    return mirrored
+
 
 @dataclass
 class RAPLFile:
