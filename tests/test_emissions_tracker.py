@@ -1153,3 +1153,76 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+    @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_geo_metadata")
+    @mock.patch("codecarbon.emissions_tracker.EmissionsTracker._get_cloud_metadata")
+    @mock.patch("codecarbon.core.electricitymaps_api.requests.get")
+    @mock.patch("codecarbon.core.resource_tracker.ResourceTracker")
+    @mock.patch(
+        "codecarbon.emissions_tracker.BaseEmissionsTracker.get_detected_hardware"
+    )
+    @mock.patch("codecarbon.emissions_tracker.PeriodicScheduler")
+    def test_coordinates_precision_is_reduced_in_emissions_data(
+        self,
+        mock_scheduler,
+        mock_get_hw,
+        mock_resource_tracker,
+        mock_get,
+        mock_cloud,
+        mock_geo,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_cloud_metadata_class,
+        mocked_get_gpu_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        mock_geo.return_value = mock.MagicMock(
+            latitude=48.8566,
+            longitude=2.3522,
+            country_iso_code="FRA",
+            country_2letter_iso_code="FR",
+        )
+        mock_cloud.return_value = mock.MagicMock(
+            is_on_private_infra=True, provider=None, region=None
+        )
+        mock_get_hw.return_value = {
+            "ram_total_size": 16.0,
+            "cpu_count": 8,
+            "cpu_physical_count": 4,
+            "cpu_model": "Mock CPU",
+            "gpu_count": 0,
+            "gpu_model": "None",
+            "gpu_ids": None,
+        }
+        mock_get.return_value = mock.MagicMock(
+            status_code=200, json=lambda: {"carbonIntensity": 100}
+        )
+
+        tracker = EmissionsTracker(
+            electricitymaps_api_token="test-token",
+            save_to_file=False,
+            measure_power_secs=1,
+            allow_multiple_runs=True,
+        )
+
+        mock_cpu = mock.MagicMock()
+        from codecarbon.external.hardware import CPU
+
+        mock_cpu.__class__ = CPU
+        mock_cpu.measure_power_and_energy.return_value = (
+            Power.from_watts(100),
+            Energy.from_energy(kWh=1.0),
+        )
+        tracker._hardware = [mock_cpu]
+
+        tracker.start()
+        data = tracker._prepare_emissions_data()
+
+        # Every output method gets coordinates reduced to one decimal place.
+        self.assertEqual(data.latitude, 48.9)
+        self.assertEqual(data.longitude, 2.4)
+        # The carbon intensity lookup still uses the full precision coordinates.
+        self.assertEqual(tracker._geo.latitude, 48.8566)
+        self.assertEqual(tracker._geo.longitude, 2.3522)
