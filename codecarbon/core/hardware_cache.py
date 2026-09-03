@@ -36,6 +36,7 @@ class HardwareKind(str, Enum):
     CPU = "cpu"
     APPLE_CHIP = "apple_chip"
     GPU = "gpu"
+    RASPBERRY = "raspberry"
 
 
 _cache_lock = threading.Lock()
@@ -108,6 +109,8 @@ def _hardware_kind(hw) -> HardwareKind:
         return HardwareKind.APPLE_CHIP
     if name == "GPU":
         return HardwareKind.GPU
+    if name == "Raspberry":
+        return HardwareKind.RASPBERRY
     raise TypeError(f"Unsupported hardware type for cache: {type(hw)}")
 
 
@@ -148,11 +151,17 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
     if kind == HardwareKind.GPU:
         gpu_ids = _canonical_gpu_ids(hw.gpu_ids)
         return {"kind": kind.value, "gpu_ids": list(gpu_ids) if gpu_ids else None}
+    if kind == HardwareKind.RASPBERRY:
+        return {
+            "kind": kind.value,
+            "model": hw._model,
+            "chip_part": hw.chip_part,
+        }
     raise TypeError(f"Unsupported hardware type for cache: {type(hw)}")
 
 
 def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
-    from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
+    from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip, Raspberry
     from codecarbon.external.ram import RAM
 
     try:
@@ -185,6 +194,12 @@ def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
     if kind == HardwareKind.GPU:
         gpu_ids = _canonical_gpu_ids(spec.get("gpu_ids"))
         return GPU.from_utils(gpu_ids=list(gpu_ids) if gpu_ids else None)
+    if kind == HardwareKind.RASPBERRY:
+        return Raspberry(
+            output_dir=output_dir,
+            model=spec["model"],
+            chip_part=spec["chip_part"],
+        )
     raise ValueError(f"Unknown hardware spec kind: {kind}")
 
 
