@@ -223,7 +223,10 @@ class BaseEmissionsTracker(ABC):
             warnings.warn(
                 "The save_to_* parameters are deprecated and will be removed in a "
                 "future version. Use output_methods=[OutputMethod.CSV, ...] instead.",
-                DeprecationWarning,
+                # FutureWarning, not DeprecationWarning: this one is aimed at
+                # end users, and the default filter hides DeprecationWarning
+                # unless it comes from __main__.
+                FutureWarning,
                 stacklevel=2,
             )
 
