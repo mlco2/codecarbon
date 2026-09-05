@@ -426,22 +426,23 @@ def monitor(
     # Shared tracker args so monitor and run_and_monitor behave the same.
     # Only the options actually given are forwarded: the others are left to the
     # tracker, which resolves them from the configuration file and environment.
+    cli_defaults = (
+        ("measure_power_secs", measure_power_secs),
+        ("api_call_interval", api_call_interval),
+        ("log_level", log_level),
+    )
     tracker_args = {
-        name: value
-        for name, value in (
-            ("measure_power_secs", measure_power_secs),
-            ("api_call_interval", api_call_interval),
-            ("log_level", log_level),
-        )
-        if _cli_provided(ctx, name)
+        name: value for name, value in cli_defaults if _cli_provided(ctx, name)
     }
-    if "log_level" not in tracker_args and "log_level" not in external_conf:
-        # Nothing configures it: keep the unattended monitor quiet.
-        tracker_args["log_level"] = log_level
+    for name, value in cli_defaults:
+        if name not in tracker_args and name not in external_conf:
+            # Nothing configures it: keep the defaults advertised by `--help`
+            # (and an unattended monitor quiet) instead of the tracker's own.
+            tracker_args[name] = value
 
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
-        if not country_iso_code and "country_iso_code" not in external_conf:
+        if not country_iso_code and not external_conf.get("country_iso_code"):
             print(
                 "ERROR: Country ISO code is required for offline mode. Add it to your configuration or provide it via the command line: `--country-iso-code FRA`",
                 file=sys.stderr,

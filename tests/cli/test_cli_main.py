@@ -1,5 +1,6 @@
 """Tests for the CodeCarbon CLI main function."""
 
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -405,8 +406,11 @@ def _fake_offline_monitor(monkeypatch, tmp_path):
         "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
     )
     monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
-    # Isolate from any config file of the user running the tests
+    # Isolate from the config file *and* the CODECARBON_* variables of the user
+    # running the tests: `get_hierarchical_config()` merges both.
     monkeypatch.setenv("HOME", str(tmp_path))
+    for name in [n for n in os.environ if n.startswith("CODECARBON_")]:
+        monkeypatch.delenv(name)
     monkeypatch.chdir(tmp_path)
     return calls
 
@@ -459,6 +463,33 @@ def test_monitor_stays_quiet_without_configured_log_level(monkeypatch, tmp_path)
 
     assert result.exit_code == 0
     assert calls["kwargs"]["log_level"] == "error"
+
+
+def test_monitor_keeps_documented_defaults_without_config(monkeypatch, tmp_path):
+    """With nothing configured, the defaults advertised by `--help` are used."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--offline", "--country-iso-code", "FRA"]
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["measure_power_secs"] == 10
+    assert calls["kwargs"]["api_call_interval"] == 30
+
+
+def test_monitor_offline_rejects_empty_country_iso_code_in_config(
+    monkeypatch, tmp_path
+):
+    """An empty value in the config is not a country: the CLI must still refuse."""
+    _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text("[codecarbon]\ncountry_iso_code =\n")
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 1
 
 
 def test_monitor_offline_accepts_country_iso_code_from_config(monkeypatch, tmp_path):
