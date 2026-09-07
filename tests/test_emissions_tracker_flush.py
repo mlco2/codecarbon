@@ -96,6 +96,19 @@ class TestCarbonTrackerFlush(unittest.TestCase):
         )
         self.assertEqual("test", emissions_df["experiment_id"].values[0])
 
+    def test_flush_with_active_task(self):
+        tracker = EmissionsTracker(
+            output_dir=self.emissions_path, output_file=self.emissions_file
+        )
+        tracker.start()
+        tracker.start_task("my_task")
+        heavy_computation(run_time_secs=1)
+        tracker.flush()
+        tracker.stop_task()
+        emissions = tracker.stop()
+        assert isinstance(emissions, float)
+        self.assertNotEqual(emissions, 0.0)
+
     def verify_output_file(self, file_path: str, expected_lines=3) -> None:
         with open(file_path, "r") as f:
             lines = [line.rstrip() for line in f]
