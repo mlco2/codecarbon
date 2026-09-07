@@ -979,12 +979,12 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
-        if not self._allow_multiple_runs:
-            # Release the lock
-            self._lock.release()
         if self._start_time is None:
-            logger.error("You first need to start the tracker.")
-            return None
+            logger.warning("Tracker already stopped or never started.")
+            return getattr(self, "final_emissions", None)
+
+        if not self._allow_multiple_runs:
+            self._lock.release()
 
         if self._scheduler:
             self._scheduler.stop()
@@ -1016,6 +1016,8 @@ class BaseEmissionsTracker(ABC):
 
         for handler in self._output_handlers:
             handler.exit()
+
+        self._start_time = None
 
         return emissions_data.emissions
 
