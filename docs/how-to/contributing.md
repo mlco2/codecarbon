@@ -22,6 +22,9 @@
     - [Build Documentation 🖨️](#build-documentation)
     - [Release process](#release-process)
       - [Test the build in Docker](#test-the-build-in-docker)
+    - [Conda-forge packaging](#conda-forge-packaging)
+      - [How a release reaches conda-forge](#how-a-release-reaches-conda-forge)
+      - [Updating the recipe by hand](#updating-the-recipe-by-hand)
   - [API and Dashboard](#api-and-dashboard)
     - [CSV Dashboard](#csv-dashboard)
     - [Web dashboard](#web-dashboard)
@@ -323,6 +326,7 @@ git push --force-with-lease
 - Wait for the Github Action `ReleaseDrafter` to finish running on the merge commit.
 - [Edit the Draft release](https://github.com/mlco2/codecarbon/releases/) on Github and give it a tag, `v1.0.0` for the version 1.0.0. Github will automatically create a Git tag for it. Complete help [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 -   A [Github Action](https://github.com/mlco2/codecarbon/actions) _Upload Python Package_ will be run automaticaly to upload the package.
+- Nothing to do for conda: the [conda-forge](#conda-forge-packaging) package is built from PyPI a few hours later.
 
 #### Test the release
 
@@ -358,6 +362,75 @@ pip install --no-cache-dir /data/dist/codecarbon-*.whl -U --force-reinstall
 cp /data/tests/test_package_integrity.py .
 pytest test_package_integrity.py
 ```
+
+<!-- TOC --><a name="conda-forge-packaging"></a>
+### Conda-forge packaging
+
+CodeCarbon is distributed on [conda-forge](https://anaconda.org/conda-forge/codecarbon)
+in addition to PyPI, so that conda users can install it with:
+
+```bash
+conda install -c conda-forge codecarbon
+```
+
+Nothing in this repository builds that package. Conda-forge builds every package from
+a dedicated repository called a *feedstock*, ours being
+[conda-forge/codecarbon-feedstock](https://github.com/conda-forge/codecarbon-feedstock).
+The build instructions live there in `recipe/meta.yaml`, and the people allowed to
+approve changes are listed at the bottom of that file under `extra: recipe-maintainers`.
+
+<!-- TOC --><a name="how-a-release-reaches-conda-forge"></a>
+#### How a release reaches conda-forge
+
+1. We publish to PyPI, as described in [Release process](#release-process).
+2. A few hours later `regro-cf-autotick-bot` notices the new version, and opens a PR on
+   the feedstock bumping the version and the source `sha256`. It also re-reads the
+   dependencies from the published package and updates the recipe accordingly.
+3. Conda-forge CI builds the package and runs the tests declared in the recipe, which
+   for us are `pip check` plus `codecarbon --help`.
+4. `conda-forge.yml` sets `bot: automerge: true`, so the PR merges itself once CI is
+   green and the package is uploaded to the `conda-forge` channel.
+
+A normal release therefore needs **no action** from us. `pip check` is the safety net:
+if a dependency is missing or is named differently on conda-forge, CI fails, the PR
+stays open, and a maintainer has to step in.
+
+<!-- TOC --><a name="updating-the-recipe-by-hand"></a>
+#### Updating the recipe by hand
+
+Needed when the bot PR fails, or when the recipe has drifted from `pyproject.toml`
+(a new dependency, a dropped Python version, a renamed entry point).
+
+Two conda-forge rules make this different from a normal PR:
+
+- **Always work from a personal fork.** Conda-forge refuses PRs opened from a branch of
+  the feedstock itself, and its bot cannot push to a fork owned by an organisation. Fork
+  to your own account, not to `mlco2`.
+- **Never edit the generated files by hand.** `README.md`, `.ci_support/`, and the CI
+  workflows are produced by `conda-smithy`. To refresh them, comment on the PR:
+
+  ```text
+  @conda-forge-admin, please rerender
+  ```
+
+  The bot pushes the regenerated files to your branch. A feedstock that has not been
+  rerendered for a long time will fail to build at all, because its pinned CI container
+  eventually becomes too old for conda-forge tooling.
+
+To update the recipe itself:
+
+- Set `version`, and take the matching `sha256` from the sdist on
+  [PyPI](https://pypi.org/project/codecarbon/#files).
+- Mirror the `dependencies` of our `pyproject.toml` into `requirements: run`. Conda
+  package names occasionally differ from PyPI ones, and environment markers such as
+  `python_version >= "3.14"` cannot be expressed in a `noarch: python` recipe.
+- Do not hardcode a Python version: use `{{ python_min }}`, which comes from
+  conda-forge's global pinning.
+- The optional `carbonboard` extra is shipped as a separate `codecarbon-viz`
+  metapackage, so its dependencies must be updated there too.
+
+Adding someone to `extra: recipe-maintainers` requires that person to comment on the PR
+to confirm.
 
 ### Contribute to a fork branch
 

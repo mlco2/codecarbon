@@ -19,6 +19,7 @@ import sys
 from functools import lru_cache
 from typing import Dict, List, Tuple
 
+from codecarbon.core.rapl import counters_match, find_mirrored_counters
 from codecarbon.core.units import Time
 from codecarbon.external.logger import logger
 
@@ -41,10 +42,6 @@ GUID_DEVICE_ENERGY_METER = "{45BD8344-7ED6-49CF-A440-C276C933B053}"
 PWH_TO_KWH = 1e-15
 PWH_TO_WH = 1e-12
 HNS_TO_S = 1e-7
-
-# Maximum relative difference between two absolute energy counters for them to
-# be considered two views of the same hardware counter.
-MIRRORED_CHANNEL_TOLERANCE = 1e-6
 
 _GENERIC_READ = 0x80000000
 _FILE_SHARE_READ = 0x1
@@ -304,7 +301,7 @@ def select_channels(
 
 def _counters_match(first: int, second: int) -> bool:
     """Tell whether two counter values are indistinguishable."""
-    return abs(first - second) <= MIRRORED_CHANNEL_TOLERANCE * max(first, second)
+    return counters_match(first, second)
 
 
 def find_mirrored_channels(
@@ -319,25 +316,9 @@ def find_mirrored_channels(
     channel per die, but every die mirrors the same socket-wide RAPL counter.
     Summing those channels multiplies the reported CPU power by the number of
     dies, exactly like the ``package-0-die-0`` / ``package-0-die-1`` duplicates
-    seen through the Linux powercap interface. Two independent meters are
-    extremely unlikely to hold the very same picowatt-hour count, so equal
-    counters point at duplicated ones.
-
-    Returns a mapping of each duplicating channel to the earlier channel it
-    mirrors.
+    seen through the Linux powercap interface.
     """
-    references: List[Tuple[Tuple[str, int], int]] = []
-    mirrored: Dict[Tuple[str, int], Tuple[str, int]] = {}
-    for key, energy in channels:
-        if energy <= 0:
-            continue
-        for reference_key, reference in references:
-            if _counters_match(energy, reference):
-                mirrored[key] = reference_key
-                break
-        else:
-            references.append((key, energy))
-    return mirrored
+    return find_mirrored_counters(channels)
 
 
 class WindowsEMI:
