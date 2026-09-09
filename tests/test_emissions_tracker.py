@@ -356,6 +356,92 @@ class TestCarbonTracker(unittest.TestCase):
             )
         )
 
+    def test_run_id_with_api_output_is_never_none(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with (
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient._create_run"
+            ) as mock_create_run,
+            mock.patch("codecarbon.output_methods.http.ApiClient.add_emission"),
+        ):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.CSV, OutputMethod.API],
+                experiment_id="test-experiment-id",
+                api_key="test-api-key",
+            )
+            api_output = next(
+                handler
+                for handler in tracker._output_handlers
+                if isinstance(handler, CodeCarbonAPIOutput)
+            )
+
+            def create_run(experiment_id):
+                api_output.api.run_id = "run-created"
+                return "run-created"
+
+            mock_create_run.side_effect = create_run
+
+            self.assertIsNotNone(tracker.run_id)
+            tracker.run_id = "caller-provided"
+            self.assertEqual(tracker.run_id, "caller-provided")
+
+            tracker.start()
+            heavy_computation(1)
+            tracker.stop()
+
+        self.assertEqual(tracker.run_id, "run-created")
+        # ...and it is what got persisted, instead of the string "None".
+        emissions_df = pd.read_csv(self.emissions_file_path)
+        self.assertEqual(emissions_df["run_id"].iloc[0], "run-created")
+
+    def test_run_id_falls_back_to_uuid_when_api_run_creation_fails(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with (
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient._create_run",
+                side_effect=Exception("API is down"),
+            ),
+            mock.patch("codecarbon.output_methods.http.ApiClient.add_emission"),
+        ):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.CSV, OutputMethod.API],
+                experiment_id="test-experiment-id",
+                api_key="test-api-key",
+            )
+            local_run_id = tracker.run_id
+
+            with self.assertLogs("codecarbon", level="ERROR") as logs:
+                tracker.start()
+            self.assertTrue(any("API is down" in line for line in logs.output))
+            self.assertIsNotNone(tracker._start_time)
+
+            heavy_computation(1)
+            tracker.stop()
+
+        self.assertEqual(tracker.run_id, local_run_id)
+        emissions_df = pd.read_csv(self.emissions_file_path)
+        self.assertEqual(emissions_df["run_id"].iloc[0], str(local_run_id))
+
     def test_default_output_methods_is_csv(
         self,
         mock_cli_setup,
