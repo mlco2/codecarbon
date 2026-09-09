@@ -1,0 +1,26 @@
+# PySentry configuration — https://pysentry.com
+# Single source of truth for BOTH the CI workflow (.github/workflows/pysentry.yml)
+# and the pre-commit hook, so local and CI scans behave identically.
+version = 1
+
+[defaults]
+# Block on high/critical; medium and below stay advisory.
+fail_on = "high"
+
+[sources]
+# Cross-check three advisory databases; findings are merged and de-duplicated.
+enabled = ["pypa", "pypi", "osv"]
+
+# Dev- and doc-only tooling is still scanned, but only critical issues should fail.
+# Anything ALSO reachable from production keeps the "high" floor set above — a group
+# can loosen below global only for packages exclusive to that group.
+[groups.dev]
+fail_on = "critical"
+
+[groups.doc]
+fail_on = "critical"
+
+# Mute individual advisories here once assessed, e.g.:
+# [ignore]
+# ids = ["GHSA-xxxx-xxxx-xxxx"]       # accepted risk or false positive
+# while_no_fix = ["PYSEC-2024-xxxx"]  # mute only until an upstream fix ships
