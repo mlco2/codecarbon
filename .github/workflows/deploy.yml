@@ -6,7 +6,7 @@ on:
       - "carbonserver/**"
       - "webapp/**"
       - "pyproject.toml"
-    branches: [master]
+    branches: [main]
 
 permissions:
   contents: read

@@ -11,7 +11,7 @@ on:
       - "uv.lock"
       - ".github/workflows/test-package.yml"
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   python-test:

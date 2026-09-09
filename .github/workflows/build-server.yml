@@ -10,7 +10,7 @@ on:
     paths:
       - "carbonserver/**"
       - "pyproject.toml"
-    branches: [master]
+    branches: [main]
 jobs:
   build_server:
     runs-on: ubuntu-latest
