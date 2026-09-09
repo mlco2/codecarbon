@@ -6,16 +6,13 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import Dict, Optional
 
 from codecarbon.core import electricitymaps_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
 from codecarbon.input import DataSource, DataSourceException
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 _NORDIC_REGIONS_BY_COUNTRY = {
     "SWE": {"SE1", "SE2", "SE3", "SE4"},
@@ -65,12 +62,12 @@ class Emissions:
             )
             return energy.kWh * (self._force_carbon_intensity_g_co2e_kwh / 1000.0)
 
-        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
         try:
+            row = self._data_source.find_cloud_region(cloud.provider, cloud.region)
+            if row is None:
+                raise KeyError(f"{cloud.provider}/{cloud.region}")
             emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_g_per_kWh(
-                df.loc[
-                    (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-                ]["impact"].item()
+                row["impact"]
             )
             emissions = emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
         except Exception as e:
@@ -100,51 +97,44 @@ class Emissions:
         """
         Returns the Country Name where the cloud region is located
         """
-        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-        flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        selected = df.loc[flags]
-        if not len(selected):
+        row = self._data_source.find_cloud_region(cloud.provider, cloud.region)
+        if row is None:
             raise ValueError(
                 "Unable to find country name for "
                 f"cloud_provider={cloud.provider}, "
                 f"cloud_region={cloud.region}"
             )
-        return selected["country_name"].item()
+        return row["country_name"]
 
     def get_cloud_country_iso_code(self, cloud: CloudMetadata) -> str:
         """
         Returns the Country ISO Code where the cloud region is located
         """
-        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-        flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        selected = df.loc[flags]
-        if not len(selected):
+        row = self._data_source.find_cloud_region(cloud.provider, cloud.region)
+        if row is None:
             raise ValueError(
                 "Unable to find country ISO Code for "
                 f"cloud_provider={cloud.provider}, "
                 f"cloud_region={cloud.region}"
             )
-        return selected["countryIsoCode"].item()
+        return row["countryIsoCode"]
 
     def get_cloud_geo_region(self, cloud: CloudMetadata) -> str:
         """
         Returns the State/City where the cloud region is located
         """
-        df: pd.DataFrame = self._data_source.get_cloud_emissions_data()
-        flags = (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
-        selected = df.loc[flags]
-        if not len(selected):
+        row = self._data_source.find_cloud_region(cloud.provider, cloud.region)
+        if row is None:
             raise ValueError(
                 "Unable to find State/City name for "
                 f"cloud_provider={cloud.provider}, "
                 f"cloud_region={cloud.region}"
             )
 
-        state = selected["state"].item()
-        if state is not None:
-            return state
-        city = selected["city"].item()
-        return city
+        # Empty ``state`` used to arrive here as pandas' NaN, which is not None,
+        # so this returned NaN for the 30 of 40 rows that only have a city.
+        # It now falls through to the city as originally intended.
+        return row["state"] if row["state"] is not None else row["city"]
 
     def get_private_infra_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """

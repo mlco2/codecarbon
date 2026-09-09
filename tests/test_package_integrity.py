@@ -3,9 +3,11 @@ Test that verifies the package includes all necessary data files.
 This test should be run against the installed package, not the source.
 """
 
+import json
+import subprocess
+import sys
 from importlib import resources as importlib_resources
 
-import pandas as pd
 import pytest
 
 from codecarbon.input import DataSource
@@ -20,11 +22,10 @@ def test_critical_data_files_included():
     assert cloud_path.exists(), f"Cloud emissions file missing: {cloud_path}"
 
     # Test that we can actually read the cloud emissions data
-    cloud_data = ds.get_cloud_emissions_data()
-    assert isinstance(
-        cloud_data, pd.DataFrame
-    ), "Cloud emissions data should be a DataFrame"
-    assert not cloud_data.empty, "Cloud emissions data should not be empty"
+    cloud_data = ds.get_cloud_emissions_rows()
+    assert isinstance(cloud_data, list), "Cloud emissions data should be a list of rows"
+    assert cloud_data, "Cloud emissions data should not be empty"
+    assert "provider" in cloud_data[0], "BOM must not leak into the first column name"
 
     # Test carbon intensity data
     carbon_intensity_path = ds.carbon_intensity_per_source_path
@@ -49,11 +50,9 @@ def test_cpu_power_data_included():
     assert cpu_power_path.exists(), f"CPU power data missing: {cpu_power_path}"
 
     # Test that we can actually read the CPU power data
-    cpu_power_data = ds.get_cpu_power_data()
-    assert isinstance(
-        cpu_power_data, pd.DataFrame
-    ), "CPU power data should be a DataFrame"
-    assert not cpu_power_data.empty, "CPU power data should not be empty"
+    cpu_power_data = ds.get_cpu_power_rows()
+    assert isinstance(cpu_power_data, list), "CPU power data should be a list of rows"
+    assert cpu_power_data, "CPU power data should not be empty"
 
 
 def test_global_energy_mix_data_included():
@@ -150,3 +149,26 @@ def test_package_importability():
     from codecarbon.output import EmissionsData
 
     assert EmissionsData is not None
+
+
+def test_core_does_not_import_pandas_or_numpy():
+    """
+    pandas/numpy are dashboard-only dependencies and are not installed by a
+    default `pip install codecarbon`. Running a tracker end to end must not
+    reach for them, so assert on a fresh interpreter's sys.modules.
+    """
+    script = (
+        "import sys, tempfile, os, json\n"
+        "os.chdir(tempfile.mkdtemp())\n"
+        "from codecarbon import OfflineEmissionsTracker\n"
+        "t = OfflineEmissionsTracker(country_iso_code='FRA', allow_multiple_runs=True)\n"
+        "t.start(); t.stop()\n"
+        "print(json.dumps([m for m in ('pandas', 'numpy', 'prometheus_client')"
+        " if m in sys.modules]))\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stderr
+    leaked = json.loads(result.stdout.strip().splitlines()[-1])
+    assert leaked == [], f"core tracker path imported {leaked}"

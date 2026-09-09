@@ -29,8 +29,6 @@ dependencies = [
     "authlib>=1.2.1",
     "joserfc>=1.0.0",
     "click",
-    "pandas>=2.3.3;python_version>='3.14'",
-    "pandas;python_version<'3.14'",
     "prometheus_client",
     "psutil >= 6.0.0",
     "py-cpuinfo",
@@ -87,6 +85,7 @@ dev = [
     "black",
     "mypy",
     "pytest",
+    "pandas",  # no longer a runtime dep; tests read output CSVs with it
     "requests",
     "requests-mock",
     "responses",
@@ -108,16 +107,28 @@ doc = [
 ]
 
 [project.optional-dependencies]
+# pandas is only needed by the dashboard now; the measurement core parses its
+# reference CSVs with the stdlib csv module.
 carbonboard = [
     "dash",
     "dash_bootstrap_components > 1.0.0",
     "fire",
+    "numpy",
+    "pandas>=2.3.3;python_version>='3.14'",
+    "pandas;python_version<'3.14'",
 ]
 # Backwards compatibility alias - will be removed in v4.0.0
 viz-legacy = [
     "dash",
     "dash_bootstrap_components > 1.0.0",
     "fire",
+    "numpy",
+    "pandas>=2.3.3;python_version>='3.14'",
+    "pandas;python_version<'3.14'",
+]
+# Everything, for users who do not want to think about extras.
+all = [
+    "codecarbon[carbonboard]",
 ]
 
 [project.scripts]

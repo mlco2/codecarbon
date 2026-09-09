@@ -1,3 +1,4 @@
+import csv
 import os
 import shutil
 import tempfile
@@ -87,6 +88,22 @@ class TestFileOutput(unittest.TestCase):
 
         self.assertTrue(file_output.has_valid_headers(self.emissions_data))
 
+    def test_non_finite_values_are_written_as_empty_cells(self):
+        """NaN and infinities must round-trip as missing, not as "nan"/"inf"."""
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(value=value):
+                file_output = FileOutput("test.csv", self.temp_dir)
+                self.emissions_data.cpu_power = value
+                file_output.out(self.emissions_data, None)
+
+                with open(file_output.save_file_path) as csv_file:
+                    row = next(csv.DictReader(csv_file))
+                self.assertEqual(row["cpu_power"], "")
+                self.assertTrue(
+                    pd.isna(pd.read_csv(file_output.save_file_path)["cpu_power"][0])
+                )
+                os.remove(file_output.save_file_path)
+
     def test_has_valid_headers_failure(self):
         file_output = FileOutput("test.csv", self.temp_dir)
         file_output.out(self.emissions_data, None)
@@ -131,6 +148,22 @@ class TestFileOutput(unittest.TestCase):
 
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(len(df), 2)
+
+    def test_file_output_out_append_respects_existing_column_order(self):
+        """Appending must follow the header on disk, not the row's key order."""
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        df = df[list(reversed(df.columns))]
+        df.to_csv(os.path.join(self.temp_dir, "test.csv"), index=False)
+
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 2)
+        self.assertEqual(df.iloc[1]["project_name"], self.emissions_data.project_name)
+        self.assertEqual(df.iloc[0].to_dict(), df.iloc[1].to_dict())
 
     def test_file_output_out_update_file_exists_no_matching_row(self):
         file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="update")
