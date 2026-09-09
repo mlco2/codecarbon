@@ -23,23 +23,23 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="zensical-0.0.52">
+      <meta name="generator" content="zensical-0.0.60">
     
     
       
-        <title>Using CodeCarbon on SLURM (Adastra/ROCm Example) - CodeCarbon</title>
+        <title>Run on SLURM (ROCm/PyTorch) - CodeCarbon</title>
       
     
     
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.8b3b5a67.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.ce62732f.min.css">
       
         
           
         
-        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.812a03bb.min.css">
       
       
 
@@ -124,7 +124,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Using CodeCarbon on SLURM (Adastra/ROCm Example)
+              Run on SLURM (ROCm/PyTorch)
             
           </span>
         </div>
@@ -2671,25 +2671,25 @@
 <h3 id="step-1-configure-your-environment-variables">Step 1: Configure Your Environment Variables<a class="headerlink" href="#step-1-configure-your-environment-variables" title="Permanent link">&para;</a></h3>
 <p>Set up environment variables for your HPC configuration. Add these to your <code>.bashrc</code> or <code>.zshrc</code>:</p>
 <p>Adapt the following environment variables with your own configuration. You can add them to your <code>.bashrc</code> or <code>.zshrc</code> for convenience.</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">BASTION_IP</span><span class="o">=</span><span class="s2">&quot;xx.xx.xx.xx&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">BASTION_USER</span><span class="o">=</span><span class="s2">&quot;username&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">HPC_HOST</span><span class="o">=</span><span class="s2">&quot;xx.xx.fr&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">HPC_PASS</span><span class="o">=</span><span class="s2">&quot;xxxxx&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">PROJECT_ID</span><span class="o">=</span><span class="s2">&quot;xxx&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">USER_NAME</span><span class="o">=</span><span class="s2">&quot;username_hpc&quot;</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">HPC_PROJECT_FOLDER</span><span class="o">=</span><span class="s2">&quot;/lus/home/xxx&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">BASTION_IP</span><span class="o">=</span><span class="s2">"xx.xx.xx.xx"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">BASTION_USER</span><span class="o">=</span><span class="s2">"username"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">HPC_HOST</span><span class="o">=</span><span class="s2">"xx.xx.fr"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">HPC_PASS</span><span class="o">=</span><span class="s2">"xxxxx"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PROJECT_ID</span><span class="o">=</span><span class="s2">"xxx"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">USER_NAME</span><span class="o">=</span><span class="s2">"username_hpc"</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">HPC_PROJECT_FOLDER</span><span class="o">=</span><span class="s2">"/lus/home/xxx"</span>
 </code></pre></div>
 <h3 id="step-2-connect-to-the-hpc-cluster">Step 2: Connect to the HPC Cluster<a class="headerlink" href="#step-2-connect-to-the-hpc-cluster" title="Permanent link">&para;</a></h3>
 <p>Connect to your HPC login node:</p>
 <p><strong>Using sshpass (automated):</strong></p>
-<div class="highlight"><pre><span></span><code>sshpass<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HPC_PASS</span><span class="s2">&quot;</span><span class="w"> </span>ssh<span class="w"> </span>-J<span class="w"> </span><span class="nv">$BASTION_USER</span>@<span class="nv">$BASTION_IP</span><span class="w"> </span><span class="nv">$USER_NAME</span>@<span class="nv">$HPC_HOST</span>
+<div class="highlight"><pre><span></span><code>sshpass<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$HPC_PASS</span><span class="s2">"</span><span class="w"> </span>ssh<span class="w"> </span>-J<span class="w"> </span><span class="nv">$BASTION_USER</span>@<span class="nv">$BASTION_IP</span><span class="w"> </span><span class="nv">$USER_NAME</span>@<span class="nv">$HPC_HOST</span>
 </code></pre></div>
 <p><strong>For first-time connection (debug SSH issues):</strong></p>
 <div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-o<span class="w"> </span><span class="nv">ServerAliveInterval</span><span class="o">=</span><span class="m">60</span><span class="w"> </span><span class="nv">$BASTION_USER</span>@<span class="nv">$BASTION_IP</span>
 ssh<span class="w"> </span>-o<span class="w"> </span><span class="nv">ServerAliveInterval</span><span class="o">=</span><span class="m">60</span><span class="w"> </span><span class="nv">$USER_NAME</span>@<span class="nv">$HPC_HOST</span>
 </code></pre></div>
 <h3 id="step-3-copy-your-code-to-the-hpc-cluster">Step 3: Copy Your Code to the HPC Cluster<a class="headerlink" href="#step-3-copy-your-code-to-the-hpc-cluster" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>sshpass<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HPC_PASS</span><span class="s2">&quot;</span><span class="w"> </span>scp<span class="w"> </span>-r<span class="w"> </span>-J<span class="w"> </span><span class="nv">$BASTION_USER</span>@<span class="nv">$BASTION_IP</span><span class="w"> </span>/you/folder/*<span class="w"> </span><span class="nv">$USER_NAME</span>@<span class="nv">$HPC_HOST</span>:<span class="nv">$HPC_PROJECT_FOLDER</span>
+<div class="highlight"><pre><span></span><code>sshpass<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$HPC_PASS</span><span class="s2">"</span><span class="w"> </span>scp<span class="w"> </span>-r<span class="w"> </span>-J<span class="w"> </span><span class="nv">$BASTION_USER</span>@<span class="nv">$BASTION_IP</span><span class="w"> </span>/you/folder/*<span class="w"> </span><span class="nv">$USER_NAME</span>@<span class="nv">$HPC_HOST</span>:<span class="nv">$HPC_PROJECT_FOLDER</span>
 </code></pre></div>
 <h3 id="step-4-install-codecarbon-and-dependencies">Step 4: Install CodeCarbon and Dependencies<a class="headerlink" href="#step-4-install-codecarbon-and-dependencies" title="Permanent link">&para;</a></h3>
 <div class="admonition warning">
@@ -2703,7 +2703,7 @@ module<span class="w"> </span>load<span class="w"> </span>rocm/7.0.1
 python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
-<span class="c1"># Important: Adastra&#39;s MI250 runs ROCm 6.4.3 natively.</span>
+<span class="c1"># Important: Adastra's MI250 runs ROCm 6.4.3 natively.</span>
 <span class="c1"># With export ROCM_PATH=/opt/rocm-6.4.3 in our SLURM script, this python wheel perfectly matches the C library without symlink issues!</span>
 pip<span class="w"> </span>install<span class="w"> </span><span class="nv">amdsmi</span><span class="o">==</span><span class="m">7</span>.0.1
 pip<span class="w"> </span>install<span class="w"> </span>codecarbon
@@ -2720,7 +2720,7 @@ python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </s
 python<span class="w"> </span>-V
 <span class="c1"># Must be 3.12.x</span>
 pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
-<span class="c1"># Important: Adastra&#39;s MI250 runs ROCm 6.4.3 natively.</span>
+<span class="c1"># Important: Adastra's MI250 runs ROCm 6.4.3 natively.</span>
 <span class="c1"># With export ROCM_PATH=/opt/rocm-6.4.3 in our SLURM script, this python wheel perfectly matches the C library without symlink issues!</span>
 pip<span class="w"> </span>install<span class="w"> </span><span class="nv">amdsmi</span><span class="o">==</span><span class="m">7</span>.0.1
 <span class="c1"># Look at https://download.pytorch.org/whl/torch/ for the correct version matching your Python (cp312) and ROCM version.</span>
@@ -2944,7 +2944,7 @@ JobId=4687018 JobName=codecarbon-test
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.action.view","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.instant","navigation.instant.progress","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.sections","navigation.path","navigation.top","navigation.footer","search.highlight"],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"default":"latest","provider":"mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.ed145cee.min.js"></script>
+      <script src="../../assets/javascripts/bundle.88ee1349.min.js"></script>
       
         <script src="../../javascripts/mathjax.js"></script>
       

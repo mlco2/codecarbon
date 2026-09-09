@@ -23,23 +23,23 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="zensical-0.0.52">
+      <meta name="generator" content="zensical-0.0.60">
     
     
       
-        <title>Deploy CodeCarbon CLI as a Service using Ansible - CodeCarbon</title>
+        <title>Deploy with Ansible - CodeCarbon</title>
       
     
     
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.8b3b5a67.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.ce62732f.min.css">
       
         
           
         
-        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.812a03bb.min.css">
       
       
 
@@ -124,7 +124,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Deploy CodeCarbon CLI as a Service using Ansible
+              Deploy with Ansible
             
           </span>
         </div>
@@ -2446,7 +2446,7 @@ overrides every per-host file and silently sends all your machines to the same
 experiment. The playbook stops with an explicit error if a host has no
 <code>experiment_id</code> at all.</p>
 <p>You can check what each host resolves to before deploying:</p>
-<div class="highlight"><pre><span></span><code>ansible<span class="w"> </span>all<span class="w"> </span>-i<span class="w"> </span>hosts<span class="w"> </span>-m<span class="w"> </span>debug<span class="w"> </span>-a<span class="w"> </span><span class="s1">&#39;msg=&quot;{{ inventory_hostname }} -&gt; {{ experiment_id }}&quot;&#39;</span>
+<div class="highlight"><pre><span></span><code>ansible<span class="w"> </span>all<span class="w"> </span>-i<span class="w"> </span>hosts<span class="w"> </span>-m<span class="w"> </span>debug<span class="w"> </span>-a<span class="w"> </span><span class="s1">'msg="{{ inventory_hostname }} -&gt; {{ experiment_id }}"'</span>
 </code></pre></div>
 <h3 id="step-4-run-the-playbook">Step 4: Run the Playbook<a class="headerlink" href="#step-4-run-the-playbook" title="Permanent link">&para;</a></h3>
 <p>Execute the Ansible playbook to deploy CodeCarbon:</p>
@@ -2583,7 +2583,7 @@ startup.</p>
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.action.view","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.instant","navigation.instant.progress","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.sections","navigation.path","navigation.top","navigation.footer","search.highlight"],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"default":"latest","provider":"mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.ed145cee.min.js"></script>
+      <script src="../../assets/javascripts/bundle.88ee1349.min.js"></script>
       
         <script src="../../javascripts/mathjax.js"></script>
       

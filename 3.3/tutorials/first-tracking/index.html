@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="zensical-0.0.52">
+      <meta name="generator" content="zensical-0.0.60">
     
     
       
@@ -34,12 +34,12 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.8b3b5a67.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.ce62732f.min.css">
       
         
           
         
-        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.812a03bb.min.css">
       
       
 
@@ -2258,25 +2258,25 @@
 <p>With CodeCarbon installed, we're ready to write our first tracking script. The simplest way to use CodeCarbon is as a <strong>context manager</strong>. Everything inside the <code>with</code> block is tracked.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">codecarbon</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmissionsTracker</span>
 
-<span class="k">with</span> <span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">project_name</span><span class="o">=</span><span class="s2">&quot;my-first-tracking&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tracker</span><span class="p">:</span>
+<span class="k">with</span> <span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">project_name</span><span class="o">=</span><span class="s2">"my-first-tracking"</span><span class="p">)</span> <span class="k">as</span> <span class="n">tracker</span><span class="p">:</span>
     <span class="c1"># Simulate some computation</span>
     <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10_000_000</span><span class="p">):</span>
         <span class="n">total</span> <span class="o">+=</span> <span class="n">i</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Computation result: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Computation result: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="step-3-inspect-the-results">Step 3: Inspect the results<a class="headerlink" href="#step-3-inspect-the-results" title="Permanent link">&para;</a></h2>
 <p>Now that the tracker has run, let's look at what it recorded. CodeCarbon saves the emissions data to a CSV file called <code>emissions.csv</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
-<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;emissions.csv&quot;</span><span class="p">)</span>
-<span class="n">df</span><span class="p">[[</span><span class="s2">&quot;project_name&quot;</span><span class="p">,</span> <span class="s2">&quot;duration&quot;</span><span class="p">,</span> <span class="s2">&quot;emissions&quot;</span><span class="p">,</span> <span class="s2">&quot;emissions_rate&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu_power&quot;</span><span class="p">,</span> <span class="s2">&quot;ram_power&quot;</span><span class="p">,</span> <span class="s2">&quot;energy_consumed&quot;</span><span class="p">]]</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"emissions.csv"</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[[</span><span class="s2">"project_name"</span><span class="p">,</span> <span class="s2">"duration"</span><span class="p">,</span> <span class="s2">"emissions"</span><span class="p">,</span> <span class="s2">"emissions_rate"</span><span class="p">,</span> <span class="s2">"cpu_power"</span><span class="p">,</span> <span class="s2">"ram_power"</span><span class="p">,</span> <span class="s2">"energy_consumed"</span><span class="p">]]</span>
 </code></pre></div>
 <p>You can also access the emissions data directly from the tracker object:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total emissions: </span><span class="si">{</span><span class="n">tracker</span><span class="o">.</span><span class="n">final_emissions</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> g CO2eq&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duration: </span><span class="si">{</span><span class="n">tracker</span><span class="o">.</span><span class="n">final_emissions_data</span><span class="o">.</span><span class="n">duration</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Energy consumed: </span><span class="si">{</span><span class="n">tracker</span><span class="o">.</span><span class="n">final_emissions_data</span><span class="o">.</span><span class="n">energy_consumed</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> kWh&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total emissions: </span><span class="si">{</span><span class="n">tracker</span><span class="o">.</span><span class="n">final_emissions</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> g CO2eq"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Duration: </span><span class="si">{</span><span class="n">tracker</span><span class="o">.</span><span class="n">final_emissions_data</span><span class="o">.</span><span class="n">duration</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Energy consumed: </span><span class="si">{</span><span class="n">tracker</span><span class="o">.</span><span class="n">final_emissions_data</span><span class="o">.</span><span class="n">energy_consumed</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> kWh"</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="whats-next">What's next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
@@ -2409,7 +2409,7 @@
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.action.view","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.instant","navigation.instant.progress","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.sections","navigation.path","navigation.top","navigation.footer","search.highlight"],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"default":"latest","provider":"mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.ed145cee.min.js"></script>
+      <script src="../../assets/javascripts/bundle.88ee1349.min.js"></script>
       
         <script src="../../javascripts/mathjax.js"></script>
       

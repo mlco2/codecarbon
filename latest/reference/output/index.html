@@ -23,23 +23,23 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="zensical-0.0.52">
+      <meta name="generator" content="zensical-0.0.60">
     
     
       
-        <title>Output - CodeCarbon</title>
+        <title>Output Formats - CodeCarbon</title>
       
     
     
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.8b3b5a67.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.ce62732f.min.css">
       
         
           
         
-        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.812a03bb.min.css">
       
       
 
@@ -124,7 +124,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Output
+              Output Formats
             
           </span>
         </div>
@@ -2601,8 +2601,8 @@ power drawn at the facility level, not at the socket.</p>
 <div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker
 
 tracker = OfflineEmissionsTracker(
-    project_name=&quot;my_project&quot;,
-    country_iso_code=&quot;USA&quot;,
+    project_name="my_project",
+    country_iso_code="USA",
     save_to_prometheus=True,
 )
 tracker.start()
@@ -2618,8 +2618,8 @@ tracker.stop()
 <div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker
 
 tracker = OfflineEmissionsTracker(
-    project_name=&quot;my_project&quot;,
-    country_iso_code=&quot;USA&quot;,
+    project_name="my_project",
+    country_iso_code="USA",
     save_to_logfire=True,
 )
 tracker.start()
@@ -2634,8 +2634,8 @@ tracker.stop()
 <div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
-    project_name=&quot;my_project&quot;,
-    country_iso_code=&quot;USA&quot;,
+    project_name="my_project",
+    country_iso_code="USA",
     output_methods=[OutputMethod.CSV, OutputMethod.BOAMPS],
 )
 tracker.start()
@@ -2646,48 +2646,48 @@ tracker.stop()
 <p>If you need to enrich the report with task metadata, datasets, or publisher information, use <code>BoAmpsOutput</code> directly through <code>output_handlers</code> or start from <a href="https://github.com/mlco2/codecarbon/blob/master/examples/boamps_output.py">examples/boamps_output.py</a>.</p>
 <p>Sample output:
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;header&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;formatVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.1&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;formatVersionSpecificationUri&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://github.com/Boavizta/BoAmps/tree/main/model&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;reportId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;79e4408f-ec31-476f-a2c5-8ca7f53e6cc7&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;reportDatetime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-04-09 23:07:42&quot;</span>
+<span class="w">  </span><span class="nt">"header"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"formatVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0.1"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"formatVersionSpecificationUri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://github.com/Boavizta/BoAmps/tree/main/model"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"reportId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"79e4408f-ec31-476f-a2c5-8ca7f53e6cc7"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"reportDatetime"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-04-09 23:07:42"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;measures&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"measures"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;measurementMethod&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;codecarbon&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.2.6&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;averageUtilizationCpu&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;powerConsumption&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">6.515418096322266e-05</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;measurementDuration&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">7.052794550996623</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;measurementDateTime&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-04-09 23:07:42&quot;</span>
+<span class="w">      </span><span class="nt">"measurementMethod"</span><span class="p">:</span><span class="w"> </span><span class="s2">"codecarbon"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3.2.6"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"averageUtilizationCpu"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.6</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"powerConsumption"</span><span class="p">:</span><span class="w"> </span><span class="mf">6.515418096322266e-05</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"measurementDuration"</span><span class="p">:</span><span class="w"> </span><span class="mf">7.052794550996623</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"measurementDateTime"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-04-09 23:07:42"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">],</span>
-<span class="w">  </span><span class="nt">&quot;system&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;os&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Linux-6.17.0-19-generic-x86_64-with-glibc2.42&quot;</span>
+<span class="w">  </span><span class="nt">"system"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"os"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Linux-6.17.0-19-generic-x86_64-with-glibc2.42"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;software&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.12.12&quot;</span>
+<span class="w">  </span><span class="nt">"software"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"language"</span><span class="p">:</span><span class="w"> </span><span class="s2">"python"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"3.12.12"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;infrastructure&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;infraType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;onPremise&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;components&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"infrastructure"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"infraType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"onPremise"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"components"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;componentName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Intel(R) Core(TM) Ultra 7 265H&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;componentType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;nbComponent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span>
+<span class="w">        </span><span class="nt">"componentName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Intel(R) Core(TM) Ultra 7 265H"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"componentType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cpu"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"nbComponent"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;componentType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ram&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;nbComponent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;memorySize&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">30.052967071533203</span>
+<span class="w">        </span><span class="nt">"componentType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ram"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"nbComponent"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"memorySize"</span><span class="p">:</span><span class="w"> </span><span class="mf">30.052967071533203</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">]</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;environment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;country&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;France&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;latitude&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">48.6</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;longitude&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">2.3</span>
+<span class="w">  </span><span class="nt">"environment"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"country"</span><span class="p">:</span><span class="w"> </span><span class="s2">"France"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"latitude"</span><span class="p">:</span><span class="w"> </span><span class="mf">48.6</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"longitude"</span><span class="p">:</span><span class="w"> </span><span class="mf">2.3</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></p>
@@ -2818,7 +2818,7 @@ tracker.stop()
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.action.view","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.instant","navigation.instant.progress","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.sections","navigation.path","navigation.top","navigation.footer","search.highlight"],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"default":"latest","provider":"mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.ed145cee.min.js"></script>
+      <script src="../../assets/javascripts/bundle.88ee1349.min.js"></script>
       
         <script src="../../javascripts/mathjax.js"></script>
       

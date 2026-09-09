@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../images/favicon.ico">
-      <meta name="generator" content="zensical-0.0.52">
+      <meta name="generator" content="zensical-0.0.60">
     
     
       
@@ -34,12 +34,12 @@
       
         
       
-      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.8b3b5a67.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.ce62732f.min.css">
       
         
           
         
-        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.dfe2e883.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.812a03bb.min.css">
       
       
 
@@ -2550,10 +2550,10 @@ sudo<span class="w"> </span>usermod<span class="w"> </span>-a<span class="w"> </
 <p>Use the account that will run CodeCarbon — if it runs as a service, add that service user
 instead of <code>$USER</code>.</p>
 <p><strong>Step 3b: Create the Rule</strong></p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/udev/rules.d/99-codecarbon-rapl.rules<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
-<span class="s">SUBSYSTEM==&quot;powercap&quot;, ACTION==&quot;add&quot;, TEST==&quot;energy_uj&quot;, \</span>
-<span class="s">  RUN+=&quot;/bin/chgrp codecarbon /sys%p/energy_uj&quot;, \</span>
-<span class="s">  RUN+=&quot;/bin/chmod 0440 /sys%p/energy_uj&quot;</span>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/udev/rules.d/99-codecarbon-rapl.rules<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<span class="s">SUBSYSTEM=="powercap", ACTION=="add", TEST=="energy_uj", \</span>
+<span class="s">  RUN+="/bin/chgrp codecarbon /sys%p/energy_uj", \</span>
+<span class="s">  RUN+="/bin/chmod 0440 /sys%p/energy_uj"</span>
 <span class="s">EOF</span>
 </code></pre></div>
 <p><code>%p</code> expands to the device path, so each RAPL domain is handled by its own event.
@@ -2576,8 +2576,8 @@ membership to take effect:</p>
 <p>On a personal machine where every account is yours, you may prefer to skip the group and
 make the counters world-readable. Per step 1, this mainly means any local process can
 observe your machine's activity and defeat KASLR:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/udev/rules.d/99-codecarbon-rapl.rules<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
-<span class="s">SUBSYSTEM==&quot;powercap&quot;, ACTION==&quot;add&quot;, TEST==&quot;energy_uj&quot;, RUN+=&quot;/bin/chmod 0444 /sys%p/energy_uj&quot;</span>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/udev/rules.d/99-codecarbon-rapl.rules<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<span class="s">SUBSYSTEM=="powercap", ACTION=="add", TEST=="energy_uj", RUN+="/bin/chmod 0444 /sys%p/energy_uj"</span>
 <span class="s">EOF</span>
 
 sudo<span class="w"> </span>udevadm<span class="w"> </span>control<span class="w"> </span>--reload-rules
@@ -2588,7 +2588,7 @@ sudo<span class="w"> </span>udevadm<span class="w"> </span>trigger<span class="w
 boot through its own <code>systemd</code> unit. It is only packaged for Debian-based distributions,
 and each RAPL domain must be listed explicitly:</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>sysfsutils
-sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span>/etc/sysfs.conf<span class="w"> </span><span class="s">&lt;&lt;&#39;EOF&#39;</span>
+sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span>/etc/sysfs.conf<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
 <span class="s">mode class/powercap/intel-rapl:0/energy_uj = 0440</span>
 <span class="s">owner class/powercap/intel-rapl:0/energy_uj = root:codecarbon</span>
 <span class="s">mode class/powercap/intel-rapl:0:0/energy_uj = 0440</span>
@@ -2600,7 +2600,7 @@ sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class=
 Missing a domain is easy here, which is why the <code>udev</code> rule is preferred.</p>
 <h3 id="step-5-verify-rapl-access">Step 5: Verify RAPL Access<a class="headerlink" href="#step-5-verify-rapl-access" title="Permanent link">&para;</a></h3>
 <p>Test that CodeCarbon can now read RAPL data:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from codecarbon import EmissionsTracker; t = EmissionsTracker(); t.start(); import time; time.sleep(5); print(t.stop())&quot;</span>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from codecarbon import EmissionsTracker; t = EmissionsTracker(); t.start(); import time; time.sleep(5); print(t.stop())"</span>
 </code></pre></div>
 <p>Check the output for <code>CPU Tracking Method: RAPL</code> to confirm RAPL is active.</p>
 <h2 id="docker-and-containerized-environments">Docker and Containerized Environments<a class="headerlink" href="#docker-and-containerized-environments" title="Permanent link">&para;</a></h2>
@@ -2744,7 +2744,7 @@ Missing a domain is easy here, which is why the <code>udev</code> rule is prefer
       <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["content.action.edit","content.action.view","content.code.copy","content.code.select","content.tabs.link","content.tooltips","navigation.instant","navigation.instant.progress","navigation.tracking","navigation.tabs","navigation.tabs.sticky","navigation.sections","navigation.path","navigation.top","navigation.footer","search.highlight"],"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"default":"latest","provider":"mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.ed145cee.min.js"></script>
+      <script src="../../assets/javascripts/bundle.88ee1349.min.js"></script>
       
         <script src="../../javascripts/mathjax.js"></script>
       
