@@ -57,6 +57,9 @@ class CodeCarbonAPIOutput(BaseOutput):
         )
         self.run_id = self.api.run_id
 
+    def exit(self) -> None:
+        self.api.close()
+
     def _ensure_api_run(self) -> None:
         if self.api.run_id is None and self.api.experiment_id is not None:
             self.api._create_run(self.api.experiment_id)
