@@ -169,6 +169,62 @@ class TestFileOutput(unittest.TestCase):
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(df["cpu_power"].iloc[0], 2)
 
+    def test_file_output_out_update_with_always_empty_columns(self):
+        """Regression test: updating a run must not coerce incoming values to the
+        dtype pandas inferred for the existing column.
+
+        An OfflineEmissionsTracker leaves longitude/latitude empty, and
+        gpu_count/gpu_model are empty on CPU-only machines. Such columns are read
+        back from the CSV as float64, so the previous implementation evaluated
+        numpy.float64("") / numpy.float64(None) and raised on the second write.
+        """
+        empty_columns_data = EmissionsData(
+            timestamp="2023-01-01T00:00:00",
+            project_name="test_project",
+            run_id="test_run_id",
+            experiment_id="test_experiment_id",
+            duration=10,
+            emissions=0.5,
+            emissions_rate=0.05,
+            cpu_power=20,
+            gpu_power=0,
+            ram_power=5,
+            cpu_energy=200,
+            gpu_energy=0,
+            ram_energy=50,
+            energy_consumed=250,
+            water_consumed=0.1,
+            country_name="Testland",
+            country_iso_code="TS",
+            region="Test Region",
+            cloud_provider="",
+            cloud_region="",
+            os="TestOS",
+            python_version="3.8",
+            codecarbon_version="2.0",
+            cpu_count=4,
+            cpu_model="Test CPU",
+            gpu_count=None,
+            gpu_model=None,
+            longitude="",
+            latitude="",
+            ram_total_size=16,
+            tracking_mode="machine",
+        )
+
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="update")
+        file_output.out(empty_columns_data, None)
+
+        empty_columns_data.cpu_power = 2
+        # This should not raise.
+        file_output.out(empty_columns_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 1)
+        self.assertEqual(df["cpu_power"].iloc[0], 2)
+        self.assertIn("longitude", df.columns)
+        self.assertIn("gpu_model", df.columns)
+
     # def test_file_output_out_consistent_column_ordering(self):
     #     file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
     #     file_output.out(self.emissions_data, None)
