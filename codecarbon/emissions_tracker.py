@@ -1337,7 +1337,6 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     _country_iso_code = None
     _country_name, _region, country_2letter_iso_code = None, None, None
 
-    @suppress(Exception)
     def __init__(
         self,
         *args,
