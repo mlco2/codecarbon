@@ -12,7 +12,7 @@ from uuid import UUID
 class EmissionBase:
     timestamp: str
     run_id: str
-    duration: int
+    duration: float
     emissions_sum: float
     emissions_rate: float
     cpu_power: float

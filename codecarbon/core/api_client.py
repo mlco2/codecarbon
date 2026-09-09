@@ -189,15 +189,16 @@ class ApiClient:  # (AsyncClient)
                     "ApiClient.add_emission still no run_id, aborting for this time !"
                 )
             return False
-        if carbon_emission["duration"] < 1:
+        if carbon_emission["duration"] <= 0:
+            # The server declares duration as gt=0, so this would 422.
             logger.warning(
-                "ApiClient : emissions not sent because of a duration smaller than 1."
+                "ApiClient : emissions not sent because the duration is not positive."
             )
             return False
         emission = EmissionCreate(
             timestamp=get_datetime_with_timezone(),
             run_id=self.run_id,
-            duration=int(carbon_emission["duration"]),
+            duration=carbon_emission["duration"],
             emissions_sum=carbon_emission["emissions"],
             emissions_rate=carbon_emission["emissions_rate"],
             cpu_power=carbon_emission["cpu_power"],
