@@ -62,6 +62,7 @@ The directory [examples/](https://github.com/mlco2/codecarbon/tree/master/exampl
 | Example | Type | Description |
 |---------|------|-------------|
 | [boamps_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/boamps_output.py) | Python Script | Write the output in [BoAmps](https://github.com/Boavizta/BoAmps) format. |
+| [sci_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/sci_output.py) | Python Script | Write a [Software Carbon Intensity](https://sci.greensoftware.foundation/) (ISO/IEC 21031) report. |
 | [logging_to_file.py](https://github.com/mlco2/codecarbon/blob/master/examples/logging_to_file.py) | Python Script | Save emissions data to a local CSV file |
 | [logging_to_file_exclusive_run.py](https://github.com/mlco2/codecarbon/blob/master/examples/logging_to_file_exclusive_run.py) | Python Script | Long-running process with exclusive file logging |
 | [logging_to_google_cloud.py](https://github.com/mlco2/codecarbon/blob/master/examples/logging_to_google_cloud.py) | Python Script | Send emissions data to Google Cloud Logging |
