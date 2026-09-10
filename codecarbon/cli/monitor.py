@@ -122,10 +122,9 @@ def run_and_monitor(
 
         # Show where the data was saved
         if hasattr(tracker, "_conf") and "output_file" in tracker._conf:
-            output_path = tracker._conf["output_file"]
-            # Make it absolute if it's relative
-            if not os.path.isabs(output_path):
-                output_path = os.path.abspath(output_path)
+            output_dir = tracker._conf.get("output_dir", ".")
+            output_file = tracker._conf["output_file"]
+            output_path = os.path.abspath(os.path.join(output_dir, output_file))
             print(f"   Saved to: {output_path}")
 
         print("   ⚠️  Note: Tracked the command process and its children")
