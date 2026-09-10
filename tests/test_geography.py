@@ -1,9 +1,14 @@
 import unittest
 from unittest import mock
 
+import requests
 import responses
 
-from codecarbon.external.geography import CloudMetadata, GeoMetadata
+from codecarbon.external.geography import (
+    GEO_API_TIMEOUT,
+    CloudMetadata,
+    GeoMetadata,
+)
 from tests.testdata import (
     CLOUD_METADATA_AWS,
     CLOUD_METADATA_AZURE,
@@ -117,6 +122,44 @@ class TestGeoMetadata(unittest.TestCase):
         self.assertEqual("USA", geo.country_iso_code)
         self.assertEqual("United States", geo.country_name)
         self.assertEqual("illinois", geo.region)
+
+    @responses.activate
+    def test_geo_metadata_retries_primary_api_on_timeout(self):
+        responses.add(
+            responses.GET,
+            self.geo_js_url,
+            body=requests.exceptions.Timeout("Read timed out"),
+        )
+        responses.add(responses.GET, self.geo_js_url, json=GEO_METADATA_USA, status=200)
+        responses.add(
+            responses.GET,
+            "https://ipinfo.io/json",
+            json=GEO_METADATA_USA_BACKUP,
+            status=200,
+        )
+
+        geo = GeoMetadata.from_geo_js(self.geo_js_url)
+
+        self.assertEqual("USA", geo.country_iso_code)
+        self.assertEqual("illinois", geo.region)
+        # The primary API answered on the second try, so the backup is never called.
+        self.assertEqual(
+            [self.geo_js_url, self.geo_js_url],
+            [call.request.url for call in responses.calls],
+        )
+
+    def test_geo_metadata_uses_configured_timeout(self):
+        mocked_response = mock.Mock()
+        mocked_response.json.return_value = GEO_METADATA_USA
+
+        with mock.patch(
+            "codecarbon.external.geography.requests.get", return_value=mocked_response
+        ) as mocked_get:
+            geo = GeoMetadata.from_geo_js(self.geo_js_url)
+
+        self.assertEqual("USA", geo.country_iso_code)
+        self.assertGreater(GEO_API_TIMEOUT, 0.5)
+        mocked_get.assert_called_once_with(self.geo_js_url, timeout=GEO_API_TIMEOUT)
 
     @responses.activate
     def test_geo_metadata_CANADA(self):
