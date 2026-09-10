@@ -4,6 +4,7 @@ import os
 import tempfile
 import time
 import unittest
+from pathlib import Path
 
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
@@ -25,28 +26,42 @@ class TestCarbonTrackerFlush(unittest.TestCase):
     def setUp(self) -> None:
         self.project_name = "project_TestCarbonLoggingOutput"
         self.emissions_logfile = "emissions-test-TestCarbonLoggingOutput.log"
-        self.emissions_path = tempfile.gettempdir()
+        self._temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._temp_dir.cleanup)
+        self.emissions_path = self._temp_dir.name
         self.emissions_file_path = os.path.join(
             self.emissions_path, self.emissions_logfile
         )
-        if os.path.isfile(self.emissions_file_path):
-            os.remove(self.emissions_file_path)
         self._test_logger = logging.getLogger(self.project_name)
         _channel = logging.FileHandler(self.emissions_file_path)
         self._test_logger.addHandler(_channel)
         self._test_logger.setLevel(logging.INFO)
         self.external_logger = LoggerOutput(self._test_logger, logging.INFO)
+        self._working_dir_csv = Path.cwd() / "emissions.csv"
+        self._working_dir_csv_size = self._read_working_dir_csv_size()
 
     def tearDown(self) -> None:
         for handler in self._test_logger.handlers[:]:
             self._test_logger.removeHandler(handler)
             handler.close()
-        if os.path.isfile(self.emissions_file_path):
-            os.remove(self.emissions_file_path)
+        # These tests only assert on the logger output, so they must not write
+        # the CSV in the working directory too. Sharing that file with the rest
+        # of the suite is what made them order dependent, see #1371.
+        self.assertEqual(
+            self._working_dir_csv_size,
+            self._read_working_dir_csv_size(),
+            "the tracker wrote to emissions.csv in the working directory",
+        )
+
+    def _read_working_dir_csv_size(self):
+        if not self._working_dir_csv.is_file():
+            return None
+        return self._working_dir_csv.stat().st_size
 
     def test_carbon_tracker_online_logging_output(self):
         tracker = EmissionsTracker(
             project_name=self.project_name,
+            save_to_file=False,
             save_to_logger=True,
             logging_logger=self.external_logger,
         )
@@ -64,6 +79,7 @@ class TestCarbonTrackerFlush(unittest.TestCase):
         tracker = OfflineEmissionsTracker(
             project_name=self.project_name,
             country_iso_code="USA",
+            save_to_file=False,
             save_to_logger=True,
             logging_logger=self.external_logger,
         )
@@ -80,6 +96,7 @@ class TestCarbonTrackerFlush(unittest.TestCase):
     def test_decorator_flush(self):
         @track_emissions(
             project_name=self.project_name,
+            save_to_file=False,
             save_to_logger=True,
             logging_logger=self.external_logger,
         )
