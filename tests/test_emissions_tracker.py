@@ -633,6 +633,35 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual("United States", emissions_df["country_name"].values[0])
         self.assertEqual("USA", emissions_df["country_iso_code"].values[0])
 
+    def test_offline_tracker_writes_tracking_methods(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            output_dir=self.temp_path,
+            experiment_id="test",
+        )
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        tracker.stop()
+
+        emissions_df = pd.read_csv(self.emissions_file_path)
+
+        for column in (
+            "ram_tracking_method",
+            "cpu_tracking_method",
+            "gpu_tracking_method",
+        ):
+            self.assertIn(column, emissions_df.columns)
+            self.assertTrue(emissions_df[column].values[0])
+
     def test_offline_tracker_invalid_headers(
         self,
         mock_cli_setup,

@@ -212,6 +212,36 @@ def test_capture_and_apply_restore_hardware_plan():
     assert type(tracker2._hardware[0]).__name__ == "RAM"
 
 
+def test_capture_and_apply_restore_tracking_methods():
+    tracker = make_tracker(
+        _conf={
+            "ram_tracking_method": "RAM power estimation model",
+            "cpu_tracking_method": "RAPL",
+            "gpu_tracking_method": "pynvml",
+        },
+    )
+    resource_tracker = SimpleNamespace(
+        tracker=tracker,
+        ram_tracker="RAM power estimation model",
+        cpu_tracker="RAPL",
+        gpu_tracker="pynvml",
+    )
+    plan = hardware_cache.capture(resource_tracker)
+
+    tracker2 = make_tracker()
+    rt2 = SimpleNamespace(
+        tracker=tracker2,
+        ram_tracker="Unspecified",
+        cpu_tracker="Unspecified",
+        gpu_tracker="Unspecified",
+    )
+    hardware_cache.apply(rt2, plan)
+
+    assert tracker2._conf["ram_tracking_method"] == "RAM power estimation model"
+    assert tracker2._conf["cpu_tracking_method"] == "RAPL"
+    assert tracker2._conf["gpu_tracking_method"] == "pynvml"
+
+
 def test_get_or_run_setup_runs_setup_once():
     tracker = make_tracker()
     resource_tracker = SimpleNamespace(
