@@ -23,6 +23,24 @@ class Data:
 
     @staticmethod
     def get_project_summary(project_data: List[Dict]):
+        if not project_data:
+            # No run to summarise, e.g. when the project dropdown is cleared.
+            # Keep the same shape so the callbacks reading it still work.
+            return {
+                "last_run": {
+                    "timestamp": "",
+                    "duration": 0,
+                    "emissions": 0,
+                    "energy_consumed": 0,
+                },
+                "total": {"duration": 0, "emissions": 0, "energy_consumed": 0},
+                "country_name": "",
+                "country_iso_code": "",
+                "region": "",
+                "on_cloud": "N",
+                "cloud_provider": "",
+                "cloud_region": "",
+            }
         last_run = project_data[-1]
         project_summary = {
             "last_run": {
