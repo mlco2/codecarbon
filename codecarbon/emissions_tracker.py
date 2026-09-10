@@ -903,7 +903,9 @@ class BaseEmissionsTracker(ABC):
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         self._persist_data(
-            total_emissions=emissions_data, delta_emissions=emissions_data_delta
+            total_emissions=emissions_data,
+            delta_emissions=emissions_data_delta,
+            experiment_name=self._experiment_name,
         )
 
         return emissions_data.emissions
