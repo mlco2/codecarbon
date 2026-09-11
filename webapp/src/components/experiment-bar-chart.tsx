@@ -29,7 +29,7 @@ const chartConfig = {
     },
     mobile: {
         label: "Energy consumed",
-        color: "hsl(var(--secondary))",
+        color: "var(--cc-gray)",
     },
 } satisfies ChartConfig;
 
