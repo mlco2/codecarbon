@@ -7,7 +7,7 @@ import { Organization, OrganizationUser, User } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
 import { cn } from "@/helpers/utils";
 import { useModal } from "@/hooks/useModal";
-import CreateOrganizationModal from "./createOrganizationModal";
+import CreateOrganizationModal from "./create-organization-modal";
 import { LogoutIcon } from "./icons/logout-icon";
 import { SettingsIcon } from "./icons/settings-icon";
 import { OrganizationIcon } from "./icons/organization-icon";
