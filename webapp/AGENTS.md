@@ -16,9 +16,20 @@ the two disagree about webapp code.
    inventing a convention.
 3. **Sweep the docs.** After a change, check the `*.md` files for anything it
    invalidates and update them briefly — what is necessary, not a rewrite.
-4. **Hand over the commit, do not make it.** End with a medium-length commit
-   message: what changed and why it matters, no exhaustive file list. Never run
-   `git commit`, and never stage files.
+4. **Hand over the commit; never make it.** See [Commits](#commits) — this one
+   has no exceptions.
+
+## Commits
+
+**Never commit. Never stage.** Not with `git commit`, not with `git add`, not as
+a convenience at the end of a task — leave both to the user, every time.
+
+Finish instead by giving the commit message as text: medium length, neither a
+one-liner nor a changelog. Only what matters, not verbose — what changed, and
+why it matters.
+
+Then ask whether to fold anything already staged into the same message, rather
+than assuming either way.
 
 ## Stack
 
@@ -40,10 +51,10 @@ the package manager, Node 24 in CI. `@/` resolves to `src/`.
 
 There are two generations of UI primitives in `src/components/ui/`. The
 redesign ones — `form-field.tsx`, `modal-header.tsx`, `primary-button.tsx`,
-`secondary-button.tsx`, `icon-button.tsx`, `menu.tsx`, `tab-nav.tsx` — carry the
-current design. The older shadcn ones — `input.tsx`, `label.tsx`, `button.tsx`,
-`card.tsx` — remain only because pre-redesign screens still use them. **New work
-uses the redesign layer.**
+`secondary-button.tsx`, `icon-button.tsx`, `menu.tsx`, `tab-nav.tsx`,
+`breadcrumb.tsx` — carry the current design. The older shadcn ones —
+`input.tsx`, `label.tsx`, `button.tsx`, `card.tsx` — remain only because
+pre-redesign screens still use them. **New work uses the redesign layer.**
 
 Modals share one shell; copy it rather than restating it:
 
@@ -160,7 +171,7 @@ Ignore the rest; none of these are things to go hunting for.
 
 Report (a) everything that differed from the design and every decision the
 design didn't specify, grouped and concise, for the PR remarks, and (b) a
-conventional-commit message.
+conventional-commit message, per [Commits](#commits).
 
 ## Styling
 
