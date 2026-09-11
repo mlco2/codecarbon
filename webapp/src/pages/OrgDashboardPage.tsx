@@ -18,6 +18,7 @@ import { getOrganizationEmissionsByProject } from "@/api/organizations";
 import { Organization, OrganizationReport } from "@/api/schemas";
 import { DateRange } from "react-day-picker";
 import useSWR from "swr";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 /*
  * The Global dashboard: one fluid content column — a breadcrumb, a header, then
@@ -124,15 +125,9 @@ export default function OrgDashboardPage() {
                 group from the rule. */}
             <div className="flex flex-col gap-8 pb-5 lg:gap-16 lg:pb-6">
                 {/* Breadcrumb */}
-                <nav
-                    aria-label="Breadcrumb"
-                    className="type-mono-medium type-breadcrumb"
-                >
-                    <span className="text-cc-breadcrumb-gray">
-                        {organization.name}/
-                    </span>
-                    <span className="text-cc-button-hover">Global</span>
-                </nav>
+                <Breadcrumb
+                    items={[{ label: organization.name }, { label: "Global" }]}
+                />
 
                 {/* Header */}
                 <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-5 lg:gap-y-8">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -21,6 +21,7 @@ import {
 import { addOrganizationUser } from "@/api/organizations";
 import { Organization, OrganizationUser } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 /*
  * The Members page, in its empty, populated and submitting states.
@@ -119,18 +120,13 @@ export default function MembersPage() {
                 button-hover green, which is the colour of the current crumb
                 beside it — hovering should not make a link look like the page
                 you are already on. */}
-            <nav
-                aria-label="Breadcrumb"
-                className="type-mono-medium type-breadcrumb pb-8 lg:pb-16"
-            >
-                <Link
-                    to={`/${organizationId}`}
-                    className="text-cc-breadcrumb-gray transition-colors hover:text-cc-white motion-reduce:transition-none"
-                >
-                    {organizationName}/
-                </Link>
-                <span className="text-cc-button-hover">Members</span>
-            </nav>
+            <Breadcrumb
+                className="pb-8 lg:pb-16"
+                items={[
+                    { label: organizationName, to: `/${organizationId}` },
+                    { label: "Members" },
+                ]}
+            />
 
             <header className="border-b border-cc-rule pb-5 lg:pb-6">
                 <h1 className="type-display type-page-title min-w-0 text-cc-white">

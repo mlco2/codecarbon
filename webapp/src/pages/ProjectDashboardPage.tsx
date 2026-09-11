@@ -15,8 +15,9 @@ import {
 import { getOneProject } from "@/api/projects";
 import { Experiment, ExperimentReport, Project } from "@/api/schemas";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { DateRange } from "react-day-picker";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export default function ProjectDashboardPage() {
     const { projectId, organizationId } = useParams<{
@@ -146,24 +147,20 @@ export default function ProjectDashboardPage() {
             {/* Parent crumbs hover to white: the current crumb is the green one,
                 so hovering a link must not make it look like the page you are
                 already on. */}
-            <nav
-                aria-label="Breadcrumb"
-                className="type-mono-medium type-breadcrumb pb-8 lg:pb-16"
-            >
-                <Link
-                    to={`/${organizationId}`}
-                    className="text-cc-breadcrumb-gray transition-colors hover:text-cc-white motion-reduce:transition-none"
-                >
-                    {organizationName || organizationId}/
-                </Link>
-                <Link
-                    to={`/${organizationId}/projects`}
-                    className="text-cc-breadcrumb-gray transition-colors hover:text-cc-white motion-reduce:transition-none"
-                >
-                    Projects/
-                </Link>
-                <span className="text-cc-button-hover">{project.name}</span>
-            </nav>
+            <Breadcrumb
+                className="pb-8 lg:pb-16"
+                items={[
+                    {
+                        label: organizationName || organizationId || "",
+                        to: `/${organizationId}`,
+                    },
+                    {
+                        label: "Projects",
+                        to: `/${organizationId}/projects`,
+                    },
+                    { label: project.name },
+                ]}
+            />
 
             {/* The heading holds everything about the project itself: its name,
                 whether it is public, what it is, and the actions that apply to

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import useSWR from "swr";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ import { fetcher } from "@/api/swr";
 import { deleteProject, getProjects } from "@/api/projects";
 import { Organization, Project } from "@/api/schemas";
 import { useModal } from "@/hooks/useModal";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 /*
  * The Projects page, in its empty and populated states, which differ only in
@@ -132,18 +133,13 @@ export default function ProjectsPage() {
                 button-hover green, which is the colour of the current crumb beside
                 it — hovering should not make a link look like the page you are
                 already on. */}
-            <nav
-                aria-label="Breadcrumb"
-                className="type-mono-medium type-breadcrumb pb-8 lg:pb-16"
-            >
-                <Link
-                    to={`/${organizationId}`}
-                    className="text-cc-breadcrumb-gray transition-colors hover:text-cc-white motion-reduce:transition-none"
-                >
-                    {organizationName}/
-                </Link>
-                <span className="text-cc-button-hover">Projects</span>
-            </nav>
+            <Breadcrumb
+                className="pb-8 lg:pb-16"
+                items={[
+                    { label: organizationName, to: `/${organizationId}` },
+                    { label: "Projects" },
+                ]}
+            />
 
             {/* The action joins the heading only when there are projects; the
                 empty state centres it instead. */}
