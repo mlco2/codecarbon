@@ -19,10 +19,9 @@ import { Tabs, TabsContent } from "./ui/tabs";
  * because it also holds the API-tokens table. The design has no frame for this
  * dialog, so it is the redesign's vocabulary applied to the controls it had.
  *
- * The fields save on submit; the public toggle saves the moment it is flipped,
- * which is what lets the sharing link it controls appear and disappear with it.
- * Only a failed submit keeps the dialog open, so edits that did not save are
- * still there to retry.
+ * Everything here, the public toggle included, saves on submit; the dialog then
+ * stays open, so the sharing link the toggle enables appears next to the save
+ * button rather than behind a second trip into settings.
  */
 
 interface ProjectSettingsModalProps {
@@ -41,6 +40,13 @@ export default function ProjectSettingsModal({
     const [name, setName] = useState(project.name || "");
     const [description, setDescription] = useState(project.description || "");
     const [isPublic, setIsPublic] = useState(project.public || false);
+    /*
+     * What visibility is actually stored, which is what the sharing link below
+     * follows. Tracked here rather than read from the prop because a parent may
+     * hold the project it opened the dialog with and not re-pass it after a
+     * save.
+     */
+    const [savedIsPublic, setSavedIsPublic] = useState(project.public || false);
     const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
 
@@ -54,41 +60,16 @@ export default function ProjectSettingsModal({
     }, [open]);
 
     /*
-     * Reset the form when the dialog moves to a *different* project, keyed on the
-     * id rather than the object. The toggle below saves as it is flipped, which
-     * refreshes the project and hands this component a new object; keying on the
-     * object would make that refresh overwrite whatever the user had typed.
+     * Reset the form when the project this dialog is editing changes, including
+     * the refresh that follows a save. Keyed on the fields rather than the
+     * object, which is a new one on every refresh.
      */
     useEffect(() => {
         setName(project.name || "");
         setDescription(project.description || "");
         setIsPublic(project.public || false);
+        setSavedIsPublic(project.public || false);
     }, [project.id, project.name, project.description, project.public]);
-
-    /*
-     * The public toggle saves on its own, so the sharing link it controls appears
-     * and disappears with it rather than waiting for the form to be submitted.
-     *
-     * It writes only the flag: the name and description it sends are the *saved*
-     * ones, not what is currently in the fields, so flipping the switch never
-     * quietly commits half-typed text. The switch moves first and rolls back if
-     * the write fails, so it always shows what is actually stored.
-     */
-    const handlePublicChange = async (next: boolean) => {
-        setIsPublic(next);
-        try {
-            await updateProject(project.id, {
-                name: project.name,
-                description: project.description,
-                public: next,
-            });
-            onProjectUpdated();
-        } catch (error) {
-            console.error("Error updating project visibility:", error);
-            setIsPublic(!next);
-            toast.error("Failed to change project visibility");
-        }
-    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -98,12 +79,12 @@ export default function ProjectSettingsModal({
                 description,
                 public: isPublic,
             });
+            setSavedIsPublic(isPublic);
             toast.success("Project settings updated successfully");
+            // Kept open: the sharing link a just-enabled project gains appears
+            // beside the button that was clicked, ready to copy.
             onProjectUpdated();
-            onOpenChange(false);
         } catch (error) {
-            // Left open on failure, so the edits that failed to save are still
-            // there to retry rather than being discarded.
             console.error("Error updating project:", error);
             toast.error("Failed to update project settings");
         } finally {
@@ -161,7 +142,7 @@ export default function ProjectSettingsModal({
                                 <Switch
                                     id="isPublic"
                                     checked={isPublic}
-                                    onCheckedChange={handlePublicChange}
+                                    onCheckedChange={setIsPublic}
                                 />
                                 <label
                                     htmlFor="isPublic"
@@ -174,15 +155,7 @@ export default function ProjectSettingsModal({
                                 </p>
                             </div>
 
-                            {/* Appears and disappears with the toggle above,
-                                which saves itself. */}
-                            <ShareProjectButton
-                                projectId={project.id}
-                                isPublic={isPublic}
-                                trigger="labelled"
-                            />
-
-                            <div className="flex pt-4">
+                            <div className="flex flex-wrap items-center justify-between gap-4 pt-4">
                                 <PrimaryButton
                                     type="submit"
                                     disabled={isSaving || !name.trim()}
@@ -192,6 +165,15 @@ export default function ProjectSettingsModal({
                                     )}
                                     {isSaving ? "Saving..." : "Save changes"}
                                 </PrimaryButton>
+
+                                {/* Follows the *saved* visibility, not the
+                                    toggle: there is no link to copy until the
+                                    project is actually public. */}
+                                <ShareProjectButton
+                                    projectId={project.id}
+                                    isPublic={savedIsPublic}
+                                    trigger="labelled"
+                                />
                             </div>
                         </form>
                     </TabsContent>

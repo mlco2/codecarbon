@@ -29,7 +29,7 @@ beforeEach(() => {
 function renderModal(overrides: Record<string, unknown> = {}) {
     const onOpenChange = vi.fn();
     const onProjectUpdated = vi.fn();
-    render(
+    const { rerender } = render(
         <ProjectSettingsModal
             open
             onOpenChange={onOpenChange}
@@ -38,11 +38,11 @@ function renderModal(overrides: Record<string, unknown> = {}) {
             {...overrides}
         />,
     );
-    return { onOpenChange, onProjectUpdated };
+    return { onOpenChange, onProjectUpdated, rerender };
 }
 
 describe("ProjectSettingsModal", () => {
-    it("saves the visibility toggle on its own and reveals the sharing link", async () => {
+    it("does not save the visibility toggle until the form is submitted", async () => {
         renderModal();
 
         expect(
@@ -51,6 +51,14 @@ describe("ProjectSettingsModal", () => {
 
         await userEvent.click(
             screen.getByRole("switch", { name: /make project public/i }),
+        );
+        expect(updateProjectMock).not.toHaveBeenCalled();
+        expect(
+            screen.queryByRole("button", { name: /copy link/i }),
+        ).not.toBeInTheDocument();
+
+        await userEvent.click(
+            screen.getByRole("button", { name: /save changes/i }),
         );
 
         await waitFor(() =>
@@ -60,49 +68,41 @@ describe("ProjectSettingsModal", () => {
                 public: true,
             }),
         );
-        expect(
-            await screen.findByRole("button", { name: /copy link/i }),
-        ).toBeInTheDocument();
     });
 
-    it("does not commit unsaved field edits when the toggle is flipped", async () => {
+    it("shows and hides the sharing link with each save, not with the toggle", async () => {
         renderModal();
-
-        const name = screen.getByLabelText(/^name$/i);
-        await userEvent.clear(name);
-        await userEvent.type(name, "Renamed but unsaved");
 
         await userEvent.click(
             screen.getByRole("switch", { name: /make project public/i }),
         );
-
-        await waitFor(() =>
-            expect(updateProjectMock).toHaveBeenCalledWith(
-                "p1",
-                expect.objectContaining({ name: project.name }),
-            ),
-        );
-    });
-
-    it("rolls the toggle back when the write fails", async () => {
-        updateProjectMock.mockRejectedValue(new Error("nope"));
-        vi.spyOn(console, "error").mockImplementation(() => {});
-        renderModal();
-
-        const toggle = screen.getByRole("switch", {
-            name: /make project public/i,
-        });
-        await userEvent.click(toggle);
-
-        await waitFor(() =>
-            expect(toggle).toHaveAttribute("data-state", "unchecked"),
+        await userEvent.click(
+            screen.getByRole("button", { name: /save changes/i }),
         );
         expect(
-            screen.queryByRole("button", { name: /copy link/i }),
-        ).not.toBeInTheDocument();
+            await screen.findByRole("button", { name: /copy link/i }),
+        ).toBeInTheDocument();
+
+        // The parent may still be holding the project it opened the dialog
+        // with, so the link has to follow what was saved here, not the prop.
+        await userEvent.click(
+            screen.getByRole("switch", { name: /make project public/i }),
+        );
+        expect(
+            screen.getByRole("button", { name: /copy link/i }),
+        ).toBeInTheDocument();
+
+        await userEvent.click(
+            screen.getByRole("button", { name: /save changes/i }),
+        );
+        await waitFor(() =>
+            expect(
+                screen.queryByRole("button", { name: /copy link/i }),
+            ).not.toBeInTheDocument(),
+        );
     });
 
-    it("closes on a successful save", async () => {
+    it("stays open after a successful save", async () => {
         const { onOpenChange, onProjectUpdated } = renderModal();
 
         await userEvent.click(
@@ -110,7 +110,7 @@ describe("ProjectSettingsModal", () => {
         );
 
         await waitFor(() => expect(onProjectUpdated).toHaveBeenCalled());
-        expect(onOpenChange).toHaveBeenCalledWith(false);
+        expect(onOpenChange).not.toHaveBeenCalledWith(false);
     });
 
     it("stays open when the save fails, so the edits survive", async () => {
