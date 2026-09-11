@@ -12,6 +12,9 @@ Before you begin, ensure you have the following installed on your system:
 
 ## Getting Started
 
+> Contributing with an AI agent? Read [AGENTS.md](./AGENTS.md) first — it holds
+> the webapp's conventions and the expected workflow.
+
 Follow these steps to get the project up and running on your local machine:
 
 1. **Open a terminal and go to the /webapp folder**
