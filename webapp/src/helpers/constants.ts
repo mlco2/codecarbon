@@ -9,7 +9,7 @@ const US_CITIZEN_WEEKLY_EMISSIONS = US_CITIZEN_YEARLY_EMISSIONS / 52; // KgCO2.e
 /**
  *
  * @param emissionKg Emission in KgCO2
- * @returns Equivalent percentage of an american citizen weekly energy consumption
+ * @returns Equivalent percentage of a US citizen's weekly emissions
  */
 export const getEquivalentCitizenPercentage = (emissionKg: number) => {
     return (

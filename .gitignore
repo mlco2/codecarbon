@@ -139,3 +139,6 @@ tests/test_data/rapl/*
 credentials*
 .codecarbon.config*
 scripts/agent-vm.personal.config.sh
+
+# Vite cache
+.vite/

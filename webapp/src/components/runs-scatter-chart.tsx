@@ -2,17 +2,11 @@ import { RunReport } from "@/api/schemas";
 import { format } from "date-fns";
 import { Label, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from "recharts";
 
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { getRunEmissionsByExperiment } from "@/api/runs";
 import { exportRunsToCsv } from "@/utils/export";
 import { pickTimeFormat } from "@/helpers/time-axis";
 import { useEffect, useMemo, useState } from "react";
+import ChartSection from "./chart-section";
 import ChartSkeleton from "./chart-skeleton";
 import { ExportCsvButton } from "./export-csv-button";
 import { ChartConfig, ChartContainer } from "./ui/chart";
@@ -123,15 +117,11 @@ export default function RunsScatterChart({
     }
 
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Scatter Chart - Emissions by Run Id</CardTitle>
-                    <CardDescription>
-                        Click a run to see time series
-                    </CardDescription>
-                </div>
-                {!isPublicView && (
+        <ChartSection
+            title="Emissions by run"
+            description="Click a run to see its time series"
+            action={
+                !isPublicView && (
                     <ExportCsvButton
                         loadingMessage="Exporting runs..."
                         successMessage="Runs exported successfully"
@@ -151,71 +141,79 @@ export default function RunsScatterChart({
                             setIsExporting(false);
                         }}
                     />
-                )}
-            </CardHeader>
-            <CardContent>
-                <ChartContainer config={chartConfig}>
-                    {runsReportsData.length > 0 ? (
-                        <ScatterChart
-                            width={500}
-                            height={300}
-                            margin={{
-                                top: 20,
-                                right: 20,
-                                bottom: 20,
-                                left: 20,
-                            }}
+                )
+            }
+        >
+            <ChartContainer config={chartConfig}>
+                {runsReportsData.length > 0 ? (
+                    <ScatterChart
+                        width={500}
+                        height={300}
+                        margin={{
+                            top: 20,
+                            right: 20,
+                            bottom: 20,
+                            left: 20,
+                        }}
+                    >
+                        <XAxis
+                            dataKey="ts"
+                            name="Timestamp"
+                            type="number"
+                            scale="time"
+                            domain={["dataMin", "dataMax"]}
+                            stroke="currentColor"
+                            minTickGap={48}
+                            tickFormatter={(value) =>
+                                format(new Date(value), tickFmt)
+                            }
                         >
-                            <XAxis
-                                dataKey="ts"
-                                name="Timestamp"
-                                type="number"
-                                scale="time"
-                                domain={["dataMin", "dataMax"]}
-                                stroke="currentColor"
-                                minTickGap={48}
-                                tickFormatter={(value) =>
-                                    format(new Date(value), tickFmt)
-                                }
-                            >
-                                <Label
-                                    value="Timestamp"
-                                    offset={-10}
-                                    position="insideBottom"
-                                    style={{ fill: "currentColor" }}
-                                />
-                            </XAxis>
-                            <YAxis
-                                dataKey="emissions"
-                                name="Emissions"
-                                type="number"
-                                stroke="currentColor"
-                            >
-                                <Label
-                                    value="Emissions (kg eq CO2)"
-                                    angle={-90}
-                                    position="insideLeft"
-                                    style={{ fill: "currentColor" }}
-                                />
-                            </YAxis>
-                            <Tooltip content={<CustomTooltip />} />
-                            <Scatter
-                                name="Emissions"
-                                data={points}
-                                fill="hsl(var(--primary))"
-                                onClick={(data) => onRunClick(data.runId)}
-                                cursor="pointer"
+                            <Label
+                                value="Timestamp"
+                                offset={-10}
+                                position="insideBottom"
+                                style={{ fill: "currentColor" }}
                             />
-                        </ScatterChart>
-                    ) : (
-                        <div className="flex items-center justify-center h-full">
-                            <p className="text-muted-foreground text-sm">
-                                No data available
-                            </p>
-                        </div>
-                    )}
-                </ChartContainer>
-            </CardContent>
-        </Card>
+                        </XAxis>
+                        <YAxis
+                            dataKey="emissions"
+                            name="Emissions"
+                            type="number"
+                            stroke="currentColor"
+                        >
+                            {/*
+                             * `insideLeft` anchors at the top of the axis and the
+                             * rotation pivots on that anchor, so the label hangs
+                             * from the top unless it is told to anchor on its own
+                             * middle.
+                             */}
+                            <Label
+                                value="Emissions (kg eq CO2)"
+                                angle={-90}
+                                position="insideLeft"
+                                style={{
+                                    fill: "currentColor",
+                                    textAnchor: "middle",
+                                }}
+                            />
+                        </YAxis>
+                        <Tooltip content={<CustomTooltip />} />
+                        <Scatter
+                            name="Emissions"
+                            data={points}
+                            fill="hsl(var(--primary))"
+                            onClick={(data) => onRunClick(data.runId)}
+                            cursor="pointer"
+                        />
+                    </ScatterChart>
+                ) : (
+                    <div className="flex items-center justify-center h-full">
+                        <p className="text-muted-foreground text-sm">
+                            No data available
+                        </p>
+                    </div>
+                )}
+            </ChartContainer>
+        </ChartSection>
     );
 }

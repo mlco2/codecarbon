@@ -16,6 +16,20 @@ export const UserSchema = z.object({
 });
 export type User = z.infer<typeof UserSchema>;
 
+/*
+ * `GET /organizations/{id}/users` returns the backend's `OrganizationUser`: a
+ * user plus their membership of that organization. `is_admin` is the only place
+ * the API exposes admin rights, and it is per-organization.
+ */
+export const OrganizationUserSchema = z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    organization_id: z.string(),
+    is_admin: z.boolean(),
+});
+export type OrganizationUser = z.infer<typeof OrganizationUserSchema>;
+
 // Backend returns snake_case keys (`organization_id`); the rest of the
 // codebase consumes camelCase (`organizationId`). Zod's `.transform` lets
 // us validate the wire shape and expose the camelCase shape to the app.
@@ -190,7 +204,6 @@ export interface ProjectDashboardProps {
     selectedRunId: string;
     onExperimentClick: (experimentId: string) => void;
     onRunClick: (runId: string) => void;
-    onSettingsClick: () => void;
     onRefresh: () => void;
     isLoading?: boolean;
 }

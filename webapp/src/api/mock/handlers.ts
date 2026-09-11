@@ -1,4 +1,4 @@
-import { ID, MOCK, MockProjectWire } from "./data";
+import { ID, MOCK, MockProjectWire, organizationReportBetween } from "./data";
 
 export type MockResponse = { status: number; body?: unknown };
 
@@ -27,7 +27,7 @@ const handlers: Handler[] = [
     },
 
     // ─── Organizations ─────────────────────────────────────────────────────
-    ({ pathname, method, body }) => {
+    ({ pathname, method, searchParams, body }) => {
         if (method === "GET" && pathname === "/organizations") {
             return ok(MOCK.organization.list);
         }
@@ -49,7 +49,20 @@ const handlers: Handler[] = [
         }
         const sums = pathname.match(/^\/organizations\/([^/]+)\/sums$/);
         if (method === "GET" && sums) {
-            return ok(MOCK.organization.report);
+            // Honour the same query parameters as the real endpoint, so the
+            // dashboard's date picker actually changes the figures locally.
+            const parse = (key: string) => {
+                const raw = searchParams.get(key);
+                if (!raw) return null;
+                const d = new Date(raw);
+                return Number.isNaN(d.getTime()) ? null : d;
+            };
+            return ok(
+                organizationReportBetween(
+                    parse("start_date"),
+                    parse("end_date"),
+                ),
+            );
         }
         const users = pathname.match(/^\/organizations\/([^/]+)\/users$/);
         if (method === "GET" && users) {

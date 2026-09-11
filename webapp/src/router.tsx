@@ -11,8 +11,8 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 const OrgDashboardPage = lazy(() => import("./pages/OrgDashboardPage"));
 const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
 const ProjectDashboardPage = lazy(() => import("./pages/ProjectDashboardPage"));
-const ProjectSettingsPage = lazy(() => import("./pages/ProjectSettingsPage"));
 const MembersPage = lazy(() => import("./pages/MembersPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
     return <Suspense fallback={<Loader />}>{children}</Suspense>;
@@ -41,6 +41,21 @@ export const router = createBrowserRouter([
             <SuspenseWrapper>
                 <PublicProjectPage />
             </SuspenseWrapper>
+        ),
+    },
+    /*
+     * Settings sits outside DashboardLayout: its design has no sidebar
+     * rail and provides its own "Go back" control, so it is a standalone
+     * authenticated page.
+     */
+    {
+        path: "/settings",
+        element: (
+            <AuthGuard>
+                <SuspenseWrapper>
+                    <SettingsPage />
+                </SuspenseWrapper>
+            </AuthGuard>
         ),
     },
     {
@@ -79,14 +94,6 @@ export const router = createBrowserRouter([
                 element: (
                     <SuspenseWrapper>
                         <ProjectDashboardPage />
-                    </SuspenseWrapper>
-                ),
-            },
-            {
-                path: "/:organizationId/projects/:projectId/settings",
-                element: (
-                    <SuspenseWrapper>
-                        <ProjectSettingsPage />
                     </SuspenseWrapper>
                 ),
             },
