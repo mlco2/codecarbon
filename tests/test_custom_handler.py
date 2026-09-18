@@ -1,9 +1,11 @@
+import logging
 import time
 import unittest
 from typing import List
 
 from codecarbon.emissions_tracker import EmissionsTracker, track_emissions
 from codecarbon.output import BaseOutput, EmissionsData
+from codecarbon.output_methods.logger import LoggerOutput
 
 
 def heavy_computation(run_time_secs: int = 3):
@@ -52,6 +54,7 @@ class TestCarbonCustomHandler(unittest.TestCase):
         @track_emissions(
             project_name=self.project_name,
             save_to_logger=True,
+            logging_logger=LoggerOutput(logging.getLogger("test_decorator_flush")),
             output_handlers=[handler_0, handler_1],
             api_call_interval=2,
             measure_power_secs=999,
