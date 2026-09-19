@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi, fetchApiVoid } from "./client";
 import {
     Organization,
     OrganizationSchema,
@@ -40,5 +40,14 @@ export async function createOrganization(organization: {
     return await fetchApi("/organizations", OrganizationSchema, {
         method: "POST",
         body: JSON.stringify(organization),
+    });
+}
+
+export async function removeUserFromOrganization(
+    organizationId: string,
+    userId: string,
+): Promise<void> {
+    await fetchApiVoid(`/organizations/${organizationId}/users/${userId}`, {
+        method: "DELETE",
     });
 }

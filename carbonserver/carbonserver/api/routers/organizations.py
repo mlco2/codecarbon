@@ -166,3 +166,25 @@ def organization_add_user(
         user=auth_user.db_user,
     )
     return {"status": "ok"}
+
+
+@router.delete(
+    "/organizations/{organization_id}/users/{user_id}",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def organization_remove_user(
+    organization_id: str,
+    user_id: str,
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    organization_service: OrganizationService = Depends(
+        Provide[ServerContainer.organization_service]
+    ),
+):
+    organization_service.remove_user(
+        organization_id=organization_id,
+        user_id=user_id,
+        user=auth_user.db_user,
+    )
+    return {"status": "ok"}
