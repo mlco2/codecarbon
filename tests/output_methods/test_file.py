@@ -169,6 +169,25 @@ class TestFileOutput(unittest.TestCase):
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(df["cpu_power"].iloc[0], 2)
 
+    def test_file_output_out_update_empty_column_second_write(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="update")
+        # First write: gpu_model is None (written as empty string/NaN)
+        first_data = self.emissions_data
+        first_data.gpu_model = None
+        file_output.out(first_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertTrue(pd.isna(df["gpu_model"].iloc[0]))
+
+        # Second write: update with a non-null string for gpu_model
+        second_data = self.emissions_data
+        second_data.gpu_model = "NVIDIA RTX 3080"
+        file_output.out(second_data, None)
+
+        df_updated = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(df_updated["gpu_model"].iloc[0], "NVIDIA RTX 3080")
+
+
     # def test_file_output_out_consistent_column_ordering(self):
     #     file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
     #     file_output.out(self.emissions_data, None)
