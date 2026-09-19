@@ -187,7 +187,6 @@ class TestFileOutput(unittest.TestCase):
         df_updated = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(df_updated["gpu_model"].iloc[0], "NVIDIA RTX 3080")
 
-
     # def test_file_output_out_consistent_column_ordering(self):
     #     file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
     #     file_output.out(self.emissions_data, None)
