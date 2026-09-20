@@ -118,12 +118,13 @@ class FileOutput(BaseOutput):
                 )
                 df = pd.concat([df, new_df])
             else:
-                update_values = {}
                 for col, val in dict(total.values).items():
-                    update_values[col] = df[col].dtype.type(val)
-                df.loc[df.run_id == total.run_id, update_values.keys()] = (
-                    update_values.values()
-                )
+                    if col in df.columns:
+                        try:
+                            df.loc[df.run_id == total.run_id, col] = val
+                        except (TypeError, ValueError):
+                            df[col] = df[col].astype(object)
+                            df.loc[df.run_id == total.run_id, col] = val
             df.to_csv(self.save_file_path, index=False)
 
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
