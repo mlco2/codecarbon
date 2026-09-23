@@ -9,6 +9,7 @@ import typer
 from typer.testing import CliRunner
 
 from codecarbon.cli import main as cli_main
+from codecarbon.output_methods.base_output import OutputMethod
 
 
 class FakeApiClient:
@@ -541,7 +542,8 @@ def test_monitor_delegates_online_mode_to_run_and_monitor(monkeypatch):
     result = cli_main.monitor(ctx=ctx, api=True)
     assert result == "ok"
     assert captured["offline"] is False
-    assert captured["kwargs"]["save_to_api"] is True
+    assert OutputMethod.API in captured["kwargs"]["output_methods"]
+    assert "save_to_api" not in captured["kwargs"]
 
 
 def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
@@ -559,7 +561,7 @@ def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
     result = cli_main.monitor(ctx=ctx, api=False)
     assert result == "ok"
     assert captured["args"] == ["python", "train.py"]
-    assert captured["kwargs"]["save_to_api"] is False
+    assert OutputMethod.API not in captured["kwargs"]["output_methods"]
 
 
 def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
@@ -577,7 +579,7 @@ def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
     result = cli_main.monitor(ctx=ctx, api=False)
     assert result == "ok"
     assert captured["offline"] is False
-    assert captured["kwargs"]["save_to_api"] is False
+    assert OutputMethod.API not in captured["kwargs"]["output_methods"]
 
 
 def test_monitor_passes_log_level_to_run_and_monitor(monkeypatch):
@@ -616,3 +618,30 @@ def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
     with pytest.raises(typer.Exit) as exc_info:
         cli_main.monitor(ctx=ctx, offline=False, api=True)
     assert exc_info.value.exit_code == 1
+
+
+@pytest.mark.parametrize(
+    "conf, api, expected",
+    [
+        ({"output_methods": "prometheus"}, True, ["prometheus", "api"]),
+        ({"output_methods": "csv,api"}, False, ["csv"]),
+        ({"save_to_file": "false", "save_to_logger": "true"}, True, ["logger", "api"]),
+        ({"save_to_api": "true"}, False, ["csv"]),
+    ],
+)
+def test_monitor_api_flag_adds_to_configured_output_methods(
+    monkeypatch, conf, api, expected
+):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "exp-1")
+    monkeypatch.setattr("codecarbon.core.config.get_hierarchical_config", lambda: conf)
+
+    cli_main.monitor(ctx=SimpleNamespace(args=["python", "train.py"]), api=api)
+
+    assert captured["kwargs"]["output_methods"] == [OutputMethod(m) for m in expected]
