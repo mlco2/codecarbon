@@ -14,7 +14,7 @@ undeclared term is reported as undeclared.
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import List, Optional
 
 from codecarbon.external.logger import logger
@@ -100,7 +100,8 @@ def map_emissions_to_sci(
                 "gpu": emissions.gpu_model,
                 "ramTotalGB": emissions.ram_total_size,
             },
-            "pue": getattr(emissions, "pue", 1),
+            # Task data carries no PUE; report it as unknown rather than 1.
+            "pue": getattr(emissions, "pue", None),
         },
     }
     if reporter:
@@ -144,7 +145,8 @@ class SCIOutput(BaseOutput):
     ):
         os.makedirs(output_dir, exist_ok=True)
         self._output_dir = output_dir
-        self._functional_unit = functional_unit
+        # Copy, so set_functional_unit_count() never mutates the caller's object.
+        self._functional_unit = replace(functional_unit) if functional_unit else None
         self._embodied = embodied
         self._reporter = reporter
         self._boundary = boundary
@@ -176,9 +178,14 @@ class SCIOutput(BaseOutput):
         Raises:
             FileNotFoundError: If the context file does not exist.
             json.JSONDecodeError: If the context file contains invalid JSON.
+            ValueError: If the top level of the context file is not an object.
         """
         with open(context_file_path) as f:
             context = json.load(f)
+        if not isinstance(context, dict):
+            raise ValueError(
+                f"SCI context file {context_file_path} must hold a JSON object"
+            )
 
         embodied = dict(context.get("embodied") or {})
         if "gCO2e" in embodied:
@@ -236,7 +243,7 @@ class SCIOutput(BaseOutput):
             gco2e=self._embodied.gco2e * share,
             source=(
                 f"{self._embodied.source or 'declared'}; "
-                f"apportioned by duration ({share:.1%} of the run)"
+                f"apportioned by duration ({share:.1%} of the tasks' duration)"
             ),
         )
 
@@ -245,10 +252,10 @@ class SCIOutput(BaseOutput):
         Write one SCI report per task, sharing the run-level declarations.
 
         ``M`` is embodied carbon of the whole device over the whole run, so each
-        task gets the slice matching its share of the run's duration. Giving
-        every task the full ``M`` would report the device's embodied carbon once
-        per task; apportioning it keeps the per-task figures summing back to the
-        run-level report.
+        task gets the slice matching its share of the tasks' summed duration.
+        Giving every task the full ``M`` would report the device's embodied
+        carbon once per task. When the tasks do not cover the whole run, the
+        full ``M`` is still spread over the tasks alone.
 
         ``R`` is not apportioned: how many functional units fell inside a task
         is not something CodeCarbon can know. Each task therefore reports

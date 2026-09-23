@@ -235,6 +235,8 @@ output_methods = csv,sci
 sci_context_file = ./sci_context.json
 ```
 
+A relative `sci_context_file` is resolved against the current working directory, not the config file's location.
+
 The context file holds what CodeCarbon cannot know:
 
 ```json
@@ -251,7 +253,7 @@ Both `gCO2e` and `gco2e` are accepted for the embodied figure.
 !!! warning "The configuration-only path needs a count in the context file"
     `set_functional_unit_count()` needs a reference to the handler, and the handler created by `output_methods = csv,sci` is owned by the tracker. So with configuration alone, `sci` is `null` in every report unless `functionalUnit.count` is hardcoded in `sci_context_file`. If the count is only known at the end of the run, construct `SCIOutput` yourself and pass it via `output_handlers=[...]`.
 
-CodeCarbon writes a final report named `sci_report_<run_id>.json` in `output_dir`, plus `sci_report_tasks_<run_id>.json` when tasks are used. In the task report, `M` is apportioned across tasks by their share of the run's duration: the declared `M` is the embodied carbon of the device for the whole run, so giving each task the full figure would count it once per task. `R` is not apportioned, because CodeCarbon cannot know how many functional units fell inside a task, so each task reports `sciShare`, its share of the run-level SCI, instead of `sci`. `I` is derived as `emissions * 1000 / energy_consumed` rather than recomputed, so the report is consistent with the CSV by construction; the PUE that was applied is recorded separately in the provenance block.
+CodeCarbon writes a final report named `sci_report_<run_id>.json` in `output_dir`, plus `sci_report_tasks_<run_id>.json` when tasks are used. In the task report, `M` is apportioned across tasks by their share of the tasks' summed duration: the declared `M` is the embodied carbon of the device for the whole run, so giving each task the full figure would count it once per task. If the tasks do not cover the whole run, the full `M` is still spread over the tasks alone. Task reports show `"pue": null` because task data does not carry the PUE. `R` is not apportioned, because CodeCarbon cannot know how many functional units fell inside a task, so each task reports `sciShare`, its share of the run-level SCI, instead of `sci`. `I` is derived as `emissions * 1000 / energy_consumed` rather than recomputed, so the report is consistent with the CSV by construction; the PUE that was applied is recorded separately in the provenance block.
 
 Sample output:
 ```json
@@ -261,7 +263,7 @@ Sample output:
   "runId": "79e4408f-ec31-476f-a2c5-8ca7f53e6cc7",
   "projectName": "my_project",
   "timestamp": "2025-01-15T10:30:00",
-  "sci": 0.0000127,
+  "sci": 0.00845,
   "unit": "gCO2eq per inference request",
   "terms": {
     "E_kWh": 0.1007,
