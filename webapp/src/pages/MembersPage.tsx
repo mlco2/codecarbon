@@ -14,12 +14,17 @@ import { toast } from "sonner";
 import useSWR, { mutate } from "swr";
 import Loader from "@/components/loader";
 import ErrorMessage from "@/components/error-message";
+import RemoveMemberModal from "@/components/remove-member-modal";
+import { removeUserFromOrganization } from "@/api/organizations";
+import { useModal } from "@/hooks/useModal";
 
 export default function MembersPage() {
     const { organizationId } = useParams<{ organizationId: string }>();
     const [isDialogOpen, setDialogOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const removeModal = useModal();
+    const [memberToRemove, setMemberToRemove] = useState<User | null>(null);
 
     const {
         data: users,
@@ -85,6 +90,24 @@ export default function MembersPage() {
             }
         } finally {
             setIsLoading(false);
+        }
+    }
+
+    function handleRemoveClick(user: User) {
+        setMemberToRemove(user);
+        removeModal.open();
+    }
+
+    async function removeMember(userId: string) {
+        try {
+            await removeUserFromOrganization(organizationId!, userId);
+            toast.success("Member removed successfully");
+            mutate(`/organizations/${organizationId}/users`);
+        } catch (err) {
+            toast.error(
+                err instanceof Error ? err.message : "Failed to remove member",
+            );
+            throw err;
         }
     }
 
@@ -177,6 +200,10 @@ export default function MembersPage() {
                                             rowKey={user.id}
                                             firstColumn={user.name}
                                             secondColumn={user.email}
+                                            deleteDisabled={false}
+                                            onDelete={async () =>
+                                                handleRemoveClick(user)
+                                            }
                                         />
                                     ))}
                             </TableBody>
@@ -184,6 +211,16 @@ export default function MembersPage() {
                     </Card>
                 </div>
             </div>
+            {memberToRemove && (
+                <RemoveMemberModal
+                    open={removeModal.isOpen}
+                    onOpenChange={removeModal.setIsOpen}
+                    memberName={memberToRemove.name}
+                    memberId={memberToRemove.id}
+                    organizationName={organization?.name || "this organization"}
+                    onRemove={removeMember}
+                />
+            )}
         </>
     );
 }
