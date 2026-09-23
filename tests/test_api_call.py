@@ -343,6 +343,26 @@ class TestApi(unittest.TestCase):
                 api._create_run("experiment_id")
             self.assertIsNone(api.run_id)
 
+    def test_failed_create_run_is_not_retried_during_cooldown(self):
+        with requests_mock.Mocker() as m:
+            runs = m.post("http://test.com/runs", text="down", status_code=503)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="experiment_id",
+                api_key="Toto",
+                conf=conf,
+                create_run_automatically=False,
+            )
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api._create_run("experiment_id")
+            self.assertIsNone(api._create_run("experiment_id"))
+            self.assertEqual(runs.call_count, 1)
+
+            api._run_create_failed_at -= 3600  # cooldown elapsed
+            runs = m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
+            self.assertEqual(api._create_run("experiment_id"), "run-1")
+            self.assertIsNone(api._run_create_failed_at)
+
     def test_create_run_raises_on_unexpected_2xx_status(self):
         with requests_mock.Mocker() as m:
             m.post("http://test.com/runs", json={}, status_code=200)

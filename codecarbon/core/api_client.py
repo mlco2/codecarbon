@@ -8,6 +8,7 @@ TODO : use async call to API
 # from httpx import AsyncClient
 import dataclasses
 import json
+import time
 from datetime import datetime, timedelta, tzinfo
 
 import requests
@@ -35,6 +36,9 @@ def get_datetime_with_timezone():
 
 # (connect, read) seconds, replacing a flat 2s that timed out on a loaded API.
 _TIMEOUT = (3.05, 10)
+# Seconds to wait after a failed run creation before trying again, so a down
+# API costs one blocking call per minute instead of one per measurement.
+_RUN_CREATE_COOLDOWN = 60
 
 
 def _measurement_timestamp(carbon_emission: dict) -> str:
@@ -85,6 +89,7 @@ class ApiClient:  # (AsyncClient)
         self.api_key = api_key
         self.conf = conf
         self.access_token = access_token
+        self._run_create_failed_at = None
         if self.experiment_id is not None and create_run_automatically:
             self._create_run(self.experiment_id)
 
@@ -261,6 +266,14 @@ class ApiClient:  # (AsyncClient)
                 "ApiClient FATAL The ApiClient._create_run() needs an experiment_id !"
             )
             return None
+        if (
+            self._run_create_failed_at is not None
+            and time.monotonic() - self._run_create_failed_at < _RUN_CREATE_COOLDOWN
+        ):
+            logger.debug("ApiClient - run creation failed recently, not retrying yet")
+            return None
+        # Cleared on success below; set now so every failure path is covered.
+        self._run_create_failed_at = time.monotonic()
         try:
             run = RunCreate(
                 timestamp=get_datetime_with_timezone(),
@@ -286,6 +299,7 @@ class ApiClient:  # (AsyncClient)
                 self._session.post, url, payload=payload, expected_status=201
             )
             self.run_id = r.json()["id"]
+            self._run_create_failed_at = None
             logger.info(
                 "ApiClient Successfully registered your run on the API.\n\n"
                 + f"Run ID: {self.run_id}\n"
