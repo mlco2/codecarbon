@@ -893,6 +893,7 @@ class IntelRAPL:
             (rapl_file.path, float(rapl_file.last_energy))
             for rapl_file in self._rapl_files
             if "dram" not in rapl_file.name.lower()
+            and rapl_file.last_energy is not None
         ]
         self._mirrored_candidates = find_mirrored_counters(
             counters, SEQUENTIAL_READ_TOLERANCE_KWH
