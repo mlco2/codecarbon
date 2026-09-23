@@ -216,7 +216,23 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             url = self.url + "/emissions"
-            self._request(requests.post, url, payload=payload, expected_status=201)
+            response = requests.post(
+                url=url, json=payload, timeout=2, headers=self._get_headers()
+            )
+            duration = payload["duration"]
+            if response.status_code == 422 and duration != round(duration):
+                # Servers older than the client declare duration as an int and
+                # reject fractional seconds: retry once with a rounded value.
+                logger.info(
+                    "ApiClient : the API rejected a fractional duration, it looks"
+                    " older than this client. Retrying with a rounded duration."
+                )
+                payload["duration"] = max(1, round(duration))
+                response = requests.post(
+                    url=url, json=payload, timeout=2, headers=self._get_headers()
+                )
+            if response.status_code != 201:
+                self._raise_api_error(url, payload, response)
             logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
         except requests.exceptions.HTTPError:
             # Already logged by _raise_api_error, do not log it twice.
