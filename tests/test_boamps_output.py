@@ -539,6 +539,7 @@ class TestBoAmpsOutputHandler(unittest.TestCase):
             self.tmpdir, f"boamps_report_{self.emissions.run_id}.json"
         )
         self.assertTrue(os.path.isfile(expected_file))
+        self.assertEqual(handler.save_file_path, expected_file)
 
         with open(expected_file) as f:
             report = json.load(f)

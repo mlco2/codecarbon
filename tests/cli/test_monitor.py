@@ -262,6 +262,15 @@ def test_run_and_monitor_reports_output_dir(monkeypatch, capsys, tmp_path):
     assert f"Savedto:{save_file_path}" in out
 
 
+def test_run_and_monitor_reports_relative_path_from_cwd(monkeypatch, capsys, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    out = _run_and_capture(
+        monkeypatch, capsys, [SimpleNamespace(save_file_path="emissions.csv")]
+    )
+
+    assert f"Savedto:{os.path.join(os.getcwd(), 'emissions.csv')}" in out
+
+
 def test_run_and_monitor_reports_no_path_without_file_output(monkeypatch, capsys):
     out = _run_and_capture(monkeypatch, capsys, [SimpleNamespace()])
 
