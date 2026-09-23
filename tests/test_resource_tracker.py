@@ -645,3 +645,76 @@ def test_setup_fallback_tracking_cpu_load_when_tdp_falsy():
     )
     assert resource_tracker.cpu_tracker == MODE_CPU_LOAD
     assert tracker._hardware == [hardware_cpu]
+
+
+def test_set_ram_tracking_uses_pmic_on_raspberry():
+    tracker = make_tracker()
+    fake_ram = SimpleNamespace(machine_memory_GB=8.0)
+    raspberry_ram = MagicMock()
+
+    with (
+        patch("codecarbon.core.resource_tracker.RAM", return_value=fake_ram),
+        patch("codecarbon.core.resource_tracker.cpu.is_raspberry", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.Raspberry.from_utils",
+            return_value=raspberry_ram,
+        ) as mock_from_utils,
+    ):
+        resource_tracker = ResourceTracker(tracker)
+        resource_tracker.set_RAM_tracking()
+
+    mock_from_utils.assert_called_once_with("out", chip_part="RAM")
+    assert tracker._hardware == [raspberry_ram]
+    assert tracker._conf["ram_total_size"] == 8.0
+
+
+def test_setup_raspberry_tracks_cpu():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+    raspberry_cpu = MagicMock()
+    raspberry_cpu.get_model.return_value = "Raspberry Pi 5"
+
+    with patch(
+        "codecarbon.core.resource_tracker.Raspberry.from_utils",
+        return_value=raspberry_cpu,
+    ) as mock_from_utils:
+        assert resource_tracker._setup_raspberry() is True
+
+    mock_from_utils.assert_called_once_with("out", chip_part="CPU")
+    assert resource_tracker.cpu_tracker == "raspberry"
+    assert tracker._conf["cpu_model"] == "Raspberry Pi 5"
+    assert tracker._hardware == [raspberry_cpu]
+
+
+def test_platform_cpu_backend_prefers_raspberry_without_rapl():
+    resource_tracker = ResourceTracker(make_tracker())
+
+    with (
+        patch("codecarbon.core.resource_tracker.is_linux_os", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=False
+        ),
+        patch("codecarbon.core.resource_tracker.cpu.is_raspberry", return_value=True),
+        patch.object(resource_tracker, "_setup_raspberry") as mock_setup,
+    ):
+        assert resource_tracker._try_platform_cpu_backend() is True
+
+    mock_setup.assert_called_once_with()
+
+
+def test_platform_cpu_backend_prefers_rapl_over_raspberry():
+    resource_tracker = ResourceTracker(make_tracker())
+
+    with (
+        patch("codecarbon.core.resource_tracker.is_linux_os", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.cpu.is_rapl_available", return_value=True
+        ),
+        patch("codecarbon.core.resource_tracker.cpu.is_raspberry", return_value=True),
+        patch.object(resource_tracker, "_setup_rapl") as mock_rapl,
+        patch.object(resource_tracker, "_setup_raspberry") as mock_raspberry,
+    ):
+        assert resource_tracker._try_platform_cpu_backend() is True
+
+    mock_rapl.assert_called_once_with()
+    mock_raspberry.assert_not_called()
