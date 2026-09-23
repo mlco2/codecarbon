@@ -88,6 +88,39 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         assertdf = pd.read_csv(self.emissions_file_path)
         self.assertEqual(USER_INPUT_CPU_POWER / 2, assertdf["cpu_power"][0])
 
+    @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
+    @mock.patch.object(cpu, "is_psutil_available")
+    def test_carbon_tracker_offline_constant_pue(self, mock_tdp, mock_psutil):
+        # The PUE must be applied to the reported power as well as to the energy,
+        # so that energy_consumed stays consistent with the power columns.
+        USER_INPUT_CPU_POWER = 1_000
+        PUE = 2.0
+        mock_tdp.return_value = None
+        mock_psutil.return_value = False
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            output_dir=self.emissions_path,
+            output_file=self.emissions_file,
+            force_cpu_power=USER_INPUT_CPU_POWER,
+            pue=PUE,
+        )
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        emissions = tracker.stop()
+        assert isinstance(emissions, float)
+        assertdf = pd.read_csv(self.emissions_file_path)
+        self.assertEqual(USER_INPUT_CPU_POWER / 2 * PUE, assertdf["cpu_power"][0])
+        # energy_consumed must be reconstructible from the reported power
+        total_power = (
+            assertdf["cpu_power"][0]
+            + assertdf["gpu_power"][0]
+            + assertdf["ram_power"][0]
+        )
+        expected_energy = total_power * assertdf["duration"][0] / 3600 / 1000
+        self.assertAlmostEqual(
+            expected_energy, assertdf["energy_consumed"][0], delta=expected_energy * 0.1
+        )
+
     @mock.patch("codecarbon.external.hardware.psutil.cpu_percent", return_value=50.0)
     @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
     @mock.patch.object(cpu, "is_psutil_available")
