@@ -13,7 +13,9 @@
   {% if page.meta and page.meta.description %}
     {% set description = page.meta.description %}
   {% endif %}
-  {% set image = config.site_url ~ "images/og-card.png" %}
+  {# The docs are deployed under /latest/ (scripts/deploy-docs.sh), not at site_url itself. #}
+  {% set base = config.site_url ~ "latest/" %}
+  {% set image = base ~ "images/og-card.png" %}
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="{{ config.site_name }}">
@@ -23,9 +25,7 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="{{ description }}">
-  {% if page.canonical_url %}
-    <meta property="og:url" content="{{ page.canonical_url }}">
-  {% endif %}
+  <meta property="og:url" content="{{ base ~ page.url }}">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ title }}">

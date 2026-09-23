@@ -34,7 +34,7 @@ counter is readable. The fallback order is documented in
 | macOS `powermetrics` | System power reporting | Not yet measured against an external reference | macOS, Intel and Apple Silicon |
 | Windows EMI | Energy Meter Interface | Not yet measured against an external reference | Windows 11, where the platform exposes it |
 | Intel Power Gadget | Vendor tool, deprecated upstream | Not yet measured | Legacy path |
-| CPU load × TDP | Estimates power from CPU utilisation against the TDP listed in `cpu_power.csv`. Two different curves, [selected by `tracking_mode`](methodology.md#the-two-cpu_load-models) | See the profiling results below: in **machine mode**, on the machines profiled, the estimate deviated from RAPL by roughly −60% to +90% depending on CPU and load point. Process mode is uncharacterised | Fallback when no CPU counter is available |
+| CPU load × TDP | Estimates power from CPU utilisation against the TDP listed in `cpu_power.csv`. Two different curves, [selected by `tracking_mode`](methodology.md#the-two-cpu_load-models) | See the profiling results below: in **machine mode**, on the machines profiled, the estimate deviated from RAPL by roughly −60% to +190% depending on CPU and load point. Process mode is uncharacterised | Fallback when no CPU counter is available |
 | Default watts per thread | Estimates from thread count alone | Not characterised; this is the least accurate path | Last resort, when the CPU model is absent from `cpu_power.csv` |
 
 ### The CPU load × TDP fallback, measured
@@ -88,7 +88,7 @@ reaches its power ceiling around 65% load, so the estimate *undershoots* at mid
 load).
 
 The practical reading: the fallback gets the order of magnitude right and can be
-off by a factor of two in either direction on a specific machine and workload.
+land at half the real power, or nearly three times it, on a specific machine and workload.
 It is not a substitute for RAPL. If your numbers need to be defensible,
 [enable RAPL](../how-to/enable-rapl.md).
 
@@ -112,7 +112,7 @@ Three independent error sources compound. Which one dominates depends on your
 setup, and the remedy differs for each.
 
 **Power measurement.** Covered by the table above. Small when hardware counters
-are available, potentially a factor of two when the TDP fallback is in use.
+are available, potentially −60% to +190% when the TDP fallback is in use.
 
 **Carbon intensity.** Often the largest term. When CodeCarbon has no data for
 your country it falls back to a world average of 475 gCO₂eq/kWh. Real national

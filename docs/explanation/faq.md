@@ -6,7 +6,7 @@ Use **CodeCarbon** when you run code on hardware you control—training models, 
 
 ## How accurate are your estimations?
 
-It depends on which measurement backend your machine offers. With hardware energy counters (RAPL on Linux, NVML or amdsmi for GPUs) CodeCarbon reads real energy consumption. Without them it falls back to estimating CPU power from load and TDP, which on the machines we profiled deviated from RAPL by up to roughly a factor of two in either direction. Carbon intensity is a separate and often larger error source: without regional data CodeCarbon uses a world average of 475 gCO2.eq/kWh.
+It depends on which measurement backend your machine offers. With hardware energy counters (RAPL on Linux, NVML or amdsmi for GPUs) CodeCarbon reads real energy consumption. Without them it falls back to estimating CPU power from load and TDP, which on the machines we profiled deviated from RAPL by roughly −60% to +190%. Carbon intensity is a separate and often larger error source: without regional data CodeCarbon uses a world average of 475 gCO2.eq/kWh.
 
 We also only cover the direct emissions of running the code — CPU, GPU and RAM — and not the life-cycle emissions of the hardware.
 

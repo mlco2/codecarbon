@@ -85,7 +85,7 @@ the notebook cell was interrupted — nothing is written.
 
 ## The numbers look wrong
 
-### "We saw that you have a ... but we don't know it. Please contact us." { #unknown-cpu-model }
+### "We saw that you have a ... but we don't know it. Please help us add it" { #unknown-cpu-model }
 
 Your CPU model was detected, but it is not listed in
 `codecarbon/data/hardware/cpu_power.csv`, so CodeCarbon has no TDP for it. It

@@ -4,15 +4,6 @@
 name-template: "v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
 
-version-resolver:
-  major:
-    labels: [breaking]
-  minor:
-    labels: [enhancement, feature]
-  patch:
-    labels: [bug, bugfix, fix, refactoring, dependencies]
-  default: patch
-
 categories:
   - title: ":rocket: Features"
     labels: [enhancement, feature]

@@ -191,12 +191,6 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
     '^version: {version}$',
 ]
 
-[tool.black]
-# Pin the target rather than letting black infer it from requires-python: the
-# inferred upper bound outran the interpreter, and black then skips its AST
-# safety check. Keep this at the oldest supported Python.
-target-version = ["py310"]
-
 [tool.pytest.ini_options]
 pythonpath = "."
 
