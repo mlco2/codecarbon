@@ -20,3 +20,12 @@ def _reset_process_hardware_cache():
     yield
     clear_hardware_cache()
     detect_cpu_model.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def _isolate_telemetry_notice_marker(tmp_path, monkeypatch):
+    """Never write the once-per-machine telemetry notice marker to the real home."""
+    monkeypatch.setattr(
+        "codecarbon.core.telemetry.dispatcher.NOTICE_MARKER",
+        tmp_path / "telemetry_notice_shown",
+    )

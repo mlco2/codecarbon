@@ -7,7 +7,9 @@ from pathlib import Path
 from carbonserver.api.schemas_telemetry import TelemetryCreate as ServerTelemetryCreate
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-CORE_TELEMETRY_SCHEMA_PATH = REPO_ROOT / "codecarbon" / "core" / "telemetry_schemas.py"
+CORE_TELEMETRY_SCHEMA_PATH = (
+    REPO_ROOT / "codecarbon" / "core" / "telemetry" / "schemas.py"
+)
 
 
 def _load_core_telemetry_create():

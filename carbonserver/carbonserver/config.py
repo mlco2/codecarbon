@@ -1,6 +1,8 @@
 from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEFAULT_TELEMETRY_EXPERIMENT_ID = "d2d69403-1373-42b4-a2c1-09589aed4801"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="", extra="ignore")
@@ -45,6 +47,12 @@ class Settings(BaseSettings):
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
     server_host: str = Field(
         "0.0.0.0", validation_alias=AliasChoices("SERVER_HOST", "server_host")
+    )
+    telemetry_experiment_id: str = Field(
+        DEFAULT_TELEMETRY_EXPERIMENT_ID,
+        validation_alias=AliasChoices(
+            "TELEMETRY_EXPERIMENT_ID", "telemetry_experiment_id"
+        ),
     )
 
     @model_validator(mode="after")

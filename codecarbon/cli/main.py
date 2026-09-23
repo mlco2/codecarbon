@@ -18,6 +18,7 @@ from codecarbon.cli.cli_utils import (
     get_existing_exp_id,
     overwrite_local_config,
 )
+from codecarbon.cli.telemetry_cli import ask_telemetry_level_once, telemetry_app
 
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
@@ -25,6 +26,7 @@ DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
 codecarbon = typer.Typer(no_args_is_help=True)
+codecarbon.add_typer(telemetry_app, name="telemetry")
 
 
 def main():
@@ -191,6 +193,7 @@ def config():
     )
 
     print("Welcome to CodeCarbon configuration wizard")
+    ask_telemetry_level_once()
     home = Path.home()
     global_path = (home / ".codecarbon.config").expanduser().resolve()
 
@@ -418,8 +421,19 @@ def monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
+    telemetry_level: Annotated[
+        Optional[str],
+        typer.Option(
+            help=(
+                "Override telemetry tier for this run only "
+                "(disabled, minimal, or extensive)."
+            ),
+        ),
+    ] = None,
 ):
     """Monitor your machine's carbon emissions."""
+    if telemetry_level is None:
+        ask_telemetry_level_once()
 
     external_conf = _external_config()
 
@@ -439,6 +453,10 @@ def monitor(
             # Nothing configures it: keep the defaults advertised by `--help`
             # (and an unattended monitor quiet) instead of the tracker's own.
             tracker_args[name] = value
+    if telemetry_level is not None:
+        from codecarbon.cli.telemetry_cli import normalize_telemetry_level
+
+        tracker_args["telemetry_level"] = normalize_telemetry_level(telemetry_level)
 
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
