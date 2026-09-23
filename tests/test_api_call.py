@@ -138,6 +138,39 @@ class TestApi(unittest.TestCase):
             assert payload["ram_utilization_percent"] == 56.5
             assert payload["wue"] == 0.8
 
+    def test_add_emission_retries_rounded_duration_on_old_server(self):
+        emission = {
+            "duration": 15.0023,
+            "emissions": 2.0,
+            "emissions_rate": 2.0,
+            "cpu_power": 3.0,
+            "gpu_power": 0,
+            "ram_power": 0.15,
+            "cpu_energy": 2,
+            "gpu_energy": 0,
+            "ram_energy": 1,
+            "energy_consumed": 3.0,
+        }
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://test.com/emissions",
+                [{"status_code": 422}, {"status_code": 201}],
+            )
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                create_run_automatically=False,
+            )
+            api.run_id = "run-1"
+
+            self.assertTrue(api.add_emission(emission))
+
+            self.assertEqual(m.call_count, 2)
+            self.assertEqual(m.request_history[0].json()["duration"], 15.0023)
+            retried = m.request_history[1].json()["duration"]
+            self.assertIsInstance(retried, int)
+            self.assertEqual(retried, 15)
+
     def test_create_run_rounds_coordinates(self):
         with requests_mock.Mocker() as m:
             m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
