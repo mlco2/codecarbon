@@ -1,11 +1,9 @@
-import os
 import subprocess
 import unittest
 from textwrap import dedent
 from unittest import mock
 
 import numpy as np
-import pytest
 
 from codecarbon.external.ram import RAM, RAM_SLOT_POWER_X86
 
@@ -440,22 +438,8 @@ class TestRAM(unittest.TestCase):
             # Verify the calculation method was not called
             mock_calc.assert_not_called()
 
-    @pytest.mark.skipif(not hasattr(os, "fork"), reason="requires os.fork")
-    def test_default_pid_is_resolved_in_forked_child(self):
-        read_fd, write_fd = os.pipe()
-        pid = os.fork()
-        if pid == 0:
-            # Child: the module is already imported, so a default argument
-            # evaluated at import time would still hold the parent's pid.
-            try:
-                os.close(read_fd)
-                ram = RAM(tracking_mode="process")
-                os.write(write_fd, str(ram._pid).encode())
-                os.close(write_fd)
-            finally:
-                os._exit(0)
-        os.close(write_fd)
-        with os.fdopen(read_fd) as f:
-            child_ram_pid = int(f.read())
-        os.waitpid(pid, 0)
-        self.assertEqual(child_ram_pid, pid)
+    def test_default_pid_is_resolved_at_init(self):
+        # A default evaluated at import time would keep the importing
+        # process's pid, e.g. in a forked child.
+        with mock.patch("os.getpid", return_value=12345):
+            self.assertEqual(RAM(tracking_mode="process")._pid, 12345)
