@@ -4,6 +4,7 @@ Encapsulates external dependencies to retrieve hardware metadata
 
 import math
 import re
+import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -207,6 +208,8 @@ class CPU(BaseHardware):
     ):
         assert tracking_mode in ["machine", "process"]
         self._power_history: List[Power] = []
+        # the monitor thread appends while the measurement thread drains
+        self._power_history_lock = threading.Lock()
         self._output_dir = output_dir
         self._mode = mode
         self._model = model
@@ -393,12 +396,12 @@ class CPU(BaseHardware):
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
-        self._power_history.append(self._get_power_from_cpus())
-        power_history_in_W = [power.W for power in self._power_history]
-        self._power_history = []
-        if not power_history_in_W:
-            logger.warning("No power samples collected, returning 0 W")
-            return Power.from_watts(0)
+        latest_sample = self._get_power_from_cpus()
+        with self._power_history_lock:
+            power_history = self._power_history
+            self._power_history = []
+        power_history.append(latest_sample)
+        power_history_in_W = [power.W for power in power_history]
         cpu_power = sum(power_history_in_W) / len(power_history_in_W)
         return Power.from_watts(cpu_power)
 
@@ -432,7 +435,8 @@ class CPU(BaseHardware):
 
     def monitor_power(self):
         cpu_power = self._get_power_from_cpus()
-        self._power_history.append(cpu_power)
+        with self._power_history_lock:
+            self._power_history.append(cpu_power)
 
     def get_model(self):
         return self._model
