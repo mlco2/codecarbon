@@ -268,6 +268,8 @@ class BaseEmissionsTracker(ABC):
 
     def _initialize_runtime_state(self) -> None:
         self._start_time: Optional[float] = None
+        # Set by stop(): a stopped tracker cannot be restarted.
+        self._stopped: bool = False
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
         self._total_emissions: float = 0.0
@@ -708,6 +710,14 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
+        if self._stopped:
+            # `start()` is wrapped in @suppress(Exception), so raising here
+            # would be swallowed: log instead of pretending it worked.
+            logger.error(
+                "This tracker was already stopped and cannot be restarted: "
+                "nothing will be measured. Create a new tracker instead."
+            )
+            return
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
@@ -965,6 +975,7 @@ class BaseEmissionsTracker(ABC):
             handler.exit()
 
         self._start_time = None
+        self._stopped = True
 
         return emissions_data.emissions
 
