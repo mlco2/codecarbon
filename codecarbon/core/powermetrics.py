@@ -8,7 +8,7 @@ import time
 from functools import lru_cache
 from typing import Dict
 
-from codecarbon.core.util import detect_cpu_model
+from codecarbon.core.util import detect_cpu_model, is_mac_arm
 from codecarbon.external.logger import logger
 
 
@@ -29,6 +29,26 @@ def clear_powermetrics_cache() -> None:
     is_powermetrics_available.cache_clear()
 
 
+def _kill_process(process: subprocess.Popen) -> None:
+    """
+    Kill a Powermetrics subprocess, tolerating a failure to do so.
+
+    The command runs through `sudo`, so the child may be owned by root and
+    refuse our signal. Letting that raise would replace the timeout we are
+    handling with a PermissionError, and waiting on it without a bound would
+    hang for as long as the child lives.
+    """
+    try:
+        process.kill()
+        process.wait(timeout=1)
+    except (OSError, subprocess.SubprocessError):
+        logger.debug("Could not kill the Powermetrics process.")
+    finally:
+        for stream in (process.stdout, process.stderr):
+            if stream is not None:
+                stream.close()
+
+
 def _has_powermetrics_sudo() -> bool:
     if shutil.which("sudo") is None:
         logger.debug("sudo not available, we won't use Apple PowerMetrics.")
@@ -39,7 +59,9 @@ def _has_powermetrics_sudo() -> bool:
         )
         return False
 
-    with subprocess.Popen(
+    # No context manager here: Popen.__exit__ would wait() without a timeout,
+    # which is exactly the hang we are trying to avoid when the kill fails.
+    process = subprocess.Popen(
         [
             "sudo",
             "powermetrics",
@@ -52,30 +74,31 @@ def _has_powermetrics_sudo() -> bool:
             "-o",
             "/dev/null",
         ],
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-    ) as process:
-        deadline = time.time() + 3
-        while process.poll() is None and time.time() < deadline:
-            time.sleep(0.05)
-        if process.poll() is None:
-            process.kill()
-            logger.debug("PowerMetrics sudo check timed out.")
-            return False
-        _, stderr = process.communicate()
+    )
+    deadline = time.time() + 3
+    while process.poll() is None and time.time() < deadline:
+        time.sleep(0.05)
+    if process.poll() is None:
+        logger.debug("PowerMetrics sudo check timed out.")
+        _kill_process(process)
+        return False
+    _, stderr = process.communicate()
 
-        if re.search(r"[sudo].*password", stderr):
-            logger.debug("""Not using PowerMetrics, sudo password prompt detected.
-                    If you want to enable Powermetrics please modify your sudoers file
-                    as described in :
-                    https://docs.codecarbon.io/latest/explanation/methodology/#power-usage
-                """)
-            return False
-        if process.returncode != 0:
-            raise Exception("Return code != 0")
+    if re.search(r"[sudo].*password", stderr):
+        logger.debug("""Not using PowerMetrics, sudo password prompt detected.
+                If you want to enable Powermetrics please modify your sudoers file
+                as described in :
+                https://docs.codecarbon.io/latest/explanation/methodology/#power-usage
+            """)
+        return False
+    if process.returncode != 0:
+        raise Exception("Return code != 0")
 
-        return True
+    return True
 
 
 class ApplePowermetrics:
@@ -99,6 +122,7 @@ class ApplePowermetrics:
     """
 
     _osx_silicon_exec = "powermetrics"
+    _warned_no_cpu_samples = False
 
     def __init__(
         self,
@@ -120,7 +144,7 @@ class ApplePowermetrics:
         if not self._system.startswith("darwin"):
             raise SystemError("Platform not supported by Powermetrics")
         cpu_model = detect_cpu_model() or ""
-        if not cpu_model.startswith("Apple"):
+        if not is_mac_arm(cpu_model):
             raise SystemError(
                 "Powermetrics is only supported on Apple Silicon, "
                 f"detected CPU: {cpu_model!r}"
@@ -131,46 +155,68 @@ class ApplePowermetrics:
             )
         self._cli = self._osx_silicon_exec
 
-    def _log_values(self) -> None:
+    def _log_values(self) -> bool:
         """
         Logs output from Powermetrics to a file
+
+        :return: False when the command did not run, so that the caller knows
+                 the log file was not refreshed and still holds the previous
+                 measure.
         """
-        returncode = None
+        if not self._system.startswith("darwin"):
+            return False
 
-        if self._system.startswith("darwin"):
-            # Run the powermetrics command with sudo and capture its output
-            cmd = [
-                "sudo",
-                self._cli,
-                "-n",
-                str(self._n_points),
-                "--samplers",
-                "cpu_power",
-                "--format",
-                "csv",
-                "-i",
-                str(self._interval),
-                "-o",
-                self._log_file_path,
-            ]
-            returncode = subprocess.call(cmd, universal_newlines=True)
-
-        else:
-            return None
+        # Run the powermetrics command with sudo and capture its output
+        cmd = [
+            "sudo",
+            self._cli,
+            "-n",
+            str(self._n_points),
+            "--samplers",
+            "cpu_power",
+            "--format",
+            "csv",
+            "-i",
+            str(self._interval),
+            "-o",
+            self._log_file_path,
+        ]
+        # _n_points samples of _interval ms is the nominal runtime of the
+        # command. Double it to absorb sampler overhead and scheduling jitter,
+        # and add a floor so short configurations keep a usable margin. This is
+        # a heuristic: it only has to be loose enough that a healthy run never
+        # trips it, because its only job is to bound a hang.
+        timeout = self._n_points * self._interval / 1000 * 2 + 5
+        # DEVNULL so that sudo gets EOF and fails fast instead of blocking
+        # forever on a password prompt when it has no cached credential.
+        # No context manager: Popen.__exit__ would wait() without a timeout.
+        process = subprocess.Popen(
+            cmd, universal_newlines=True, stdin=subprocess.DEVNULL
+        )
+        try:
+            returncode = process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            logger.warning(
+                f"Powermetrics did not complete within {timeout:g} seconds, "
+                "skipping this measure."
+            )
+            _kill_process(process)
+            return False
 
         if returncode != 0:
             logger.warning(
                 "Returncode while logging power values using "
                 + f"Powermetrics: {returncode}"
             )
-        return
+        return True
 
     def get_details(self) -> Dict:
         """
         Fetches the CPU Power Details by fetching values from a logged csv file
         in _log_values function
         """
-        self._log_values()
+        if not self._log_values():
+            return dict()
         details = dict()
         try:
             with open(self._log_file_path) as f:
@@ -183,6 +229,14 @@ class ApplePowermetrics:
                 )
                 details[f"{chip_part} Energy Delta"] = (
                     details[f"{chip_part} Power"] * len(watts) * self._interval / 1000
+                )
+            if details["CPU Energy Delta"] == 0.0 and not self._warned_no_cpu_samples:
+                self._warned_no_cpu_samples = True
+                logger.warning(
+                    "Powermetrics logged no CPU power samples, so CPU power is "
+                    "reported as 0 W. Check that powermetrics can run with sudo "
+                    "without a password: "
+                    "https://docs.codecarbon.io/latest/explanation/methodology/#cpu"
                 )
         except Exception as e:
             logger.info(
