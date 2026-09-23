@@ -236,7 +236,7 @@ class TestApi(unittest.TestCase):
         )
 
     def test_add_emission_sends_millisecond_duration_unchanged(self):
-        """A single FastAPI request lasts milliseconds: send it, do not round it."""
+        """A sub-second duration is sent as is, not rounded."""
         with requests_mock.Mocker() as m:
             m.post("http://test.com/emissions", json={"id": "em-1"}, status_code=201)
             api = ApiClient(
