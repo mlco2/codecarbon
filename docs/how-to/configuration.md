@@ -104,12 +104,13 @@ and also periodically during long runs (every
 
     A fetched carbon intensity is reused for 60 seconds before the API is
     queried again, so measurements taken within that window share the same
-    intensity value. Electricity Maps publishes hourly at best, and the default
-    `measure_power_secs` is 15 seconds, so the cache removes roughly three
-    requests out of four without changing the reported figures. After a failure
-    (invalid token, network down), requests are skipped for an exponentially
-    growing cooldown (30 s up to 1 hour), per location and token, and CodeCarbon
-    falls back to its own country data.
+    intensity value. With default settings the periodic query runs every ~2
+    minutes, so the cache mainly deduplicates closely spaced lookups (for
+    example the final query in `stop()`, or several trackers in one process).
+    After a failure (invalid token, network down), requests are skipped for a
+    cooldown that starts at 30 seconds and doubles on each consecutive failure,
+    up to 1 hour, per location and token; it resets after a successful request.
+    Meanwhile CodeCarbon falls back to its own country data.
 
 The Electricity Maps API offers a free tier. You can sign up and get a token at
 [electricitymaps.com](https://app.electricitymaps.com/sign-up).

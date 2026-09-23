@@ -11,20 +11,23 @@ from codecarbon.external.logger import logger
 _Key = Tuple[Tuple[Tuple[str, Any], ...], str]
 
 URL: str = "https://api.electricitymaps.com/v3/carbon-intensity/latest"
-ELECTRICITYMAPS_API_TIMEOUT: int = 30
+# Kept short: the lookup runs on the measurement thread, which stop() joins.
+ELECTRICITYMAPS_API_TIMEOUT: int = 10
 
 # Grid carbon intensity is published hourly at best, while emissions are computed
 # on every measurement tick, so the value is cached instead of refetched.
 ELECTRICITYMAPS_CACHE_TTL: int = 60
 # After a failure (bad token, network down), wait before retrying instead of
-# issuing one doomed request per measurement tick.
-ELECTRICITYMAPS_COOLDOWN: int = 60
+# issuing one doomed request per measurement tick. The wait doubles on each
+# consecutive failure, up to the maximum, and resets on success.
+ELECTRICITYMAPS_COOLDOWN: int = 30
+ELECTRICITYMAPS_MAX_COOLDOWN: int = 3600
 
 # {(sorted query params, token): (monotonic fetch time, intensity in gCO2e/kWh)}
 _cache: Dict[_Key, Tuple[float, float]] = {}
-# {cache key: monotonic time until which requests are skipped}
+# {cache key: (monotonic time until which requests are skipped, cooldown length)}
 # Keyed like the cache: one tracker's bad token must not block another's good one.
-_cooldown: Dict[_Key, float] = {}
+_cooldown: Dict[_Key, Tuple[float, float]] = {}
 # The state above is read-modify-written from the measurement thread.
 _lock = threading.Lock()
 
@@ -38,7 +41,11 @@ def reset_cache() -> None:
 
 def _start_cooldown(key: _Key) -> None:
     with _lock:
-        _cooldown[key] = time.monotonic() + ELECTRICITYMAPS_COOLDOWN
+        previous = _cooldown.get(key, (0.0, 0.0))[1]
+        delay = min(
+            max(previous * 2, ELECTRICITYMAPS_COOLDOWN), ELECTRICITYMAPS_MAX_COOLDOWN
+        )
+        _cooldown[key] = (time.monotonic() + delay, delay)
 
 
 def get_carbon_intensity(
@@ -52,14 +59,14 @@ def get_carbon_intensity(
         ElectricityMapsAPIError: the request failed, returned an error, or was
             skipped because a previous one failed (``...CooldownError``).
     """
-    if geo.latitude:
+    if geo.latitude is not None:
         params: Dict[str, Any] = {"lat": geo.latitude, "lon": geo.longitude}
     else:
         params = {"countryCode": geo.country_2letter_iso_code}
     key = (tuple(sorted(params.items())), electricitymaps_api_token)
     with _lock:
         cached = _cache.get(key)
-        cooldown_until = _cooldown.get(key, 0.0)
+        cooldown_until = _cooldown.get(key, (0.0, 0.0))[0]
     if cached and time.monotonic() - cached[0] <= ELECTRICITYMAPS_CACHE_TTL:
         logger.debug(
             f"electricitymaps_api: using cached carbon intensity {cached[1]} gCO2e/kWh"
