@@ -189,15 +189,16 @@ class ApiClient:  # (AsyncClient)
                     "ApiClient.add_emission still no run_id, aborting for this time !"
                 )
             return False
-        if carbon_emission["duration"] < 1:
+        if carbon_emission["duration"] <= 0:
+            # The server declares duration as gt=0, so this would 422.
             logger.warning(
-                "ApiClient : emissions not sent because of a duration smaller than 1."
+                "ApiClient : emissions not sent because the duration is not positive."
             )
             return False
         emission = EmissionCreate(
             timestamp=get_datetime_with_timezone(),
             run_id=self.run_id,
-            duration=int(carbon_emission["duration"]),
+            duration=carbon_emission["duration"],
             emissions_sum=carbon_emission["emissions"],
             emissions_rate=carbon_emission["emissions_rate"],
             cpu_power=carbon_emission["cpu_power"],
@@ -215,7 +216,23 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             url = self.url + "/emissions"
-            self._request(requests.post, url, payload=payload, expected_status=201)
+            response = requests.post(
+                url=url, json=payload, timeout=2, headers=self._get_headers()
+            )
+            duration = payload["duration"]
+            if response.status_code == 422 and duration != round(duration):
+                # Servers older than the client declare duration as an int and
+                # reject fractional seconds: retry once with a rounded value.
+                logger.info(
+                    "ApiClient : the API rejected a fractional duration, it looks"
+                    " older than this client. Retrying with a rounded duration."
+                )
+                payload["duration"] = max(1, round(duration))
+                response = requests.post(
+                    url=url, json=payload, timeout=2, headers=self._get_headers()
+                )
+            if response.status_code != 201:
+                self._raise_api_error(url, payload, response)
             logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
         except requests.exceptions.HTTPError:
             # Already logged by _raise_api_error, do not log it twice.
