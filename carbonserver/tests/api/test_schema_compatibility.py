@@ -121,7 +121,7 @@ def test_client_create_payloads_validate_against_server_schemas(
 
 
 def test_millisecond_duration_survives_client_to_server():
-    """A single FastAPI request lasts milliseconds and must not be rounded away."""
+    """A sub-second duration is stored as is, not rounded away."""
     payload = client_schemas.EmissionCreate(
         timestamp="2021-04-04T08:43:00+02:00",
         run_id="40088f1a-d28e-4980-8d80-bf5600056a14",
