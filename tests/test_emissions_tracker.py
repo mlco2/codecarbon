@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -19,6 +20,7 @@ from codecarbon.emissions_tracker import (
 )
 from codecarbon.external.geography import CloudMetadata
 from codecarbon.output import BoAmpsOutput, CodeCarbonAPIOutput, OutputMethod
+from codecarbon.output_methods.logger import LoggerOutput
 from tests.fake_modules import pynvml as fake_pynvml
 from tests.testdata import (
     GEO_METADATA_CANADA,
@@ -389,6 +391,7 @@ class TestCarbonTracker(unittest.TestCase):
                 output_handlers=[],
                 save_to_file=True,
                 save_to_logger=True,
+                logging_logger=LoggerOutput(logging.getLogger("test_save_to_flags")),
             )
 
         self.assertIn(OutputMethod.CSV, tracker._output_methods)
@@ -1036,6 +1039,40 @@ class TestCarbonTracker(unittest.TestCase):
             self.assertTrue(
                 scheduler_warning_found, "Expected scheduler warning was not found"
             )
+
+    def test_logger_output_raises_without_logging_logger(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with self.assertRaises(ValueError):
+            EmissionsTracker(
+                project_name=self.project_name,
+                output_methods=["logger"],
+            )
+
+    def test_logger_output_succeeds_with_logging_logger(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        my_logger = logging.getLogger("test_logger_output")
+        tracker = EmissionsTracker(
+            project_name=self.project_name,
+            output_methods=["logger"],
+            logging_logger=LoggerOutput(my_logger),
+        )
+        self.assertIsNotNone(tracker)
 
     def test_get_detected_hardware(
         self,
