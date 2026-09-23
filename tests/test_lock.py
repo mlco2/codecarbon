@@ -1,5 +1,4 @@
 import atexit
-import os
 import signal
 import threading
 import unittest
@@ -142,43 +141,79 @@ class TestLockSignalHandlers(SignalSafeTestCase):
     @unittest.skipIf(
         not hasattr(signal, "raise_signal"), "requires signal.raise_signal (3.8+)"
     )
-    @patch("codecarbon.lock.os.kill")
     @patch("codecarbon.lock.os.remove")
     @patch("codecarbon.lock.open", new_callable=mock_open)
-    def test_default_disposition_is_reproduced(self, mock_file, mock_remove, mock_kill):
-        # No handler installed by the host application: the default disposition
-        # of SIGTERM is to terminate, which the lock must reproduce after having
-        # released the lock instead of silently swallowing the signal.
+    def test_default_disposition_exits_with_cleanup(self, mock_file, mock_remove):
+        # No handler installed by the host application: exit, but through
+        # SystemExit so `finally` / `__exit__` still write the final emissions.
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
         lock = Lock()
         lock.acquire()
 
-        signal.raise_signal(signal.SIGTERM)
+        with self.assertRaises(SystemExit) as ctx:
+            signal.raise_signal(signal.SIGTERM)
 
-        mock_kill.assert_called_once_with(os.getpid(), signal.SIGTERM)
-        # The lock was released before re-raising, and the default disposition
-        # was put back so the re-raised signal is not caught again.
+        self.assertEqual(ctx.exception.code, 128 + signal.SIGTERM)
+        # The lock was released and the default disposition put back.
         self.assertTrue(mock_remove.called)
         self.assertIs(signal.getsignal(signal.SIGTERM), signal.SIG_DFL)
 
     @unittest.skipIf(
         not hasattr(signal, "raise_signal"), "requires signal.raise_signal (3.8+)"
     )
-    @patch("codecarbon.lock.os.kill")
     @patch("codecarbon.lock.os.remove")
     @patch("codecarbon.lock.open", new_callable=mock_open)
-    def test_ignored_signal_stays_ignored(self, mock_file, mock_remove, mock_kill):
+    def test_ignored_signal_stays_ignored(self, mock_file, mock_remove):
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         lock = Lock()
         lock.acquire()
 
+        # The host application asked to ignore SIGTERM: release the lock, but do
+        # not terminate on its behalf (no SystemExit).
         signal.raise_signal(signal.SIGTERM)
 
-        # The host application asked to ignore SIGTERM: release the lock, but do
-        # not terminate on its behalf.
         self.assertTrue(mock_remove.called)
-        mock_kill.assert_not_called()
         self.assertIs(signal.getsignal(signal.SIGTERM), signal.SIG_IGN)
+
+    @patch("codecarbon.lock.os.remove")
+    @patch("codecarbon.lock.open", new_callable=mock_open)
+    def test_release_from_worker_thread_removes_lock_file(self, mock_file, mock_remove):
+        # stop() is often called from a callback thread: signal.signal() would
+        # raise there, so release() must still remove the lock file.
+        lock = Lock()
+        lock.acquire()
+        errors = []
+
+        def release():
+            try:
+                lock.release()
+            except Exception as e:  # pragma: no cover - the failure being tested
+                errors.append(e)
+
+        worker = threading.Thread(target=release)
+        worker.start()
+        worker.join()
+
+        self.assertEqual(errors, [])
+        mock_remove.assert_called_once_with(LOCKFILE)
+        # Handlers could not be restored off the main thread: still ours.
+        self.assertEqual(signal.getsignal(signal.SIGTERM), lock._handle_exit)
+        lock.release()
+        self.assertIs(
+            signal.getsignal(signal.SIGTERM), self.original_handlers[signal.SIGTERM]
+        )
+
+    @patch("codecarbon.lock.os.remove")
+    @patch("codecarbon.lock.open", new_callable=mock_open)
+    def test_handler_installed_from_c_is_restored_as_default(
+        self, mock_file, mock_remove
+    ):
+        # signal.getsignal() returns None for handlers not installed from Python.
+        lock = Lock()
+        lock.acquire()
+        lock._previous_handlers[signal.SIGTERM] = None
+        lock.release()
+        self.assertIs(signal.getsignal(signal.SIGTERM), signal.SIG_DFL)
 
     @patch("codecarbon.lock.os.remove")
     def test_release_from_within_the_critical_section_does_not_deadlock(

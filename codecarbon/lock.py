@@ -39,8 +39,13 @@ class Lock:
         self.release()  # also restores the previous handlers
         if callable(previous):
             return previous(signum, frame)
-        if previous == signal.SIG_DFL:
-            os.kill(os.getpid(), signum)
+        if previous == signal.SIG_IGN:
+            return None
+        # Default disposition: raise instead of re-sending the signal, so that
+        # `finally` / `__exit__` still run and the tracker writes its last row.
+        if signum == signal.SIGINT:
+            raise KeyboardInterrupt
+        raise SystemExit(128 + signum)
 
     def acquire(self):
         """Creates a lock file and ensures it's the only instance running."""
@@ -68,11 +73,6 @@ class Lock:
         """Removes the lock file and restores the signal handlers we replaced."""
         with self._thread_lock:
             logger.debug("Removing the lock")
-            while self._previous_handlers:
-                sig, handler = self._previous_handlers.popitem()
-                # Only restore if nobody installed another handler after us.
-                if signal.getsignal(sig) == self._handle_exit:
-                    signal.signal(sig, handler)
             atexit.unregister(self.release)
             try:
                 # Remove the lock file only if it was created by this instance
@@ -83,3 +83,20 @@ class Lock:
                 logger.debug(f"Error: {e}")
                 if e.errno != errno.ENOENT:
                     raise
+            finally:
+                self._restore_signal_handlers()
+
+    def _restore_signal_handlers(self):
+        # signal.signal() only works on the main thread. Elsewhere, keep our
+        # handlers: a later signal still releases (a no-op) and forwards.
+        if threading.current_thread() is not threading.main_thread():
+            return
+        while self._previous_handlers:
+            sig, handler = self._previous_handlers.popitem()
+            try:
+                # Only restore if nobody installed another handler after us.
+                if signal.getsignal(sig) == self._handle_exit:
+                    # None: the handler was installed from C, use the default.
+                    signal.signal(sig, signal.SIG_DFL if handler is None else handler)
+            except (ValueError, TypeError, OSError) as e:
+                logger.debug(f"Could not restore handler for signal {sig}: {e}")
