@@ -1,4 +1,5 @@
 import os
+import subprocess
 from unittest import mock
 
 import pytest
@@ -11,6 +12,8 @@ class FakeProcess:
     def __init__(self, stderr="", returncode=0):
         self._stderr = stderr
         self.returncode = returncode
+        self.stdout = None
+        self.stderr = None
 
     def communicate(self):
         return ("", self._stderr)
@@ -29,14 +32,24 @@ class FakeProcess:
 
 
 class HangingProcess:
-    def __init__(self):
+    """A process that never exits, and optionally cannot be killed."""
+
+    def __init__(self, kill_error=None):
         self.killed = False
+        self.stdout = None
+        self.stderr = None
+        self._kill_error = kill_error
 
     def poll(self):
         return None
 
     def kill(self):
         self.killed = True
+        if self._kill_error is not None:
+            raise self._kill_error
+
+    def wait(self, timeout=None):
+        raise subprocess.TimeoutExpired(cmd="powermetrics", timeout=timeout)
 
     def communicate(self):
         return ("", "")
@@ -209,29 +222,89 @@ class TestApplePowerMetrics:
             with pytest.raises(FileNotFoundError):
                 ApplePowermetrics()
 
-    def test_log_values_returns_none_on_non_darwin(self):
+    def test_log_values_returns_false_on_non_darwin(self):
         powermetrics = ApplePowermetrics.__new__(ApplePowermetrics)
         powermetrics._system = "linux"
 
-        assert powermetrics._log_values() is None
+        assert powermetrics._log_values() is False
 
-    def test_log_values_warns_on_nonzero_returncode(self):
+    @staticmethod
+    def _powermetrics_instance():
         powermetrics = ApplePowermetrics.__new__(ApplePowermetrics)
         powermetrics._system = "darwin"
         powermetrics._n_points = 3
         powermetrics._interval = 100
         powermetrics._log_file_path = "powermetrics_log.txt"
+        return powermetrics
+
+    def test_log_values_warns_on_nonzero_returncode(self):
+        powermetrics = self._powermetrics_instance()
+        process = mock.Mock()
+        process.wait.return_value = 1
 
         with (
             mock.patch(
-                "codecarbon.core.powermetrics.subprocess.call", return_value=1
-            ) as mock_call,
+                "codecarbon.core.powermetrics.subprocess.Popen", return_value=process
+            ) as mock_popen,
             mock.patch("codecarbon.core.powermetrics.logger.warning") as mock_warning,
         ):
-            powermetrics._log_values()
+            assert powermetrics._log_values() is True
 
-        mock_call.assert_called_once()
+        mock_popen.assert_called_once()
         mock_warning.assert_called_once()
+
+    def test_log_values_runs_with_a_timeout_and_no_stdin(self):
+        powermetrics = self._powermetrics_instance()
+        process = mock.Mock()
+        process.wait.return_value = 0
+
+        with mock.patch(
+            "codecarbon.core.powermetrics.subprocess.Popen", return_value=process
+        ) as mock_popen:
+            assert powermetrics._log_values() is True
+
+        # 3 points of 100 ms is 0.3 s of nominal work: 0.3 * 2 + 5.
+        assert process.wait.call_args.kwargs["timeout"] == pytest.approx(5.6)
+        assert mock_popen.call_args.kwargs["stdin"] is subprocess.DEVNULL
+
+    def test_log_values_warns_on_timeout(self):
+        powermetrics = self._powermetrics_instance()
+        hanging = HangingProcess()
+
+        with (
+            mock.patch(
+                "codecarbon.core.powermetrics.subprocess.Popen", return_value=hanging
+            ),
+            mock.patch("codecarbon.core.powermetrics.logger.warning") as mock_warning,
+        ):
+            assert powermetrics._log_values() is False
+
+        mock_warning.assert_called_once()
+        assert hanging.killed is True
+
+    def test_log_values_survives_an_unkillable_process_on_timeout(self):
+        """The child runs as root through sudo, so the kill can be refused."""
+        powermetrics = self._powermetrics_instance()
+        hanging = HangingProcess(kill_error=PermissionError("not permitted"))
+
+        with (
+            mock.patch(
+                "codecarbon.core.powermetrics.subprocess.Popen", return_value=hanging
+            ),
+            mock.patch("codecarbon.core.powermetrics.logger.warning"),
+        ):
+            assert powermetrics._log_values() is False
+
+    def test_get_details_returns_empty_dict_when_log_values_fails(self):
+        powermetrics = ApplePowermetrics.__new__(ApplePowermetrics)
+        powermetrics._log_file_path = os.path.join(
+            os.path.dirname(__file__), "test_data", "mock_powermetrics_log.txt"
+        )
+
+        with mock.patch.object(ApplePowermetrics, "_log_values", return_value=False):
+            # The log file still holds the previous measure, it must not be
+            # reported a second time as if it were fresh.
+            assert powermetrics.get_details() == {}
 
     @mock.patch("codecarbon.core.powermetrics.ApplePowermetrics._log_values")
     @mock.patch("builtins.open", side_effect=OSError("missing"))
