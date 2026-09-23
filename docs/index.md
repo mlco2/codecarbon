@@ -73,9 +73,13 @@ A single datacenter can consume large amounts of energy to run computing code. A
 | [CLI Tutorial](tutorials/cli.md) | Track emissions from the command line |
 | [Python API Tutorial](tutorials/python-api.md) | Track emissions in Python code |
 | [Comparing Model Efficiency](tutorials/comparing-model-efficiency.md) | Measure carbon efficiency across ML models |
+| [Accurate CPU measurements (Linux/RAPL)](how-to/enable-rapl.md) | Read real energy counters instead of estimating |
+| [Troubleshooting](how-to/troubleshooting.md) | Fix warnings and numbers that look wrong |
 | [API Reference](reference/api.md) | Full parameter documentation |
 | [Framework Examples](how-to/scikit-learn.md) | Example usage patterns |
 | [Methodology](explanation/methodology.md) | How emissions are calculated |
+| [Accuracy and validation](explanation/accuracy.md) | How accurate the numbers are, and why |
+| [Alternatives comparison](explanation/alternatives.md) | CodeCarbon vs other carbon tracking tools |
 | [EcoLogits](https://ecologits.ai/latest/?utm_source=codecarbon&utm_medium=docs) | Track emissions from GenAI API calls |
 | [Discord Community](https://discord.gg/GS9js2XkJR) | Chat with us and the community |
 
@@ -84,5 +88,5 @@ A single datacenter can consume large amounts of energy to run computing code. A
 CodeCarbon is built by a community of open-source contributors and supported by organizations committed to sustainable computing.
 
 - **[Contributors](https://github.com/mlco2/codecarbon/graphs/contributors)** - See everyone who has contributed to the project
-- **[Citation](https://zenodo.org/records/11171501)** - Cite CodeCarbon in your research
+- **[Citation](https://doi.org/10.5281/zenodo.4658424)** - Cite CodeCarbon in your research
 - **[Partners](https://github.com/mlco2/codecarbon#partners)** - The organizations supporting this work

@@ -1,5 +1,12 @@
 # How Power Estimation Works in CodeCarbon
 
+!!! info
+
+    This page explains how CodeCarbon derives **power** (Watts) from **energy**
+    counters. If you are looking for how CodeCarbon estimates power for hardware
+    that has no energy counter (TDP registry, constants, CPU load), see
+    [Methodology](methodology.md).
+
 CodeCarbon tracks energy consumption by periodically querying the underlying hardware interfaces (e.g., RAPL for Intel CPUs, NVML for NVIDIA GPUs, AMDSMI for AMD GPUs) or by falling back on constant power models for non-supported hardware (such as generic CPU or RAM matching). 
 
 While energy is the metric primarily responsible for CO₂ emissions estimations, tracking **power** (measured in Watts or kiloWatts) is equally important to provide meaningful dashboards and to help users understand their instantaneous consumption.

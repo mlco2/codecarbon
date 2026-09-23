@@ -1,8 +1,8 @@
 # Release drafter configuration https://github.com/release-drafter/release-drafter#configuration
 # Emojis were chosen to match the https://gitmoji.carloscuesta.me/
 
-name-template: "v$NEXT_PATCH_VERSION"
-tag-template: "v$NEXT_PATCH_VERSION"
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
 
 categories:
   - title: ":rocket: Features"
