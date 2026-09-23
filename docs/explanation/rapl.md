@@ -78,6 +78,13 @@ counting!)
 
 **Correct approach**: Use only psys (9.6W) ✅
 
+A second, unrelated double-count shows up on some multi-die AMD CPUs
+(Threadripper / EPYC): `package-0-die-0` and `package-0-die-1` can both
+expose the **same** socket-wide energy counter. They are not two
+independent packages. Summing identical readings multiplies CPU power
+by the die count. See the Threadripper teaser below and
+[issue #1274](https://github.com/mlco2/codecarbon/issues/1274).
+
 ## CodeCarbon's RAPL Strategy
 
 CodeCarbon implements intelligent domain selection to provide reliable
@@ -124,7 +131,7 @@ and consistent measurements:
 -   `core` reports very low energy values
 -   Unclear if `core` is included in `package` (vendor documentation is
     sparse)
--   Multiple dies may report as separate packages (e.g., Threadripper)
+-   On some multi-die CPUs (e.g., Threadripper), separate package domains mirror the same socket-wide counter. CodeCarbon flags counters holding the same value at startup, confirms with the energy deltas of the first measurement interval that they are true mirrors, and keeps only one, so CPU energy is not multiplied by the number of dies.
 
 **What RAPL Does NOT Measure**:
 
@@ -179,8 +186,9 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 7.  **Platform-specific behavior**:
     -   Intel modern: package or psys (with rapl_prefer_psys=True)
     -   Intel older: package-0 for CPU only
-    -   AMD: Sum all package-X-die-Y for multi-die CPUs, which is
-        [under review](https://github.com/mlco2/codecarbon/issues/1379)
+    -   AMD: use package domains. If several `package-X-die-Y`
+        domains report the same energy, keep one — do not sum
+        mirrors. Sum only domains with distinct counters.
 8.  **Limitations**: RAPL does NOT measure:
     -   Discrete GPUs (use nvidia-smi/rocm-smi)
     -   SSDs, peripherals, fans
@@ -219,16 +227,23 @@ We investigate RAPL on various architectures :
 Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads)
 Power plug measure when idle (10% CPU): 125 W
 package-0-die-0: 68 W | package-0-die-1: 68 W | CodeCarbon: 137 W
+
+⚠️  WRONG: 68 W + 68 W = 137 W. The two dies report the same
+    socket-wide RAPL counter (issue 1274). This is one meter read
+    twice, not two independent 68 W packages. CPU RAPL here is
+    ~68 W, not 137 W.
 ```
 
-!!! warning "Multi-die summing is under review"
+!!! warning "Mirrored per-die RAPL counters"
 
-    On Linux, CodeCarbon sums every domain whose name contains `package`, so the
-    two per-die domains above are added together. Whether those domains report
-    independent power or mirror the same counter is unresolved, and it decides
-    whether 137 W is right or double the real figure. Tracked in
-    [issue #1379](https://github.com/mlco2/codecarbon/issues/1379). The numbers
-    here are left exactly as observed — they are the evidence behind that issue.
+    Two dies reporting the exact same 68 W is not a coincidence. On
+    some multi-die AMD CPUs the Linux powercap `package-*-die-*`
+    domains all read one socket-wide energy counter, so this 137 W
+    figure is an over-count. The numbers here are left exactly as
+    observed. CodeCarbon now detects such mirrors and keeps only one
+    (see [CodeCarbon's RAPL Strategy](#codecarbons-rapl-strategy)).
+    Tracking: [#1274](https://github.com/mlco2/codecarbon/issues/1274),
+    [#1379](https://github.com/mlco2/codecarbon/issues/1379).
 
 ### Laptop: Intel(R) Core(TM) Ultra 7 265H (TDP 28W)
 
@@ -366,16 +381,21 @@ Total Power Consumption: 181.05 Watts
 280 - 100 (idle) = 180 W
 
 Analysis:
-- Each die independently measured via RAPL
+- This capture exposes a single package-0 domain (kernel-dependent)
+- It is not the mirrored 68 W + 68 W case in the teaser above
 - No psys domain available on this AMD system
 - RAPL counter range: 234 sec at 280W (potential wraparound consideration)
 ```
 
 **AMD RAPL Characteristics**:
 
--   Multi-die CPUs report separate packages (package-0-die-0,
-    package-0-die-1)
+-   Multi-die CPUs may report separate packages (package-0-die-0,
+    package-0-die-1). On some parts those domains **mirror the same
+    socket-wide counter**; summing identical readings double-counts
+    CPU power (the 68 W + 68 W → 137 W teaser above). Distinct
+    counters (for example two sockets) should still be added.
 -   No psys domain available on older AMD processors
 -   `core` domain reports very low values (unclear if included in
     package)
--   Package measurements are generally reliable for total CPU power
+-   A single, non-mirrored package reading is generally reliable for
+    total CPU power
