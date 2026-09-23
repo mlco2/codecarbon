@@ -1339,7 +1339,6 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     _country_iso_code = None
     _country_name, _region, country_2letter_iso_code = None, None, None
 
-    @suppress(Exception)
     def __init__(
         self,
         *args,
@@ -1380,7 +1379,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         logger.info("offline tracker init")
 
         if self._region is not None:
-            assert isinstance(self._region, str)
+            if not isinstance(self._region, str):
+                raise ValueError(f"region must be a string, got {self._region!r}")
             self._region: str = self._region.lower()
 
         if self._cloud_provider:
@@ -1390,7 +1390,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 )
 
         if self._country_2letter_iso_code:
-            assert isinstance(self._country_2letter_iso_code, str)
+            if not isinstance(self._country_2letter_iso_code, str):
+                raise ValueError(
+                    "country_2letter_iso_code must be a string, "
+                    f"got {self._country_2letter_iso_code!r}"
+                )
             self._country_2letter_iso_code: str = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
@@ -1650,75 +1654,84 @@ def track_emissions(
                     cloud_provider is None or cloud_provider is _sentinel
                 ):
                     raise Exception("Needs ISO Code of the Country for Offline mode")
-                tracker = OfflineEmissionsTracker(
-                    project_name=project_name,
-                    measure_power_secs=measure_power_secs,
-                    output_dir=output_dir,
-                    output_file=output_file,
-                    output_methods=output_methods,
-                    save_to_file=save_to_file,
-                    save_to_logger=save_to_logger,
-                    logging_logger=logging_logger,
-                    save_to_prometheus=save_to_prometheus,
-                    save_to_logfire=save_to_logfire,
-                    prometheus_url=prometheus_url,
-                    output_handlers=output_handlers,
-                    gpu_ids=gpu_ids,
-                    electricitymaps_api_token=_electricitymaps_token,
-                    tracking_mode=tracking_mode,
-                    log_level=log_level,
-                    on_csv_write=on_csv_write,
-                    logger_preamble=logger_preamble,
-                    country_iso_code=country_iso_code,
-                    region=region,
-                    cloud_provider=cloud_provider,
-                    cloud_region=cloud_region,
-                    country_2letter_iso_code=country_2letter_iso_code,
-                    force_cpu_power=force_cpu_power,
-                    force_ram_power=force_ram_power,
-                    pue=pue,
-                    wue=wue,
-                    force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
-                    allow_multiple_runs=allow_multiple_runs,
-                    rapl_include_dram=rapl_include_dram,
-                    rapl_prefer_psys=rapl_prefer_psys,
+            try:
+                if offline and offline is not _sentinel:
+                    tracker = OfflineEmissionsTracker(
+                        project_name=project_name,
+                        measure_power_secs=measure_power_secs,
+                        output_dir=output_dir,
+                        output_file=output_file,
+                        output_methods=output_methods,
+                        save_to_file=save_to_file,
+                        save_to_logger=save_to_logger,
+                        logging_logger=logging_logger,
+                        save_to_prometheus=save_to_prometheus,
+                        save_to_logfire=save_to_logfire,
+                        prometheus_url=prometheus_url,
+                        output_handlers=output_handlers,
+                        gpu_ids=gpu_ids,
+                        electricitymaps_api_token=_electricitymaps_token,
+                        tracking_mode=tracking_mode,
+                        log_level=log_level,
+                        on_csv_write=on_csv_write,
+                        logger_preamble=logger_preamble,
+                        country_iso_code=country_iso_code,
+                        region=region,
+                        cloud_provider=cloud_provider,
+                        cloud_region=cloud_region,
+                        country_2letter_iso_code=country_2letter_iso_code,
+                        force_cpu_power=force_cpu_power,
+                        force_ram_power=force_ram_power,
+                        pue=pue,
+                        wue=wue,
+                        force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                        allow_multiple_runs=allow_multiple_runs,
+                        rapl_include_dram=rapl_include_dram,
+                        rapl_prefer_psys=rapl_prefer_psys,
+                    )
+                else:
+                    tracker = EmissionsTracker(
+                        project_name=project_name,
+                        measure_power_secs=measure_power_secs,
+                        api_call_interval=api_call_interval,
+                        api_endpoint=api_endpoint,
+                        api_key=api_key,
+                        output_dir=output_dir,
+                        output_file=output_file,
+                        output_methods=output_methods,
+                        save_to_file=save_to_file,
+                        save_to_api=save_to_api,
+                        save_to_logger=save_to_logger,
+                        logging_logger=logging_logger,
+                        save_to_prometheus=save_to_prometheus,
+                        save_to_logfire=save_to_logfire,
+                        prometheus_url=prometheus_url,
+                        output_handlers=output_handlers,
+                        gpu_ids=gpu_ids,
+                        emissions_endpoint=emissions_endpoint,
+                        experiment_id=experiment_id,
+                        experiment_name=experiment_name,
+                        electricitymaps_api_token=_electricitymaps_token,
+                        tracking_mode=tracking_mode,
+                        log_level=log_level,
+                        on_csv_write=on_csv_write,
+                        logger_preamble=logger_preamble,
+                        force_cpu_power=force_cpu_power,
+                        force_ram_power=force_ram_power,
+                        pue=pue,
+                        wue=wue,
+                        force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                        allow_multiple_runs=allow_multiple_runs,
+                        rapl_include_dram=rapl_include_dram,
+                        rapl_prefer_psys=rapl_prefer_psys,
+                    )
+            except Exception:
+                logger.error(
+                    "Tracker not initialized, running the function untracked. "
+                    "Please check the logs.",
+                    exc_info=True,
                 )
-            else:
-                tracker = EmissionsTracker(
-                    project_name=project_name,
-                    measure_power_secs=measure_power_secs,
-                    api_call_interval=api_call_interval,
-                    api_endpoint=api_endpoint,
-                    api_key=api_key,
-                    output_dir=output_dir,
-                    output_file=output_file,
-                    output_methods=output_methods,
-                    save_to_file=save_to_file,
-                    save_to_api=save_to_api,
-                    save_to_logger=save_to_logger,
-                    logging_logger=logging_logger,
-                    save_to_prometheus=save_to_prometheus,
-                    save_to_logfire=save_to_logfire,
-                    prometheus_url=prometheus_url,
-                    output_handlers=output_handlers,
-                    gpu_ids=gpu_ids,
-                    emissions_endpoint=emissions_endpoint,
-                    experiment_id=experiment_id,
-                    experiment_name=experiment_name,
-                    electricitymaps_api_token=_electricitymaps_token,
-                    tracking_mode=tracking_mode,
-                    log_level=log_level,
-                    on_csv_write=on_csv_write,
-                    logger_preamble=logger_preamble,
-                    force_cpu_power=force_cpu_power,
-                    force_ram_power=force_ram_power,
-                    pue=pue,
-                    wue=wue,
-                    force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
-                    allow_multiple_runs=allow_multiple_runs,
-                    rapl_include_dram=rapl_include_dram,
-                    rapl_prefer_psys=rapl_prefer_psys,
-                )
+                return fn(*args, **kwargs)
             tracker.start()
             try:
                 fn_result = fn(*args, **kwargs)
