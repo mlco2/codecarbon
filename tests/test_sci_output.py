@@ -202,6 +202,12 @@ class TestSCIOutput(unittest.TestCase):
         self.assertEqual(report["terms"]["R_name"], "request")
         self.assertAlmostEqual(report["sci"], data.emissions * 1000 / 750, places=10)
 
+    def test_set_functional_unit_count_does_not_mutate_caller_unit(self):
+        unit = FunctionalUnit(name="request", count=1)
+        handler = SCIOutput(output_dir=self.temp_dir, functional_unit=unit)
+        handler.set_functional_unit_count(750, name="image")
+        self.assertEqual(unit, FunctionalUnit(name="request", count=1))
+
     def test_set_functional_unit_count_renames_existing_unit(self):
         handler = SCIOutput(
             output_dir=self.temp_dir,
@@ -258,6 +264,8 @@ class TestSCIOutput(unittest.TestCase):
         self.assertAlmostEqual(report["tasks"][1]["sciShare"], (0.1 * 1000 + 5.0) / 100)
         # R is not apportioned, so no per-functional-unit label is claimed
         self.assertNotIn("unit", report["tasks"][0])
+        # task data carries no PUE, so it is reported as unknown, not 1
+        self.assertIsNone(report["tasks"][0]["provenance"]["pue"])
         self.assertIn("vendor LCA", report["tasks"][0]["provenance"]["M_source"])
         self.assertIn(
             "apportioned by duration", report["tasks"][0]["provenance"]["M_source"]
@@ -286,7 +294,9 @@ class TestSCIOutput(unittest.TestCase):
         self.assertAlmostEqual(shares[1], 30.0)
         # the split is exhaustive: the run's M is counted exactly once
         self.assertAlmostEqual(sum(shares), 40.0)
-        self.assertIn("25.0% of the run", report["tasks"][0]["provenance"]["M_source"])
+        self.assertIn(
+            "25.0% of the tasks' duration", report["tasks"][0]["provenance"]["M_source"]
+        )
 
     def test_task_out_without_embodied_stays_undeclared(self):
         tasks = [_make_task_data("train")]
@@ -408,6 +418,11 @@ class TestContextFile(unittest.TestCase):
         with self.assertRaises(json.JSONDecodeError):
             SCIOutput.from_file(path, output_dir=self.temp_dir)
 
+    def test_from_file_not_an_object(self):
+        path = self._write_context("[1]")
+        with self.assertRaises(ValueError):
+            SCIOutput.from_file(path, output_dir=self.temp_dir)
+
 
 class _TrackerStub:
     """Minimal stand-in exercising ``_init_output_methods`` without hardware."""
@@ -464,6 +479,17 @@ class TestTrackerRegistration(unittest.TestCase):
                 {"sci_context_file": os.path.join(self.temp_dir, "nope.json")},
             ).init()
         self.assertTrue(any("sci_context_file" in m for m in logs.output))
+        handler = next(h for h in handlers if isinstance(h, SCIOutput))
+        self.assertIsNone(handler._functional_unit)
+
+    def test_sci_context_file_not_an_object_degrades(self):
+        context_path = os.path.join(self.temp_dir, "sci_context.json")
+        with open(context_path, "w") as f:
+            f.write("[1]")
+        with self.assertLogs("codecarbon", level="ERROR"):
+            handlers = _TrackerStub(
+                self.temp_dir, {"sci_context_file": context_path}
+            ).init()
         handler = next(h for h in handlers if isinstance(h, SCIOutput))
         self.assertIsNone(handler._functional_unit)
 
