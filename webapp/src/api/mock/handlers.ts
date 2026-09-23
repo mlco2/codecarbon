@@ -55,6 +55,14 @@ const handlers: Handler[] = [
         if (method === "GET" && users) {
             return ok(MOCK.organization.usersByOrgId[users[1]] ?? []);
         }
+        const orgUser = pathname.match(
+            /^\/organizations\/([^/]+)\/users\/([^/]+)$/,
+        );
+        if (method === "DELETE" && orgUser) {
+            const members = MOCK.organization.usersByOrgId[orgUser[1]] ?? [];
+            const member = members.find((user) => user.id === orgUser[2]);
+            return member ? ok({ status: "ok" }) : notFound("User not found");
+        }
         const addUser = pathname.match(/^\/organizations\/([^/]+)\/add-user$/);
         if (method === "POST" && addUser) {
             const input = (body ?? {}) as { email?: string };
