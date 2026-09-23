@@ -296,6 +296,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._window_observers: List[Callable[[float], None]] = []
         self._scheduler_paused_by_task = False
         self._hardware = []
         self._hardware_initialized = False
@@ -1004,6 +1005,46 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
+    def add_energy_window_observer(self, callback: Callable[[float], None]) -> None:
+        """Call ``callback(total_energy_kwh)`` after every completed sampling window.
+
+        The callback runs on whichever thread took the sample (normally the
+        scheduler thread), so it must be cheap. Used by the FastAPI per-request
+        energy attribution to split each window's energy across the requests
+        that were in flight during it.
+
+        Args:
+            callback: Receives the tracker's cumulative energy in kWh.
+        """
+        self._window_observers.append(callback)
+
+    def remove_energy_window_observer(self, callback: Callable[[float], None]) -> None:
+        """Remove a callback registered with :meth:`add_energy_window_observer`."""
+        if callback in self._window_observers:
+            self._window_observers.remove(callback)
+
+    def _notify_energy_window_observers(self) -> None:
+        # Copy: an observer may be removed from another thread mid-iteration.
+        for callback in tuple(self._window_observers):
+            try:
+                callback(self._total_energy.kWh)
+            except Exception:
+                logger.exception("CodeCarbon energy window observer failed")
+
+    def _carbon_intensity_kg_per_kwh(self) -> float:
+        """Current carbon intensity, kg CO2eq per kWh, without touching run totals.
+
+        Used by the FastAPI integration to convert each request's energy share,
+        once per sampling window, off the tracker's accumulated state.
+        """
+        self._ensure_geo_metadata()
+        self._ensure_emissions_engine()
+        one_kwh = Energy.from_energy(kWh=1)
+        cloud: CloudMetadata = self._get_cloud_metadata()
+        if cloud.is_on_private_infra:
+            return self._emissions.get_private_infra_emissions(one_kwh, self._geo)
+        return self._emissions.get_cloud_emissions(one_kwh, cloud, self._geo)
+
     def _prepare_emissions_data(self) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
@@ -1304,6 +1345,7 @@ class BaseEmissionsTracker(ABC):
 
         self._do_measurements()
         self._last_measured_time = time.perf_counter()
+        self._notify_energy_window_observers()
         self._measure_occurrence += 1
         # Special case: metrics and api calls are sent every `api_call_interval` measures
         if (

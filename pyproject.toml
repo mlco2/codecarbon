@@ -95,6 +95,8 @@ dev = [
     "jsonschema",  # For BoAmps schema validation tests
     "mktestdocs",  # For testing documentation code blocks
     "scikit-learn",  # For documentation examples and tests
+    "fastapi>=0.100",  # For testing the FastAPI middleware
+    "httpx",  # For fastapi.testclient
 ]
 doc = [
   "requests",
@@ -112,6 +114,9 @@ carbonboard = [
     "dash",
     "dash_bootstrap_components > 1.0.0",
     "fire",
+]
+fastapi = [
+    "fastapi>=0.100",
 ]
 # Backwards compatibility alias - will be removed in v4.0.0
 viz-legacy = [
