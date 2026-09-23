@@ -231,11 +231,10 @@ class ResourceTracker:
                 if powermetrics.is_powermetrics_available():
                     self._setup_powermetrics()
                     return True
+            # Intel Mac: powermetrics has no CPU power line there, so it is
+            # not an option (ApplePowermetrics rejects non-Apple Silicon CPUs).
             elif cpu.is_powergadget_available():
                 self._setup_power_gadget()
-                return True
-            elif powermetrics.is_powermetrics_available():
-                self._setup_powermetrics()
                 return True
         elif is_windows_os():
             if windows_emi.is_emi_available():
