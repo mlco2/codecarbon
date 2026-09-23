@@ -206,8 +206,8 @@ class TestFileOutput(unittest.TestCase):
             cpu_model="Test CPU",
             gpu_count=None,
             gpu_model=None,
-            longitude="",
-            latitude="",
+            longitude=None,
+            latitude=None,
             ram_total_size=16,
             tracking_mode="machine",
         )
