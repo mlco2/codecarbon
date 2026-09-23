@@ -110,3 +110,130 @@ def test_non_main_rapl_permission_warning_and_skip(tmp_path):
             os.chmod(energy1, stat.S_IMODE(mode_before) or 0o644)
         except Exception:
             pass
+
+
+def test_rapl_wraparound_without_max_skips_sample(tmp_path):
+    """A wrap-around with an unknown max range must not yield a negative delta."""
+    from codecarbon.core.rapl import RAPLFile
+    from codecarbon.core.units import Time
+    from codecarbon.external.logger import logger as codecarbon_logger
+
+    energy_file = tmp_path / "energy_uj"
+    energy_file.write_text("4000000000")
+
+    log_records = []
+
+    class TestHandler(logging.Handler):
+        def emit(self, record):
+            log_records.append(record)
+
+    test_handler = TestHandler()
+    test_handler.setLevel(logging.WARNING)
+    codecarbon_logger.addHandler(test_handler)
+
+    try:
+        rapl_file = RAPLFile(
+            name="package-0",
+            path=str(energy_file),
+            max_path=str(tmp_path / "does_not_exist"),
+        )
+        rapl_file.start()
+        energy_file.write_text("10000")
+        rapl_file.delta(Time.from_seconds(10))
+
+        assert rapl_file.energy_delta.kWh == 0
+        assert rapl_file.power.W == 0
+        assert any(
+            "counter went backwards" in r.getMessage() for r in log_records
+        ), f"Expected warning, got: {[r.getMessage() for r in log_records]}"
+    finally:
+        codecarbon_logger.removeHandler(test_handler)
+
+
+def test_rapl_wraparound_with_max_is_corrected(tmp_path):
+    """A wrap-around with a known max range is still corrected."""
+    from codecarbon.core.rapl import RAPLFile
+    from codecarbon.core.units import Energy, Time
+
+    energy_file = tmp_path / "energy_uj"
+    energy_file.write_text("4000000000")
+    max_file = tmp_path / "max_energy_range_uj"
+    max_file.write_text("4294967295")
+
+    rapl_file = RAPLFile(
+        name="package-0", path=str(energy_file), max_path=str(max_file)
+    )
+    rapl_file.start()
+    energy_file.write_text("10000")
+    rapl_file.delta(Time.from_seconds(10))
+
+    expected = Energy.from_ujoules(10000 + 4294967295 - 4000000000).kWh
+    assert rapl_file.energy_delta.kWh == pytest.approx(expected)
+
+
+def test_rapl_read_error_does_not_inject_energy(tmp_path):
+    """A transient read error must not be mistaken for a wrap-around."""
+    from codecarbon.core.rapl import RAPLFile
+    from codecarbon.core.units import Energy, Time
+
+    energy_file = tmp_path / "energy_uj"
+    energy_file.write_text("4000000000")
+    max_file = tmp_path / "max_energy_range_uj"
+    max_file.write_text("4294967295")
+
+    rapl_file = RAPLFile(
+        name="package-0", path=str(energy_file), max_path=str(max_file)
+    )
+    rapl_file.start()
+
+    # Unreadable content : previously this returned 0 and looked like a wrap.
+    energy_file.write_text("")
+    rapl_file.delta(Time.from_seconds(10))
+    assert rapl_file.energy_delta.kWh == 0
+    assert rapl_file.power.W == 0
+
+    # The next sample re-baselines instead of counting the gap twice.
+    energy_file.write_text("4000010000")
+    rapl_file.delta(Time.from_seconds(10))
+    assert rapl_file.energy_delta.kWh == 0
+
+    energy_file.write_text("4000020000")
+    rapl_file.delta(Time.from_seconds(10))
+    assert rapl_file.energy_delta.kWh == pytest.approx(Energy.from_ujoules(10000).kWh)
+
+
+def test_rapl_uncorrectable_wrap_warns_once(tmp_path):
+    """The uncorrectable-wrap warning must not repeat on every cycle."""
+    from codecarbon.core.rapl import RAPLFile
+    from codecarbon.core.units import Time
+    from codecarbon.external.logger import logger as codecarbon_logger
+
+    energy_file = tmp_path / "energy_uj"
+    energy_file.write_text("4000000000")
+
+    log_records = []
+
+    class TestHandler(logging.Handler):
+        def emit(self, record):
+            log_records.append(record)
+
+    test_handler = TestHandler()
+    test_handler.setLevel(logging.WARNING)
+    codecarbon_logger.addHandler(test_handler)
+    try:
+        rapl_file = RAPLFile(
+            name="package-0",
+            path=str(energy_file),
+            max_path=str(tmp_path / "does_not_exist"),
+        )
+        rapl_file.start()
+        for value in ("10000", "9000", "8000"):
+            energy_file.write_text(value)
+            rapl_file.delta(Time.from_seconds(10))
+
+        backwards = [
+            r for r in log_records if "counter went backwards" in r.getMessage()
+        ]
+        assert len(backwards) == 1, [r.getMessage() for r in log_records]
+    finally:
+        codecarbon_logger.removeHandler(test_handler)
