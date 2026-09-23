@@ -5,10 +5,12 @@ OfflineEmissionsTracker, context manager and decorator @track_emissions
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import os
 import platform
 import re
+import sys
 import time
 import uuid
 import warnings
@@ -50,6 +52,30 @@ if TYPE_CHECKING:
 #
 # To fix this, a complex move would be to have default values set to the sentinel:
 # _sentinel = object()
+
+_PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__)) + os.sep
+# The `@suppress(...)` decorator adds a `contextlib` frame to the stack.
+_CONTEXTLIB_FILE = os.path.abspath(contextlib.__file__)
+
+
+def _caller_stacklevel() -> int:
+    """
+    ``stacklevel`` of the first frame outside the codecarbon package, so a warning
+    raised deep inside tracker initialization points at the user's code whatever
+    the entry point (``EmissionsTracker``, ``OfflineEmissionsTracker``,
+    ``@track_emissions``, ...).
+    """
+    frame = sys._getframe(1)  # the function calling warnings.warn()
+    level = 1
+    while frame is not None:
+        filename = os.path.abspath(frame.f_code.co_filename)
+        if not filename.startswith(_PACKAGE_DIR) and filename != _CONTEXTLIB_FILE:
+            return level
+        frame = frame.f_back
+        level += 1
+    return 2
+
+
 # see: https://stackoverflow.com/questions/67202314/
 #      python-distinguish-default-argument-and-argument-provided-with-default-value
 
@@ -227,7 +253,7 @@ class BaseEmissionsTracker(ABC):
                 # end users, and the default filter hides DeprecationWarning
                 # unless it comes from __main__.
                 FutureWarning,
-                stacklevel=2,
+                stacklevel=_caller_stacklevel(),
             )
 
         self._set_from_conf(output_methods, "output_methods")

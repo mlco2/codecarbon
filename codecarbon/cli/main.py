@@ -26,6 +26,34 @@ DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
 codecarbon = typer.Typer(no_args_is_help=True)
 
+# save_to_* configuration key -> (output method, default), as the tracker reads them
+_SAVE_TO_KEYS = {
+    "save_to_file": ("csv", True),
+    "save_to_api": ("api", False),
+    "save_to_logger": ("logger", False),
+    "save_to_prometheus": ("prometheus", False),
+    "save_to_logfire": ("logfire", False),
+}
+
+
+def _configured_output_methods() -> list:
+    """Output methods resolved from configuration alone, like the tracker does."""
+    from codecarbon.core.config import get_hierarchical_config
+    from codecarbon.output_methods.base_output import OutputMethod
+
+    conf = get_hierarchical_config()
+    if conf.get("output_methods"):
+        return [
+            OutputMethod(method.strip())
+            for method in conf["output_methods"].split(",")
+            if method.strip()
+        ]
+    return [
+        OutputMethod(method)
+        for key, (method, default) in _SAVE_TO_KEYS.items()
+        if str(conf.get(key, default)).lower() == "true"
+    ]
+
 
 def main():
     """
@@ -422,7 +450,16 @@ def monitor(
             )
             raise typer.Exit(1)
 
-        tracker_args = {**tracker_args, "save_to_api": api}
+        # output_methods replaces the configured outputs, so start from them and
+        # only add or remove the API, as save_to_api=api used to.
+        from codecarbon.output_methods.base_output import OutputMethod
+
+        output_methods = [
+            m for m in _configured_output_methods() if m != OutputMethod.API
+        ]
+        if api:
+            output_methods.append(OutputMethod.API)
+        tracker_args = {**tracker_args, "output_methods": output_methods}
 
     from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 
@@ -473,7 +510,7 @@ def detect():
     from codecarbon.emissions_tracker import EmissionsTracker
 
     print("Detecting hardware...")
-    tracker = EmissionsTracker(save_to_file=False)
+    tracker = EmissionsTracker(output_methods=[])
     hardware_info = tracker.get_detected_hardware()
 
     print("\nDetected Hardware and System Information:")

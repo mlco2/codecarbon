@@ -1124,6 +1124,7 @@ def test_deprecation_warning_survives_the_default_filter():
             warnings.simplefilter("ignore", DeprecationWarning)
             tracker_cls(save_to_file=False, **extra)
 
-        assert [
-            w for w in recorded if issubclass(w.category, FutureWarning)
-        ], f"no FutureWarning raised by {tracker_cls.__name__}"
+        future = [w for w in recorded if issubclass(w.category, FutureWarning)]
+        assert future, f"no FutureWarning raised by {tracker_cls.__name__}"
+        # THEN the warning points at the caller, not at codecarbon internals.
+        assert future[0].filename == __file__
