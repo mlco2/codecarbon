@@ -115,6 +115,9 @@ carbonboard = [
     "dash_bootstrap_components > 1.0.0",
     "fire",
 ]
+fastapi = [
+    "fastapi>=0.100",
+]
 # Backwards compatibility alias - will be removed in v4.0.0
 viz-legacy = [
     "dash",

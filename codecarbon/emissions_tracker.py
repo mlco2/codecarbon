@@ -1024,46 +1024,26 @@ class BaseEmissionsTracker(ABC):
             self._window_observers.remove(callback)
 
     def _notify_energy_window_observers(self) -> None:
-        for callback in self._window_observers:
+        # Copy: an observer may be removed from another thread mid-iteration.
+        for callback in tuple(self._window_observers):
             try:
                 callback(self._total_energy.kWh)
             except Exception:
                 logger.exception("CodeCarbon energy window observer failed")
 
-    def http_request_emissions(
-        self, energy_kwh: float, duration_s: float
-    ) -> EmissionsData:
-        """Scale the run's emissions data down to one attributed energy share.
+    def _carbon_intensity_kg_per_kwh(self) -> float:
+        """Current carbon intensity, kg CO2eq per kWh, without touching run totals.
 
-        The share is split into cpu/gpu/ram in the same proportions the run has
-        accumulated so far, and converted with the run's effective carbon
-        intensity, so per-request numbers stay consistent with the run total.
-        Over a single request the per-component split is not separately known,
-        and the run ratio is the best estimate available.
-
-        Args:
-            energy_kwh: Energy attributed to the request, from
-                :class:`~codecarbon.integrations.fastapi.EnergyAttributor`.
-            duration_s: Wall-clock duration of the request.
+        Used by the FastAPI integration to convert each request's energy share,
+        once per sampling window, off the tracker's accumulated state.
         """
-        snapshot = self._prepare_emissions_data()
-        total = snapshot.energy_consumed or 0.0
-
-        def _share(component: float) -> float:
-            return energy_kwh * (component / total) if total else 0.0
-
-        emissions = energy_kwh * (self._total_emissions / total if total else 0.0)
-        return dataclasses.replace(
-            snapshot,
-            duration=duration_s,
-            emissions=emissions,
-            emissions_rate=emissions / duration_s if duration_s else 0.0,
-            cpu_energy=_share(snapshot.cpu_energy),
-            gpu_energy=_share(snapshot.gpu_energy),
-            ram_energy=_share(snapshot.ram_energy),
-            energy_consumed=energy_kwh,
-            water_consumed=_share(snapshot.water_consumed),
-        )
+        self._ensure_geo_metadata()
+        self._ensure_emissions_engine()
+        one_kwh = Energy.from_energy(kWh=1)
+        cloud: CloudMetadata = self._get_cloud_metadata()
+        if cloud.is_on_private_infra:
+            return self._emissions.get_private_infra_emissions(one_kwh, self._geo)
+        return self._emissions.get_cloud_emissions(one_kwh, cloud, self._geo)
 
     def _prepare_emissions_data(self) -> EmissionsData:
         """
