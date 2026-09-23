@@ -18,6 +18,10 @@ from codecarbon.cli.cli_utils import (
     get_existing_exp_id,
     overwrite_local_config,
 )
+from codecarbon.cli.tracker_options import (
+    extend_monitor_signature,
+    extra_tracker_param_names,
+)
 
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
@@ -418,8 +422,14 @@ def monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
+    **tracker_kwargs,
 ):
-    """Monitor your machine's carbon emissions."""
+    """Monitor your machine's carbon emissions.
+
+    Additional flags are generated from ``EmissionsTracker`` constructor
+    arguments (for example ``--pue`` and ``--wue``) so the CLI stays in
+    sync with the package API.
+    """
 
     external_conf = _external_config()
 
@@ -434,6 +444,12 @@ def monitor(
     tracker_args = {
         name: value for name, value in cli_defaults if _cli_provided(ctx, name)
     }
+    for name in extra_tracker_param_names():
+        value = tracker_kwargs.get(name)
+        if value is None and ctx is not None:
+            value = ctx.params.get(name)
+        if value is not None:
+            tracker_args[name] = value
     for name, value in cli_defaults:
         if name not in tracker_args and name not in external_conf:
             # Nothing configures it: keep the defaults advertised by `--help`
@@ -546,3 +562,5 @@ def questionary_prompt(prompt, list_options, default):
 
 if __name__ == "__main__":
     main()
+
+extend_monitor_signature(monitor)
