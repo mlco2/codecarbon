@@ -94,6 +94,29 @@ class TestElectricityMapsCache(unittest.TestCase):
         assert len(responses.calls) == 1
 
     @responses.activate
+    def test_cooldown_doubles_on_consecutive_failures_up_to_the_cap(self):
+        responses.add(
+            responses.GET,
+            electricitymaps_api.URL,
+            json={"error": "invalid token"},
+            status=401,
+        )
+        delays = []
+        for _ in range(9):
+            key = next(iter(electricitymaps_api._cooldown), None)
+            if key is not None:
+                # Let the previous cooldown expire so the next call hits the API.
+                _, delay = electricitymaps_api._cooldown[key]
+                electricitymaps_api._cooldown[key] = (0.0, delay)
+            with self.assertRaises(electricitymaps_api.ElectricityMapsAPIError):
+                electricitymaps_api.get_carbon_intensity(self._geo)
+            key = next(iter(electricitymaps_api._cooldown))
+            delays.append(electricitymaps_api._cooldown[key][1])
+
+        assert delays == [30, 60, 120, 240, 480, 960, 1920, 3600, 3600]
+        assert len(responses.calls) == 9
+
+    @responses.activate
     def test_cooldown_is_reset_after_a_successful_call(self):
         responses.add(
             responses.GET,
@@ -107,7 +130,7 @@ class TestElectricityMapsCache(unittest.TestCase):
         responses.reset()
         self._add_success_response()
         key = next(iter(electricitymaps_api._cooldown))
-        electricitymaps_api._cooldown[key] = 0.0
+        electricitymaps_api._cooldown[key] = (0.0, 30.0)
         electricitymaps_api.get_carbon_intensity(self._geo)
 
         assert electricitymaps_api._cooldown == {}
