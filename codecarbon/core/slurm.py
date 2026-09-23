@@ -1,26 +1,30 @@
 import os
-import re
 
 from codecarbon.external.logger import logger
 
 
 def warn_on_multi_rank_double_counting(tracking_mode: str) -> None:
     """
-    Warn when several ranks share a node and each one measures the whole node.
+    Warn when a machine-mode tracker runs on a non-zero SLURM local rank.
 
-    In ``machine`` mode every rank reports the node's power, so the job's
-    reported footprint is silently multiplied by the number of ranks per node.
+    In ``machine`` mode every tracker reports the whole node's power, so if
+    more than one rank per node starts a tracker, the job's footprint is
+    silently multiplied. Local rank 0 (the recommended tracker) and the batch
+    step (``SLURM_LOCALID`` unset) never warn.
     """
     if tracking_mode != "machine":
         return
-    # SLURM writes this as "4", or as "4(x2)" for a heterogeneous allocation.
-    ntasks_per_node = os.environ.get("SLURM_NTASKS_PER_NODE", "")
-    match = re.match(r"\d+", ntasks_per_node)
-    if match and int(match.group()) > 1:
-        logger.warning(
-            f"SLURM_NTASKS_PER_NODE is {ntasks_per_node} and tracking_mode is "
-            "'machine': every rank measures the whole node, so the job's total "
-            "will be multiplied by the number of ranks per node. Start the "
-            "tracker on one rank per node (SLURM_LOCALID == 0), or use "
-            "tracking_mode='process'."
-        )
+    local_id = os.environ.get("SLURM_LOCALID", "")
+    if not local_id.isdigit() or int(local_id) == 0:
+        return
+    # Step-scoped and always set by srun; written "4", or "4(x2)".
+    tasks_per_node = os.environ.get(
+        "SLURM_STEP_TASKS_PER_NODE", os.environ.get("SLURM_TASKS_PER_NODE", "?")
+    )
+    logger.warning(
+        f"tracking_mode is 'machine' on SLURM local rank {local_id} "
+        f"(tasks per node: {tasks_per_node}). If more than one rank per node "
+        "starts a tracker, each one measures the whole node and the job's total "
+        "is multiplied. Start the tracker only on SLURM_LOCALID == 0, or use "
+        "tracking_mode='process'."
+    )
