@@ -21,10 +21,8 @@ import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
-from codecarbon.core.telemetry.settings import (
-    DEFAULT_TELEMETRY_EXPERIMENT_ID,
-    TelemetrySettings,
-)
+from codecarbon.core.telemetry import Telemetry
+from codecarbon.core.telemetry.settings import TelemetrySettings
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
@@ -533,8 +531,6 @@ class BaseEmissionsTracker(ABC):
         """
 
         self._external_conf = get_hierarchical_config()
-        from codecarbon.core.telemetry import Telemetry
-
         # Resolve the tier from the constructor kwarg first so that
         # ``EmissionsTracker(telemetry_level="disabled")`` really wins.
         self._telemetry = Telemetry(
@@ -609,9 +605,9 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
         self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
         self._set_from_conf(
-            experiment_id, "experiment_id", DEFAULT_TELEMETRY_EXPERIMENT_ID
+            experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
-        self._set_from_conf(self._telemetry.settings.level.value, "telemetry_level")
+
         if self.force_carbon_intensity_g_co2e_kwh is not None:
             logger.info(
                 f"Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
@@ -623,7 +619,7 @@ class BaseEmissionsTracker(ABC):
         self._initialize_runtime_state()
         self._initialize_scheduler_state()
         self._initialize_emissions_context()
-        self._telemetry.warn_if_implicit()
+        self._telemetry.notice_once_if_implicit()
         self._init_output_methods(api_key=self._api_key)
 
     @suppress(Exception)

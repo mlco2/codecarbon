@@ -9,8 +9,7 @@ import sys
 from datetime import datetime, timezone
 from typing import Any
 
-from codecarbon.core.api_client import _round_coordinate_or_zero
-from codecarbon.core.cloud import get_env_cloud_details
+from codecarbon.core.api_client import _round_or_none
 from codecarbon.core.gpu import is_nvidia_system
 from codecarbon.core.telemetry.schemas import TelemetryLevel
 from codecarbon.output_methods.base_output import OutputMethod
@@ -81,26 +80,17 @@ def _package_installed(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
 
 
+def _first_set(*values: Any) -> Any:
+    return next((value for value in values if value is not None), None)
+
+
 def _cloud_region(
     emissions: EmissionsData,
 ) -> tuple[str | None, str | None, str | None]:
-    details = get_env_cloud_details()
-    raw_provider = raw_region = None
-    if details and details.get("metadata"):
-        provider = (details.get("provider") or "").lower() or None
-        metadata = details.get("metadata") or {}
-        if provider == "aws":
-            raw_region = metadata.get("region")
-        elif provider == "azure":
-            raw_region = (metadata.get("compute") or {}).get("location")
-        elif provider == "gcp":
-            zone = metadata.get("zone") or ""
-            parts = zone.split("/")
-            raw_region = parts[-1].rsplit("-", 1)[0] if parts else None
-        raw_provider = provider
-
-    cloud_provider = emissions.cloud_provider or raw_provider
-    cloud_region = emissions.cloud_region or raw_region
+    # Reuse what the tracker already detected: probing the cloud metadata
+    # endpoints again costs up to a few seconds off-cloud.
+    cloud_provider = emissions.cloud_provider or None
+    cloud_region = emissions.cloud_region or None
     region = emissions.region
     if emissions.on_cloud == "Y" and cloud_region:
         region = region or cloud_region
@@ -241,10 +231,13 @@ def _minimal_payload(
         "region": region,
         "cloud_provider": cloud_provider,
         "cloud_region": cloud_region,
-        "longitude": _round_coordinate_or_zero(
-            conf.get("longitude", emissions.longitude)
+        # Unknown location stays null rather than a fake 0,0.
+        "longitude": _round_or_none(
+            _first_set(conf.get("longitude"), emissions.longitude)
         ),
-        "latitude": _round_coordinate_or_zero(conf.get("latitude", emissions.latitude)),
+        "latitude": _round_or_none(
+            _first_set(conf.get("latitude"), emissions.latitude)
+        ),
         "cpu_count": conf.get("cpu_count"),
         "cpu_physical_count": conf.get("cpu_physical_count"),
         "cpu_model": conf.get("cpu_model"),

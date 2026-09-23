@@ -18,7 +18,7 @@ from codecarbon.cli.cli_utils import (
     get_existing_exp_id,
     overwrite_local_config,
 )
-from codecarbon.cli.telemetry_cli import telemetry_app
+from codecarbon.cli.telemetry_cli import ask_telemetry_level_once, telemetry_app
 
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
@@ -193,6 +193,7 @@ def config():
     )
 
     print("Welcome to CodeCarbon configuration wizard")
+    ask_telemetry_level_once()
     home = Path.home()
     global_path = (home / ".codecarbon.config").expanduser().resolve()
 
@@ -431,6 +432,8 @@ def monitor(
     ] = None,
 ):
     """Monitor your machine's carbon emissions."""
+    if telemetry_level is None:
+        ask_telemetry_level_once()
 
     external_conf = _external_config()
 

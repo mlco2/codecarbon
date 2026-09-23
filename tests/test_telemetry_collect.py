@@ -163,44 +163,32 @@ class TestTelemetryCollect(unittest.TestCase):
     def test_minimal_fields_are_schema_subset(self):
         self.assertTrue(MINIMAL_TELEMETRY_FIELDS.issubset(TelemetryBase.model_fields))
 
-    def test_cloud_region_from_aws_metadata(self):
-        emissions = _sample_emissions(on_cloud="Y", cloud_region="", region="")
-        ctx = _tracker_context(emissions=emissions)
-        with patch(
-            "codecarbon.core.telemetry.collect.get_env_cloud_details",
-            return_value={"provider": "aws", "metadata": {"region": "eu-west-1"}},
-        ):
-            payload = _build(ctx, level=TelemetryLevel.minimal)
+    def test_cloud_fields_come_from_tracker_detection(self):
+        """No second metadata probe: stop() must not pay for it off-cloud."""
+        emissions = _sample_emissions(
+            on_cloud="Y", cloud_provider="aws", cloud_region="eu-west-1", region=""
+        )
+        payload = _build(
+            _tracker_context(emissions=emissions), level=TelemetryLevel.minimal
+        )
         self.assertEqual(payload["cloud_provider"], "aws")
         self.assertEqual(payload["cloud_region"], "eu-west-1")
+        self.assertEqual(payload["region"], "eu-west-1")
 
-    def test_cloud_region_from_azure_metadata(self):
-        emissions = _sample_emissions(on_cloud="Y", cloud_region="", region="")
-        ctx = _tracker_context(emissions=emissions)
-        with patch(
-            "codecarbon.core.telemetry.collect.get_env_cloud_details",
-            return_value={
-                "provider": "azure",
-                "metadata": {"compute": {"location": "westeurope"}},
-            },
-        ):
-            payload = _build(ctx, level=TelemetryLevel.minimal)
-        self.assertEqual(payload["cloud_provider"], "azure")
-        self.assertEqual(payload["cloud_region"], "westeurope")
+    def test_unknown_coordinates_are_omitted_not_zero(self):
+        emissions = _sample_emissions(longitude=None, latitude=None)
+        payload = _build(
+            _tracker_context(emissions=emissions), level=TelemetryLevel.minimal
+        )
+        self.assertNotIn("longitude", payload)
+        self.assertNotIn("latitude", payload)
 
-    def test_cloud_region_from_gcp_metadata(self):
-        emissions = _sample_emissions(on_cloud="Y", cloud_region="", region="")
-        ctx = _tracker_context(emissions=emissions)
-        with patch(
-            "codecarbon.core.telemetry.collect.get_env_cloud_details",
-            return_value={
-                "provider": "gcp",
-                "metadata": {"zone": "projects/p/zones/europe-west1-b"},
-            },
-        ):
-            payload = _build(ctx, level=TelemetryLevel.minimal)
-        self.assertEqual(payload["cloud_provider"], "gcp")
-        self.assertEqual(payload["cloud_region"], "europe-west1")
+    def test_coordinates_are_rounded(self):
+        emissions = _sample_emissions(longitude=-7.61743, latitude=33.58229)
+        payload = _build(
+            _tracker_context(emissions=emissions), level=TelemetryLevel.minimal
+        )
+        self.assertEqual((payload["longitude"], payload["latitude"]), (-7.6, 33.6))
 
     def test_extensive_payload_includes_environment_hints(self):
         ctx = _tracker_context(output_methods=["api"])

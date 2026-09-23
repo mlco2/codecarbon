@@ -1,5 +1,6 @@
 """CLI commands to configure CodeCarbon product telemetry tiers."""
 
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -31,9 +32,16 @@ telemetry_app = typer.Typer(
 )
 
 TIER_DESCRIPTIONS = {
-    "disabled": "No product telemetry.",
-    "minimal": "Environment and hardware only (private POST /telemetry).",
-    "extensive": "Minimal fields plus run metrics and public run summary.",
+    "disabled": "Nothing is sent.",
+    "minimal": (
+        "OS, Python/CodeCarbon versions, CPU/GPU model and count, RAM size, "
+        "country/region, cloud provider, coordinates rounded to 0.1 degree."
+    ),
+    "extensive": (
+        "Minimal, plus run metrics (duration, energy, emissions, utilisation), "
+        "environment hints (CI, container, notebook, IDE, frameworks) and a "
+        "public run summary."
+    ),
 }
 
 
@@ -150,11 +158,39 @@ def print_telemetry_status(config_path: Optional[Path] = None) -> None:
     print(f"telemetry_level in file(s): {stored!r}")
     print(f"Resolved tier: {level.value}")
     print(f"Explicitly configured: {explicit}")
+    if level != TelemetryLevel.disabled and not settings.api_key:
+        print("Nothing is sent: no telemetry API key is configured.")
+    elif level != TelemetryLevel.disabled:
+        print(f"Sent on each tracker stop to {settings.api_url}/telemetry.")
     if not explicit:
-        print(
-            "[yellow]Minimal telemetry will be sent on each tracker stop "
-            "until you set telemetry_level.[/yellow]"
-        )
+        print("Opt out with: codecarbon telemetry set disabled")
+
+
+def ask_telemetry_level_once() -> None:
+    """Ask for a telemetry tier on first interactive CLI use, and remember it.
+
+    Does nothing without a TTY (CI, SLURM, pipes) or once a tier is configured,
+    so it never blocks an unattended run: the tracker's one-time notice covers
+    those.
+    """
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        return
+    if TelemetrySettings.resolve(external_conf=get_hierarchical_config()).is_explicit:
+        return
+    print("CodeCarbon product telemetry: which level do you want?")
+    level = questionary.select(
+        "telemetry_level:",
+        choices=[
+            questionary.Choice(f"{name} — {text}", name)
+            for name, text in TIER_DESCRIPTIONS.items()
+        ],
+        default=DEFAULT_TELEMETRY_LEVEL.value,
+    ).ask()
+    if level is None:  # Ctrl-C: keep the default, ask again next time
+        return
+    path = Path(_config_file_paths()[0])
+    write_telemetry_level(path, level)
+    print(f"Saved telemetry_level = {level} in {path}")
 
 
 def run_telemetry_interactive(config: Optional[Path] = None) -> None:

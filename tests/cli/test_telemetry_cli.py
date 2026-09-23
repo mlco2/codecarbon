@@ -140,7 +140,7 @@ def test_telemetry_status_shows_implicit_warning():
         ):
             result = runner.invoke(telemetry_app, ["status"])
     assert "Explicitly configured: False" in result.output
-    assert "Minimal telemetry will be sent" in result.output
+    assert "Nothing is sent: no telemetry API key" in result.output
 
 
 def test_resolve_config_path_creates_explicit_file():
@@ -257,3 +257,35 @@ def test_telemetry_interactive_prompts_for_config_path(tmp_path, monkeypatch):
     assert result.exit_code == 0
     assert config_path.exists()
     assert "telemetry_level = minimal" in config_path.read_text()
+
+
+def test_ask_telemetry_level_once_never_prompts_without_tty():
+    from codecarbon.cli.telemetry_cli import ask_telemetry_level_once
+
+    with (
+        patch("codecarbon.cli.telemetry_cli.sys") as mock_sys,
+        patch("codecarbon.cli.telemetry_cli.questionary.select") as mock_select,
+    ):
+        mock_sys.stdin.isatty.return_value = False
+        ask_telemetry_level_once()
+    mock_select.assert_not_called()
+
+
+def test_ask_telemetry_level_once_stores_answer_in_global_config(tmp_path):
+    from codecarbon.cli.telemetry_cli import ask_telemetry_level_once
+
+    global_path = tmp_path / ".codecarbon.config"
+    with (
+        patch("codecarbon.cli.telemetry_cli.sys") as mock_sys,
+        patch("codecarbon.cli.telemetry_cli.get_hierarchical_config", return_value={}),
+        patch(
+            "codecarbon.cli.telemetry_cli._config_file_paths",
+            return_value=(str(global_path), str(tmp_path / "local")),
+        ),
+        patch("codecarbon.cli.telemetry_cli.questionary.select") as mock_select,
+    ):
+        mock_sys.stdin.isatty.return_value = True
+        mock_sys.stdout.isatty.return_value = True
+        mock_select.return_value.ask.return_value = "disabled"
+        ask_telemetry_level_once()
+    assert "telemetry_level = disabled" in global_path.read_text()

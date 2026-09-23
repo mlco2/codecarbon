@@ -47,7 +47,16 @@ Both tiers POST to `/telemetry` at each `stop()`. The server schema defines what
 | `minimal` | Environment and hardware only (OS, Python, CPU/GPU/RAM, geo/cloud, CodeCarbon version) |
 | `extensive` | Minimal fields **plus** run metrics, output methods, framework flags, usage diagnostics |
 
-**Minimal** includes rounded coordinates (1 decimal), cloud region, and hardware metadata. It does **not** include run emissions, energy, duration, or framework flags.
+**Minimal** includes rounded coordinates (1 decimal), cloud region, and hardware metadata. It does **not** include run emissions, energy, duration, or framework flags. Empty or unknown values are left out rather than sent as zeros.
+
+### Every field sent
+
+| Tier | Fields |
+|------|--------|
+| `minimal` | `timestamp`, `telemetry_level`, `os`, `country_name`, `country_iso_code`, `region`, `cloud_provider`, `cloud_region`, `longitude`, `latitude` (rounded to 0.1°), `cpu_count`, `cpu_physical_count`, `cpu_model`, `cpu_architecture`, `gpu_count`, `gpu_model`, `gpu_memory_total_gb`, `gpu_driver_version`, `cuda_version`, `cudnn_version`, `ram_total_size_gb`, `python_version`, `python_implementation`, `python_env_type`, `codecarbon_version`, `codecarbon_install_method` |
+| `extensive` adds | `duration_seconds`, `total_emissions_kg`, `emissions_rate_kg_per_sec`, `energy_consumed_kwh`, `cpu_energy_kwh`, `gpu_energy_kwh`, `ram_energy_kwh`, `cpu_utilization_avg`, `gpu_utilization_avg`, `ram_utilization_avg`, `tracking_mode`, `decorator_vs_context`, `output_methods`, `task_tracking_used`, `measure_power_interval_secs`, `api_mode`, `hardware_tracked`, `hardware_detection_success`, `rapl_available`, `gpu_detection_method`, `has_torch`, `has_transformers`, `has_diffusers`, `python_package_manager`, `in_container`, `container_runtime`, `ci_environment`, `notebook_environment`, `ide_used` |
+
+The payload is built and sent on a background thread, so `stop()` never waits on it. At interpreter exit, a pending send gets at most one second before it is dropped.
 
 **Extensive** adds run outcome (duration, emissions, energy, utilization), output methods, ML framework presence flags (booleans only, no package versions), CI/notebook/container/IDE hints, and integration context (`decorator_vs_context`: `library`, `cli_monitor`, or `offline_tracker`).
 
@@ -99,9 +108,16 @@ tracker.stop()
 telemetry_level = disabled
 ```
 
+Or set `CODECARBON_TELEMETRY_LEVEL=disabled`, or run `codecarbon telemetry set disabled`.
+
 ## First run without explicit configuration
 
-If you never set `telemetry_level`, CodeCarbon uses `minimal` and logs a **one-time warning** per Python session. Set `telemetry_level` explicitly to silence it.
+Telemetry is on by default (`minimal`), and you are asked about it:
+
+- **Interactive CLI** (`codecarbon config` or `codecarbon monitor` in a terminal): you are asked once which level you want. The answer is saved as `telemetry_level` in `~/.codecarbon.config`.
+- **Everything else** (library use, CI, SLURM, pipes): nothing ever blocks on a prompt. CodeCarbon logs a notice **once per machine** saying what is sent and how to opt out, and remembers that it did in `~/.codecarbon/telemetry_notice_shown`.
+
+Set `telemetry_level` explicitly to skip both.
 
 ## Related
 

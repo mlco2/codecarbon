@@ -34,17 +34,6 @@ def get_datetime_with_timezone():
     return str(arrow.now().isoformat())
 
 
-def _round_coordinate_or_zero(value, decimals: int = 1) -> float:
-    """Round a coordinate for telemetry, coercing None to 0.0.
-
-    Unlike ``_round_or_none``, this never returns None: the telemetry payload
-    wants a number rather than a null.
-    """
-    if value is None:
-        return round(0.0, decimals)
-    return round(float(value), decimals)
-
-
 class ApiClient:  # (AsyncClient)
     """
     This class call the Code Carbon API

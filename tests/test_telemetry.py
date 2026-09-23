@@ -6,7 +6,6 @@ import time
 import unittest
 from unittest.mock import MagicMock, patch
 
-from codecarbon.core.telemetry import Telemetry
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from tests.testutils import (
     ensure_telemetry_run_duration,
@@ -44,7 +43,6 @@ class TestTrackerTelemetry(unittest.TestCase):
     """Every case goes through the real constructor, not ``resolve()``."""
 
     def setUp(self) -> None:
-        Telemetry._default_warning_shown = False
         self._patchers = []
         clean_env = {
             key: value
@@ -57,7 +55,6 @@ class TestTrackerTelemetry(unittest.TestCase):
     def tearDown(self) -> None:
         for patcher in reversed(self._patchers):
             patcher.stop()
-        Telemetry._default_warning_shown = False
 
     def _enter(self, patcher):
         patcher.start()
@@ -114,7 +111,7 @@ class TestTrackerTelemetry(unittest.TestCase):
         mock_post.assert_not_called()
         mock_api_cls.assert_not_called()
         self.assertEqual(tracker._telemetry.settings.level.value, "disabled")
-        self.assertEqual(tracker._conf["telemetry_level"], "disabled")
+        self.assertNotIn("telemetry_level", tracker._conf)
 
     def test_kwarg_disabled_overrides_env(self, mock_cli_setup):
         self._mock_config(_conf())
@@ -144,7 +141,7 @@ class TestTrackerTelemetry(unittest.TestCase):
                 )
                 tracker.start()
                 tracker.stop()
-        join_telemetry(tracker)
+            join_telemetry(tracker)
         mock_post.assert_called_once()
 
     def test_missing_api_key_sends_nothing(self, mock_cli_setup):
@@ -182,19 +179,43 @@ class TestTrackerTelemetry(unittest.TestCase):
             tracker = EmissionsTracker(save_to_api=False, save_to_file=False)
         self.assertEqual(tracker._telemetry.settings.api_url, "http://env.test")
 
-    def test_warns_once_when_level_not_explicit(self, mock_cli_setup):
-        self._mock_config(_conf())
+    def _notices(self, mock_warning):
+        return [
+            call
+            for call in mock_warning.call_args_list
+            if call[0] and "telemetry is on by default" in str(call[0][0])
+        ]
+
+    def test_notice_once_per_machine_when_level_not_explicit(self, mock_cli_setup):
+        self._mock_config(_conf(api_key=None))
         with patch(
             "codecarbon.core.telemetry.dispatcher.logger.warning"
         ) as mock_warning:
             EmissionsTracker(save_to_api=False, save_to_file=False)
             EmissionsTracker(save_to_api=False, save_to_file=False)
-        warnings = [
-            call
-            for call in mock_warning.call_args_list
-            if call[0] and "Minimal telemetry" in str(call[0][0])
-        ]
-        self.assertEqual(len(warnings), 1)
+        notices = self._notices(mock_warning)
+        self.assertEqual(len(notices), 1)
+        # The notice says what actually happens: no key, nothing sent.
+        self.assertIn("nothing is sent", notices[0][0][2])
+
+    def test_payload_built_off_the_stop_thread(self, mock_cli_setup):
+        self._mock_config(_conf("minimal"))
+        with (
+            self._mock_post(),
+            patch(
+                "codecarbon.core.telemetry.dispatcher.build_payload", return_value={}
+            ) as mock_build,
+        ):
+            with ensure_telemetry_run_duration():
+                tracker = EmissionsTracker(
+                    measure_power_secs=1, save_to_api=False, save_to_file=False
+                )
+                tracker.start()
+                with patch(
+                    "codecarbon.core.telemetry.dispatcher.threading.Thread.start"
+                ):
+                    tracker.stop()
+        mock_build.assert_not_called()
 
     def _timed_run(self, level: str, url: str):
         """Run a tracker against ``url`` and time ``stop()`` alone."""
@@ -238,12 +259,7 @@ class TestTrackerTelemetry(unittest.TestCase):
             EmissionsTracker(
                 telemetry_level="disabled", save_to_api=False, save_to_file=False
             )
-        warnings = [
-            call
-            for call in mock_warning.call_args_list
-            if call[0] and "Minimal telemetry" in str(call[0][0])
-        ]
-        self.assertEqual(warnings, [])
+        self.assertEqual(self._notices(mock_warning), [])
 
 
 if __name__ == "__main__":
