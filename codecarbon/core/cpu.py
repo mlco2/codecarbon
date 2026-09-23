@@ -744,7 +744,11 @@ class IntelRAPL:
             logger.warning(
                 "\tRAPL - No package or psys domains found, using all available domains"
             )
-            domains_to_use = readable_domains
+            domains_to_use = [
+                domain
+                for domain in readable_domains
+                if self.rapl_include_dram or "dram" not in (domain[5] or "").lower()
+            ]
 
         return domains_to_use
 
@@ -779,8 +783,9 @@ class IntelRAPL:
             domain_name,
         ) in domain_map.values():
             try:
-                if domain_name and (
-                    "package" in domain_name.lower() or "psys" in domain_name.lower()
+                domain_lower = (domain_name or "").lower()
+                if any(
+                    keyword in domain_lower for keyword in ("package", "psys", "dram")
                 ):
                     display_name = f"Processor Energy Delta_{domain_index}(kWh)"
                     domain_index += 1
@@ -789,7 +794,12 @@ class IntelRAPL:
 
                 interface_type = "MMIO" if is_mmio else "MSR"
                 self._rapl_files.append(
-                    RAPLFile(name=display_name, path=rapl_file, max_path=rapl_file_max)
+                    RAPLFile(
+                        name=display_name,
+                        path=rapl_file,
+                        max_path=rapl_file_max,
+                        is_dram="dram" in domain_lower,
+                    )
                 )
                 logger.info(
                     "\tRAPL - Monitoring domain '%s' (displayed as '%s') via %s at %s",
@@ -892,7 +902,7 @@ class IntelRAPL:
         counters = [
             (rapl_file.path, float(rapl_file.last_energy))
             for rapl_file in self._rapl_files
-            if "dram" not in rapl_file.name.lower()
+            if not rapl_file.is_dram
         ]
         self._mirrored_candidates = find_mirrored_counters(
             counters, SEQUENTIAL_READ_TOLERANCE_KWH

@@ -68,6 +68,8 @@ class RAPLFile:
     last_energy: Energy = field(default_factory=lambda: Energy(0))
     # Max value energy can hold before it wraps
     max_energy_reading: Energy = field(default_factory=lambda: Energy(0))
+    # DRAM domain: a separate measurement, never a mirror of a package counter
+    is_dram: bool = False
 
     def __post_init__(self):
         self.last_energy = self._get_value()
