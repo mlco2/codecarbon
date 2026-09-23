@@ -6,7 +6,11 @@ from unittest import mock
 
 import pandas as pd
 
-from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
+from codecarbon.emissions_tracker import (
+    EmissionsTracker,
+    OfflineEmissionsTracker,
+    track_emissions,
+)
 from tests.testutils import get_custom_mock_open, get_test_data_source
 
 
@@ -85,6 +89,20 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         # before `super().__init__`, so it also has to reach the caller.
         with self.assertRaises(ValueError):
             OfflineEmissionsTracker(country_iso_code="FRA", region=123)
+
+    def test_track_emissions_runs_function_when_tracker_construction_fails(self):
+        # The decorator must never stop the user's function from running,
+        # even though direct construction raises.
+        @track_emissions(
+            offline=True,
+            country_iso_code="FRA",
+            output_dir=str(self.temp_path / "does_not_exist"),
+        )
+        def fn():
+            return 42
+
+        with self.assertLogs("codecarbon", level="ERROR"):
+            self.assertEqual(fn(), 42)
 
     def test_resolve_offline_country_name_logs_on_invalid_iso(self):
         tracker = OfflineEmissionsTracker(
