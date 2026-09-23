@@ -1,5 +1,6 @@
 import dataclasses
 import unittest
+from datetime import datetime
 from uuid import uuid4
 
 import requests
@@ -261,6 +262,45 @@ class TestApi(unittest.TestCase):
             )
         )
 
+    def test_add_emission_keeps_measurement_timestamp(self):
+        """The row must carry when it was measured, not when it was sent."""
+        payload = {
+            "duration": 10,
+            "emissions": 1.0,
+            "emissions_rate": 1.0,
+            "cpu_power": 1.0,
+            "gpu_power": 0.0,
+            "ram_power": 0.5,
+            "cpu_energy": 0.1,
+            "gpu_energy": 0.0,
+            "ram_energy": 0.1,
+            "energy_consumed": 0.2,
+        }
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/emissions", status_code=201)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                conf=conf,
+                create_run_automatically=False,
+            )
+            api.run_id = "run-1"
+
+            # naive timestamp, as produced by EmissionsData
+            assert api.add_emission({**payload, "timestamp": "2020-01-01T00:00:00"})
+            sent = datetime.fromisoformat(m.last_request.json()["timestamp"])
+            self.assertEqual(
+                sent.replace(tzinfo=None).isoformat(), "2020-01-01T00:00:00"
+            )
+            self.assertIsNotNone(sent.tzinfo)
+
+            # missing / unparseable timestamps fall back to now
+            for bad in ({}, {"timestamp": None}, {"timestamp": "222"}):
+                assert api.add_emission({**payload, **bad})
+                sent = datetime.fromisoformat(m.last_request.json()["timestamp"])
+                self.assertIsNotNone(sent.tzinfo)
+                self.assertGreater(sent.year, 2020)
+
     def test_add_emission_raises_on_unsuccessful_post(self):
         with requests_mock.Mocker() as m:
             m.post("http://test.com/emissions", text="bad", status_code=500)
@@ -302,6 +342,26 @@ class TestApi(unittest.TestCase):
             with self.assertRaises(requests.exceptions.HTTPError):
                 api._create_run("experiment_id")
             self.assertIsNone(api.run_id)
+
+    def test_failed_create_run_is_not_retried_during_cooldown(self):
+        with requests_mock.Mocker() as m:
+            runs = m.post("http://test.com/runs", text="down", status_code=503)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="experiment_id",
+                api_key="Toto",
+                conf=conf,
+                create_run_automatically=False,
+            )
+            with self.assertRaises(requests.exceptions.HTTPError):
+                api._create_run("experiment_id")
+            self.assertIsNone(api._create_run("experiment_id"))
+            self.assertEqual(runs.call_count, 1)
+
+            api._run_create_failed_at -= 3600  # cooldown elapsed
+            runs = m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
+            self.assertEqual(api._create_run("experiment_id"), "run-1")
+            self.assertIsNone(api._run_create_failed_at)
 
     def test_create_run_raises_on_unexpected_2xx_status(self):
         with requests_mock.Mocker() as m:
