@@ -430,7 +430,7 @@ class TestCarbonTracker(unittest.TestCase):
             )
             local_run_id = tracker.run_id
 
-            with self.assertLogs("codecarbon", level="ERROR") as logs:
+            with self.assertLogs("codecarbon", level="WARNING") as logs:
                 tracker.start()
             self.assertTrue(any("API is down" in line for line in logs.output))
             self.assertIsNotNone(tracker._start_time)
@@ -441,6 +441,52 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(tracker.run_id, local_run_id)
         emissions_df = pd.read_csv(self.emissions_file_path)
         self.assertEqual(emissions_df["run_id"].iloc[0], str(local_run_id))
+
+    def test_run_id_syncs_when_api_recovers_after_start(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with (
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient._create_run"
+            ) as mock_create_run,
+            mock.patch("codecarbon.output_methods.http.ApiClient.add_emission"),
+        ):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.CSV, OutputMethod.API],
+                experiment_id="test-experiment-id",
+                api_key="test-api-key",
+            )
+            api_output = tracker._api_output
+
+            # API down at start(), back up at the first emission.
+            def create_run(experiment_id):
+                if mock_create_run.call_count == 1:
+                    raise Exception("API is down")
+                api_output.api.run_id = "run-created"
+                return "run-created"
+
+            mock_create_run.side_effect = create_run
+            tracker.start()
+            local_run_id = tracker.run_id
+            self.assertNotEqual(local_run_id, "run-created")
+
+            tracker.flush()
+            self.assertEqual(api_output.run_id, "run-created")
+            heavy_computation(1)
+            tracker.stop()
+
+        self.assertEqual(tracker.run_id, "run-created")
+        emissions_df = pd.read_csv(self.emissions_file_path)
+        self.assertEqual(emissions_df["run_id"].iloc[-1], "run-created")
 
     def test_default_output_methods_is_csv(
         self,

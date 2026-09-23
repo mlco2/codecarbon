@@ -714,12 +714,15 @@ class BaseEmissionsTracker(ABC):
         self._ensure_hardware_ready()
 
         if self._api_output is not None:
-            # Create the run now, so every record carries the API run id.
+            # Create the run now (blocking HTTP call), so every record carries
+            # the API run id. The API client already logs the failure itself.
             try:
                 self._api_output._ensure_api_run()
                 self.run_id = self._api_output.run_id or self.run_id
             except Exception as e:
-                logger.error(e, exc_info=True)
+                logger.warning(
+                    f"Could not create the API run ({e}), using local run_id {self.run_id}"
+                )
 
         self._last_measured_time = self._start_time = time.perf_counter()
 
@@ -1012,11 +1015,25 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
+    def _sync_api_run_id(self) -> None:
+        """
+        Adopt the API run id once the run exists, e.g. when the API was down
+        at start() and the run got created later by a successful emission.
+        """
+        api_run_id = self._api_output.run_id if self._api_output else None
+        if api_run_id and api_run_id != self.run_id:
+            logger.warning(
+                f"API run created late: switching run_id from {self.run_id} to"
+                f" {api_run_id}. Earlier local records used {self.run_id}."
+            )
+            self.run_id = api_run_id
+
     def _prepare_emissions_data(self) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
         :return: EmissionsData object with the total emissions data.
         """
+        self._sync_api_run_id()
         self._update_emissions()
         self._ensure_cloud_conf()
         cloud = self._get_cloud_metadata()
