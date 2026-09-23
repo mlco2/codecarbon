@@ -336,8 +336,18 @@ class TestEmissionsMapping(unittest.TestCase):
         measure = report.measures[0].to_dict()
         self.assertAlmostEqual(measure["averageUtilizationGpu"], 0.80, places=2)
 
-    def test_tracking_modes_omitted(self):
-        """cpuTrackingMode/gpuTrackingMode are omitted (not available in EmissionsData)."""
+    def test_tracking_modes_mapped(self):
+        """cpuTrackingMode/gpuTrackingMode come from the tracking methods."""
+        emissions = _make_emissions_data(
+            cpu_tracking_method="RAPL", gpu_tracking_method="pynvml"
+        )
+        report = map_emissions_to_boamps(emissions, task=self.task)
+        measure = report.measures[0].to_dict()
+        self.assertEqual(measure["cpuTrackingMode"], "RAPL")
+        self.assertEqual(measure["gpuTrackingMode"], "pynvml")
+
+    def test_tracking_modes_omitted_when_unknown(self):
+        """cpuTrackingMode/gpuTrackingMode are omitted when no method was recorded."""
         report = map_emissions_to_boamps(self.emissions, task=self.task)
         measure = report.measures[0].to_dict()
         self.assertNotIn("cpuTrackingMode", measure)
