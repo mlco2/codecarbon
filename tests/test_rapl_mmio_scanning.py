@@ -73,7 +73,9 @@ def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monke
     assert len(rapl._mirrored_candidates) == 1
     details = rapl.get_cpu_details(Time.from_seconds(1))
     assert len(_counted_domains(details)) == 2
-    assert "dram" in details
+    dram = next(f for f in rapl._rapl_files if f.is_dram)
+    assert dram.path not in rapl._mirrored_candidates
+    assert dram.name in details
 
 
 def test_rapl_start_reevaluates_mirror_candidates(tmp_path, monkeypatch):

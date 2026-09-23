@@ -527,6 +527,27 @@ def test_rapl_parameters_stored_correctly(tmp_path):
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
+@pytest.mark.parametrize("include_dram", [False, True])
+def test_rapl_fallback_respects_include_dram(tmp_path, include_dram):
+    """
+    Without package/psys domains every readable domain is used as a fallback, but
+    DRAM must still only be counted when rapl_include_dram is set.
+    """
+    rapl_provider = tmp_path / "intel-rapl"
+    rapl_provider.mkdir()
+    for index, name in enumerate(("core", "dram")):
+        domain = rapl_provider / f"intel-rapl:{index}"
+        domain.mkdir()
+        (domain / "name").write_text(name)
+        (domain / "energy_uj").write_text("1000000")
+        (domain / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path), rapl_include_dram=include_dram)
+
+    assert any(f.is_dram for f in rapl._rapl_files) is include_dram
+
+
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_rapl_non_power_domain_keeps_its_own_name(tmp_path):
     """
     When no package/psys/dram domain exists, the remaining domains are used as a
