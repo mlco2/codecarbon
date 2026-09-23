@@ -5,7 +5,11 @@ from uuid import UUID
 import pytest
 from api.mocks import DUMMY_USER, FakeAuthContext
 
-from carbonserver.api.errors import NotAllowedErrorEnum, UserException
+from carbonserver.api.errors import (
+    NotAllowedErrorEnum,
+    NotFoundErrorEnum,
+    UserException,
+)
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
 )
@@ -194,3 +198,66 @@ def test_orgganization_service_list_users():
     repository_mock.list_users.return_value = [ORG_USER]
     actual_user_list = organization_service.list_users(ORG_ID)
     assert actual_user_list == expected_org_users
+
+
+ORG_MEMBER = OrganizationUser(
+    id="a52fe339-164d-4c2b-a8c0-f562dfce0660",
+    name="user2",
+    email="user2@local.com",
+    is_active=True,
+    organization_id=ORG_1.id,
+    is_admin=False,
+)
+
+
+def _organization_service(repository_mock, user_repository_mock) -> OrganizationService:
+    return OrganizationService(
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=FakeAuthContext(),
+    )
+
+
+def test_organization_service_removes_user_from_org():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    organization_service = _organization_service(repository_mock, user_repository_mock)
+    repository_mock.list_users.return_value = [ORG_USER, ORG_MEMBER]
+
+    organization_service.remove_user(
+        organization_id=ORG_ID, user_id=ORG_MEMBER.id, user=DUMMY_USER
+    )
+
+    user_repository_mock.unsubscribe_user_from_org.assert_called_once_with(
+        user_id=ORG_MEMBER.id, organization_id=ORG_ID
+    )
+
+
+def test_organization_service_remove_user_fails_when_user_not_in_org():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    organization_service = _organization_service(repository_mock, user_repository_mock)
+    repository_mock.list_users.return_value = [ORG_USER]
+
+    with pytest.raises(UserException) as exc_info:
+        organization_service.remove_user(
+            organization_id=ORG_ID, user_id=ORG_MEMBER.id, user=DUMMY_USER
+        )
+
+    assert exc_info.value.error.code == NotFoundErrorEnum.NOT_FOUND
+    user_repository_mock.unsubscribe_user_from_org.assert_not_called()
+
+
+def test_organization_service_remove_user_fails_on_last_admin():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    organization_service = _organization_service(repository_mock, user_repository_mock)
+    repository_mock.list_users.return_value = [ORG_USER, ORG_MEMBER]
+
+    with pytest.raises(UserException) as exc_info:
+        organization_service.remove_user(
+            organization_id=ORG_ID, user_id=ORG_USER.id, user=DUMMY_USER
+        )
+
+    assert exc_info.value.error.code == NotAllowedErrorEnum.OPERATION_NOT_ALLOWED
+    user_repository_mock.unsubscribe_user_from_org.assert_not_called()

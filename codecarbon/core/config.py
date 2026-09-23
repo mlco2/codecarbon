@@ -1,9 +1,12 @@
 import configparser
 import os
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from codecarbon.external.logger import logger
+
+CONFIG_FILE_NAME = ".codecarbon.config"
+CONFIG_SECTION = "codecarbon"
 
 
 def clean_env_key(k: str) -> str:
@@ -36,7 +39,7 @@ def parse_env_config() -> dict:
         dict: existing relevant environment variables mapped into a dict
     """
     return {
-        "codecarbon": {
+        CONFIG_SECTION: {
             clean_env_key(k): v
             for k, v in os.environ.items()
             if k.lower().startswith("codecarbon_")
@@ -112,10 +115,8 @@ def normalize_gpu_ids(
 
 def _config_file_paths() -> tuple[str, str]:
     """Return resolved paths for global and local CodeCarbon config files."""
-    cwd = Path.cwd()
-    home = Path.home()
-    global_path = str((home / ".codecarbon.config").expanduser().resolve())
-    local_path = str((cwd / ".codecarbon.config").expanduser().resolve())
+    global_path = str((Path.home() / CONFIG_FILE_NAME).expanduser().resolve())
+    local_path = str((Path.cwd() / CONFIG_FILE_NAME).expanduser().resolve())
     return global_path, local_path
 
 
@@ -127,18 +128,84 @@ def get_config_file_settings() -> dict[str, str]:
     Returns:
         Configuration dict from files only. Empty when no file or section exists.
     """
+    conf: dict[str, str] = {}
+    for path in _config_file_paths():
+        conf.update(read_config_file(path))
+    return conf
+
+
+def read_config_file(path: str) -> dict:
+    """
+    Read the `[codecarbon]` section of a single configuration file.
+
+    A file that does not exist, or that cannot be read, is ignored, like
+    configparser.ConfigParser.read does.
+
+    Args:
+        path (str): Path of the configuration file to read.
+
+    Returns:
+        dict: The keys defined in this file only, empty if there is nothing to read.
+    """
     config = configparser.ConfigParser()
-    global_path, local_path = _config_file_paths()
-    config.read([global_path, local_path])
-    if "codecarbon" not in config:
+    config.read(path)
+    if not config.has_section(CONFIG_SECTION):
         return {}
-    return dict(config["codecarbon"])
+    return dict(config[CONFIG_SECTION])
+
+
+def log_config_sources(sources: Dict[str, str]) -> None:
+    """
+    Log a single line telling, for every configuration key, which layer set it.
+
+    Only the key names and their source are logged, never the values, because
+    this configuration holds secrets such as `api_key` and `experiment_id`.
+
+    Args:
+        sources (dict): The key to source mapping built by
+            get_hierarchical_config_with_sources.
+    """
+    if not sources:
+        return
+    logger.info(
+        "Codecarbon configuration: "
+        + ", ".join(f"{key} from {source}" for key, source in sorted(sources.items()))
+    )
+
+
+def get_hierarchical_config_with_sources() -> Tuple[dict, Dict[str, str]]:
+    """
+    Same as get_hierarchical_config, but also tells where each key comes from.
+
+    The layers are read from the lowest to the highest priority: the global
+    config file, then the local config file, then the environment variables.
+    The last layer defining a key wins, and is the one reported as its source.
+    A source is either the path of the config file that set the key, or the
+    name of the environment variable, e.g. `CODECARBON_PROJECT_NAME`.
+
+    Returns:
+        tuple: The (config, sources) dicts, which share the same keys. `config`
+        maps a key to its value (**all values are strings**) and `sources` maps
+        a key to the layer it was read from.
+    """
+    config = {}
+    sources = {}
+
+    for path in _config_file_paths():
+        for key, value in read_config_file(path).items():
+            config[key] = value
+            sources[key] = path
+
+    for key, value in parse_env_config()[CONFIG_SECTION].items():
+        config[key] = value
+        sources[key] = f"CODECARBON_{key.upper()}"
+
+    return config, sources
 
 
 def get_hierarchical_config():
     """
-    Get the user-defined codecarbon configuration ConfigParser dictionnary
-    (actually a configparser.SectionProxy instance).
+    Get the user-defined codecarbon configuration as a dict.
 
     ```
     >>> from codecarbon.core.config import get_hierarchical_config
@@ -146,10 +213,7 @@ def get_hierarchical_config():
     >>> print(conf)
     ```
 
-    `conf` works like a regular dict + methods getint(key) getfloat(key)
-    and getboolean(key) to automatically parse strings into those types.
-
-    All values (outputs of get(key)) are strings.
+    All values are strings.
 
     It looks for, and reads, a config file .codecarbon.config in the user's $HOME.
     It then looks for, reads, and updates the previous configuration from a config
@@ -158,22 +222,13 @@ def get_hierarchical_config():
     with `CODECARBON_` (for instance if `CODECARBON_PROJECT_NAME` is `your-project`
     then the resulting configuration key `project_name` will have value `your-project`)
 
+    The source of every resolved key is logged, so that a surprising value can be
+    traced back to the file or the environment variable that set it.
+
     Returns:
         dict: The final configuration dict parsed from global,
         local and environment configurations. **All values are strings**.
     """
-    global_path, local_path = _config_file_paths()
-    if Path(global_path).exists():
-        logger.info(
-            f"Codecarbon is taking the configuration from global file: {global_path}"
-        )
-        if Path(local_path).exists():
-            logger.info(f"Some variables are overriden by the local file: {local_path}")
-    elif Path(local_path).exists():
-        logger.info(
-            f"Codecarbon is taking the configuration from the local file {local_path}"
-        )
-
-    conf = get_config_file_settings()
-    conf.update(parse_env_config().get("codecarbon", {}))
-    return conf
+    config, sources = get_hierarchical_config_with_sources()
+    log_config_sources(sources)
+    return config

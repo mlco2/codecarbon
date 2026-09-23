@@ -76,6 +76,19 @@ Yields attributes:
 }
 ```
 
+!!! note "Where does a value come from?"
+
+    CodeCarbon logs one line listing every configuration key read from the files
+    and the environment, with the layer it came from, so you can trace a
+    surprising value back to its source:
+
+    ```
+    [codecarbon INFO @ 09:30:00] Codecarbon configuration: experiment_id from CODECARBON_EXPERIMENT_ID, measure_power_secs from /home/victor/.codecarbon.config
+    ```
+
+    Only the key names and their source are logged, never the values, as this
+    configuration holds secrets such as `api_key`.
+
 !!! note "Note"
 
     If you're wondering about the configuration files' syntax, be aware
