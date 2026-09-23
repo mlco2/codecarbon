@@ -37,8 +37,10 @@ class GPUDevice:
         self.last_energy = self._get_energy_kwh()
 
     def __post_init__(self) -> None:
-        self.last_energy = self._get_energy_kwh()
+        # Static details first: subclasses set flags there (e.g. AMD dual-GCD)
+        # that the energy read depends on.
         self._init_static_details()
+        self.last_energy = self._get_energy_kwh()
 
     def _get_energy_kwh(self) -> Optional[Energy]:
         total_energy_consumption = self._get_total_energy_consumption()
