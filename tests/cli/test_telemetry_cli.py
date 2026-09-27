@@ -140,7 +140,7 @@ def test_telemetry_status_shows_implicit_warning():
         ):
             result = runner.invoke(telemetry_app, ["status"])
     assert "Explicitly configured: False" in result.output
-    assert "Sent at tracker stop to" in result.output
+    assert "Sent once per process to" in result.output
 
 
 def test_resolve_config_path_creates_explicit_file():

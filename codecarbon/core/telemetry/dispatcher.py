@@ -27,8 +27,8 @@ THREAD_NAME = "codecarbon-telemetry"
 NOTICE_MARKER = Path.home() / ".codecarbon" / "telemetry_notice_shown"
 
 TELEMETRY_NOTICE = (
-    "CodeCarbon telemetry is on by default at level %r: each stop() "
-    "sends environment and hardware info (OS, Python and CodeCarbon "
+    "CodeCarbon telemetry is on by default at level %r: once per process, "
+    "stop() sends environment and hardware info (OS, Python and CodeCarbon "
     "versions, CPU/GPU model and count, RAM size, country/region, cloud "
     "provider); no code, data, file paths or coordinates. Opt out with "
     "`codecarbon telemetry set disabled` or "
@@ -38,6 +38,11 @@ TELEMETRY_NOTICE = (
 )
 
 _pending: set[threading.Thread] = set()
+
+#: Telemetry describes the environment, which does not change within a
+#: process, so only the first qualifying stop() sends it.
+_sent_lock = threading.Lock()
+_sent = False
 
 
 @atexit.register
@@ -70,12 +75,17 @@ class Telemetry:
         logger.warning(TELEMETRY_NOTICE, self.settings.level.value)
 
     def send_at_stop(self, tracker: Any, emissions: EmissionsData) -> None:
-        """Send product telemetry at tracker ``stop()`` for the resolved tier."""
+        """Send product telemetry on the first qualifying ``stop()`` of the process."""
+        global _sent
         if self.settings.level == TelemetryLevel.disabled:
             return
         if emissions.duration is not None and emissions.duration < 1:
             logger.debug("Telemetry not sent: run shorter than 1 second.")
             return
+        with _sent_lock:
+            if _sent:
+                return
+            _sent = True
         # Payload building (NVML, package lookups) and the network both happen
         # on this thread: stop() never waits on either. At exit it is joined for
         # at most EXIT_JOIN_SECONDS, then dropped.
