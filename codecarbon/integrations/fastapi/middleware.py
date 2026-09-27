@@ -129,6 +129,7 @@ class CodeCarbonMiddleware:
         self.on_request = on_request
         self.attributor = EnergyAttributor()
         self._attached: BaseEmissionsTracker | None = None
+        self._observer: Callable[[WindowSample], None] | None = None
         # kg CO2eq per kWh, refreshed once per sampling window.
         self._intensity: float | None = None
 
@@ -138,17 +139,21 @@ class CodeCarbonMiddleware:
         Called automatically on lifespan shutdown.
         """
         if self._attached is not None:
-            self._attached.remove_energy_window_observer(self._on_window)
-            self._attached = None
+            self._attached.remove_energy_window_observer(self._observer)
+            self._attached = self._observer = None
         if self._patched:
             _unpatch_run_sync()
             self._patched = False
         self.attributor.close()
 
-    def _on_window(self, sample: WindowSample) -> None:
+    def _on_window(self, tracker: BaseEmissionsTracker, sample: WindowSample) -> None:
+        # A detached tracker's scheduler may already be inside this call: its
+        # sample must not mix into the next tracker's anchor.
+        if tracker is not self._attached:
+            return
         # Scheduler thread: one intensity lookup per window, not per request.
         try:
-            self._intensity = self._attached._carbon_intensity_kg_per_kwh()
+            self._intensity = tracker._carbon_intensity_kg_per_kwh()
         except Exception:
             logger.debug("CodeCarbon: carbon intensity unavailable", exc_info=True)
         self.attributor.on_window(sample)
@@ -183,8 +188,9 @@ class CodeCarbonMiddleware:
             self.close()
             if tracker is not None:
                 self.attributor.reset_window(tracker._window_sample())
-                tracker.add_energy_window_observer(self._on_window)
                 self._attached = tracker
+                self._observer = functools.partial(self._on_window, tracker)
+                tracker.add_energy_window_observer(self._observer)
                 if self.meter_threadpool:
                     _patch_run_sync()
                     self._patched = True

@@ -612,6 +612,29 @@ def test_close_on_shutdown_emits_pending():
     assert tracker.observers == []
 
 
+def test_late_window_from_a_replaced_tracker_is_ignored():
+    async def ok(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b""})
+
+    async def noop(message):
+        pass
+
+    old, new = _FakeTracker(), _FakeTracker()
+    middleware = CodeCarbonMiddleware(ok, tracker=old, on_request=None)
+    scope = {"type": "http", "method": "GET", "path": "/"}
+    asyncio.run(middleware(scope, None, noop))
+    (late,) = old.observers
+    middleware.tracker = new
+    asyncio.run(middleware(scope, None, noop))
+    anchor = middleware.attributor._prev
+    old._total_energy.kWh = 5.0
+    late(old._window_sample())  # the scheduler was already calling it
+    middleware.close()
+    assert middleware.attributor._prev is anchor
+    assert middleware.attributor.settled_kwh == 0.0
+
+
 def test_tracker_not_started_records_nothing():
     tracker, seen = _FakeTracker(started=False), []
     with TestClient(_app(tracker, seen)) as client:
