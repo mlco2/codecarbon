@@ -554,59 +554,66 @@ class BaseEmissionsTracker(ABC):
         if self._configure_multiple_runs(allow_multiple_runs):
             return
 
-        self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
-        self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
-        self._set_from_conf(api_key, "api_key", "api_key")
-        self._configure_electricitymaps_token(
-            electricitymaps_api_token, co2_signal_api_token
-        )
-
-        self._set_from_conf(emissions_endpoint, "emissions_endpoint")
-        self._set_from_conf(experiment_name, "experiment_name", "base")
-        self._set_from_conf(gpu_ids, "gpu_ids")
-        self._set_from_conf(log_level, "log_level", "info")
-        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
-        self._set_from_conf(output_dir, "output_dir", ".")
-        self._set_from_conf(output_file, "output_file", "emissions.csv")
-        self._set_from_conf(project_name, "project_name", "codecarbon")
-        self._resolve_output_methods(
-            output_methods,
-            save_to_file,
-            save_to_api,
-            save_to_logger,
-            save_to_prometheus,
-            save_to_logfire,
-        )
-
-        self._set_from_conf(logging_logger, "logging_logger")
-        self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
-        self._set_from_conf(output_handlers, "output_handlers", [])
-        self._set_from_conf(tracking_mode, "tracking_mode", "machine")
-        self._set_from_conf(on_csv_write, "on_csv_write", "append")
-        self._set_from_conf(logger_preamble, "logger_preamble", "")
-        self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
-        self._set_from_conf(force_ram_power, "force_ram_power", None, float)
-        self._set_from_conf(pue, "pue", 1.0, float)
-        self._set_from_conf(wue, "wue", 0, float)
-        self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
-        self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
-        self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
-        self._set_from_conf(
-            experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
-        )
-
-        if self.force_carbon_intensity_g_co2e_kwh is not None:
-            logger.info(
-                f"Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
+        try:
+            self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
+            self._set_from_conf(
+                api_endpoint, "api_endpoint", "https://api.codecarbon.io"
+            )
+            self._set_from_conf(api_key, "api_key", "api_key")
+            self._configure_electricitymaps_token(
+                electricitymaps_api_token, co2_signal_api_token
             )
 
-        assert self._tracking_mode in ["machine", "process"]
-        set_logger_level(self._log_level)
-        set_logger_format(self._logger_preamble)
-        self._initialize_runtime_state()
-        self._initialize_scheduler_state()
-        self._initialize_emissions_context()
-        self._init_output_methods(api_key=self._api_key)
+            self._set_from_conf(emissions_endpoint, "emissions_endpoint")
+            self._set_from_conf(experiment_name, "experiment_name", "base")
+            self._set_from_conf(gpu_ids, "gpu_ids")
+            self._set_from_conf(log_level, "log_level", "info")
+            self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
+            self._set_from_conf(output_dir, "output_dir", ".")
+            self._set_from_conf(output_file, "output_file", "emissions.csv")
+            self._set_from_conf(project_name, "project_name", "codecarbon")
+            self._resolve_output_methods(
+                output_methods,
+                save_to_file,
+                save_to_api,
+                save_to_logger,
+                save_to_prometheus,
+                save_to_logfire,
+            )
+
+            self._set_from_conf(logging_logger, "logging_logger")
+            self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
+            self._set_from_conf(output_handlers, "output_handlers", [])
+            self._set_from_conf(tracking_mode, "tracking_mode", "machine")
+            self._set_from_conf(on_csv_write, "on_csv_write", "append")
+            self._set_from_conf(logger_preamble, "logger_preamble", "")
+            self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
+            self._set_from_conf(force_ram_power, "force_ram_power", None, float)
+            self._set_from_conf(pue, "pue", 1.0, float)
+            self._set_from_conf(wue, "wue", 0, float)
+            self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
+            self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
+            self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
+            self._set_from_conf(
+                experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
+            )
+
+            if self.force_carbon_intensity_g_co2e_kwh is not None:
+                logger.info(
+                    f"Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
+                )
+
+            assert self._tracking_mode in ["machine", "process"]
+            set_logger_level(self._log_level)
+            set_logger_format(self._logger_preamble)
+            self._initialize_runtime_state()
+            self._initialize_scheduler_state()
+            self._initialize_emissions_context()
+            self._init_output_methods(api_key=self._api_key)
+        except Exception:
+            if getattr(self, "_lock", None) is not None:
+                self._lock.release()
+            raise
 
     def _init_output_methods(self, *, api_key: str = None):
         """
