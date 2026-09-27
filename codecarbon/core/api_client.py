@@ -235,7 +235,7 @@ class ApiClient:  # (AsyncClient)
                     return False
                 logger.info(
                     "ApiClient : the API rejected a fractional duration, it looks"
-                    " older than this client. Retrying with a rounded duration."
+                    " older than this client. Retrying with the duration truncated to whole seconds."
                 )
                 payload["duration"] = int(duration)
                 response = requests.post(
