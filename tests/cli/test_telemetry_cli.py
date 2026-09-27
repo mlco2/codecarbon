@@ -46,13 +46,13 @@ def test_telemetry_status_reports_stored_level():
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp:
         config_path = Path(tmp) / ".codecarbon.config"
-        config_path.write_text("[codecarbon]\ntelemetry_level = extensive\n")
+        config_path.write_text("[codecarbon]\ntelemetry_level = minimal\n")
         result = runner.invoke(
             telemetry_app,
             ["status", "--config", str(config_path)],
         )
         assert result.exit_code == 0
-        assert "extensive" in result.output
+        assert "Resolved tier: minimal" in result.output
         assert "Explicitly configured: True" in result.output
 
 
@@ -140,7 +140,7 @@ def test_telemetry_status_shows_implicit_warning():
         ):
             result = runner.invoke(telemetry_app, ["status"])
     assert "Explicitly configured: False" in result.output
-    assert "Nothing is sent: no telemetry API key" in result.output
+    assert "Sent at tracker stop to" in result.output
 
 
 def test_resolve_config_path_creates_explicit_file():

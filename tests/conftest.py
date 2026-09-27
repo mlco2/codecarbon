@@ -23,8 +23,13 @@ def _reset_process_hardware_cache():
 
 
 @pytest.fixture(autouse=True)
-def _isolate_telemetry_notice_marker(tmp_path, monkeypatch):
-    """Never write the once-per-machine telemetry notice marker to the real home."""
+def _isolate_telemetry(tmp_path, monkeypatch):
+    """Keep tests off the real telemetry endpoint and the real home.
+
+    Telemetry needs no key, so any tracker a test stops would post to
+    api.codecarbon.io. Tests that exercise telemetry clear this variable.
+    """
+    monkeypatch.setenv("CODECARBON_TELEMETRY_LEVEL", "disabled")
     monkeypatch.setattr(
         "codecarbon.core.telemetry.dispatcher.NOTICE_MARKER",
         tmp_path / "telemetry_notice_shown",

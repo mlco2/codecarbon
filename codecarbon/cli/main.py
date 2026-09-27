@@ -424,10 +424,7 @@ def monitor(
     telemetry_level: Annotated[
         Optional[str],
         typer.Option(
-            help=(
-                "Override telemetry tier for this run only "
-                "(disabled, minimal, or extensive)."
-            ),
+            help="Override telemetry level for this run only (disabled or minimal).",
         ),
     ] = None,
 ):

@@ -45,7 +45,7 @@ Displays real-time emissions data for all processes on your machine. Press `Ctrl
 | `--offline` | flag | false | Run without internet access |
 | `--country-iso-code` | string | - | ISO 3166-1 alpha-3 country code (required in offline mode) |
 | `--log-level` | choice | ERROR | Log level: DEBUG, INFO, WARNING, ERROR |
-| `--telemetry-level` | string | - | One-run tier: `disabled`, `minimal`, or `extensive` |
+| `--telemetry-level` | string | - | One-run level: `disabled` or `minimal` |
 
 **Examples:**
 ```bash
@@ -97,7 +97,7 @@ Configure **product telemetry** (library usage metadata), separate from `codecar
 
 ```bash
 codecarbon telemetry              # interactive wizard
-codecarbon telemetry set <level>  # disabled | minimal | extensive
+codecarbon telemetry set <level>  # disabled | minimal
 codecarbon telemetry status       # resolved tier and whether it was set explicitly
 ```
 

@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from tests.testutils import (
@@ -24,17 +24,14 @@ else:
 TELEMETRY_ENV_VARS = (
     "CODECARBON_TELEMETRY",
     "CODECARBON_TELEMETRY_LEVEL",
-    "CODECARBON_TELEMETRY_API_KEY",
     "CODECARBON_TELEMETRY_API_URL",
 )
 
 
-def _conf(level: str = None, *, api_key: str = "test-key", extra: str = "") -> str:
+def _conf(level: str = None, *, extra: str = "") -> str:
     conf = "[codecarbon]\n"
     if level is not None:
         conf += f"telemetry_level = {level}\n"
-    if api_key is not None:
-        conf += f"telemetry_api_key = {api_key}\n"
     return conf + extra
 
 
@@ -104,33 +101,19 @@ class TestTrackerTelemetry(unittest.TestCase):
 
     def test_kwarg_disabled_overrides_config(self, mock_cli_setup):
         """Regression: ``telemetry_level="disabled"`` used to be ignored entirely."""
-        self._mock_config(_conf("extensive"))
+        self._mock_config(_conf("minimal"))
         with self._mock_post() as mock_post:
-            with patch("codecarbon.core.telemetry.client.ApiClient") as mock_api_cls:
-                tracker = self._run_tracker(telemetry_level="disabled")
+            tracker = self._run_tracker(telemetry_level="disabled")
         mock_post.assert_not_called()
-        mock_api_cls.assert_not_called()
         self.assertEqual(tracker._telemetry.settings.level.value, "disabled")
         self.assertNotIn("telemetry_level", tracker._conf)
 
     def test_kwarg_disabled_overrides_env(self, mock_cli_setup):
         self._mock_config(_conf())
-        with patch.dict(os.environ, {"CODECARBON_TELEMETRY_LEVEL": "extensive"}):
+        with patch.dict(os.environ, {"CODECARBON_TELEMETRY_LEVEL": "minimal"}):
             with self._mock_post() as mock_post:
                 self._run_tracker(telemetry_level="disabled")
         mock_post.assert_not_called()
-
-    def test_extensive_also_posts_public_summary(self, mock_cli_setup):
-        self._mock_config(_conf("extensive"))
-        with self._mock_post() as mock_post:
-            with patch("codecarbon.core.telemetry.client.ApiClient") as mock_api_cls:
-                mock_api_cls.return_value = MagicMock(
-                    **{"add_emission.return_value": True}
-                )
-                self._run_tracker()
-        mock_post.assert_called_once()
-        mock_api_cls.assert_called_once()
-        self.assertIn("total_emissions_kg", mock_post.call_args[0][1])
 
     def test_offline_tracker_sends_on_stop(self, mock_cli_setup):
         self._mock_config(_conf("minimal"))
@@ -143,12 +126,6 @@ class TestTrackerTelemetry(unittest.TestCase):
                 tracker.stop()
             join_telemetry(tracker)
         mock_post.assert_called_once()
-
-    def test_missing_api_key_sends_nothing(self, mock_cli_setup):
-        self._mock_config(_conf("minimal", api_key=None))
-        with self._mock_post() as mock_post:
-            self._run_tracker()
-        mock_post.assert_not_called()
 
     def test_env_level_overrides_config_file(self, mock_cli_setup):
         self._mock_config(_conf("minimal"))
@@ -187,7 +164,7 @@ class TestTrackerTelemetry(unittest.TestCase):
         ]
 
     def test_notice_once_per_machine_when_level_not_explicit(self, mock_cli_setup):
-        self._mock_config(_conf(api_key=None))
+        self._mock_config(_conf())
         with patch(
             "codecarbon.core.telemetry.dispatcher.logger.warning"
         ) as mock_warning:
@@ -195,8 +172,6 @@ class TestTrackerTelemetry(unittest.TestCase):
             EmissionsTracker(save_to_api=False, save_to_file=False)
         notices = self._notices(mock_warning)
         self.assertEqual(len(notices), 1)
-        # The notice says what actually happens: no key, nothing sent.
-        self.assertIn("nothing is sent", notices[0][0][2])
 
     def test_payload_built_off_the_stop_thread(self, mock_cli_setup):
         self._mock_config(_conf("minimal"))
@@ -221,7 +196,6 @@ class TestTrackerTelemetry(unittest.TestCase):
         """Run a tracker against ``url`` and time ``stop()`` alone."""
         env = {
             "CODECARBON_TELEMETRY_LEVEL": level,
-            "CODECARBON_TELEMETRY_API_KEY": "test-key",
             "CODECARBON_TELEMETRY_API_URL": url,
         }
         with patch.dict(os.environ, env), ensure_telemetry_run_duration():
@@ -239,17 +213,15 @@ class TestTrackerTelemetry(unittest.TestCase):
             # The first stop() in a process pays one-off setup costs unrelated to
             # telemetry, so warm those up before timing anything.
             self._timed_run("disabled", url)
-            for level in ("minimal", "extensive"):
-                with self.subTest(level=level):
-                    tracker, start, elapsed = self._timed_run(level, url)
-                    thread = tracker._telemetry._thread
-                    self.assertIsNotNone(thread)
-                    # Synchronously this cost 2s (minimal) to 6s (extensive).
-                    self.assertLess(elapsed, 0.5)
-                    # One budget for the whole send, however many requests it makes.
-                    thread.join(20)
-                    self.assertFalse(thread.is_alive())
-                    self.assertLess(time.monotonic() - start, 4.0)
+            tracker, start, elapsed = self._timed_run("minimal", url)
+            thread = tracker._telemetry._thread
+            self.assertIsNotNone(thread)
+            # Synchronously this cost the full 2s request timeout.
+            self.assertLess(elapsed, 0.5)
+            # The send itself gives up once its time budget is spent.
+            thread.join(20)
+            self.assertFalse(thread.is_alive())
+            self.assertLess(time.monotonic() - start, 4.0)
 
     def test_no_warning_when_level_set_by_kwarg(self, mock_cli_setup):
         self._mock_config(_conf())

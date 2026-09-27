@@ -525,7 +525,7 @@ class BaseEmissionsTracker(ABC):
                                  (CPU + chipset + PCIe). When False, uses package domains which
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
-        :param telemetry_level: Telemetry tier (``disabled``, ``minimal``, ``extensive``).
+        :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
                                 Overrides config file and ``CODECARBON_TELEMETRY_LEVEL`` when set.
                                 Defaults to ``minimal``.
         """
@@ -1646,7 +1646,7 @@ def track_emissions(
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
-    :param telemetry_level: Telemetry tier (``disabled``, ``minimal``, ``extensive``).
+    :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
 
     :return: The decorated function
     """
