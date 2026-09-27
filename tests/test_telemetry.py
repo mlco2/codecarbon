@@ -7,6 +7,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from codecarbon.core.telemetry.dispatcher import Telemetry
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from tests.testutils import (
     ensure_telemetry_run_duration,
@@ -133,17 +134,22 @@ class TestTrackerTelemetry(unittest.TestCase):
                 self._run_tracker(telemetry_level="disabled")
         mock_post.assert_not_called()
 
-    def test_offline_tracker_sends_on_stop(self, mock_cli_setup):
+    def test_offline_tracker_never_sends_telemetry(self, mock_cli_setup):
+        """Offline mode is chosen for no-network runs: it must never call out,
+        including for telemetry, even when the config/env would otherwise
+        enable it.
+        """
         self._mock_config(_conf("minimal"))
         with self._mock_post() as mock_post:
             with ensure_telemetry_run_duration():
                 tracker = OfflineEmissionsTracker(
                     country_iso_code="CAN", save_to_api=False, save_to_file=False
                 )
+                self.assertEqual(tracker._telemetry.settings.level.value, "disabled")
                 tracker.start()
                 tracker.stop()
             join_telemetry(tracker)
-        mock_post.assert_called_once()
+        mock_post.assert_not_called()
 
     def test_env_level_overrides_config_file(self, mock_cli_setup):
         self._mock_config(_conf("minimal"))
@@ -231,6 +237,20 @@ class TestTrackerTelemetry(unittest.TestCase):
         with patch.dict(os.environ, env), ensure_telemetry_run_duration():
             tracker = OfflineEmissionsTracker(
                 country_iso_code="CAN", save_to_api=False, save_to_file=False
+            )
+            # Offline mode never sends telemetry (see
+            # test_offline_tracker_never_sends_telemetry); this test is only
+            # about the generic non-blocking behaviour of a send, so it
+            # re-enables telemetry on this instance directly.
+            from codecarbon.core.telemetry.schemas import TelemetryLevel
+            from codecarbon.core.telemetry.settings import TelemetrySettings
+
+            tracker._telemetry = Telemetry(
+                TelemetrySettings(
+                    level=TelemetryLevel(level),
+                    is_explicit=True,
+                    api_url=url,
+                )
             )
             tracker.start()
             start = time.monotonic()
