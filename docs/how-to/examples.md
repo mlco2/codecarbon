@@ -211,9 +211,14 @@ Each window is split as follows:
 2. Of the CPU energy above idle, this process keeps its share of the
    machine's busy CPU time (`psutil.cpu_times()`). The rest belongs to other
    processes on the host.
-3. The process's part is split by the CPU time each request used, measured by
+3. Each request is charged the CPU time it used, measured by
    `time.thread_time_ns()` around every step of the request's coroutine and
-   around each call it sends to the threadpool.
+   around each call it sends to the threadpool, times the cost of one
+   CPU-second. That cost comes from the power model in CPU load mode, from
+   the slope of the power-against-load fit when it is good, and otherwise
+   from the process's average (its energy above idle over its CPU time). The
+   charges never add up to more than the process's share of step 2; the
+   remainder is counted under other processes.
 4. GPU energy above idle has no per-request signal, so it is split by how long
    each request overlapped the window.
 
@@ -243,11 +248,18 @@ add up to `settled_kwh`:
   see it (see the limits below).
 - `unattributed_kwh`: energy above idle in windows with no request in flight.
 
-It also reports the idle power in use per component (`idle_power_w`) and the
-source quality of the last window.
+It also reports the idle power in use per component (`idle_power_w`), the
+cost of a CPU-second and its source (`cpu_j_per_cpu_second`,
+`cpu_cost_source`), and the source quality of the last window.
 
 Limits:
 
+- One CPU-second is priced with a single linear slope. Power curves are
+  convex, so this overcharges at low machine load (the charges are then
+  capped at the process's share) and undercharges at high load. The upside
+  is that a request's energy barely moves when another process loads the
+  host. In CPU load mode the slope is the chord of the cubic model, so the
+  cap nearly always binds at low load.
 - CPU time is a proxy for energy. Frequency scaling, SMT and wide vector
   instructions make one CPU second cost different amounts of energy; the
   error from this has not been measured yet.

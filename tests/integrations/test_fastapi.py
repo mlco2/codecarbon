@@ -7,6 +7,7 @@ import types
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
+import psutil
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -32,6 +33,7 @@ def _sample(total: float, *, cpu: float | None = None, gpu: float = 0.0, **kw):
         cpu_quality="measured",
         gpu_quality=None,
         cpu_idle_w=0.0,
+        cpu_w_per_busy_cpu=None,
         cpu_per_process=False,
     )
     fields.update(kw)
@@ -325,6 +327,48 @@ def test_other_processes_keep_their_share_of_cpu_energy():
     _invariant(attributor)
 
 
+def test_model_cost_per_cpu_second_is_charged_and_capped():
+    """Charged b * cpu_seconds; the rest of the machine's energy is not ours."""
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=0.0, cpu_w_per_busy_cpu=10.0))
+    state = _begin(attributor, cpu_s=1.0)
+    # 100 J above idle, 4 busy CPU-seconds, 1 of them ours: our share is 25 J,
+    # but the model says one CPU-second costs 10 J.
+    times.advance(process=1.0, busy=4.0, total=8.0)
+    attributor.on_window(_sample(_kwh(100, 1), timestamp=1.0, cpu_w_per_busy_cpu=10.0))
+    assert state.energy == pytest.approx(_kwh(10, 1))
+    assert attributor.other_processes_kwh == pytest.approx(_kwh(90, 1))
+    assert attributor.report()["cpu_cost_source"] == "model"
+    # A cost above our share is capped at the share.
+    state.meter.ns += int(1e9)
+    times.advance(process=1.0, busy=4.0, total=8.0)
+    attributor.on_window(_sample(_kwh(200, 1), timestamp=2.0, cpu_w_per_busy_cpu=60.0))
+    assert state.energy == pytest.approx(_kwh(10 + 25, 1))
+    _invariant(attributor)
+
+
+def test_fitted_cost_per_cpu_second_ignores_other_processes_load():
+    """Linear machine: 5 W idle + 10 W per busy CPU. A hog doesn't move us."""
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    measured = dict(cpu_idle_w=None)
+    attributor.reset_window(_sample(0.0, timestamp=0.0, **measured))
+    energy = 0.0
+    for t in range(1, 31):
+        busy = 1.0 + (t % 4)
+        times.advance(process=0.5, busy=busy, total=8.0)
+        energy += _kwh(5 + 10 * busy, 1)
+        attributor.on_window(_sample(energy, timestamp=float(t), **measured))
+    assert attributor.report()["cpu_cost_source"] == "fit"
+    state = _begin(attributor, start=30.0, cpu_s=0.5)
+    times.advance(process=0.5, busy=6.0, total=8.0)  # a hog takes 5.5 CPUs
+    attributor.on_window(_sample(energy + _kwh(65, 1), timestamp=31.0, **measured))
+    assert state.energy == pytest.approx(_kwh(5, 1))
+    assert attributor.report()["cpu_j_per_cpu_second"] == pytest.approx(10)
+    _invariant(attributor)
+
+
 def test_process_share_is_clamped_and_skipped_in_process_mode():
     times = _FakeTimes()
     attributor = EnergyAttributor(cpu_times=times)
@@ -579,6 +623,9 @@ def test_window_sample_reports_components_and_quality():
     assert sample.cpu_quality == "modeled"
     (cpu,) = [h for h in tracker._hardware if isinstance(h, CPU)]
     assert sample.cpu_idle_w == pytest.approx(0.1 * cpu._tdp * tracker._pue)
+    assert sample.cpu_w_per_busy_cpu == pytest.approx(
+        0.9 * cpu._tdp * tracker._pue / psutil.cpu_count()
+    )
     parts = sample.cpu_kwh + sample.gpu_kwh + sample.ram_kwh
     assert sample.total_kwh == pytest.approx(parts)
     assert sample.total_kwh > 0

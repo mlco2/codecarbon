@@ -9,9 +9,11 @@ Idle energy (and all RAM energy) goes to ``idle_kwh``: it would have been
 drawn with no request at all, so charging it to whichever request happened to
 be in flight is wrong. Of the dynamic CPU energy, only this process's share
 of the machine's busy CPU time is kept; the rest goes to
-``other_processes_kwh``. What is kept is split across the requests in flight
-by the CPU time each one's meter saw in the window; what no meter claimed goes
-to ``process_unattributed_kwh``. Dynamic GPU energy has no per-request signal
+``other_processes_kwh``. Each request in flight is charged the CPU time its
+meter saw in the window times the cost of a CPU-second, capped so the charges
+never exceed what was kept; our CPU time no meter claimed goes to
+``process_unattributed_kwh`` at the same cost, and whatever the cost leaves
+over joins ``other_processes_kwh``. Dynamic GPU energy has no per-request signal
 and is split by overlap with the window. Dynamic energy of windows with
 nothing in flight goes to ``unattributed_kwh``. The invariant is::
 
@@ -211,13 +213,14 @@ def _cpu_times() -> tuple[float, float, float]:
 
 
 class _IdleEstimator:
-    """Idle power of one component, in W.
+    """Idle power of one component in W, and its cost per busy CPU.
 
-    The lower of the rolling minimum of window power over ``horizon_s`` and,
-    once 20 windows with a utilisation are known and the fit is good
-    (R² > 0.8), the intercept of ``power = a + b * utilisation``. The minimum
-    alone overestimates idle on a server that is never idle; the intercept
-    alone is noise when load barely varies.
+    Idle power is the lower of the rolling minimum of window power over
+    ``horizon_s`` and, once 20 windows with a CPU load are known and the fit
+    is good (R² > 0.8), the intercept of ``power = a + b * busy_cpus``. The
+    minimum alone overestimates idle on a server that is never idle; the
+    intercept alone is noise when load barely varies. The fit's slope ``b``
+    (W per busy CPU, i.e. J per CPU-second) is kept in :attr:`slope`.
     """
 
     def __init__(self, horizon_s: float) -> None:
@@ -227,8 +230,10 @@ class _IdleEstimator:
         self._points: deque[tuple[float, float, float]] = deque()
         #: Latest estimate, ``None`` before the first window.
         self.watts: float | None = None
+        #: Slope of a good fit, ``None`` without one.
+        self.slope: float | None = None
 
-    def update(self, t: float, power: float, util: float | None = None) -> float:
+    def update(self, t: float, power: float, busy_cpus: float | None = None) -> float:
         cutoff = t - self._horizon_s
         while self._mins and self._mins[0][0] < cutoff:
             self._mins.popleft()
@@ -236,34 +241,36 @@ class _IdleEstimator:
             self._mins.pop()
         self._mins.append((t, power))
         estimate = self._mins[0][1]
-        if util is not None:
-            self._points.append((t, util, power))
+        if busy_cpus is not None:
+            self._points.append((t, busy_cpus, power))
             while self._points[0][0] < cutoff:
                 self._points.popleft()
-            intercept = _intercept(self._points)
-            if intercept is not None:
-                estimate = min(estimate, intercept)
+            fit = _fit(self._points)
+            self.slope = fit[1] if fit is not None and fit[1] > 0 else None
+            if fit is not None:
+                estimate = min(estimate, max(fit[0], 0.0))
         self.watts = estimate
         return estimate
 
 
-def _intercept(points: deque[tuple[float, float, float]]) -> float | None:
-    """Least-squares intercept of power on utilisation, ``None`` if unreliable."""
+def _fit(points: deque[tuple[float, float, float]]) -> tuple[float, float] | None:
+    """Least-squares ``(intercept, slope)`` of power on load, ``None`` if unreliable."""
     # ponytail: full O(n) refit per window, n = horizon / measure_power_secs
     # (3600 at 1 s, about 1 ms). Keep running sums if that ever shows up.
     n = len(points)
     if n < 20:
         return None
-    mean_u = sum(u for _, u, _ in points) / n
+    mean_x = sum(x for _, x, _ in points) / n
     mean_p = sum(p for _, _, p in points) / n
-    sxx = sum((u - mean_u) ** 2 for _, u, _ in points)
+    sxx = sum((x - mean_x) ** 2 for _, x, _ in points)
     syy = sum((p - mean_p) ** 2 for _, _, p in points)
     if sxx <= 0 or syy <= 0:
         return None
-    sxy = sum((u - mean_u) * (p - mean_p) for _, u, p in points)
+    sxy = sum((x - mean_x) * (p - mean_p) for _, x, p in points)
     if sxy * sxy / (sxx * syy) <= 0.8:
         return None
-    return max(mean_p - sxy / sxx * mean_u, 0.0)
+    slope = sxy / sxx
+    return mean_p - slope * mean_x, slope
 
 
 def _dynamic(delta_kwh: float, idle_w: float, width: float) -> float:
@@ -315,6 +322,10 @@ class EnergyAttributor:
         #: Windows where an energy counter went backwards (RAPL wrap/reset).
         self.windows_skipped = 0
         self._cpu_idle = _IdleEstimator(idle_horizon_s)
+        #: J per CPU-second charged in the last window, and where it came from
+        #: (``"model"``, ``"fit"`` or ``"average"``).
+        self.cpu_j_per_cpu_s: float | None = None
+        self.cpu_cost_source: str | None = None
         self._gpu_idle = _IdleEstimator(idle_horizon_s)
         self._prev: WindowSample | None = None
         self._t_prev = clock()
@@ -397,10 +408,12 @@ class EnergyAttributor:
             return
 
         d_proc, d_busy, d_total = (now - then for now, then in zip(times, times_prev))
-        util = d_busy / d_total if d_total > 0 else None
+        busy_cpus = d_busy / width if d_total > 0 else None
         cpu_idle_w = sample.cpu_idle_w
         if cpu_idle_w is None:
-            cpu_idle_w = self._cpu_idle.update(w1, d_cpu * _WS_PER_KWH / width, util)
+            cpu_idle_w = self._cpu_idle.update(
+                w1, d_cpu * _WS_PER_KWH / width, busy_cpus
+            )
         else:
             self._cpu_idle.watts = cpu_idle_w
         dynamic_cpu = _dynamic(d_cpu, cpu_idle_w, width)
@@ -413,7 +426,6 @@ class EnergyAttributor:
         else:
             share = 1.0 if d_proc > 0 else 0.0
         ours = dynamic_cpu * share
-        other = dynamic_cpu - ours
         dynamic_gpu = 0.0
         if sample.gpu_quality is not None:
             gpu_idle_w = self._gpu_idle.update(w1, d_gpu * _WS_PER_KWH / width)
@@ -423,14 +435,46 @@ class EnergyAttributor:
         if sample.gpu_quality is not None:
             quality = min(quality, sample.gpu_quality, key=_QUALITIES.index)
 
+        # Cost of one CPU-second, J: the power model's, else the slope of a
+        # good fit of power on load, else our average (dynamic / CPU time).
+        # ponytail: one linear slope. On a convex power curve it undercharges
+        # at high load and overcharges at low load; the cap below bounds the
+        # second case by what our process actually drew.
+        d_proc_s = max(d_proc, 0.0)
+        if sample.cpu_w_per_busy_cpu is not None:
+            j_per_cpu_s, self.cpu_cost_source = sample.cpu_w_per_busy_cpu, "model"
+        elif self._cpu_idle.slope is not None:
+            j_per_cpu_s, self.cpu_cost_source = self._cpu_idle.slope, "fit"
+        else:
+            j_per_cpu_s = ours * _WS_PER_KWH / d_proc_s if d_proc_s > 0 else 0.0
+            self.cpu_cost_source = "average"
+        self.cpu_j_per_cpu_s = j_per_cpu_s
+
         states = list(self._in_flight.values())
-        # CPU: each request gets our share in proportion to the CPU time its
-        # meter saw this window. If the meters claim more than the process
-        # used (clock granularity), they are scaled down to fit.
+        # CPU: each request is charged its metered CPU time at that cost. If
+        # the meters claim more than the process used (clock granularity),
+        # they are scaled down to fit, and if the charges exceed our share of
+        # the dynamic energy, they are scaled down to that.
         seen = [state.meter.total_ns() if state.meter else 0 for state in states]
-        used = [now - state.cpu_seen_ns for now, state in zip(seen, states)]
-        denominator = max(sum(used), max(d_proc, 0.0) * 1e9)
-        cpu_parts = [ours * ns / denominator if denominator > 0 else 0.0 for ns in used]
+        cpu_s = [(now - state.cpu_seen_ns) / 1e9 for now, state in zip(seen, states)]
+        claimed_s = sum(cpu_s)
+        if claimed_s > d_proc_s:
+            cpu_s = [c * d_proc_s / claimed_s for c in cpu_s]
+            claimed_s = d_proc_s
+        wanted = [j_per_cpu_s * c / _WS_PER_KWH for c in cpu_s]
+        total_wanted = sum(wanted)
+        cap = ours / total_wanted if total_wanted > ours else 1.0
+        cpu_parts = [w * cap for w in wanted]
+        cpu_attributed = sum(cpu_parts)
+        # The rest of our process's CPU time, at the same cost and cap.
+        process_rest = max(
+            min(
+                j_per_cpu_s * max(d_proc_s - claimed_s, 0.0) / _WS_PER_KWH,
+                ours - cpu_attributed,
+            ),
+            0.0,
+        )
+        other = dynamic_cpu - cpu_attributed - process_rest
         # GPU: no per-request signal, so split by overlap with the window.
         weights = []
         for state in states:
@@ -444,9 +488,9 @@ class EnergyAttributor:
         ]
 
         if not states:
-            self.unattributed_kwh += ours + dynamic_gpu
+            self.unattributed_kwh += process_rest + dynamic_gpu
         else:
-            cpu_attributed, gpu_attributed = sum(cpu_parts), sum(gpu_parts)
+            gpu_attributed = sum(gpu_parts)
             for state, now, cpu_part, gpu_part in zip(
                 states, seen, cpu_parts, gpu_parts
             ):
@@ -459,7 +503,7 @@ class EnergyAttributor:
                 state.windows += 1
                 state.concurrency_sum += len(states)
             self.attributed_kwh += cpu_attributed + gpu_attributed
-            self.process_unattributed_kwh += ours - cpu_attributed
+            self.process_unattributed_kwh += process_rest
             # No overlap at all (or rounding): nobody to give it to.
             self.unattributed_kwh += dynamic_gpu - gpu_attributed
         self.other_processes_kwh += other
@@ -507,6 +551,8 @@ class EnergyAttributor:
             "unattributed_kwh": self.unattributed_kwh,
             "settled_kwh": self.settled_kwh,
             "idle_power_w": {"cpu": self._cpu_idle.watts, "gpu": self._gpu_idle.watts},
+            "cpu_j_per_cpu_second": self.cpu_j_per_cpu_s,
+            "cpu_cost_source": self.cpu_cost_source,
             "quality": {
                 "cpu": self._prev.cpu_quality if self._prev else None,
                 "gpu": self._prev.gpu_quality if self._prev else None,

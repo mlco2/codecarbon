@@ -87,6 +87,9 @@ class WindowSample:
     #: CPU idle power in W when the power model fixes it (load and constant
     #: modes), ``None`` when it has to be estimated from the measurements.
     cpu_idle_w: Optional[float]
+    #: Extra CPU power per busy logical CPU in W (J per CPU-second) when the
+    #: power model fixes it, ``None`` when it has to be fitted.
+    cpu_w_per_busy_cpu: Optional[float]
     #: The CPU energy already covers only this process (load mode with
     #: ``tracking_mode="process"``), not the whole machine.
     cpu_per_process: bool
@@ -1068,6 +1071,7 @@ class BaseEmissionsTracker(ABC):
         """Snapshot of the cumulative energies and how they were obtained."""
         cpu_quality, gpu_quality = "none", None
         cpu_idle_w: Optional[float] = None
+        cpu_w_per_busy_cpu: Optional[float] = None
         cpu_per_process = False
         for hardware in self._hardware:
             if isinstance(hardware, CPU):
@@ -1080,11 +1084,20 @@ class BaseEmissionsTracker(ABC):
                     # idle is exactly 0.1 * TDP. Process mode has no floor.
                     cpu_idle_w = 0.0 if cpu_per_process else 0.1 * hardware._tdp
                     cpu_idle_w *= self._pue
+                    # Process mode is linear in CPU time: TDP / CPUs per busy
+                    # CPU. Machine mode is cubic in load; its chord from idle
+                    # to full load, 0.9 * TDP / CPUs, is the linear stand-in.
+                    if cpu_per_process:
+                        slope, cpus = hardware._tdp, hardware._cpu_count
+                    else:
+                        slope, cpus = 0.9 * hardware._tdp, psutil.cpu_count()
+                    cpu_w_per_busy_cpu = slope * self._pue / max(cpus or 1, 1)
                 elif hardware._mode == "constant":
                     # Constant mode never moves: all of it is idle power.
                     cpu_idle_w = (
                         hardware._tdp * CONSUMPTION_PERCENTAGE_CONSTANT * self._pue
                     )
+                    cpu_w_per_busy_cpu = 0.0
             elif isinstance(hardware, AppleSiliconChip):
                 if hardware.chip_part == "CPU":
                     cpu_quality = "measured"
@@ -1101,6 +1114,7 @@ class BaseEmissionsTracker(ABC):
             cpu_quality=cpu_quality,
             gpu_quality=gpu_quality,
             cpu_idle_w=cpu_idle_w,
+            cpu_w_per_busy_cpu=cpu_w_per_busy_cpu,
             cpu_per_process=cpu_per_process,
         )
 
