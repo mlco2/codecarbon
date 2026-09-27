@@ -85,6 +85,10 @@ tracker.start()
 tracker.stop()
 ```
 
+## Offline mode
+
+`OfflineEmissionsTracker` and `codecarbon monitor --offline` never send telemetry, regardless of `telemetry_level` in config, environment or argument: offline mode is chosen for runs with no network access.
+
 ## Opt out
 
 ```ini
