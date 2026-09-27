@@ -165,6 +165,9 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.pytest.ini_options]
 pythonpath = "."
+markers = [
+    "accuracy: bare-metal accuracy checks, opt-in (needs Linux with readable RAPL)",
+]
 
 [tool.coverage.run]
 source = [

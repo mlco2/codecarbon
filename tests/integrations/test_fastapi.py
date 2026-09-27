@@ -576,3 +576,101 @@ def test_window_sample_reports_components_and_quality():
     parts = sample.cpu_kwh + sample.gpu_kwh + sample.ram_kwh
     assert sample.total_kwh == pytest.approx(parts)
     assert sample.total_kwh > 0
+
+
+def test_conservation_with_fake_clocks_and_energy():
+    """Random windows, meters and GPU load: nothing is created or lost."""
+    import random
+
+    rng = random.Random(1428)
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    gpu = dict(gpu_quality="measured", cpu_idle_w=None)
+    totals = dict(cpu=0.0, gpu=0.0, ram=0.0)
+    attributor.reset_window(_sample(0.0, timestamp=0.0, **gpu))
+    results = []
+    live = []
+    for t in range(1, 500):
+        for _ in range(rng.randint(0, 4)):
+            state = _begin(attributor, start=t - rng.random())
+            state.on_resolved = results.append
+            live.append(state)
+        for state in live:
+            state.meter.ns += rng.randint(0, 50_000_000)
+        for state in rng.sample(live, k=len(live) // 2):
+            attributor.end(state)
+            live.remove(state)
+        for part, watts in (("cpu", 80), ("gpu", 250), ("ram", 5)):
+            totals[part] += _kwh(watts * rng.random(), 1)
+        times.advance(process=rng.random(), busy=rng.random() * 4, total=8.0)
+        attributor.on_window(
+            _sample(
+                sum(totals.values()),
+                cpu=totals["cpu"],
+                gpu=totals["gpu"],
+                ram_kwh=totals["ram"],
+                timestamp=float(t),
+                **gpu,
+            )
+        )
+        _invariant(attributor)
+    attributor.close()
+    report = attributor.report()
+    assert report["settled_kwh"] == pytest.approx(sum(totals.values()), rel=1e-12)
+    charged = sum(r.energy_kwh + r.gpu_kwh for r in results if r.windows)
+    assert charged == pytest.approx(report["attributed_kwh"], rel=1e-12)
+    assert all(report[k] > 0 for k in ("idle_kwh", "other_processes_kwh"))
+
+
+def _metered_app(seen):
+    app = FastAPI()
+    app.add_middleware(
+        CodeCarbonMiddleware,
+        tracker=_FakeTracker(),
+        on_request=lambda energy, kg, status: seen.append(energy),
+    )
+
+    @app.get("/burn/{ms}")
+    async def burn(ms: float):
+        _burn(ms / 1000)
+        return {}
+
+    @app.get("/burn-sync/{ms}")
+    def burn_sync(ms: float):
+        _burn(ms / 1000)
+        return {}
+
+    @app.get("/sleep/{ms}")
+    async def sleep(ms: float):
+        await asyncio.sleep(ms / 1000)
+        return {}
+
+    return app
+
+
+def _cpu_seconds(path: str, repeat: int = 5) -> list[float]:
+    seen = []
+    with TestClient(_metered_app(seen)) as client:
+        client.get(path)  # warm-up: first-call imports and caches
+        for _ in range(repeat):
+            assert client.get(path).status_code == 200
+    # Lifespan shutdown closed the middleware and emitted everything.
+    return [energy.cpu_seconds for energy in seen[1:]]
+
+
+def test_cpu_seconds_of_a_known_async_burn():
+    for cpu_s in _cpu_seconds("/burn/20"):
+        assert cpu_s == pytest.approx(0.020, rel=0.10, abs=0.0002)
+
+
+@pytest.mark.xfail(
+    strict=True, reason="sync endpoints run in a worker thread, not metered yet"
+)
+def test_cpu_seconds_of_a_known_sync_burn():
+    for cpu_s in _cpu_seconds("/burn-sync/20"):
+        assert cpu_s == pytest.approx(0.020, rel=0.10, abs=0.0002)
+
+
+def test_sleeping_endpoint_uses_almost_no_cpu():
+    for cpu_s in _cpu_seconds("/sleep/50"):
+        assert cpu_s < 0.002
