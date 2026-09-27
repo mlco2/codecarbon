@@ -13,7 +13,7 @@ except ImportError as e:  # pragma: no cover
         "pip install 'codecarbon[fastapi]'"
     ) from e
 
-from codecarbon.emissions_tracker import BaseEmissionsTracker
+from codecarbon.emissions_tracker import BaseEmissionsTracker, WindowSample
 from codecarbon.external.logger import logger
 from codecarbon.integrations.fastapi.attribution import EnergyAttributor, RequestEnergy
 
@@ -77,13 +77,13 @@ class CodeCarbonMiddleware:
             self._attached = None
         self.attributor.close()
 
-    def _on_window(self, total_energy_kwh: float) -> None:
+    def _on_window(self, sample: WindowSample) -> None:
         # Scheduler thread: one intensity lookup per window, not per request.
         try:
             self._intensity = self._attached._carbon_intensity_kg_per_kwh()
         except Exception:
             logger.debug("CodeCarbon: carbon intensity unavailable", exc_info=True)
-        self.attributor.on_window(total_energy_kwh)
+        self.attributor.on_window(sample)
 
     def _running_tracker(self, scope: Scope) -> BaseEmissionsTracker | None:
         tracker = self.tracker
@@ -114,7 +114,7 @@ class CodeCarbonMiddleware:
             # Tracker stopped, replaced or first seen: settle what we hold.
             self.close()
             if tracker is not None:
-                self.attributor.reset_window(tracker._total_energy.kWh)
+                self.attributor.reset_window(tracker._window_sample())
                 tracker.add_energy_window_observer(self._on_window)
                 self._attached = tracker
         if tracker is None:

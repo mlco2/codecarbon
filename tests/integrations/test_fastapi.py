@@ -9,12 +9,30 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from codecarbon.emissions_tracker import OfflineEmissionsTracker
+from codecarbon.emissions_tracker import OfflineEmissionsTracker, WindowSample
+from codecarbon.external.hardware import CPU
 from codecarbon.integrations.fastapi import (
     CodeCarbonMiddleware,
     EnergyAttributor,
     RequestEnergy,
 )
+
+
+def _sample(total: float, *, cpu: float | None = None, gpu: float = 0.0, **kw):
+    """A window sample; by default all energy is CPU energy."""
+    fields = dict(
+        timestamp=time.perf_counter(),
+        total_kwh=total,
+        cpu_kwh=total - gpu if cpu is None else cpu,
+        gpu_kwh=gpu,
+        ram_kwh=0.0,
+        cpu_quality="measured",
+        gpu_quality=None,
+        cpu_idle_w=None,
+        cpu_per_process=False,
+    )
+    fields.update(kw)
+    return WindowSample(**fields)
 
 
 def _invariant(attributor: EnergyAttributor) -> None:
@@ -26,8 +44,8 @@ def _invariant(attributor: EnergyAttributor) -> None:
 
 def test_idle_windows_are_unattributed():
     attributor = EnergyAttributor()
-    attributor.reset_window(0.0)
-    attributor.on_window(1.0)
+    attributor.reset_window(_sample(0.0))
+    attributor.on_window(_sample(1.0))
     assert attributor.unattributed_kwh == 1.0
     assert attributor.attributed_kwh == 0.0
     _invariant(attributor)
@@ -35,12 +53,12 @@ def test_idle_windows_are_unattributed():
 
 def test_window_energy_splits_by_overlap():
     attributor = EnergyAttributor()
-    attributor.reset_window(0.0)
+    attributor.reset_window(_sample(0.0))
     early = attributor.begin("GET /a")
     time.sleep(0.02)
     late = attributor.begin("GET /b")
     time.sleep(0.02)
-    attributor.on_window(1.0)
+    attributor.on_window(_sample(1.0))
 
     # `early` overlapped roughly twice as much of the window as `late`.
     assert early.energy > late.energy
@@ -50,9 +68,9 @@ def test_window_energy_splits_by_overlap():
 
 def test_backwards_counter_is_skipped_not_split():
     attributor = EnergyAttributor()
-    attributor.reset_window(5.0)
+    attributor.reset_window(_sample(5.0))
     attributor.begin("GET /a")
-    attributor.on_window(1.0)  # RAPL wrap
+    attributor.on_window(_sample(1.0))  # RAPL wrap
     assert attributor.windows_skipped == 1
     assert attributor.attributed_kwh == 0.0
     _invariant(attributor)
@@ -61,7 +79,7 @@ def test_backwards_counter_is_skipped_not_split():
 def test_unresolved_request_reports_no_energy():
     """A request that never covered a window gets None, not zero."""
     attributor = EnergyAttributor()
-    attributor.reset_window(0.0)
+    attributor.reset_window(_sample(0.0))
     results = []
     state = attributor.begin("GET /fast")
     state.on_resolved = results.append
@@ -74,7 +92,7 @@ def test_unresolved_request_reports_no_energy():
 def test_invariant_holds_under_concurrency():
     """The core property: nothing is created or lost by the split."""
     attributor = EnergyAttributor()
-    attributor.reset_window(0.0)
+    attributor.reset_window(_sample(0.0))
     results: list[RequestEnergy] = []  # list.append is atomic under the GIL
     stop = threading.Event()
     energy = 0.0
@@ -83,7 +101,7 @@ def test_invariant_holds_under_concurrency():
         nonlocal energy
         while not stop.is_set():
             energy += 0.001
-            attributor.on_window(energy)
+            attributor.on_window(_sample(energy))
             _invariant(attributor)
             time.sleep(0.002)
 
@@ -129,10 +147,13 @@ class _FakeTracker:
     def _carbon_intensity_kg_per_kwh(self):
         return 0.5
 
+    def _window_sample(self):
+        return _sample(self._total_energy.kWh)
+
     def window(self, kwh: float) -> None:
         self._total_energy.kWh += kwh
         for callback in tuple(self.observers):
-            callback(self._total_energy.kWh)
+            callback(self._window_sample())
 
 
 def _app(tracker, seen, *, lifespan=None):
@@ -219,3 +240,27 @@ def test_documented_lifespan_pattern():
     assert (energy.endpoint, status) == ("GET /work/{n}", 200)
     assert energy.energy_kwh is not None and energy.energy_kwh > 0
     assert kg is not None and kg > 0
+
+
+def test_window_sample_reports_components_and_quality():
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA",
+        measure_power_secs=3600,
+        output_methods=[],
+        allow_multiple_runs=True,
+        force_mode_cpu_load=True,
+    )
+    samples = []
+    tracker.add_energy_window_observer(samples.append)
+    tracker.start()
+    try:
+        tracker._measure_power_and_energy()
+    finally:
+        tracker.stop()
+    sample = samples[0]
+    assert sample.cpu_quality == "modeled"
+    (cpu,) = [h for h in tracker._hardware if isinstance(h, CPU)]
+    assert sample.cpu_idle_w == pytest.approx(0.1 * cpu._tdp * tracker._pue)
+    parts = sample.cpu_kwh + sample.gpu_kwh + sample.ram_kwh
+    assert sample.total_kwh == pytest.approx(parts)
+    assert sample.total_kwh > 0

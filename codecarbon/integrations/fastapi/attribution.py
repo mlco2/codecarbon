@@ -22,6 +22,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from codecarbon.emissions_tracker import WindowSample
 from codecarbon.external.logger import logger
 
 
@@ -79,10 +80,10 @@ class EnergyAttributor:
         self._t_prev = time.perf_counter()
         self._e_prev = 0.0
 
-    def reset_window(self, total_energy_kwh: float = 0.0) -> None:
+    def reset_window(self, sample: WindowSample) -> None:
         """Anchor the first window at now. Call when the tracker starts."""
         self._t_prev = time.perf_counter()
-        self._e_prev = total_energy_kwh
+        self._e_prev = sample.total_kwh
 
     def begin(self, endpoint: str) -> _InFlight:
         """Start weighting a request. Returns the handle to pass to :meth:`end`."""
@@ -110,7 +111,7 @@ class EnergyAttributor:
         for state in pending:
             self._emit(state)
 
-    def on_window(self, total_energy_kwh: float) -> None:
+    def on_window(self, sample: WindowSample) -> None:
         """Close a sampling window with the tracker's cumulative energy.
 
         Wired to
@@ -118,7 +119,7 @@ class EnergyAttributor:
         so it is only ever called from a real hardware sample.
         """
         with self._lock:
-            self._settle(total_energy_kwh)
+            self._settle(sample.total_kwh)
             finished = [
                 self._in_flight.pop(key)
                 for key, state in list(self._in_flight.items())
