@@ -181,6 +181,18 @@ class TestTrackerTelemetry(unittest.TestCase):
             if call[0] and "telemetry is on by default" in str(call[0][0])
         ]
 
+    def test_notice_printed_to_stderr_even_at_default_log_level(self, mock_cli_setup):
+        """``codecarbon monitor`` defaults to log_level=error, which hides a
+        WARNING-only notice; the notice must be visible regardless of log level.
+        """
+        self._mock_config(_conf())
+        with patch("sys.stderr") as mock_stderr:
+            EmissionsTracker(save_to_api=False, save_to_file=False, log_level="error")
+        printed = "".join(
+            call.args[0] for call in mock_stderr.write.call_args_list if call.args
+        )
+        self.assertIn("telemetry is on by default", printed)
+
     def test_notice_once_per_machine_when_level_not_explicit(self, mock_cli_setup):
         self._mock_config(_conf())
         with patch(

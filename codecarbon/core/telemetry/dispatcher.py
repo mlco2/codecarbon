@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 import os
+import sys
 import threading
 import time
 from pathlib import Path
@@ -89,6 +90,10 @@ class Telemetry:
             NOTICE_MARKER.touch()
         except OSError:
             pass  # read-only home: showing it again beats never showing it
+        # `codecarbon monitor` defaults to log_level=error, which would hide a
+        # WARNING-only notice while still marking it as shown. Print to stderr
+        # so the one-time notice is seen regardless of the configured log level.
+        print(TELEMETRY_NOTICE % self.settings.level.value, file=sys.stderr)
         logger.warning(TELEMETRY_NOTICE, self.settings.level.value)
 
     def send_at_stop(self, tracker: Any, emissions: EmissionsData) -> None:
