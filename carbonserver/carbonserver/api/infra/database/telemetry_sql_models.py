@@ -21,8 +21,6 @@ class Telemetry(Base):
     region = Column(String, nullable=True)
     cloud_provider = Column(String, nullable=True)
     cloud_region = Column(String, nullable=True)
-    longitude = Column(Float, nullable=True)
-    latitude = Column(Float, nullable=True)
 
     cpu_count = Column(Integer, nullable=True)
     cpu_physical_count = Column(Integer, nullable=True)

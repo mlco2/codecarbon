@@ -27,7 +27,7 @@ from codecarbon.core.telemetry.settings import (
 )
 
 telemetry_app = typer.Typer(
-    help="Configure product telemetry (disabled, minimal, or extensive).",
+    help="Configure product telemetry (disabled or minimal).",
     no_args_is_help=False,
 )
 
@@ -35,12 +35,7 @@ TIER_DESCRIPTIONS = {
     "disabled": "Nothing is sent.",
     "minimal": (
         "OS, Python/CodeCarbon versions, CPU/GPU model and count, RAM size, "
-        "country/region, cloud provider, coordinates rounded to 0.1 degree."
-    ),
-    "extensive": (
-        "Minimal, plus run metrics (duration, energy, emissions, utilisation), "
-        "environment hints (CI, container, notebook, IDE, frameworks) and a "
-        "public run summary."
+        "country/region, cloud provider."
     ),
 }
 
@@ -158,10 +153,8 @@ def print_telemetry_status(config_path: Optional[Path] = None) -> None:
     print(f"telemetry_level in file(s): {stored!r}")
     print(f"Resolved tier: {level.value}")
     print(f"Explicitly configured: {explicit}")
-    if level != TelemetryLevel.disabled and not settings.api_key:
-        print("Nothing is sent: no telemetry API key is configured.")
-    elif level != TelemetryLevel.disabled:
-        print(f"Sent on each tracker stop to {settings.api_url}/telemetry.")
+    if level != TelemetryLevel.disabled:
+        print(f"Sent at tracker stop to {settings.api_url}/telemetry.")
     if not explicit:
         print("Opt out with: codecarbon telemetry set disabled")
 
@@ -202,7 +195,7 @@ def run_telemetry_interactive(config: Optional[Path] = None) -> None:
     print("CodeCarbon product telemetry")
     print(
         "Separate from your dashboard experiment (codecarbon config). "
-        "Controls optional usage analytics and public leaderboard data.\n"
+        "Controls optional, anonymous usage analytics.\n"
     )
     path = resolve_config_path(config) if config else None
     if path is None or (config is None and not path.exists()):
@@ -213,9 +206,6 @@ def run_telemetry_interactive(config: Optional[Path] = None) -> None:
     choices = [
         questionary.Choice("disabled — " + TIER_DESCRIPTIONS["disabled"], "disabled"),
         questionary.Choice("minimal — " + TIER_DESCRIPTIONS["minimal"], "minimal"),
-        questionary.Choice(
-            "extensive — " + TIER_DESCRIPTIONS["extensive"], "extensive"
-        ),
     ]
     try:
         current = get_config(path).get("telemetry_level")
@@ -269,7 +259,7 @@ def status(
 def set_level(
     level: Annotated[
         str,
-        typer.Argument(help="Telemetry tier: disabled, minimal, or extensive."),
+        typer.Argument(help="Telemetry tier: disabled or minimal."),
     ],
     config: Annotated[
         Optional[Path],

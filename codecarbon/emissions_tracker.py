@@ -545,7 +545,7 @@ class BaseEmissionsTracker(ABC):
                          algorithms, dataset) that cannot be auto-detected by CodeCarbon.
                          Can also be set in config as a path to a JSON file:
                          ``metadata=metadata.json``.
-        :param telemetry_level: Telemetry tier (``disabled``, ``minimal``, ``extensive``).
+        :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
                                 Overrides config file and ``CODECARBON_TELEMETRY_LEVEL`` when set.
                                 Defaults to ``minimal``.
         """
@@ -1738,7 +1738,7 @@ def track_emissions(
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
-    :param telemetry_level: Telemetry tier (``disabled``, ``minimal``, ``extensive``).
+    :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
 
     :return: The decorated function
     """

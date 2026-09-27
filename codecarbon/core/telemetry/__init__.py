@@ -1,4 +1,4 @@
-"""Product telemetry sent at tracker stop (Tier 1 / Tier 2)."""
+"""Product telemetry sent at tracker stop (minimal tier)."""
 
 from codecarbon.core.telemetry.dispatcher import Telemetry
 
