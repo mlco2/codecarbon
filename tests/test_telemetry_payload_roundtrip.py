@@ -105,7 +105,7 @@ class TestTelemetryPayloadContract(unittest.TestCase):
         self.assertEqual(parsed.telemetry_level, "minimal")
         self.assertEqual(parsed.os, request_body["os"])
         self.assertEqual(parsed.country_name, request_body["country_name"])
-        self.assertIsNone(parsed.total_emissions_kg)
+        self.assertNotIn("latitude", request_body)
 
     def test_post_private_sends_round_tripped_body_without_token(self):
         ServerTelemetryCreate = _load_server_telemetry_create()
