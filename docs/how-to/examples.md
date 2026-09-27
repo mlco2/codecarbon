@@ -259,7 +259,11 @@ Limits:
   capped at the process's share) and undercharges at high load. The upside
   is that a request's energy barely moves when another process loads the
   host. In CPU load mode the slope is the chord of the cubic model, so the
-  cap nearly always binds at low load.
+  cap nearly always binds at low load and charges fall back to the average
+  cost. There, a request's energy rises when other processes load the
+  machine (by several times in our tests). Only a measured source (RAPL,
+  powermetrics, NVML, `quality == "measured"`) gives numbers that hold up
+  under a busy neighbour; the accuracy tests only run against one.
 - CPU time is a proxy for energy. Frequency scaling, SMT and wide vector
   instructions make one CPU second cost different amounts of energy; the
   error from this has not been measured yet.
