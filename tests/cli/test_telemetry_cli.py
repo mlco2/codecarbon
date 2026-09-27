@@ -240,6 +240,32 @@ def test_pick_config_path_lists_existing_configs(tmp_path, monkeypatch):
     assert path == local_path.resolve()
 
 
+def test_pick_config_path_lists_same_file_once(tmp_path, monkeypatch):
+    """Run from $HOME, the global and local config are the same file."""
+    home = tmp_path / "home"
+    home.mkdir()
+    (home / ".codecarbon.config").write_text("[codecarbon]\n", encoding="utf-8")
+    monkeypatch.chdir(home)
+    monkeypatch.setattr(Path, "home", lambda: home)
+    with patch("codecarbon.cli.telemetry_cli.questionary.select") as mock_select:
+        mock_select.return_value.ask.return_value = "Create new config file"
+        with patch("codecarbon.cli.telemetry_cli.create_new_config_file"):
+            pick_config_path_interactive()
+    choices = mock_select.call_args.kwargs["choices"]
+    assert choices == [
+        str((home / ".codecarbon.config").resolve()),
+        "Create new config file",
+    ]
+
+
+def test_pick_config_path_interactive_cancel_exits():
+    """Ctrl-C at the prompt makes questionary return None."""
+    with patch("codecarbon.cli.telemetry_cli.questionary.select") as mock_select:
+        mock_select.return_value.ask.return_value = None
+        with pytest.raises(typer.Exit):
+            pick_config_path_interactive()
+
+
 def test_telemetry_default_command_runs_interactive_wizard(tmp_path):
     config_path = tmp_path / ".codecarbon.config"
     config_path.write_text("[codecarbon]\n", encoding="utf-8")

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import importlib.util
+import json
 import os
 import platform
 import sys
@@ -18,10 +18,6 @@ def _strip_empty(data: dict[str, Any]) -> dict[str, Any]:
     return {
         key: value for key, value in data.items() if value not in (None, "", [], {})
     }
-
-
-def _package_installed(name: str) -> bool:
-    return importlib.util.find_spec(name) is not None
 
 
 def _cloud_region(
@@ -52,7 +48,9 @@ def _detect_codecarbon_install_method() -> str | None:
         from importlib.metadata import distribution
 
         dist = distribution("codecarbon")
-        if getattr(dist, "editable", False):
+        # PEP 610: editable installs record ``dir_info.editable`` in direct_url.json.
+        direct_url = dist.read_text("direct_url.json")
+        if direct_url and json.loads(direct_url).get("dir_info", {}).get("editable"):
             return "editable"
         installer = (dist.metadata.get("Installer") or "").lower()
         if "uv" in installer:
@@ -65,9 +63,8 @@ def _detect_codecarbon_install_method() -> str | None:
 
 
 def _cudnn_version() -> str | None:
-    # Never `import torch`: importing it here as a side effect of unrelated
-    # telemetry collection can trigger a slow, GPU-touching module init.
-    # Only read it if the host process already imported it itself.
+    # Only report torch if the user's process already imported it: importing it
+    # here can take seconds and load CUDA libraries, well past the time budget.
     torch = sys.modules.get("torch")
     if torch is None:
         return None
@@ -108,7 +105,10 @@ def _minimal_payload(
     region = region or conf.get("region")
     country_name, country_iso_code = emissions.country_name, emissions.country_iso_code
     # A failed geolocation falls back to Canada; that is a guess, not a location.
-    if getattr(getattr(tracker, "_geo", None), "is_default", False):
+    # On cloud the location comes from the cloud region, so it is still valid.
+    if emissions.on_cloud != "Y" and getattr(
+        getattr(tracker, "_geo", None), "is_default", False
+    ):
         country_name = country_iso_code = region = None
 
     payload = {
