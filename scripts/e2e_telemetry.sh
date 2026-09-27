@@ -10,20 +10,30 @@
 # Everything is torn down on exit.
 #
 # Set E2E_ALLOW_PULL=1 to allow pulling the postgres image when it is missing.
+# Set E2E_PG_PORT to change the host port for Postgres (default 55432, so a dev
+# database already on 5432 does not clash).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT=codecarbon-e2e
 API_URL=http://localhost:8008
-export DATABASE_URL=postgresql://codecarbon-user:supersecret@localhost:5432/codecarbon_db
+PG_PORT="${E2E_PG_PORT:-55432}"
+export DATABASE_URL="postgresql://codecarbon-user:supersecret@localhost:${PG_PORT}/codecarbon_db"
 WORK="$(mktemp -d)"
+cat >"$WORK/compose.override.yml" <<YAML
+services:
+  postgres:
+    ports: !override
+      - "${PG_PORT}:5432"
+YAML
+COMPOSE=(docker compose -f "$ROOT/docker-compose.yml" -f "$WORK/compose.override.yml" -p "$PROJECT")
 API_PID=""
 
 cleanup() {
     if [ -n "$API_PID" ]; then
         kill "$API_PID" 2>/dev/null || echo "WARN: API process already gone" >&2
     fi
-    if ! docker compose -f "$ROOT/docker-compose.yml" -p "$PROJECT" down -v; then
+    if ! "${COMPOSE[@]}" down -v; then
         echo "WARN: docker compose down failed; remove project $PROJECT by hand" >&2
     fi
     rm -rf "$WORK"
@@ -41,10 +51,10 @@ fi
 trap cleanup EXIT
 
 echo "== Starting Postgres"
-docker compose -f "$ROOT/docker-compose.yml" -p "$PROJECT" up -d postgres
+"${COMPOSE[@]}" up -d postgres
 pg_ready=0
 for _ in $(seq 1 30); do
-    if docker compose -f "$ROOT/docker-compose.yml" -p "$PROJECT" exec -T postgres \
+    if "${COMPOSE[@]}" exec -T postgres \
         pg_isready -U codecarbon-user -d codecarbon_db >/dev/null 2>&1; then
         pg_ready=1
         break
