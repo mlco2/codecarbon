@@ -22,8 +22,9 @@ You can use one without the other.
 The level is resolved in this order:
 
 1. **Tracker or CLI argument**: `EmissionsTracker(telemetry_level=...)` or `codecarbon monitor --telemetry-level ...`
-2. **Config and environment**: `telemetry_level` in `.codecarbon.config`, then `CODECARBON_TELEMETRY_LEVEL` when both are set
-3. **Default:** `minimal`
+2. **`CODECARBON_TELEMETRY_LEVEL`**: overrides the config file when both are set
+3. **Config file**: `telemetry_level` in `.codecarbon.config`
+4. **Default:** `minimal`
 
 Telemetry is sent **once per process**, at the first `stop()` of a run that lasted at least one second; later `stop()` calls in the same process send nothing. The payload is built and sent on a background thread, so `stop()` never waits on it. At interpreter exit, a pending send gets at most one second before it is dropped.
 
