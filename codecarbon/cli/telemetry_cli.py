@@ -35,7 +35,7 @@ TIER_DESCRIPTIONS = {
     "disabled": "Nothing is sent.",
     "minimal": (
         "OS, Python/CodeCarbon versions, CPU/GPU model and count, RAM size, "
-        "country/region, cloud provider."
+        "country/region, cloud provider. Sent once per process."
     ),
 }
 
@@ -154,7 +154,7 @@ def print_telemetry_status(config_path: Optional[Path] = None) -> None:
     print(f"Resolved tier: {level.value}")
     print(f"Explicitly configured: {explicit}")
     if level != TelemetryLevel.disabled:
-        print(f"Sent at tracker stop to {settings.api_url}/telemetry.")
+        print(f"Sent once per process to {settings.api_url}/telemetry.")
     if not explicit:
         print("Opt out with: codecarbon telemetry set disabled")
 

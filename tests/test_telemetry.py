@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
@@ -92,6 +93,23 @@ class TestTrackerTelemetry(unittest.TestCase):
         payload = mock_post.call_args[0][1]
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertNotIn("total_emissions_kg", payload)
+
+    def test_sends_once_per_process(self, mock_cli_setup):
+        self._mock_config(_conf("minimal"))
+        with self._mock_post() as mock_post:
+            self._run_tracker()
+            self._run_tracker()
+        mock_post.assert_called_once()
+
+    def test_short_run_does_not_use_up_the_single_send(self, mock_cli_setup):
+        self._mock_config(_conf("minimal"))
+        with self._mock_post() as mock_post:
+            tracker = EmissionsTracker(save_to_api=False, save_to_file=False)
+            tracker._telemetry.send_at_stop(tracker, SimpleNamespace(duration=0.5))
+            join_telemetry(tracker)
+            mock_post.assert_not_called()
+            self._run_tracker()
+        mock_post.assert_called_once()
 
     def test_config_disabled_sends_nothing(self, mock_cli_setup):
         self._mock_config(_conf("disabled"))

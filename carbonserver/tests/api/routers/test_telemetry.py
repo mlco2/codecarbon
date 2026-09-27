@@ -41,6 +41,13 @@ def client(custom_test_server):
     yield TestClient(custom_test_server)
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limit():
+    telemetry._recent_requests.clear()
+    yield
+    telemetry._recent_requests.clear()
+
+
 @pytest.fixture
 def repository_mock(custom_test_server):
     repository_mock = mock.Mock(spec=TelemetryRepository)
@@ -85,3 +92,48 @@ def test_coordinates_are_rejected(client, repository_mock):
 
     assert response.status_code == 422
     repository_mock.add_telemetry.assert_not_called()
+
+
+def test_oversized_string_is_rejected(client, repository_mock):
+    response = client.post(
+        "/telemetry",
+        json={**MINIMAL_TELEMETRY_TO_CREATE, "cpu_model": "x" * 257},
+    )
+
+    assert response.status_code == 422
+    repository_mock.add_telemetry.assert_not_called()
+
+
+def test_rate_limit_returns_429_per_ip(client, repository_mock, monkeypatch):
+    monkeypatch.setattr(telemetry, "RATE_LIMIT", 2)
+
+    codes = [
+        client.post("/telemetry", json=MINIMAL_TELEMETRY_TO_CREATE).status_code
+        for _ in range(3)
+    ]
+
+    assert codes == [201, 201, 429]
+    assert repository_mock.add_telemetry.call_count == 2
+    # Another IP has its own budget.
+    other = TestClient(client.app, client=("10.0.0.2", 50000))
+    assert other.post("/telemetry", json=MINIMAL_TELEMETRY_TO_CREATE).status_code == 201
+
+
+def test_rate_limit_window_expires(monkeypatch):
+    monkeypatch.setattr(telemetry, "RATE_LIMIT", 1)
+    now = [1000.0]
+    monkeypatch.setattr(telemetry.time, "monotonic", lambda: now[0])
+
+    assert telemetry._rate_limited("1.2.3.4") is False
+    assert telemetry._rate_limited("1.2.3.4") is True
+    now[0] += telemetry.RATE_WINDOW_SECONDS + 1
+    assert telemetry._rate_limited("1.2.3.4") is False
+
+
+def test_rate_limit_memory_is_bounded(monkeypatch):
+    monkeypatch.setattr(telemetry, "MAX_TRACKED_IPS", 2)
+
+    for host in ("1.1.1.1", "2.2.2.2", "3.3.3.3"):
+        telemetry._rate_limited(host)
+
+    assert list(telemetry._recent_requests) == ["3.3.3.3"]

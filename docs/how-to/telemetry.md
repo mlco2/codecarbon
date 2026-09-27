@@ -17,7 +17,7 @@ You can use one without the other.
 | `telemetry_level` | What is sent |
 |-------------------|--------------|
 | `disabled` | Nothing |
-| `minimal` (default) | The fields listed below, at `stop()` |
+| `minimal` (default) | The fields listed below, once per process |
 
 The level is resolved in this order:
 
@@ -25,7 +25,7 @@ The level is resolved in this order:
 2. **Config and environment**: `telemetry_level` in `.codecarbon.config`, then `CODECARBON_TELEMETRY_LEVEL` when both are set
 3. **Default:** `minimal`
 
-If the run lasts less than one second, nothing is sent. The payload is built and sent on a background thread, so `stop()` never waits on it. At interpreter exit, a pending send gets at most one second before it is dropped.
+Telemetry is sent **once per process**, at the first `stop()` of a run that lasted at least one second; later `stop()` calls in the same process send nothing. The payload is built and sent on a background thread, so `stop()` never waits on it. At interpreter exit, a pending send gets at most one second before it is dropped.
 
 ## Every field sent
 

@@ -30,6 +30,7 @@ def _isolate_telemetry(tmp_path, monkeypatch):
     api.codecarbon.io. Tests that exercise telemetry clear this variable.
     """
     monkeypatch.setenv("CODECARBON_TELEMETRY_LEVEL", "disabled")
+    monkeypatch.setattr("codecarbon.core.telemetry.dispatcher._sent", False)
     monkeypatch.setattr(
         "codecarbon.core.telemetry.dispatcher.NOTICE_MARKER",
         tmp_path / "telemetry_notice_shown",
