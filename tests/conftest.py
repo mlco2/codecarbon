@@ -29,3 +29,9 @@ def _isolate_telemetry_notice_marker(tmp_path, monkeypatch):
         "codecarbon.core.telemetry.dispatcher.NOTICE_MARKER",
         tmp_path / "telemetry_notice_shown",
     )
+
+
+@pytest.fixture(autouse=True)
+def _no_real_browser(monkeypatch):
+    """Keep tests headless: never let code under test open a browser tab."""
+    monkeypatch.setattr("webbrowser.open", lambda *args, **kwargs: True)
