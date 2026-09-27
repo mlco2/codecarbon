@@ -482,6 +482,22 @@ def test_metered_passes_thrown_exceptions_the_coroutine_handles():
     assert asyncio.run(main()) == "handled"
 
 
+def test_metered_drives_any_awaitable():
+    """ASGI only promises an awaitable: a Future or custom ``__await__`` works."""
+
+    class Custom:
+        def __await__(self):
+            yield from asyncio.sleep(0).__await__()
+            return "custom"
+
+    async def main():
+        future = asyncio.get_running_loop().create_future()
+        asyncio.get_running_loop().call_soon(future.set_result, 7)
+        return await _Metered(future, _Meter()), await _Metered(Custom(), _Meter())
+
+    assert asyncio.run(main()) == (7, "custom")
+
+
 def test_metered_close_closes_the_inner_coroutine():
     closed = []
 

@@ -135,10 +135,11 @@ class _Meter:
 
 
 class _Metered:
-    """Awaitable that drives ``coro`` and meters it.
+    """Awaitable that drives the awaitable ``coro`` and meters it.
 
-    Adds ``time.thread_time_ns()`` spent inside each ``send``/``throw`` of the
-    coroutine to ``meter``. Work the coroutine hands to other threads or to
+    Adds ``time.thread_time_ns()`` spent inside each ``send``/``throw`` of its
+    ``__await__`` iterator to ``meter``. ASGI only promises an awaitable, so
+    that iterator, not ``coro`` itself, is what gets driven. Work the coroutine hands to other threads or to
     child tasks is not seen.
     """
 
@@ -149,7 +150,7 @@ class _Metered:
         self._meter = meter
 
     def __await__(self):
-        coro, meter, clock = self._coro, self._meter, time.thread_time_ns
+        coro, meter, clock = self._coro.__await__(), self._meter, time.thread_time_ns
         value: Any = None
         error: BaseException | None = None
         while True:
@@ -172,7 +173,9 @@ class _Metered:
             except GeneratorExit:
                 start = clock()
                 try:
-                    coro.close()
+                    close = getattr(coro, "close", None)
+                    if close is not None:
+                        close()
                 finally:
                     meter.ns += clock() - start
                 raise
