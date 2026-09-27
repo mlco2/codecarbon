@@ -197,5 +197,14 @@ pending is reported when the app shuts down. A request's share is only known
 one or more sampling windows *after* its response was sent, so the
 `on_request(energy, emissions_kg, status_code)` callback fires then, on the
 tracker's scheduler thread — keep it cheap. The default callback logs at DEBUG.
-`energy.energy_kwh` is `None` when the request was shorter than the gap
-between two samples: there is no honest number, and zero would be a lie.
+`energy.energy_kwh` is `None` only when the request never overlapped a
+completed sampling window, which in practice means it was still pending when
+the tracker stopped.
+
+`energy_kwh` is an estimated share, not a measurement of the request. The
+whole machine's energy for a window, idle power included, is split across the
+requests in flight by how long each overlapped the window. Time spent waiting
+on I/O counts the same as time spent computing, and a lone short request in an
+otherwise idle window receives that window's full energy. Sum the values per
+route over many requests rather than reading a single one, and lower
+`measure_power_secs` for finer-grained windows.
