@@ -398,6 +398,23 @@ def test_fitted_cost_per_cpu_second_ignores_other_processes_load():
     _invariant(attributor)
 
 
+def test_fitted_cost_is_dropped_without_a_load_reading():
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    measured = dict(cpu_idle_w=None)
+    attributor.reset_window(_sample(0.0, timestamp=0.0, **measured))
+    energy = 0.0
+    for t in range(1, 31):
+        busy = 1.0 + (t % 4)
+        times.advance(process=0.5, busy=busy, total=8.0)
+        energy += _kwh(5 + 10 * busy, 1)
+        attributor.on_window(_sample(energy, timestamp=float(t), **measured))
+    assert attributor.report()["cpu_cost_source"] == "fit"
+    times.advance(process=0.5, total=0.0)  # no machine CPU times this window
+    attributor.on_window(_sample(energy + _kwh(20, 1), timestamp=31.0, **measured))
+    assert attributor.report()["cpu_cost_source"] == "average"
+
+
 def test_process_share_is_clamped_and_skipped_in_process_mode():
     times = _FakeTimes()
     attributor = EnergyAttributor(cpu_times=times)

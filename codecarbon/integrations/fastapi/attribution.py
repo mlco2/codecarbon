@@ -245,6 +245,7 @@ class _IdleEstimator:
             self._mins.pop()
         self._mins.append((t, power))
         estimate = self._mins[0][1]
+        self.slope = None  # no load reading, no current fit to charge by
         if busy_cpus is not None:
             self._points.append((t, busy_cpus, power))
             while self._points[0][0] < cutoff:
