@@ -22,6 +22,7 @@ import psutil
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
 from codecarbon.core.telemetry import Telemetry
+from codecarbon.core.telemetry.schemas import TelemetryLevel
 from codecarbon.core.telemetry.settings import TelemetrySettings
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
@@ -533,12 +534,18 @@ class BaseEmissionsTracker(ABC):
         self._external_conf = get_hierarchical_config()
         # Resolve the tier from the constructor kwarg first so that
         # ``EmissionsTracker(telemetry_level="disabled")`` really wins.
-        self._telemetry = Telemetry(
-            TelemetrySettings.resolve(
+        # Offline mode is chosen for no-network runs, so it must never call
+        # out, including for telemetry, regardless of config/env/kwarg.
+        if isinstance(self, OfflineEmissionsTracker):
+            telemetry_settings = TelemetrySettings.resolve(
+                external_conf={}, override=TelemetryLevel.disabled
+            )
+        else:
+            telemetry_settings = TelemetrySettings.resolve(
                 external_conf=self._external_conf,
                 override=None if telemetry_level is _sentinel else telemetry_level,
             )
-        )
+        self._telemetry = Telemetry(telemetry_settings)
         self._set_from_conf(
             force_carbon_intensity_g_co2e_kwh,
             "force_carbon_intensity_g_co2e_kwh",
