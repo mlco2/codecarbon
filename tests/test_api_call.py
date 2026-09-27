@@ -171,6 +171,35 @@ class TestApi(unittest.TestCase):
             self.assertIsInstance(retried, int)
             self.assertEqual(retried, 15)
 
+    def test_add_emission_drops_subsecond_duration_on_old_server(self):
+        """An old server 422s on a fractional duration; below 1s we must drop
+        the emission (matching the old client, which never sent it), not
+        inflate it to 1s."""
+        emission = {
+            "duration": 0.004,
+            "emissions": 2.0,
+            "emissions_rate": 2.0,
+            "cpu_power": 3.0,
+            "gpu_power": 0,
+            "ram_power": 0.15,
+            "cpu_energy": 2,
+            "gpu_energy": 0,
+            "ram_energy": 1,
+            "energy_consumed": 3.0,
+        }
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/emissions", status_code=422)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                create_run_automatically=False,
+            )
+            api.run_id = "run-1"
+
+            self.assertFalse(api.add_emission(emission))
+
+            self.assertEqual(m.call_count, 1)
+
     def test_create_run_rounds_coordinates(self):
         with requests_mock.Mocker() as m:
             m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
