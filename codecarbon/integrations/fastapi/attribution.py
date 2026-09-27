@@ -10,17 +10,18 @@ drawn with no request at all, so charging it to whichever request happened to
 be in flight is wrong. Of the dynamic CPU energy, only this process's share
 of the machine's busy CPU time is kept; the rest goes to
 ``other_processes_kwh``. Each request in flight is charged the CPU time its
-meter saw in the window times the cost of a CPU-second, capped so the charges
-never exceed what was kept; our CPU time no meter claimed goes to
-``process_unattributed_kwh`` at the same cost, and whatever the cost leaves
-over joins ``other_processes_kwh``. Dynamic GPU energy has no per-request signal
+meter saw in the window times the cost of a CPU-second; our CPU time no meter
+claimed goes to ``process_unattributed_kwh`` at the same cost. One cap scales
+both down when all of our CPU time at that cost exceeds what was kept, and
+whatever the cost leaves over joins ``other_processes_kwh``. Dynamic GPU energy has no per-request signal
 and is split by overlap with the window. Dynamic energy of windows with
 nothing in flight goes to ``unattributed_kwh``. The invariant is::
 
     attributed_kwh + idle_kwh + other_processes_kwh
         + process_unattributed_kwh + unattributed_kwh == settled_kwh
 
-exactly, after every window. That is the property the tests pin down.
+up to float rounding, after every window. That is the property the tests
+pin down.
 
 Start/stop energy snapshots per request cannot do this: with N requests in
 flight each one sees the whole machine's delta, so the sum overcounts by
@@ -318,10 +319,13 @@ class EnergyAttributor:
         self.process_unattributed_kwh = 0.0
         #: Dynamic energy from windows with nothing in flight, kWh.
         self.unattributed_kwh = 0.0
-        #: Energy taken in from closed windows. The buckets add up to it
-        #: exactly after every window; it is below the tracker's run total by
-        #: whatever a wrapped counter dropped (``windows_skipped``) plus the
-        #: final unsampled partial window.
+        #: Energy taken in from closed windows. The buckets add up to it, up
+        #: to float rounding, after every window; it is below the tracker's
+        #: run total by whatever skipped windows dropped (``windows_skipped``)
+        #: plus the final unsampled partial window. The anchor sample is read
+        #: on the request path while the scheduler thread may be measuring,
+        #: so it can be taken mid-update: the first window is then split
+        #: slightly off, but everything later is unaffected.
         self.settled_kwh = 0.0
         self.windows_settled = 0
         #: Windows dropped unsplit: an energy counter went backwards (RAPL

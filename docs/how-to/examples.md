@@ -203,11 +203,14 @@ the tracker stopped.
 
 Each window is split as follows:
 
-1. Per component, idle power times the window length is taken out first. Idle
-   power is known exactly in CPU load mode (10% of TDP). Otherwise it is
-   estimated: the lowest window power seen over the last hour, or the
-   intercept of a power-against-CPU-utilisation fit when that fit is good
-   (R² > 0.8, at least 20 windows). All RAM energy counts as idle.
+1. Per component, idle power times the window length is taken out first.
+   Three CPU modes fix it: CPU load mode tracking the machine uses 10% of
+   TDP, CPU load mode tracking the process uses 0 W, and constant (TDP) mode
+   counts all of its power as idle, so it charges requests nothing. Otherwise
+   idle power is estimated as the lower of the lowest window power seen over
+   the last hour and, when a power-against-CPU-utilisation fit is good
+   (R² > 0.8, at least 20 windows), that fit's intercept. All RAM energy
+   counts as idle.
 2. Of the CPU energy above idle, this process keeps its share of the
    machine's busy CPU time (`psutil.cpu_times()`). The rest belongs to other
    processes on the host.
@@ -216,9 +219,12 @@ Each window is split as follows:
    around each call it sends to the threadpool, times the cost of one
    CPU-second. That cost comes from the power model in CPU load mode, from
    the slope of the power-against-load fit when it is good, and otherwise
-   from the process's average (its energy above idle over its CPU time). The
-   charges never add up to more than the process's share of step 2; the
-   remainder is counted under other processes.
+   from the process's average (its energy above idle over its CPU time).
+   The process's CPU time that no request claimed goes to
+   `process_unattributed_kwh` at the same cost. If all of the process's CPU
+   time at that cost would exceed its share from step 2, requests and that
+   unclaimed rest are scaled down by the same factor. Whatever the share
+   leaves over is counted under other processes.
 4. GPU energy above idle has no per-request signal, so it is split by how long
    each request overlapped the window.
 
@@ -237,8 +243,8 @@ The fields of `RequestEnergy`:
 request never covered a completed sampling window, which in practice means it
 was still pending when the tracker stopped.
 
-The middleware's `attributor.report()` returns the run-level buckets. They always
-add up to `settled_kwh`:
+The middleware's `attributor.report()` returns the run-level buckets. They add
+up to `settled_kwh` (up to float rounding):
 
 - `attributed_kwh`: charged to requests.
 - `idle_kwh`: idle power and RAM.
@@ -246,7 +252,10 @@ add up to `settled_kwh`:
 - `process_unattributed_kwh`: this process's CPU energy that no request meter
   claimed. A large value means much of the work runs where the meter cannot
   see it (see the limits below).
-- `unattributed_kwh`: energy above idle in windows with no request in flight.
+- `unattributed_kwh`: in windows with no request in flight, this process's
+  CPU energy above idle (at the cost of a CPU-second) and all GPU energy
+  above idle; in other windows, GPU energy above idle that no request
+  overlapped.
 
 It also reports the idle power in use per component (`idle_power_w`), the
 cost of a CPU-second and its source (`cpu_j_per_cpu_second`,
@@ -274,6 +283,15 @@ Limits:
   changes nothing outside a request. Pass `meter_threadpool=False` to turn
   this off. On Linux a long sync call is charged window by window; on other
   platforms its CPU time counts in the window where it returns.
+- The threadpool wrapper keeps one current meter per request context. With
+  nested `CodeCarbonMiddleware` instances the innermost one takes the
+  threadpool CPU time and the outer ones lose it. If another library wrapped
+  `anyio.to_thread.run_sync` before the middleware did and later restores its
+  own saved original, the middleware's wrapper drops out of the chain and
+  threadpool work goes unmetered until the process restarts.
+- In CPU load mode with `tracking_mode="process"`, the tracker's energy
+  includes child processes, but the process CPU time used for pricing does
+  not. The children's CPU energy lands in `other_processes_kwh`.
 - Tasks the request starts with `asyncio.create_task` or `gather` are not
   metered (their sync threadpool calls are). Their CPU time, and threads the
   application starts itself, land in `process_unattributed_kwh`.

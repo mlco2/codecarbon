@@ -51,7 +51,13 @@ async def _metered_run_sync(func: Callable[..., Any], *args: Any, **kwargs: Any)
 
 
 def _patch_run_sync() -> None:
-    """Route ``anyio.to_thread.run_sync`` through the meter. Reference-counted."""
+    """Route ``anyio.to_thread.run_sync`` through the meter. Reference-counted.
+
+    Once patched, ours is assumed to stay in the chain. If a library that
+    wrapped ``run_sync`` before us later restores its own saved original,
+    our wrapper is dropped and threadpool work goes unmetered; there is no
+    cheap way to tell whether a wrapper on top still calls ours.
+    """
     global _patch_users, _patch_in_chain, _original_run_sync
     with _patch_lock:
         if not _patch_in_chain:
@@ -110,6 +116,9 @@ class CodeCarbonMiddleware:
             the threadpool (sync endpoints and dependencies, sync iterators).
             This wraps ``anyio.to_thread.run_sync`` process-wide while a
             tracker is attached; outside a request it behaves as before.
+            There is one current meter per request context, so with nested
+            ``CodeCarbonMiddleware`` instances the innermost one takes the
+            threadpool CPU time and the outer ones lose it.
     """
 
     def __init__(
