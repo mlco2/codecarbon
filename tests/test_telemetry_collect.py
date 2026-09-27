@@ -129,6 +129,25 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertNotIn("country_iso_code", payload)
         self.assertNotIn("region", payload)
 
+    def test_default_geo_fallback_keeps_cloud_location(self):
+        """On cloud the location comes from the cloud region, not from IP
+        geolocation, so a failed geo lookup must not drop it."""
+        tracker, emissions = _tracker_context(
+            emissions=_sample_emissions(
+                on_cloud="Y",
+                cloud_provider="aws",
+                cloud_region="eu-west-3",
+                country_name="France",
+                country_iso_code="FRA",
+                region="eu-west-3",
+            )
+        )
+        tracker._geo = SimpleNamespace(is_default=True)
+        payload = build_payload(tracker, emissions, level=TelemetryLevel.minimal)
+        self.assertEqual(payload["country_name"], "France")
+        self.assertEqual(payload["country_iso_code"], "FRA")
+        self.assertEqual(payload["region"], "eu-west-3")
+
     def test_coordinates_are_never_sent(self):
         emissions = _sample_emissions(longitude=-7.61743, latitude=33.58229)
         payload = _build(
@@ -192,14 +211,19 @@ class TestTelemetryCollect(unittest.TestCase):
     def test_codecarbon_install_method(self):
         from codecarbon.core.telemetry import collect
 
-        def dist(editable=False, installer=None):
+        def dist(direct_url=None, installer=None):
             return SimpleNamespace(
-                editable=editable,
+                read_text=lambda name: (
+                    direct_url if name == "direct_url.json" else None
+                ),
                 metadata={"Installer": installer} if installer else {},
             )
 
+        editable_url = '{"url": "file:///src", "dir_info": {"editable": true}}'
+        local_url = '{"url": "file:///src", "dir_info": {}}'
         cases = [
-            (dist(editable=True), "editable"),
+            (dist(direct_url=editable_url, installer="uv"), "editable"),
+            (dist(direct_url=local_url, installer="pip"), "pip"),
             (dist(installer="uv"), "uv"),
             (dist(installer="pip"), "pip"),
             (dist(installer="poetry"), None),
@@ -228,11 +252,19 @@ class TestTelemetryCollect(unittest.TestCase):
         cases = [(torch_ok, "8902"), (torch_none, None), (torch_broken, None)]
         for torch, expected in cases:
             with self.subTest(expected=expected):
-                with (
-                    patch.object(collect, "_package_installed", return_value=True),
-                    patch.dict(sys.modules, {"torch": torch}),
-                ):
+                with patch.dict(sys.modules, {"torch": torch}):
                     self.assertEqual(collect._cudnn_version(), expected)
+
+    def test_cudnn_version_does_not_import_torch(self):
+        """Importing torch is slow; only read it if the user already did."""
+        from codecarbon.core.telemetry import collect
+
+        with patch.dict(sys.modules):
+            sys.modules.pop("torch", None)
+            with patch("builtins.__import__") as mock_import:
+                self.assertIsNone(collect._cudnn_version())
+            mock_import.assert_not_called()
+            self.assertNotIn("torch", sys.modules)
 
     def test_gpu_static_fields_empty_when_nvml_fails(self):
         mock_pynvml = MagicMock()
