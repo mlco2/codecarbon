@@ -9,13 +9,14 @@ Idle energy (and all RAM energy) goes to ``idle_kwh``: it would have been
 drawn with no request at all, so charging it to whichever request happened to
 be in flight is wrong. Of the dynamic CPU energy, only this process's share
 of the machine's busy CPU time is kept; the rest goes to
-``other_processes_kwh``. What is kept is split across the requests that were
-in flight, weighted by their overlap with the window and normalised **by the
-sum of the weights**. Dynamic energy of windows with nothing in flight goes to
-``unattributed_kwh``. The invariant is::
+``other_processes_kwh``. What is kept is split across the requests in flight
+by the CPU time each one's meter saw in the window; what no meter claimed goes
+to ``process_unattributed_kwh``. Dynamic GPU energy has no per-request signal
+and is split by overlap with the window. Dynamic energy of windows with
+nothing in flight goes to ``unattributed_kwh``. The invariant is::
 
-    attributed_kwh + idle_kwh + other_processes_kwh + unattributed_kwh
-        == settled_kwh
+    attributed_kwh + idle_kwh + other_processes_kwh
+        + process_unattributed_kwh + unattributed_kwh == settled_kwh
 
 exactly, after every window. That is the property the tests pin down.
 
@@ -57,6 +58,68 @@ class RequestEnergy:
     windows: int
     #: Mean number of requests it competed against, window-weighted.
     mean_concurrency: float | None
+    #: CPU time the meter saw this request use, in seconds.
+    cpu_seconds: float = 0.0
+
+
+class _Meter:
+    """CPU time used by one request, in ns.
+
+    Written only by the event-loop thread driving the request and read by the
+    scheduler thread. A single writer and a plain int attribute need no lock,
+    with or without the GIL.
+    """
+
+    __slots__ = ("ns",)
+
+    def __init__(self) -> None:
+        self.ns = 0
+
+
+class _Metered:
+    """Awaitable that drives ``coro`` and meters it.
+
+    Adds ``time.thread_time_ns()`` spent inside each ``send``/``throw`` of the
+    coroutine to ``meter``. Work the coroutine hands to other threads or to
+    child tasks is not seen.
+    """
+
+    __slots__ = ("_coro", "_meter")
+
+    def __init__(self, coro: Any, meter: _Meter) -> None:
+        self._coro = coro
+        self._meter = meter
+
+    def __await__(self):
+        coro, meter, clock = self._coro, self._meter, time.thread_time_ns
+        value: Any = None
+        error: BaseException | None = None
+        while True:
+            start = clock()
+            try:
+                if error is None:
+                    yielded = coro.send(value)
+                else:
+                    yielded = coro.throw(error)
+            except StopIteration as stop:
+                meter.ns += clock() - start
+                return stop.value
+            except BaseException:
+                meter.ns += clock() - start
+                raise
+            meter.ns += clock() - start
+            value = error = None
+            try:
+                value = yield yielded
+            except GeneratorExit:
+                start = clock()
+                try:
+                    coro.close()
+                finally:
+                    meter.ns += clock() - start
+                raise
+            except BaseException as exc:
+                error = exc
 
 
 @dataclass
@@ -65,6 +128,9 @@ class _InFlight:
 
     endpoint: str
     start: float
+    meter: _Meter | None = None
+    #: ``meter.ns`` already charged in earlier windows.
+    cpu_seen_ns: int = 0
     end: float | None = None
     energy: float = 0.0
     windows: int = 0
@@ -177,6 +243,9 @@ class EnergyAttributor:
         self.idle_kwh = 0.0
         #: Dynamic CPU energy of the machine's other processes, kWh.
         self.other_processes_kwh = 0.0
+        #: Our CPU dynamic energy that no request's meter claimed: work in
+        #: threads, child tasks, the server itself, kWh.
+        self.process_unattributed_kwh = 0.0
         #: Dynamic energy from windows with nothing in flight, kWh.
         self.unattributed_kwh = 0.0
         #: Energy taken in from closed windows. The buckets add up to it
@@ -200,9 +269,12 @@ class EnergyAttributor:
             self._t_prev = sample.timestamp
             self._times_prev = self._cpu_times()
 
-    def begin(self, endpoint: str) -> _InFlight:
-        """Start weighting a request. Returns the handle to pass to :meth:`end`."""
-        state = _InFlight(endpoint=endpoint, start=self._clock())
+    def begin(self, endpoint: str, meter: _Meter | None = None) -> _InFlight:
+        """Start weighting a request. Returns the handle to pass to :meth:`end`.
+
+        ``meter`` is the request's CPU meter; without one it gets no CPU energy.
+        """
+        state = _InFlight(endpoint=endpoint, start=self._clock(), meter=meter)
         with self._lock:
             self._in_flight[id(state)] = state
         return state
@@ -278,38 +350,50 @@ class EnergyAttributor:
             share = min(max(d_proc / d_busy, 0.0), 1.0)
         else:
             share = 1.0 if d_proc > 0 else 0.0
-        dynamic = dynamic_cpu * share
-        other = dynamic_cpu - dynamic
+        ours = dynamic_cpu * share
+        other = dynamic_cpu - ours
+        dynamic_gpu = 0.0
         if sample.gpu_quality is not None:
             gpu_idle_w = self._gpu_idle.update(w1, d_gpu * _WS_PER_KWH / width)
-            dynamic += _dynamic(d_gpu, gpu_idle_w, width)
+            dynamic_gpu = _dynamic(d_gpu, gpu_idle_w, width)
 
-        states: list[_InFlight] = []
-        weights: list[float] = []
-        for state in self._in_flight.values():
+        states = list(self._in_flight.values())
+        # CPU: each request gets our share in proportion to the CPU time its
+        # meter saw this window. If the meters claim more than the process
+        # used (clock granularity), they are scaled down to fit.
+        seen = [state.meter.ns if state.meter else 0 for state in states]
+        used = [now - state.cpu_seen_ns for now, state in zip(seen, states)]
+        denominator = max(sum(used), max(d_proc, 0.0) * 1e9)
+        cpu_parts = [ours * ns / denominator if denominator > 0 else 0.0 for ns in used]
+        # GPU: no per-request signal, so split by overlap with the window.
+        weights = []
+        for state in states:
             lo = max(state.start, w0)
             hi = min(state.end if state.end is not None else w1, w1)
-            if hi - lo <= 0:
-                continue
-            weights.append(hi - lo)
-            states.append(state)
+            weights.append(max(hi - lo, 0.0))
+        total_weight = sum(weights)
+        gpu_parts = [
+            dynamic_gpu * weight / total_weight if total_weight > 0 else 0.0
+            for weight in weights
+        ]
 
-        attributed = 0.0
         if not states:
-            self.unattributed_kwh += dynamic
+            self.unattributed_kwh += ours + dynamic_gpu
         else:
-            total_weight = sum(weights)
-            for state, weight in zip(states, weights):
-                share = dynamic * (weight / total_weight)
-                state.energy += share
+            cpu_attributed, gpu_attributed = sum(cpu_parts), sum(gpu_parts)
+            for state, now, cpu_part, gpu_part in zip(
+                states, seen, cpu_parts, gpu_parts
+            ):
+                state.cpu_seen_ns = now
+                state.energy += cpu_part + gpu_part
                 state.windows += 1
                 state.concurrency_sum += len(states)
-                attributed += share
-            self.attributed_kwh += attributed
-            # Rounding in the split: absorbed so the buckets still add up.
-            self.unattributed_kwh += dynamic - attributed
+            self.attributed_kwh += cpu_attributed + gpu_attributed
+            self.process_unattributed_kwh += ours - cpu_attributed
+            # No overlap at all (or rounding): nobody to give it to.
+            self.unattributed_kwh += dynamic_gpu - gpu_attributed
         self.other_processes_kwh += other
-        self.idle_kwh += delta - dynamic - other
+        self.idle_kwh += delta - dynamic_cpu - dynamic_gpu
         # Banked only once the split succeeded. The caller swallows exceptions,
         # so advancing the cursor first would drop this window's energy from
         # settled_kwh; left in place, the next window covers it.
@@ -326,6 +410,7 @@ class EnergyAttributor:
             mean_concurrency=(
                 state.concurrency_sum / state.windows if state.windows else None
             ),
+            cpu_seconds=state.meter.ns / 1e9 if state.meter else 0.0,
         )
         if state.on_resolved is not None:
             try:
@@ -339,6 +424,7 @@ class EnergyAttributor:
             "attributed_kwh": self.attributed_kwh,
             "idle_kwh": self.idle_kwh,
             "other_processes_kwh": self.other_processes_kwh,
+            "process_unattributed_kwh": self.process_unattributed_kwh,
             "unattributed_kwh": self.unattributed_kwh,
             "settled_kwh": self.settled_kwh,
             "idle_power_w": {"cpu": self._cpu_idle.watts, "gpu": self._gpu_idle.watts},

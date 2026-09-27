@@ -15,7 +15,12 @@ except ImportError as e:  # pragma: no cover
 
 from codecarbon.emissions_tracker import BaseEmissionsTracker, WindowSample
 from codecarbon.external.logger import logger
-from codecarbon.integrations.fastapi.attribution import EnergyAttributor, RequestEnergy
+from codecarbon.integrations.fastapi.attribution import (
+    EnergyAttributor,
+    RequestEnergy,
+    _Meter,
+    _Metered,
+)
 
 
 def log_request(
@@ -129,9 +134,10 @@ class CodeCarbonMiddleware:
                 status_code = message["status"]
             await send(message)
 
-        state = self.attributor.begin(_endpoint(scope))
+        meter = _Meter()
+        state = self.attributor.begin(_endpoint(scope), meter)
         try:
-            await self.app(scope, receive, send_wrapper)
+            await _Metered(self.app(scope, receive, send_wrapper), meter)
         finally:
             # The route template only lands in the scope once Starlette's
             # router has run, so the endpoint can only be named here.

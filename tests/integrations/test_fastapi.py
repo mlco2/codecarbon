@@ -1,7 +1,9 @@
 """Tests for the FastAPI per-request energy attribution."""
 
+import asyncio
 import threading
 import time
+import types
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
@@ -16,6 +18,7 @@ from codecarbon.integrations.fastapi import (
     EnergyAttributor,
     RequestEnergy,
 )
+from codecarbon.integrations.fastapi.attribution import _Meter, _Metered
 
 
 def _sample(total: float, *, cpu: float | None = None, gpu: float = 0.0, **kw):
@@ -49,7 +52,13 @@ def _all_ours():
 
 def _invariant(attributor: EnergyAttributor) -> None:
     report = attributor.report()
-    buckets = ("attributed_kwh", "idle_kwh", "other_processes_kwh", "unattributed_kwh")
+    buckets = (
+        "attributed_kwh",
+        "idle_kwh",
+        "other_processes_kwh",
+        "process_unattributed_kwh",
+        "unattributed_kwh",
+    )
     assert sum(report[b] for b in buckets) == pytest.approx(
         report["settled_kwh"], rel=1e-12, abs=1e-15
     )
@@ -64,18 +73,60 @@ def test_idle_windows_are_unattributed():
     _invariant(attributor)
 
 
-def test_window_energy_splits_by_overlap():
-    attributor = EnergyAttributor(cpu_times=_all_ours())
-    attributor.reset_window(_sample(0.0))
-    early = attributor.begin("GET /a")
-    time.sleep(0.02)
-    late = attributor.begin("GET /b")
-    time.sleep(0.02)
-    attributor.on_window(_sample(1.0))
+def _begin(attributor, endpoint="GET /a", *, start=0.0, cpu_s=0.0):
+    """A request that started at ``start`` and used ``cpu_s`` of CPU so far."""
+    meter = _Meter()
+    meter.ns = int(cpu_s * 1e9)
+    state = attributor.begin(endpoint, meter)
+    state.start = start
+    return state
 
-    # `early` overlapped roughly twice as much of the window as `late`.
-    assert early.energy > late.energy
-    assert early.energy + late.energy == pytest.approx(1.0)
+
+def test_cpu_energy_splits_by_cpu_time():
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=0.0))
+    busy = _begin(attributor, "GET /busy", cpu_s=0.6)
+    waiting = _begin(attributor, "GET /io", cpu_s=0.0)
+    times.advance(process=1.0, busy=1.0)
+    attributor.on_window(_sample(_kwh(100, 1), timestamp=1.0))
+    # The process used 1 s of CPU; the meters account for 0.6 s of it.
+    assert busy.energy == pytest.approx(_kwh(60, 1))
+    assert waiting.energy == 0.0
+    assert attributor.process_unattributed_kwh == pytest.approx(_kwh(40, 1))
+    # Only the CPU time since the last window counts in the next one.
+    busy.meter.ns += int(0.5e9)
+    times.advance(process=0.5, busy=0.5)
+    attributor.on_window(_sample(_kwh(150, 1), timestamp=2.0))
+    assert busy.energy == pytest.approx(_kwh(110, 1))
+    _invariant(attributor)
+
+
+def test_meters_claiming_more_than_the_process_are_scaled_down():
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=0.0))
+    a = _begin(attributor, cpu_s=0.9)
+    b = _begin(attributor, cpu_s=0.3)
+    times.advance(process=1.0, busy=1.0)
+    attributor.on_window(_sample(_kwh(100, 1), timestamp=1.0))
+    assert a.energy == pytest.approx(_kwh(75, 1))
+    assert b.energy == pytest.approx(_kwh(25, 1))
+    assert attributor.process_unattributed_kwh == pytest.approx(0.0, abs=1e-18)
+    _invariant(attributor)
+
+
+def test_gpu_energy_splits_by_overlap():
+    attributor = EnergyAttributor(cpu_times=_all_ours())
+    gpu = dict(gpu_quality="measured")
+    attributor.reset_window(_sample(0.0, timestamp=0.0, **gpu))
+    attributor.on_window(_sample(0.0, timestamp=1.0, **gpu))  # GPU idles at 0 W
+    early = _begin(attributor, "GET /a", start=1.0)
+    late = _begin(attributor, "GET /b", start=2.0)
+    attributor.on_window(_sample(_kwh(90, 2), gpu=_kwh(90, 2), timestamp=3.0, **gpu))
+    # `early` overlapped twice as much of the window as `late`.
+    assert early.energy == pytest.approx(_kwh(120, 1))
+    assert late.energy == pytest.approx(_kwh(60, 1))
     _invariant(attributor)
 
 
@@ -113,15 +164,18 @@ def test_invariant_holds_under_concurrency():
     def sampler():
         nonlocal energy
         while not stop.is_set():
-            energy += 0.001
-            attributor.on_window(_sample(energy))
+            energy += 0.001 + 0.0005 * (energy * 1000 % 3)
+            gpu = energy / 3
+            attributor.on_window(_sample(energy, gpu=gpu, gpu_quality="measured"))
             _invariant(attributor)
             time.sleep(0.002)
 
     def requester(i: int):
         for _ in range(20):
-            state = attributor.begin(f"GET /{i % 3}")
+            meter = _Meter()
+            state = attributor.begin(f"GET /{i % 3}", meter)
             state.on_resolved = results.append
+            meter.ns += 5_000_000
             time.sleep(0.001)
             attributor.end(state)
 
@@ -204,8 +258,7 @@ def test_analytic_idle_and_ram_go_to_idle_bucket():
     """Load mode fixes idle at 0.1 * TDP; RAM is never charged to requests."""
     attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(0.0, timestamp=0.0))
-    state = attributor.begin("GET /a")
-    state.start = 0.0
+    state = _begin(attributor, cpu_s=1.0)  # all of the process's CPU time
     cpu, ram = _kwh(25, 2), _kwh(3, 2)
     attributor.on_window(
         _sample(cpu + ram, cpu=cpu, ram_kwh=ram, timestamp=2.0, cpu_idle_w=10.0)
@@ -233,8 +286,7 @@ def test_other_processes_keep_their_share_of_cpu_energy():
     times = _FakeTimes()
     attributor = EnergyAttributor(cpu_times=times)
     attributor.reset_window(_sample(0.0, timestamp=0.0))
-    state = attributor.begin("GET /a")
-    state.start = 0.0
+    state = _begin(attributor, cpu_s=1.0)
     times.advance(process=1.0, busy=4.0, total=8.0)
     attributor.on_window(_sample(_kwh(40, 1), timestamp=1.0))
     assert state.energy == pytest.approx(_kwh(10, 1))
@@ -269,6 +321,97 @@ def test_cpu_times_busy_excludes_idle_and_steal(monkeypatch):
     )
     _, busy, total = attribution._cpu_times()
     assert (busy, total) == (8, 25)
+
+
+def _burn(seconds: float) -> None:
+    end = time.thread_time_ns() + int(seconds * 1e9)
+    while time.thread_time_ns() < end:
+        pass
+
+
+def test_metered_returns_and_counts_only_cpu_time():
+    async def work():
+        _burn(0.01)
+        await asyncio.sleep(0.05)
+        _burn(0.01)
+        return 42
+
+    async def main():
+        return await _Metered(work(), meter)
+
+    meter = _Meter()
+    assert asyncio.run(main()) == 42
+    assert 0.02 <= meter.ns / 1e9 < 0.03
+
+
+def test_metered_propagates_errors_and_cancellation():
+    meter = _Meter()
+
+    async def boom():
+        await asyncio.sleep(0)
+        raise ValueError("boom")
+
+    async def main():
+        await _Metered(boom(), meter)
+
+    with pytest.raises(ValueError):
+        asyncio.run(main())
+
+    cleaned = []
+
+    async def slow():
+        try:
+            await asyncio.sleep(10)
+        finally:
+            cleaned.append(True)
+
+    async def cancel_it():
+        task = asyncio.ensure_future(_Metered(slow(), meter))
+        await asyncio.sleep(0.01)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(cancel_it())
+    assert cleaned == [True]
+
+
+def test_metered_passes_thrown_exceptions_the_coroutine_handles():
+    async def swallow():
+        try:
+            await asyncio.sleep(10)
+        except asyncio.CancelledError:
+            return "handled"
+
+    async def main():
+        task = asyncio.ensure_future(_Metered(swallow(), _Meter()))
+        await asyncio.sleep(0.01)
+        task.cancel()
+        return await task
+
+    assert asyncio.run(main()) == "handled"
+
+
+def test_metered_close_closes_the_inner_coroutine():
+    closed = []
+
+    @types.coroutine
+    def pause():
+        yield
+
+    async def inner():
+        try:
+            await pause()
+        finally:
+            closed.append(True)
+
+    async def outer():
+        await _Metered(inner(), _Meter())
+
+    coro = outer()
+    coro.send(None)  # suspended inside pause()
+    coro.close()
+    assert closed == [True]
 
 
 class _FakeTracker:
@@ -326,8 +469,10 @@ def test_request_resolves_on_next_window():
         tracker.window(1.0)
         energy, kg, status = seen[0]
     assert (energy.endpoint, status) == ("GET /work/{n}", 200)
-    assert energy.energy_kwh == pytest.approx(1.0)
-    assert kg == pytest.approx(0.5)
+    # A sync endpoint's work runs in a worker thread the meter doesn't see.
+    assert 0.0 <= energy.energy_kwh < 1.0
+    assert energy.cpu_seconds > 0
+    assert kg == pytest.approx(energy.energy_kwh * 0.5)
 
 
 def test_app_raising_is_reported_as_500():
