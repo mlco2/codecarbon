@@ -106,7 +106,11 @@ def _minimal_payload(
     region = region or conf.get("region")
 
     payload = {
-        "timestamp": datetime.now(timezone.utc),
+        # Truncated to the hour: enough to see usage trends over time without
+        # pinning a row to the exact second a process ran.
+        "timestamp": datetime.now(timezone.utc).replace(
+            minute=0, second=0, microsecond=0
+        ),
         "telemetry_level": level.value,
         "os": conf.get("os") or platform.platform(),
         "country_name": emissions.country_name,
