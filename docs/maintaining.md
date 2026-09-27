@@ -11,7 +11,7 @@ operating the production database. Contributors want the
 - Open a terminal and make sure you are not in a venv with `deactivate`.
 - Create a PR bumping the version with `uv run bumpver update --patch`. For a release candidate, use `uv run bumpver update --set-version 3.0.0_rc1`.
 - Run `uv run python .github/pyproject_versions.py -c` to check version consistancy.
-- No manual step is needed for the citation: `bumpver` also updates the `version:` line in `CITATION.cff`. Only `date-released:` may need a manual touch.
+- No manual step is needed for the citation: `bumpver` also updates the `version:` line in `CITATION.cff` and the `version` field in the README.md BibTeX entry. `date-released:` in `CITATION.cff` is not tracked by `bumpver` and needs a manual touch.
 - Update the dependencies with `uv sync --upgrade`
 - [Build the documentation](how-to/development.md#build-documentation) with `uv run --only-group doc task docs`.
 - Push the changes.

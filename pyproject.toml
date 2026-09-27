@@ -190,6 +190,9 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 "CITATION.cff" = [
     '^version: {version}$',
 ]
+"README.md" = [
+    '^  version      = {{version}},$',
+]
 
 [tool.pytest.ini_options]
 pythonpath = "."
