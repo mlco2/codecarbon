@@ -401,6 +401,18 @@ class TestTelemetrySettings(unittest.TestCase):
         self.assertIs(settings.level, TelemetryLevel.disabled)
         mock_logger.error.assert_called_once()
 
+    def test_empty_config_value_falls_back_to_disabled_not_default(self):
+        """An empty ``telemetry_level =`` (or ``CODECARBON_TELEMETRY_LEVEL=``)
+        must go through the invalid branch to disabled, not be treated as
+        unset and silently resolve to the default ``minimal``.
+        """
+        from codecarbon.core.telemetry.schemas import TelemetryLevel
+        from codecarbon.core.telemetry.settings import TelemetrySettings
+
+        settings = TelemetrySettings.resolve(external_conf={"telemetry_level": ""})
+        self.assertIs(settings.level, TelemetryLevel.disabled)
+        self.assertTrue(settings.is_explicit)
+
     def test_privacy_intent_strings_fall_back_to_disabled_not_minimal(self):
         """off/false/none/0 must never resolve to a level that sends data."""
         from codecarbon.core.telemetry.schemas import TelemetryLevel
