@@ -90,6 +90,23 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         with self.assertRaises(ValueError):
             OfflineEmissionsTracker(country_iso_code="FRA", region=123)
 
+    def test_offline_tracker_lowercases_valid_region(self):
+        # The isinstance check must not reject the normal, valid case.
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA", region="Ile-de-France", save_to_file=False
+        )
+        self.assertEqual(tracker._region, "ile-de-france")
+
+    def test_offline_tracker_raises_on_invalid_country_2letter_iso_code(self):
+        with self.assertRaises(ValueError):
+            OfflineEmissionsTracker(country_iso_code="FRA", country_2letter_iso_code=42)
+
+    def test_offline_tracker_uppercases_valid_country_2letter_iso_code(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA", country_2letter_iso_code="fr", save_to_file=False
+        )
+        self.assertEqual(tracker._country_2letter_iso_code, "FR")
+
     def test_track_emissions_runs_function_when_tracker_construction_fails(self):
         # The decorator must never stop the user's function from running,
         # even though direct construction raises.
