@@ -104,6 +104,10 @@ def _minimal_payload(
     conf = getattr(tracker, "_conf", {})
     cloud_provider, cloud_region, region = _cloud_region(emissions)
     region = region or conf.get("region")
+    country_name, country_iso_code = emissions.country_name, emissions.country_iso_code
+    # A failed geolocation falls back to Canada; that is a guess, not a location.
+    if getattr(getattr(tracker, "_geo", None), "is_default", False):
+        country_name = country_iso_code = region = None
 
     payload = {
         # Truncated to the hour: enough to see usage trends over time without
@@ -113,8 +117,8 @@ def _minimal_payload(
         ),
         "telemetry_level": level.value,
         "os": conf.get("os") or platform.platform(),
-        "country_name": emissions.country_name,
-        "country_iso_code": emissions.country_iso_code,
+        "country_name": country_name,
+        "country_iso_code": country_iso_code,
         "region": region,
         "cloud_provider": cloud_provider,
         "cloud_region": cloud_region,

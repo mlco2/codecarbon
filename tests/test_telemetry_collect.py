@@ -115,6 +115,20 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertEqual(payload["cloud_region"], "eu-west-1")
         self.assertEqual(payload["region"], "eu-west-1")
 
+    def test_default_geo_fallback_is_not_reported_as_a_location(self):
+        """When both geo APIs fail the tracker assumes Canada; telemetry must
+        not record that guess as where the user is."""
+        tracker, emissions = _tracker_context(
+            emissions=_sample_emissions(
+                country_name="Canada", country_iso_code="CAN", region="quebec"
+            )
+        )
+        tracker._geo = SimpleNamespace(is_default=True)
+        payload = build_payload(tracker, emissions, level=TelemetryLevel.minimal)
+        self.assertNotIn("country_name", payload)
+        self.assertNotIn("country_iso_code", payload)
+        self.assertNotIn("region", payload)
+
     def test_coordinates_are_never_sent(self):
         emissions = _sample_emissions(longitude=-7.61743, latitude=33.58229)
         payload = _build(
