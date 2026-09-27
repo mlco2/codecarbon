@@ -1,4 +1,5 @@
 import atexit
+import errno
 import signal
 import threading
 import unittest
@@ -238,6 +239,54 @@ class TestLockSignalHandlers(SignalSafeTestCase):
         worker = threading.Thread(target=hold_then_release, daemon=True)
         worker.start()
         assert done.wait(timeout=5), "release() deadlocked on its own thread lock"
+
+    @unittest.skipIf(
+        not hasattr(signal, "raise_signal"), "requires signal.raise_signal (3.8+)"
+    )
+    @patch("codecarbon.lock.os.remove")
+    @patch("codecarbon.lock.open", new_callable=mock_open)
+    def test_default_disposition_sigint_raises_keyboard_interrupt(
+        self, mock_file, mock_remove
+    ):
+        # SIGINT's default disposition raises KeyboardInterrupt rather than
+        # SystemExit, matching what an uncaught Ctrl+C would raise.
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        lock = Lock()
+        lock.acquire()
+
+        with self.assertRaises(KeyboardInterrupt):
+            signal.raise_signal(signal.SIGINT)
+
+        self.assertTrue(mock_remove.called)
+        self.assertIs(signal.getsignal(signal.SIGINT), signal.SIG_DFL)
+
+    @patch("codecarbon.lock.os.remove")
+    @patch("codecarbon.lock.open", new_callable=mock_open)
+    def test_release_reraises_non_enoent_oserror(self, mock_file, mock_remove):
+        # Only a missing lock file (ENOENT) is swallowed; any other OSError
+        # (e.g. a permissions issue) must still surface to the caller.
+        mock_remove.side_effect = OSError(errno.EACCES, "Permission denied")
+        lock = Lock()
+        lock.acquire()
+        with self.assertRaises(OSError):
+            lock.release()
+
+    @patch("codecarbon.lock.os.remove")
+    @patch("codecarbon.lock.open", new_callable=mock_open)
+    def test_restore_signal_handlers_swallows_restore_errors(
+        self, mock_file, mock_remove
+    ):
+        # If putting a previous handler back fails (e.g. a signal invalid on
+        # this platform), release() must not raise: the lock is still removed.
+        lock = Lock()
+        lock.acquire()  # installs lock._handle_exit for real via signal.signal
+
+        with patch(
+            "codecarbon.lock.signal.signal", side_effect=ValueError("bad signal")
+        ):
+            lock.release()  # must not raise despite the restore failing
+
+        mock_remove.assert_called_once_with(LOCKFILE)
 
     @patch("codecarbon.lock.open", new_callable=mock_open)
     def test_failed_acquire_leaves_the_handlers_alone(self, mock_file):
