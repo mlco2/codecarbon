@@ -662,6 +662,30 @@ def test_window_sample_reports_components_and_quality():
     assert sample.total_kwh > 0
 
 
+def test_window_sample_error_never_breaks_measurement(monkeypatch):
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA",
+        measure_power_secs=3600,
+        output_methods=[],
+        allow_multiple_runs=True,
+        force_mode_cpu_load=True,
+    )
+    samples = []
+    tracker.add_energy_window_observer(samples.append)
+
+    def broken():
+        raise RuntimeError("sample")
+
+    monkeypatch.setattr(tracker, "_window_sample", broken)
+    tracker.start()
+    try:
+        tracker._measure_power_and_energy()
+        assert tracker._total_energy.kWh > 0
+    finally:
+        tracker.stop()
+    assert samples == []
+
+
 def test_conservation_with_fake_clocks_and_energy():
     """Random windows, meters and GPU load: nothing is created or lost."""
     import random

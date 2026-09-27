@@ -1121,13 +1121,17 @@ class BaseEmissionsTracker(ABC):
     def _notify_energy_window_observers(self) -> None:
         if not self._window_observers:
             return
-        sample = self._window_sample()
-        # Copy: an observer may be removed from another thread mid-iteration.
-        for callback in tuple(self._window_observers):
-            try:
-                callback(sample)
-            except Exception:
-                logger.exception("CodeCarbon energy window observer failed")
+        # Observers are integrations: nothing they touch may break measurement.
+        try:
+            sample = self._window_sample()
+            # Copy: an observer may be removed from another thread mid-iteration.
+            for callback in tuple(self._window_observers):
+                try:
+                    callback(sample)
+                except Exception:
+                    logger.exception("CodeCarbon energy window observer failed")
+        except Exception:
+            logger.exception("CodeCarbon energy window sample failed")
 
     def _carbon_intensity_kg_per_kwh(self) -> float:
         """Current carbon intensity, kg CO2eq per kWh, without touching run totals.
