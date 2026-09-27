@@ -18,12 +18,20 @@ API_URL_CONFIG_KEYS = ("telemetry_api_url", "api_endpoint")
 API_URL_ENV_VAR = "CODECARBON_TELEMETRY_API_URL"
 
 
+#: Older releases used a wider ``extensive`` tier; map it onto the tier that
+#: replaced it rather than treating it as unparseable.
+LEGACY_LEVEL_ALIASES = {"extensive": TelemetryLevel.minimal}
+
+
 def parse_telemetry_level(raw: str | TelemetryLevel) -> TelemetryLevel:
     """Parse a telemetry tier name or enum member."""
     if isinstance(raw, TelemetryLevel):
         return raw
+    normalized = str(raw).lower()
+    if normalized in LEGACY_LEVEL_ALIASES:
+        return LEGACY_LEVEL_ALIASES[normalized]
     try:
-        return TelemetryLevel(str(raw).lower())
+        return TelemetryLevel(normalized)
     except ValueError as error:
         raise ValueError(
             f"Invalid telemetry_level {raw!r}. Choose: disabled or minimal."
@@ -57,9 +65,14 @@ class TelemetrySettings:
             try:
                 level = parse_telemetry_level(raw)
             except ValueError:
+                # An unrecognized value (typo, or a privacy-intent string like
+                # "off"/"false"/"none"/"0") must never be treated as consent
+                # to send telemetry: fail closed to disabled, not minimal.
+                level = TelemetryLevel.disabled
                 logger.error(
-                    "Invalid telemetry_level provided; falling back to %r",
-                    DEFAULT_TELEMETRY_LEVEL.value,
+                    "Invalid telemetry_level %r; falling back to %r",
+                    raw,
+                    TelemetryLevel.disabled.value,
                 )
         api_url = next(
             (conf[key] for key in API_URL_CONFIG_KEYS if conf.get(key)),
