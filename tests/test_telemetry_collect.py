@@ -79,6 +79,20 @@ class TestTelemetryCollect(unittest.TestCase):
         self.assertEqual(payload["telemetry_level"], "minimal")
         self.assertNotIn("total_emissions_kg", payload)
 
+    def test_timestamp_is_truncated_to_the_hour(self):
+        from datetime import datetime, timezone
+
+        ctx = _tracker_context(conf={"codecarbon_version": "3.0"})
+        with patch("codecarbon.core.telemetry.collect.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(
+                2026, 1, 1, 12, 34, 56, 789, tzinfo=timezone.utc
+            )
+            payload = _build(ctx, level=TelemetryLevel.minimal)
+        self.assertEqual(
+            payload["timestamp"],
+            datetime(2026, 1, 1, 12, 0, 0, 0, tzinfo=timezone.utc),
+        )
+
     def test_minimal_payload_passes_schema_validation(self):
         ctx = _tracker_context(conf={"os": "Linux", "codecarbon_version": "3.0"})
         payload = _build(ctx, level=TelemetryLevel.minimal)
