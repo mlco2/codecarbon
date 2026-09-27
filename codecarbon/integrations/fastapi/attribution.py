@@ -116,10 +116,11 @@ class _Meter:
         try:
             return func(*args)
         finally:
-            used = time.thread_time_ns() - start
+            # Read under the lock, or a total_ns() between the read and the
+            # lock could count more of this call than we add, and go backwards.
             with self._lock:
                 del self._running[ident]
-                self._thread_ns += used
+                self._thread_ns += time.thread_time_ns() - start
 
     def total_ns(self) -> int:
         """CPU time so far, including worker calls still running."""
