@@ -100,7 +100,7 @@ def _gpu_static_fields() -> dict[str, Any]:
 def _minimal_payload(
     tracker: Any, emissions: EmissionsData, level: TelemetryLevel
 ) -> dict[str, Any]:
-    """Fields allowed for ``telemetry_level=minimal`` (matches DB + MINIMAL_TELEMETRY_FIELDS)."""
+    """Every field of ``TelemetryCreate``; empty values are dropped."""
     conf = getattr(tracker, "_conf", {})
     cloud_provider, cloud_region, region = _cloud_region(emissions)
     region = region or conf.get("region")
