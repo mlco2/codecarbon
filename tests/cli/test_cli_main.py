@@ -1,5 +1,6 @@
 """Tests for the CodeCarbon CLI main function."""
 
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -386,6 +387,124 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
     assert calls["kwargs"]["region"] == "IDF"
 
 
+def _fake_offline_monitor(monkeypatch, tmp_path):
+    """Patch the offline tracker and run the monitor loop in `tmp_path`."""
+    calls = {}
+
+    class FakeOfflineTracker:
+        def __init__(self, **kwargs):
+            calls["kwargs"] = kwargs
+            self._another_instance_already_running = True
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
+    )
+    monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
+    # Isolate from the config file *and* the CODECARBON_* variables of the user
+    # running the tests: `get_hierarchical_config()` merges both.
+    monkeypatch.setenv("HOME", str(tmp_path))
+    for name in [n for n in os.environ if n.startswith("CODECARBON_")]:
+        monkeypatch.delenv(name)
+    monkeypatch.chdir(tmp_path)
+    return calls
+
+
+def test_monitor_does_not_override_config_with_cli_defaults(monkeypatch, tmp_path):
+    """Options left at their default must not shadow the config file."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\n"
+        "log_level = DEBUG\n"
+        "measure_power_secs = 30\n"
+        "api_call_interval = 10\n"
+        "country_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 0
+    # Nothing is forwarded: the tracker reads those values from the config itself
+    for name in ("log_level", "measure_power_secs", "api_call_interval"):
+        assert name not in calls["kwargs"]
+
+
+def test_monitor_cli_options_win_over_config(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\nlog_level = DEBUG\nmeasure_power_secs = 30\n"
+        "country_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        ["monitor", "--offline", "--log-level", "warning", "--measure-power-secs", "5"],
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["log_level"] == "warning"
+    assert calls["kwargs"]["measure_power_secs"] == 5
+
+
+def test_monitor_stays_quiet_without_configured_log_level(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--offline", "--country-iso-code", "FRA"]
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["log_level"] == "error"
+
+
+def test_monitor_keeps_documented_defaults_without_config(monkeypatch, tmp_path):
+    """With nothing configured, the defaults advertised by `--help` are used."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--offline", "--country-iso-code", "FRA"]
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["measure_power_secs"] == 10
+    assert calls["kwargs"]["api_call_interval"] == 30
+
+
+def test_monitor_offline_rejects_empty_country_iso_code_in_config(
+    monkeypatch, tmp_path
+):
+    """An empty value in the config is not a country: the CLI must still refuse."""
+    _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text("[codecarbon]\ncountry_iso_code =\n")
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 1
+
+
+def test_monitor_offline_accepts_country_iso_code_from_config(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\ncountry_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 0
+    assert "country_iso_code" not in calls["kwargs"]
+
+
 def test_monitor_delegates_offline_flag_to_run_and_monitor(monkeypatch):
     captured = {}
 
@@ -478,6 +597,16 @@ def test_monitor_passes_log_level_to_run_and_monitor(monkeypatch):
     )
 
     assert captured["kwargs"]["log_level"] == "debug"
+
+
+def test_external_config_returns_empty_dict_on_error(monkeypatch):
+    """A malformed config file must not crash `monitor`: fall back to `{}`."""
+
+    def raise_error():
+        raise ValueError("malformed config file")
+
+    monkeypatch.setattr("codecarbon.core.config.get_hierarchical_config", raise_error)
+    assert cli_main._external_config() == {}
 
 
 def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):

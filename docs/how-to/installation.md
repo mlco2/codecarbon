@@ -1,5 +1,9 @@
 # Installing CodeCarbon {#installation}
 
+!!! note "Python Support"
+
+    We recommend using a [supported Python version](https://devguide.python.org/versions/).
+
 ## From PyPi repository
 
 The package is hosted on the pip repository
@@ -22,13 +26,18 @@ conda activate codecarbon
 pip install codecarbon
 ```
 
-!!! warning "Conda Support"
+!!! note "Conda Support"
 
-    While CodeCarbon can be used in Conda environments, we no longer maintain official Conda packages. We recommend using `pip install codecarbon` within your Conda environment, which works seamlessly. The conda package may be outdated and is not officially supported.
+    Starting from 3.3.0 we start to maintain again an official Conda packages on [conda-forge](https://anaconda.org/channels/conda-forge/packages/codecarbon/overview):
 
-!!! note "Note"
 
-    We recommend using Python 3.8 or above.
+    ``` bash
+    conda install -c conda-forge codecarbon
+    ```
+
+    The [channel `codecarbon`](https://anaconda.org/channels/codecarbon/packages/codecarbon/overview) is outdated.
+
+
 
 ## Dependencies
 

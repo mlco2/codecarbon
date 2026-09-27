@@ -150,6 +150,54 @@ def test_run_and_monitor_uses_online_tracker_by_default(monkeypatch):
     assert captured["kwargs"]["save_to_api"] is True
 
 
+def _run_and_monitor_capturing(monkeypatch, **kwargs):
+    """Run `run_and_monitor` on a dummy command, capturing what it does."""
+    captured = {"levels": []}
+
+    class FakeCapturingTracker(FakeTracker):
+        def __init__(self, **tracker_kwargs):
+            captured["kwargs"] = tracker_kwargs
+            super().__init__()
+
+    class FakePopen:
+        def __init__(self, command, text=True):
+            pass
+
+        def wait(self):
+            return 0
+
+    _patch_trackers(
+        monkeypatch, online_cls=FakeCapturingTracker, offline_cls=FakeCapturingTracker
+    )
+    monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        "codecarbon.external.logger.set_logger_level",
+        lambda level: captured["levels"].append(level),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        monitor_module.run_and_monitor(SimpleNamespace(args=["echo", "hi"]), **kwargs)
+
+    assert exc_info.value.exit_code == 0
+    return captured
+
+
+def test_run_and_monitor_leaves_log_level_to_the_config_by_default(monkeypatch):
+    """No log level given: the tracker resolves it from the config, not from us."""
+    captured = _run_and_monitor_capturing(monkeypatch)
+
+    assert captured["levels"] == []
+    assert "log_level" not in captured["kwargs"]
+
+
+def test_run_and_monitor_applies_given_log_level(monkeypatch):
+    captured = _run_and_monitor_capturing(monkeypatch, log_level="debug")
+
+    assert captured["levels"] == ["debug"]
+    assert captured["kwargs"]["log_level"] == "debug"
+
+
 def test_run_and_monitor_handles_keyboard_interrupt(monkeypatch):
     process_info = {"terminated": 0, "killed": 0}
 

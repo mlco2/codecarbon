@@ -202,3 +202,20 @@ def test_add_user_passes_authenticated_user(client, custom_test_server):
         email=email,
         user=FakeUserWithAuthDependency.db_user,
     )
+
+
+def test_remove_user_passes_authenticated_user(client, custom_test_server):
+    organization_service_mock = mock.Mock()
+
+    with custom_test_server.container.organization_service.override(
+        organization_service_mock
+    ):
+        response = client.delete(f"/organizations/{ORG_ID_1}/users/{USER_ID_1}")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"status": "ok"}
+    organization_service_mock.remove_user.assert_called_once_with(
+        organization_id=ORG_ID_1,
+        user_id=USER_ID_1,
+        user=FakeUserWithAuthDependency.db_user,
+    )

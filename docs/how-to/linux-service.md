@@ -45,15 +45,32 @@ Install CodeCarbon in the virtual environment:
 sudo -u codecarbon /opt/codecarbon/.venv/bin/pip install codecarbon
 ```
 
-### Step 3: Authenticate with CodeCarbon
+### Step 3: Get Your Dashboard Credentials
 
-Go to <https://dashboard.codecarbon.io/> and create an account to get your API key. Then authenticate locally:
+Go to <https://dashboard.codecarbon.io/> and create an account.
 
-Configure CodeCarbon:
+Run the login and configuration wizard **as your own user**, not as the `codecarbon`
+service user: `codecarbon login` needs a web browser and writes a `credentials.json`
+file in the current directory, two things the service user does not have. The service
+itself never uses those credentials, only the `api_key` you will write in its
+configuration file at Step 6.
+
+From your own account, in a directory you can write to:
 
 ``` bash
-sudo -u codecarbon /opt/codecarbon/.venv/bin/codecarbon login
+pip install codecarbon  # or run it with `uvx codecarbon`
+codecarbon login
+codecarbon config
 ```
+
+`codecarbon config` asks you to pick or create an organization, a project and an
+experiment, then writes their ids and an API key to `~/.codecarbon.config`. Keep that
+file at hand, you will copy its values into the service configuration at Step 6.
+
+If the machine has no browser (headless server), `codecarbon login` prints the
+authentication URL: open it in a browser on the same machine, or forward the callback
+port over SSH with `ssh -L 8090:localhost:8090 user@server` and open the URL on your
+laptop, so that the `http://localhost:8090/callback` redirect reaches the CLI.
 
 ### Step 4: Create a Systemd Service File
 
@@ -107,7 +124,8 @@ group means no other local account gains anything from this change.
 
 ### Step 6: Create the CodeCarbon Configuration File
 
-Configure CodeCarbon with your dashboard credentials:
+Copy the ids and the API key from the `~/.codecarbon.config` written at Step 3 into the
+service configuration file:
 
 ``` bash
 sudo tee /opt/codecarbon/.codecarbon.config <<EOF
