@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import functools
+import threading
 from collections.abc import Callable
+from contextvars import ContextVar
+from typing import Any
 
 try:
+    import anyio.to_thread
     from starlette.types import ASGIApp, Message, Receive, Scope, Send
 except ImportError as e:  # pragma: no cover
     raise ImportError(
@@ -21,6 +25,54 @@ from codecarbon.integrations.fastapi.attribution import (
     _Meter,
     _Metered,
 )
+
+#: The meter of the request whose task (or child task) is running, if any.
+_current_meter: ContextVar[_Meter | None] = ContextVar(
+    "codecarbon_request_meter", default=None
+)
+_patch_lock = threading.Lock()
+_patch_users = 0
+#: Whether ``_metered_run_sync`` is reachable from ``anyio.to_thread.run_sync``.
+_patch_in_chain = False
+_original_run_sync: Callable[..., Any] = anyio.to_thread.run_sync
+
+
+async def _metered_run_sync(func: Callable[..., Any], *args: Any, **kwargs: Any):
+    """``anyio.to_thread.run_sync`` that meters the call for the current request.
+
+    Starlette and FastAPI send sync endpoints, sync dependencies, sync
+    iterators and file work through it. Outside a metered request it calls
+    the original unchanged.
+    """
+    meter = _current_meter.get()
+    if meter is not None:
+        func = functools.partial(meter.run_in_thread, func)
+    return await _original_run_sync(func, *args, **kwargs)
+
+
+def _patch_run_sync() -> None:
+    """Route ``anyio.to_thread.run_sync`` through the meter. Reference-counted."""
+    global _patch_users, _patch_in_chain, _original_run_sync
+    with _patch_lock:
+        if not _patch_in_chain:
+            _original_run_sync = anyio.to_thread.run_sync
+            anyio.to_thread.run_sync = _metered_run_sync
+            _patch_in_chain = True
+        _patch_users += 1
+
+
+def _unpatch_run_sync() -> None:
+    """Undo :func:`_patch_run_sync` once its last user is gone.
+
+    If someone patched ``run_sync`` on top of ours, ours stays in their chain
+    (it does nothing outside a metered request) rather than breaking it.
+    """
+    global _patch_users, _patch_in_chain
+    with _patch_lock:
+        _patch_users -= 1
+        if _patch_users == 0 and anyio.to_thread.run_sync is _metered_run_sync:
+            anyio.to_thread.run_sync = _original_run_sync
+            _patch_in_chain = False
 
 
 def log_request(
@@ -54,6 +106,10 @@ class CodeCarbonMiddleware:
         tracker: Optional tracker; defaults to ``app.state.codecarbon_tracker``.
         on_request: Callback ``(RequestEnergy, emissions_kg | None, status_code)``.
             ``None`` disables reporting.
+        meter_threadpool: Also meter the CPU time of work a request sends to
+            the threadpool (sync endpoints and dependencies, sync iterators).
+            This wraps ``anyio.to_thread.run_sync`` process-wide while a
+            tracker is attached; outside a request it behaves as before.
     """
 
     def __init__(
@@ -64,8 +120,11 @@ class CodeCarbonMiddleware:
         on_request: (
             Callable[[RequestEnergy, float | None, int], None] | None
         ) = log_request,
+        meter_threadpool: bool = True,
     ) -> None:
         self.app = app
+        self.meter_threadpool = meter_threadpool
+        self._patched = False
         self.tracker = tracker
         self.on_request = on_request
         self.attributor = EnergyAttributor()
@@ -81,6 +140,9 @@ class CodeCarbonMiddleware:
         if self._attached is not None:
             self._attached.remove_energy_window_observer(self._on_window)
             self._attached = None
+        if self._patched:
+            _unpatch_run_sync()
+            self._patched = False
         self.attributor.close()
 
     def _on_window(self, sample: WindowSample) -> None:
@@ -123,6 +185,9 @@ class CodeCarbonMiddleware:
                 self.attributor.reset_window(tracker._window_sample())
                 tracker.add_energy_window_observer(self._on_window)
                 self._attached = tracker
+                if self.meter_threadpool:
+                    _patch_run_sync()
+                    self._patched = True
         if tracker is None:
             await self.app(scope, receive, send)
             return
@@ -137,9 +202,12 @@ class CodeCarbonMiddleware:
 
         meter = _Meter()
         state = self.attributor.begin(_endpoint(scope), meter)
+        token = _current_meter.set(meter) if self._patched else None
         try:
             await _Metered(self.app(scope, receive, send_wrapper), meter)
         finally:
+            if token is not None:
+                _current_meter.reset(token)
             # The route template only lands in the scope once Starlette's
             # router has run, so the endpoint can only be named here.
             state.endpoint = _endpoint(scope)

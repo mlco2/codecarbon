@@ -669,12 +669,193 @@ def test_cpu_seconds_of_a_known_async_burn():
         assert cpu_s == pytest.approx(0.020, rel=0.10, abs=0.0002)
 
 
-@pytest.mark.xfail(
-    strict=True, reason="sync endpoints run in a worker thread, not metered yet"
-)
 def test_cpu_seconds_of_a_known_sync_burn():
     for cpu_s in _cpu_seconds("/burn-sync/20"):
         assert cpu_s == pytest.approx(0.020, rel=0.10, abs=0.0002)
+
+
+def _threadpool_app(seen, **middleware):
+    """Every way FastAPI and Starlette send a request's work to a thread."""
+    from fastapi import APIRouter, Depends
+    from fastapi.responses import StreamingResponse
+
+    app = FastAPI()
+    app.add_middleware(
+        CodeCarbonMiddleware,
+        tracker=_FakeTracker(),
+        on_request=lambda energy, kg, status: seen.append(energy),
+        **middleware,
+    )
+
+    def burn_dep() -> int:
+        _burn(0.010)
+        return 1
+
+    def real_value() -> str:
+        return "real"
+
+    @app.get("/sync-dep")
+    async def sync_dep(x: int = Depends(burn_dep)):
+        return {}
+
+    @app.get("/stream")
+    def stream():
+        def chunks():
+            for _ in range(4):
+                _burn(0.005)
+                yield b"x"
+
+        return StreamingResponse(chunks())
+
+    router = APIRouter()
+
+    @router.get("/sync")
+    def included_sync():
+        _burn(0.010)
+        return {}
+
+    app.include_router(router, prefix="/included")
+
+    @app.get("/value")
+    def value(v: str = Depends(real_value)):
+        return {"v": v}
+
+    app.state.real_value = real_value
+    return app
+
+
+@pytest.mark.parametrize(
+    "path, cpu_s",
+    [("/sync-dep", 0.010), ("/stream", 0.020), ("/included/sync", 0.010)],
+)
+def test_threadpool_work_is_metered(path, cpu_s):
+    seen = []
+    with TestClient(_threadpool_app(seen)) as client:
+        client.get(path)  # warm-up
+        for _ in range(3):
+            assert client.get(path).status_code == 200
+    for energy in seen[1:]:
+        assert energy.cpu_seconds == pytest.approx(cpu_s, rel=0.10, abs=0.0005)
+
+
+def test_plain_starlette_sync_endpoint_is_metered():
+    from starlette.applications import Starlette
+    from starlette.middleware import Middleware
+    from starlette.responses import PlainTextResponse
+    from starlette.routing import Route
+
+    def endpoint(request):
+        _burn(0.010)
+        return PlainTextResponse("ok")
+
+    seen = []
+    app = Starlette(
+        routes=[Route("/", endpoint)],
+        middleware=[
+            Middleware(
+                CodeCarbonMiddleware,
+                tracker=_FakeTracker(),
+                on_request=lambda energy, kg, status: seen.append(energy),
+            )
+        ],
+    )
+    with TestClient(app) as client:
+        for _ in range(3):
+            assert client.get("/").status_code == 200
+    for energy in seen:
+        assert energy.cpu_seconds == pytest.approx(0.010, rel=0.10, abs=0.0005)
+
+
+def test_dependency_overrides_still_work():
+    seen = []
+    app = _threadpool_app(seen)
+    app.dependency_overrides[app.state.real_value] = lambda: "override"
+    with TestClient(app) as client:
+        assert client.get("/value").json() == {"v": "override"}
+
+
+def test_threadpool_metering_can_be_turned_off():
+    import anyio.to_thread
+
+    original = anyio.to_thread.run_sync
+    seen = []
+    with TestClient(_threadpool_app(seen, meter_threadpool=False)) as client:
+        client.get("/included/sync")
+        assert anyio.to_thread.run_sync is original
+    assert seen[0].cpu_seconds < 0.005
+
+
+def test_run_sync_patch_is_transparent_and_restored():
+    import anyio
+    import anyio.to_thread
+
+    from codecarbon.integrations.fastapi import middleware as mw
+
+    original = anyio.to_thread.run_sync
+    limiter = anyio.CapacityLimiter(1)
+
+    def add(a, b):
+        return a + b
+
+    def boom():
+        raise ValueError("boom")
+
+    async def main():
+        # No request meter set: plain pass-through, arguments and errors.
+        assert await anyio.to_thread.run_sync(add, 1, 2, limiter=limiter) == 3
+        with pytest.raises(ValueError):
+            await anyio.to_thread.run_sync(boom)
+        meter = _Meter()
+        token = mw._current_meter.set(meter)
+        try:
+            await anyio.to_thread.run_sync(_burn, 0.005)
+        finally:
+            mw._current_meter.reset(token)
+        return meter
+
+    mw._patch_run_sync()
+    mw._patch_run_sync()  # idempotent: one wrapper, two users
+    try:
+        assert anyio.to_thread.run_sync is mw._metered_run_sync
+        meter = anyio.run(main)
+        assert meter.total_ns() / 1e9 == pytest.approx(0.005, rel=0.2)
+        mw._unpatch_run_sync()
+        assert anyio.to_thread.run_sync is mw._metered_run_sync
+    finally:
+        mw._unpatch_run_sync()
+    assert anyio.to_thread.run_sync is original
+
+
+def test_threadpool_patch_restored_on_shutdown():
+    import anyio.to_thread
+
+    original = anyio.to_thread.run_sync
+    with TestClient(_threadpool_app([])) as client:
+        client.get("/included/sync")
+        assert anyio.to_thread.run_sync is not original
+    assert anyio.to_thread.run_sync is original
+
+
+@pytest.mark.skipif(
+    not hasattr(time, "pthread_getcpuclockid"),
+    reason="no way to read another thread's CPU clock on this platform",
+)
+def test_long_sync_call_is_charged_while_running():
+    meter = _Meter()
+    started = threading.Event()
+
+    def work():
+        started.set()
+        _burn(0.2)
+
+    worker = threading.Thread(target=meter.run_in_thread, args=(work,))
+    worker.start()
+    started.wait()
+    time.sleep(0.1)
+    midway = meter.total_ns()
+    worker.join()
+    assert 0.02 < midway / 1e9 < 0.2
+    assert meter.total_ns() / 1e9 == pytest.approx(0.2, rel=0.1)
 
 
 def test_sleeping_endpoint_uses_almost_no_cpu():

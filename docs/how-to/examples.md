@@ -212,7 +212,8 @@ Each window is split as follows:
    machine's busy CPU time (`psutil.cpu_times()`). The rest belongs to other
    processes on the host.
 3. The process's part is split by the CPU time each request used, measured by
-   `time.thread_time_ns()` around every step of the request's coroutine.
+   `time.thread_time_ns()` around every step of the request's coroutine and
+   around each call it sends to the threadpool.
 4. GPU energy above idle has no per-request signal, so it is split by how long
    each request overlapped the window.
 
@@ -250,10 +251,16 @@ Limits:
 - CPU time is a proxy for energy. Frequency scaling, SMT and wide vector
   instructions make one CPU second cost different amounts of energy; the
   error from this has not been measured yet.
-- Only the request's own coroutine is metered. Sync (`def`) endpoints and
-  dependencies run in a worker thread, and tasks the request starts with
-  `asyncio.create_task` or `gather` run outside it; their CPU time lands in
-  `process_unattributed_kwh`.
+- The request's own coroutine is metered, and so is the work it sends to the
+  threadpool: sync (`def`) endpoints and dependencies, sync iterators of a
+  `StreamingResponse`. For the latter the middleware wraps
+  `anyio.to_thread.run_sync` process-wide while a tracker is attached; it
+  changes nothing outside a request. Pass `meter_threadpool=False` to turn
+  this off. On Linux a long sync call is charged window by window; on other
+  platforms its CPU time counts in the window where it returns.
+- Tasks the request starts with `asyncio.create_task` or `gather` are not
+  metered (their sync threadpool calls are). Their CPU time, and threads the
+  application starts itself, land in `process_unattributed_kwh`.
 - GPU energy is split by wall-clock time, not by the work each request sent
   to the GPU.
 - The idle estimate needs time to settle. Until the host has had a quiet

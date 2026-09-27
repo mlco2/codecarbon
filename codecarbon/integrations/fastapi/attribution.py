@@ -74,18 +74,62 @@ class RequestEnergy:
     quality: str
 
 
+def _thread_clock() -> int | None:
+    """The calling thread's CPU clock, readable from other threads (Linux)."""
+    if not hasattr(time, "pthread_getcpuclockid"):
+        return None
+    try:
+        return time.pthread_getcpuclockid(threading.get_ident())
+    except OSError:
+        return None
+
+
 class _Meter:
     """CPU time used by one request, in ns.
 
-    Written only by the event-loop thread driving the request and read by the
-    scheduler thread. A single writer and a plain int attribute need no lock,
-    with or without the GIL.
+    ``ns`` is the event-loop time. It is written only by the loop thread
+    driving the request, so it needs no lock, with or without the GIL.
+    Worker-thread calls (:meth:`run_in_thread`) go through ``_lock``. While
+    one runs, :meth:`total_ns` reads its CPU clock from the outside where the
+    platform allows it (Linux), so a long sync call is charged window by
+    window. Elsewhere its CPU time only shows up once it returns.
     """
 
-    __slots__ = ("ns",)
+    __slots__ = ("ns", "_lock", "_thread_ns", "_running")
 
     def __init__(self) -> None:
         self.ns = 0
+        self._lock = threading.Lock()
+        self._thread_ns = 0
+        #: Worker thread id -> (its CPU clock or None, thread time at start).
+        self._running: dict[int, tuple[int | None, int]] = {}
+
+    def run_in_thread(self, func: Callable[..., Any], *args: Any) -> Any:
+        """Call ``func(*args)`` on this worker thread, adding its CPU time."""
+        ident = threading.get_ident()
+        clock = _thread_clock()
+        start = time.thread_time_ns()
+        with self._lock:
+            self._running[ident] = (clock, start)
+        try:
+            return func(*args)
+        finally:
+            used = time.thread_time_ns() - start
+            with self._lock:
+                del self._running[ident]
+                self._thread_ns += used
+
+    def total_ns(self) -> int:
+        """CPU time so far, including worker calls still running."""
+        with self._lock:
+            total = self.ns + self._thread_ns
+            for clock, start in self._running.values():
+                if clock is not None:
+                    try:
+                        total += max(time.clock_gettime_ns(clock) - start, 0)
+                    except OSError:
+                        pass
+        return total
 
 
 class _Metered:
@@ -141,7 +185,7 @@ class _InFlight:
     endpoint: str
     start: float
     meter: _Meter | None = None
-    #: ``meter.ns`` already charged in earlier windows.
+    #: ``meter.total_ns()`` already charged in earlier windows.
     cpu_seen_ns: int = 0
     end: float | None = None
     energy: float = 0.0
@@ -348,7 +392,7 @@ class EnergyAttributor:
             # window would charge it against a process time that excludes it.
             self.windows_skipped += 1
             for state in self._in_flight.values():
-                state.cpu_seen_ns = state.meter.ns if state.meter else 0
+                state.cpu_seen_ns = state.meter.total_ns() if state.meter else 0
             self._prev, self._t_prev, self._times_prev = sample, w1, times
             return
 
@@ -383,7 +427,7 @@ class EnergyAttributor:
         # CPU: each request gets our share in proportion to the CPU time its
         # meter saw this window. If the meters claim more than the process
         # used (clock granularity), they are scaled down to fit.
-        seen = [state.meter.ns if state.meter else 0 for state in states]
+        seen = [state.meter.total_ns() if state.meter else 0 for state in states]
         used = [now - state.cpu_seen_ns for now, state in zip(seen, states)]
         denominator = max(sum(used), max(d_proc, 0.0) * 1e9)
         cpu_parts = [ours * ns / denominator if denominator > 0 else 0.0 for ns in used]
@@ -443,7 +487,7 @@ class EnergyAttributor:
             mean_concurrency=(
                 state.concurrency_sum / state.windows if state.windows else None
             ),
-            cpu_seconds=state.meter.ns / 1e9 if state.meter else 0.0,
+            cpu_seconds=state.meter.total_ns() / 1e9 if state.meter else 0.0,
             attribution_method=method,
             quality=state.quality or "none",
         )
