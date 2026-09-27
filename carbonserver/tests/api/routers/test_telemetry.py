@@ -130,6 +130,33 @@ def test_rate_limit_window_expires(monkeypatch):
     assert telemetry._rate_limited("1.2.3.4") is False
 
 
+def test_rate_limited_is_atomic_under_concurrency(monkeypatch):
+    """FastAPI runs sync endpoints in a threadpool; _rate_limited must not
+    let concurrent callers both slip past the limit check (see the lock in
+    carbonserver/carbonserver/api/routers/telemetry.py)."""
+    import threading
+
+    monkeypatch.setattr(telemetry, "RATE_LIMIT", 5)
+    admitted = []
+    admitted_lock = threading.Lock()
+    barrier = threading.Barrier(20)
+
+    def call():
+        barrier.wait()
+        limited = telemetry._rate_limited("9.9.9.9")
+        if not limited:
+            with admitted_lock:
+                admitted.append(1)
+
+    threads = [threading.Thread(target=call) for _ in range(20)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert len(admitted) == telemetry.RATE_LIMIT
+
+
 def test_rate_limit_memory_is_bounded(monkeypatch):
     monkeypatch.setattr(telemetry, "MAX_TRACKED_IPS", 2)
 
