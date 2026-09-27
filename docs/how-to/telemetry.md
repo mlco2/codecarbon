@@ -33,7 +33,7 @@ Empty or unknown values are left out rather than sent as zeros.
 
 | Field | Content |
 |-------|---------|
-| `timestamp` | Time of the send (UTC) |
+| `timestamp` | Hour of the send (UTC), truncated to the hour |
 | `telemetry_level` | Always `minimal` |
 | `os` | Platform string, for example `Linux-5.10.0-x86_64` |
 | `country_name`, `country_iso_code`, `region` | Location as already detected by the tracker |
