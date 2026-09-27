@@ -42,29 +42,47 @@ trap cleanup EXIT
 
 echo "== Starting Postgres"
 docker compose -f "$ROOT/docker-compose.yml" -p "$PROJECT" up -d postgres
+pg_ready=0
 for _ in $(seq 1 30); do
     if docker compose -f "$ROOT/docker-compose.yml" -p "$PROJECT" exec -T postgres \
         pg_isready -U codecarbon-user -d codecarbon_db >/dev/null 2>&1; then
+        pg_ready=1
         break
     fi
     sleep 1
 done
+if [ "$pg_ready" -ne 1 ]; then
+    echo "ERROR: Postgres never became ready (pg_isready kept failing)." >&2
+    exit 1
+fi
 
 echo "== Migrating"
 (cd "$ROOT/carbonserver" && uv run --project . python -m alembic \
     -c carbonserver/database/alembic.ini upgrade head)
 
+if curl --noproxy '*' -fsS "$API_URL/" >/dev/null 2>&1; then
+    echo "ERROR: something is already listening on $API_URL before the API starts." >&2
+    exit 1
+fi
+
 echo "== Starting API"
 (cd "$ROOT/carbonserver" && exec env AUTH_PROVIDER=none ENVIRONMENT=local \
     uv run --project . uvicorn main:app --port 8008 >"$WORK/api.log" 2>&1) &
 API_PID=$!
+api_up=0
 for _ in $(seq 1 60); do
+    if ! kill -0 "$API_PID" 2>/dev/null; then
+        echo "ERROR: API process exited before coming up; log follows" >&2
+        cat "$WORK/api.log" >&2
+        exit 1
+    fi
     if curl --noproxy '*' -fsS "$API_URL/" >/dev/null 2>&1; then
+        api_up=1
         break
     fi
     sleep 1
 done
-if ! curl --noproxy '*' -fsS "$API_URL/" >/dev/null; then
+if [ "$api_up" -ne 1 ] || ! kill -0 "$API_PID" 2>/dev/null; then
     echo "ERROR: API did not come up; log follows" >&2
     cat "$WORK/api.log" >&2
     exit 1
