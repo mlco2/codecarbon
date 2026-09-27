@@ -401,6 +401,21 @@ class TestTelemetrySettings(unittest.TestCase):
         self.assertIs(settings.level, TelemetryLevel.disabled)
         mock_logger.error.assert_called_once()
 
+    def test_api_endpoint_config_key_is_not_used_for_telemetry_url(self):
+        """``api_endpoint`` configures the dashboard experiment API
+        (``save_to_api``), a separate concern from telemetry; it must never
+        redirect telemetry to that host.
+        """
+        from codecarbon.core.telemetry.settings import (
+            DEFAULT_TELEMETRY_API_URL,
+            TelemetrySettings,
+        )
+
+        settings = TelemetrySettings.resolve(
+            external_conf={"api_endpoint": "https://dashboard.example.test"}
+        )
+        self.assertEqual(settings.api_url, DEFAULT_TELEMETRY_API_URL)
+
     def test_empty_config_value_falls_back_to_disabled_not_default(self):
         """An empty ``telemetry_level =`` (or ``CODECARBON_TELEMETRY_LEVEL=``)
         must go through the invalid branch to disabled, not be treated as

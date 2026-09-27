@@ -14,7 +14,7 @@ DEFAULT_TELEMETRY_LEVEL = TelemetryLevel.minimal
 
 TELEMETRY_LEVEL_CONFIG_KEY = "telemetry_level"
 
-API_URL_CONFIG_KEYS = ("telemetry_api_url", "api_endpoint")
+API_URL_CONFIG_KEYS = ("telemetry_api_url",)
 API_URL_ENV_VAR = "CODECARBON_TELEMETRY_API_URL"
 
 
