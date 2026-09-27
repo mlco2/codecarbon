@@ -23,16 +23,22 @@ class TestTelemetrySchemaValidation(unittest.TestCase):
                 **{**self._minimal_payload(), "telemetry_level": "disabled"}
             )
 
-    def test_rejects_minimal_with_extensive_field(self):
-        with pytest.raises(
-            ValidationError, match="Minimal telemetry cannot include extensive fields"
-        ):
+    def test_rejects_unknown_field(self):
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
             TelemetryCreate(
                 **{
                     **self._minimal_payload(),
                     "total_emissions_kg": 0.5,
                 }
             )
+
+    def test_rejects_oversized_string(self):
+        with pytest.raises(ValidationError, match="at most 256 characters"):
+            TelemetryCreate(**{**self._minimal_payload(), "cpu_model": "x" * 257})
+
+    def test_rejects_coordinates(self):
+        with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+            TelemetryCreate(**{**self._minimal_payload(), "latitude": 48.8})
 
 
 if __name__ == "__main__":

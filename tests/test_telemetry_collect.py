@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 
 from codecarbon.core.telemetry.collect import build_payload
 from codecarbon.core.telemetry.schemas import (
-    MINIMAL_TELEMETRY_FIELDS,
     TelemetryBase,
     TelemetryCreate,
     TelemetryLevel,
@@ -78,7 +77,6 @@ class TestTelemetryCollect(unittest.TestCase):
         payload = _build(ctx, level=TelemetryLevel.minimal)
 
         self.assertEqual(payload["telemetry_level"], "minimal")
-        self.assertTrue(set(payload) <= MINIMAL_TELEMETRY_FIELDS)
         self.assertNotIn("total_emissions_kg", payload)
 
     def test_minimal_payload_passes_schema_validation(self):
@@ -90,9 +88,6 @@ class TestTelemetryCollect(unittest.TestCase):
         ctx = _tracker_context(conf={"codecarbon_version": "3.0"})
         payload = _build(ctx)
         self.assertTrue(set(payload).issubset(TelemetryBase.model_fields))
-
-    def test_minimal_fields_are_schema_subset(self):
-        self.assertTrue(MINIMAL_TELEMETRY_FIELDS.issubset(TelemetryBase.model_fields))
 
     def test_cloud_fields_come_from_tracker_detection(self):
         """No second metadata probe: stop() must not pay for it off-cloud."""

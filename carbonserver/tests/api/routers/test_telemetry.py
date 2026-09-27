@@ -57,7 +57,7 @@ def test_add_telemetry_needs_no_token(client, repository_mock):
     repository_mock.add_telemetry.assert_called_once()
 
 
-def test_minimal_telemetry_rejects_extensive_fields(client, repository_mock):
+def test_unknown_fields_are_rejected(client, repository_mock):
     response = client.post(
         "/telemetry",
         json={**MINIMAL_TELEMETRY_TO_CREATE, "total_emissions_kg": 0.42},
