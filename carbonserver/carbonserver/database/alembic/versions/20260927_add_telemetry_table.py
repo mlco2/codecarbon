@@ -16,9 +16,11 @@ down_revision = "20251119_add_utilization"
 branch_labels = None
 depends_on = None
 
-# New columns, as created by ``create_table`` for a fresh database.
+# New columns, as created by ``create_table`` for a fresh database. A naive
+# timestamp is ambiguous across servers in different zones, so it is always
+# timezone-aware (``timestamptz`` on Postgres).
 NEW_COLUMNS = [
-    sa.Column("timestamp", sa.DateTime, nullable=False),
+    sa.Column("timestamp", sa.DateTime(timezone=True), nullable=False),
     sa.Column("telemetry_level", sa.String, nullable=False),
     sa.Column("os", sa.String, nullable=True),
     sa.Column("country_name", sa.String, nullable=True),
@@ -102,6 +104,11 @@ OLD_ONLY_COLUMNS = [
 ]
 
 
+def _bind_is_postgres(bind) -> bool:
+    """SQLite (used by the migration test) can't ALTER a column's type."""
+    return bind.dialect.name == "postgresql"
+
+
 def upgrade():
     """Anonymous SDK telemetry, one row per process (minimal level only).
 
@@ -121,6 +128,13 @@ def upgrade():
         for column in NEW_COLUMNS:
             if column.name not in existing:
                 op.add_column("telemetry", column.copy())
+        if "timestamp" in existing and _bind_is_postgres(bind):
+            op.alter_column(
+                "telemetry",
+                "timestamp",
+                type_=sa.DateTime(timezone=True),
+                postgresql_using="timestamp AT TIME ZONE 'UTC'",
+            )
         return
     op.create_table(
         "telemetry",
@@ -132,7 +146,15 @@ def upgrade():
 
 def downgrade():
     """Restore the old, wider schema (as nullable columns), preserving rows."""
-    existing = {c["name"] for c in sa.inspect(op.get_bind()).get_columns("telemetry")}
+    bind = op.get_bind()
+    existing = {c["name"] for c in sa.inspect(bind).get_columns("telemetry")}
     for column in OLD_ONLY_COLUMNS:
         if column.name not in existing:
             op.add_column("telemetry", column.copy())
+    if _bind_is_postgres(bind):
+        op.alter_column(
+            "telemetry",
+            "timestamp",
+            type_=sa.DateTime(),
+            postgresql_using="timestamp AT TIME ZONE 'UTC'",
+        )

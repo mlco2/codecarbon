@@ -12,7 +12,7 @@ class Telemetry(Base):
     __tablename__ = "telemetry"
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
-    timestamp = Column(DateTime, nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False)
     telemetry_level = Column(String, nullable=False)
 
     os = Column(String, nullable=True)

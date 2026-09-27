@@ -5,6 +5,7 @@ table (old, wide schema, see #1171)."""
 import importlib.util
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import sqlalchemy as sa
 from alembic.operations import Operations
@@ -78,6 +79,51 @@ def _create_old_table(conn, module, skip_columns=()):
     )
 
 
+def test_timestamp_column_is_timezone_aware_on_create():
+    """Naive timestamps are ambiguous across servers in different zones;
+    the column must be created as ``timestamptz``."""
+    module = _load_migration()
+    (timestamp_column,) = [c for c in module.NEW_COLUMNS if c.name == "timestamp"]
+    assert isinstance(timestamp_column.type, sa.DateTime)
+    assert timestamp_column.type.timezone is True
+
+
+def test_bind_is_postgres_helper():
+    module = _load_migration()
+
+    class _FakeDialect:
+        def __init__(self, name):
+            self.name = name
+
+    class _FakeBind:
+        def __init__(self, name):
+            self.dialect = _FakeDialect(name)
+
+    assert module._bind_is_postgres(_FakeBind("postgresql")) is True
+    assert module._bind_is_postgres(_FakeBind("sqlite")) is False
+
+
+def test_upgrade_alters_timestamp_to_timezone_aware_on_existing_postgres_table():
+    """When the table pre-exists on Postgres, the migration must alter the
+    ``timestamp`` column type to timestamptz rather than leaving it naive."""
+    module = _load_migration()
+    engine = sa.create_engine("sqlite:///:memory:")
+    with engine.connect() as conn:
+        _create_old_table(conn, module)
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            with (
+                patch.object(module, "_bind_is_postgres", return_value=True),
+                patch("alembic.op.alter_column") as mock_alter,
+            ):
+                module.upgrade()
+    (call,) = mock_alter.call_args_list
+    args, kwargs = call
+    assert args == ("telemetry", "timestamp")
+    assert kwargs["type_"].timezone is True
+    assert kwargs["postgresql_using"] == "timestamp AT TIME ZONE 'UTC'"
+
+
 def test_upgrade_creates_table_when_absent():
     module = _load_migration()
     engine = sa.create_engine("sqlite:///:memory:")
@@ -118,6 +164,26 @@ def test_upgrade_adds_a_genuinely_missing_new_column():
             module.upgrade()
         columns = {c["name"] for c in sa.inspect(conn).get_columns("telemetry")}
     assert "cpu_architecture" in columns
+
+
+def test_downgrade_alters_timestamp_back_to_naive_on_postgres():
+    module = _load_migration()
+    engine = sa.create_engine("sqlite:///:memory:")
+    with engine.connect() as conn:
+        _create_old_table(conn, module)
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            module.upgrade()
+            with (
+                patch.object(module, "_bind_is_postgres", return_value=True),
+                patch("alembic.op.alter_column") as mock_alter,
+            ):
+                module.downgrade()
+    (call,) = mock_alter.call_args_list
+    args, kwargs = call
+    assert args == ("telemetry", "timestamp")
+    assert kwargs["type_"].timezone is False
+    assert kwargs["postgresql_using"] == "timestamp AT TIME ZONE 'UTC'"
 
 
 def test_downgrade_restores_old_columns_as_nullable_preserving_rows():
