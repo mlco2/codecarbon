@@ -290,6 +290,56 @@ class TestDispatcherEdges(unittest.TestCase):
             dispatcher._join_pending()
         thread.join.assert_called_once()
 
+    def test_thread_start_failure_does_not_crash_stop(self):
+        """A broken thread creation/start must never propagate out of stop()."""
+        from codecarbon.core.telemetry import dispatcher
+
+        with (
+            patch.object(dispatcher, "_sent", False),
+            patch.object(
+                dispatcher.threading, "Thread", side_effect=RuntimeError("boom")
+            ),
+        ):
+            telemetry = self._telemetry()
+            telemetry.send_at_stop(
+                SimpleNamespace(), SimpleNamespace(duration=5)
+            )  # must not raise
+        self.assertFalse(dispatcher._sent)
+
+    def test_sent_marked_only_after_thread_actually_started(self):
+        from codecarbon.core.telemetry import dispatcher
+
+        started = []
+        real_thread_cls = dispatcher.threading.Thread
+
+        class TrackingThread(real_thread_cls):
+            def start(self):
+                started.append(dispatcher._sent)
+                super().start()
+
+        with (
+            patch.object(dispatcher, "_sent", False),
+            patch.object(dispatcher.threading, "Thread", TrackingThread),
+        ):
+            telemetry = self._telemetry()
+            telemetry.send_at_stop(SimpleNamespace(), SimpleNamespace(duration=5))
+            telemetry._thread.join(5)
+            # _sent was still False at the moment start() was called.
+            self.assertEqual(started, [False])
+            self.assertTrue(dispatcher._sent)
+
+    def test_fork_reset_clears_sent_flag_and_lock(self):
+        from codecarbon.core.telemetry import dispatcher
+
+        dispatcher._sent = True
+        old_lock = dispatcher._sent_lock
+        try:
+            dispatcher._reset_after_fork()
+            self.assertFalse(dispatcher._sent)
+            self.assertIsNot(dispatcher._sent_lock, old_lock)
+        finally:
+            dispatcher._sent = False
+
 
 class TestTelemetrySettings(unittest.TestCase):
     def test_enum_level_passes_through(self):
@@ -300,15 +350,36 @@ class TestTelemetrySettings(unittest.TestCase):
             parse_telemetry_level(TelemetryLevel.disabled), TelemetryLevel.disabled
         )
 
-    def test_invalid_level_falls_back_to_minimal(self):
+    def test_legacy_extensive_level_maps_to_minimal(self):
+        from codecarbon.core.telemetry.settings import TelemetrySettings
+
+        settings = TelemetrySettings.resolve(
+            external_conf={"telemetry_level": "extensive"}
+        )
+        self.assertEqual(settings.level.value, "minimal")
+
+    def test_unparseable_level_falls_back_to_disabled(self):
+        from codecarbon.core.telemetry.schemas import TelemetryLevel
         from codecarbon.core.telemetry.settings import TelemetrySettings
 
         with patch("codecarbon.core.telemetry.settings.logger") as mock_logger:
             settings = TelemetrySettings.resolve(
-                external_conf={"telemetry_level": "extensive"}
+                external_conf={"telemetry_level": "bogus"}
             )
-        self.assertEqual(settings.level.value, "minimal")
+        self.assertIs(settings.level, TelemetryLevel.disabled)
         mock_logger.error.assert_called_once()
+
+    def test_privacy_intent_strings_fall_back_to_disabled_not_minimal(self):
+        """off/false/none/0 must never resolve to a level that sends data."""
+        from codecarbon.core.telemetry.schemas import TelemetryLevel
+        from codecarbon.core.telemetry.settings import TelemetrySettings
+
+        for value in ("off", "false", "none", "0"):
+            with self.subTest(value=value):
+                settings = TelemetrySettings.resolve(
+                    external_conf={"telemetry_level": value}
+                )
+                self.assertIs(settings.level, TelemetryLevel.disabled)
 
 
 if __name__ == "__main__":
