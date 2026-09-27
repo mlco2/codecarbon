@@ -21,7 +21,7 @@ Optional library telemetry is controlled by **`telemetry_level`** on the tracker
 | `disabled` | No product telemetry |
 | `minimal` (default) | Anonymous environment and hardware telemetry, once per process |
 
-**Resolution order:** tracker argument → `.codecarbon.config` → `CODECARBON_TELEMETRY_LEVEL` → default `minimal`. The tracker argument overrides config and environment.
+**Resolution order:** tracker argument → `CODECARBON_TELEMETRY_LEVEL` → `.codecarbon.config` → default `minimal`. The tracker argument overrides the environment variable and config file.
 
 This is separate from `save_to_api` (your dashboard experiment). See [Product telemetry](../how-to/telemetry.md).
 
