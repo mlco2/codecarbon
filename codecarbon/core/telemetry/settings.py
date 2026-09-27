@@ -55,11 +55,7 @@ class TelemetrySettings:
     ) -> TelemetrySettings:
         """Resolve tier (override > config/env > default minimal) and API URL."""
         conf = external_conf or {}
-        raw = (
-            override
-            if override is not None
-            else conf.get(TELEMETRY_LEVEL_CONFIG_KEY) or None
-        )
+        raw = override if override is not None else conf.get(TELEMETRY_LEVEL_CONFIG_KEY)
         level = DEFAULT_TELEMETRY_LEVEL
         if raw is not None:
             try:
