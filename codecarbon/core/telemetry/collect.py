@@ -65,11 +65,13 @@ def _detect_codecarbon_install_method() -> str | None:
 
 
 def _cudnn_version() -> str | None:
-    if not _package_installed("torch"):
+    # Never `import torch`: importing it here as a side effect of unrelated
+    # telemetry collection can trigger a slow, GPU-touching module init.
+    # Only read it if the host process already imported it itself.
+    torch = sys.modules.get("torch")
+    if torch is None:
         return None
     try:
-        import torch
-
         version = torch.backends.cudnn.version()
         return str(version) if version is not None else None
     except Exception:

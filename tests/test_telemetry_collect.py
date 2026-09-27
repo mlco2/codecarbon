@@ -234,6 +234,24 @@ class TestTelemetryCollect(unittest.TestCase):
                 ):
                     self.assertEqual(collect._cudnn_version(), expected)
 
+    def test_cudnn_version_never_imports_torch(self):
+        """Importing torch here would trigger CUDA init / a multi-second load
+        as a side effect of unrelated telemetry collection; it must only be
+        read from sys.modules if the caller's process already imported it.
+        """
+        from codecarbon.core.telemetry import collect
+
+        with (
+            patch.object(collect, "_package_installed", return_value=True),
+            patch.dict(sys.modules, {}, clear=False),
+        ):
+            sys.modules.pop("torch", None)
+            mock_import = MagicMock(side_effect=AssertionError("torch imported"))
+            with patch("builtins.__import__", mock_import):
+                self.assertIsNone(collect._cudnn_version())
+            for call in mock_import.call_args_list:
+                self.assertNotEqual(call.args[0] if call.args else None, "torch")
+
     def test_gpu_static_fields_empty_when_nvml_fails(self):
         mock_pynvml = MagicMock()
         mock_pynvml.nvmlInit.side_effect = RuntimeError("no driver")
