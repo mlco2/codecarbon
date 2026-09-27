@@ -95,13 +95,15 @@ def pick_config_path_interactive() -> Path:
     options = []
     if global_path.exists():
         options.append(str(global_path))
-    if local_path.exists() and local_path not in options:
+    if local_path.exists() and str(local_path) not in options:
         options.append(str(local_path))
     options.append("Create new config file")
     choice = questionary.select(
         "Which configuration file should store telemetry_level?",
         choices=options,
     ).ask()
+    if choice is None:
+        raise typer.Exit(0)
     if choice == "Create new config file":
         return create_new_config_file()
     return Path(choice).expanduser().resolve()
