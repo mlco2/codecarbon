@@ -91,7 +91,7 @@ tracker.stop()
 telemetry_level = disabled
 ```
 
-Or set `CODECARBON_TELEMETRY_LEVEL=disabled`, or run `codecarbon telemetry set disabled`.
+Or set `CODECARBON_TELEMETRY_LEVEL=disabled`, or run `codecarbon telemetry set disabled` (writes to the global `~/.codecarbon.config`, creating it if missing; pass `--config` to target a specific file instead).
 
 ## First run without explicit configuration
 
