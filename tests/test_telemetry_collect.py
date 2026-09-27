@@ -144,6 +144,81 @@ class TestTelemetryCollect(unittest.TestCase):
                     payload = _build(ctx, level=TelemetryLevel.minimal)
         self.assertEqual(payload["python_env_type"], "venv")
 
+    def test_python_env_type_variants(self):
+        from codecarbon.core.telemetry import collect
+
+        cases = [
+            ({"CONDA_DEFAULT_ENV": "base"}, "/usr", "conda"),
+            ({}, "/venv", "venv"),
+            ({}, "/usr", "system"),
+        ]
+        for env, prefix, expected in cases:
+            with self.subTest(expected=expected):
+                with (
+                    patch.dict(os.environ, env, clear=True),
+                    patch.object(collect.sys, "prefix", prefix),
+                    patch.object(collect.sys, "base_prefix", "/usr"),
+                ):
+                    self.assertEqual(collect._detect_python_env_type(), expected)
+
+    def test_codecarbon_install_method(self):
+        from codecarbon.core.telemetry import collect
+
+        def dist(editable=False, installer=None):
+            return SimpleNamespace(
+                editable=editable,
+                metadata={"Installer": installer} if installer else {},
+            )
+
+        cases = [
+            (dist(editable=True), "editable"),
+            (dist(installer="uv"), "uv"),
+            (dist(installer="pip"), "pip"),
+            (dist(installer="poetry"), None),
+            (RuntimeError("no metadata"), None),
+        ]
+        for result, expected in cases:
+            with self.subTest(expected=expected, result=result):
+                with patch(
+                    "importlib.metadata.distribution",
+                    side_effect=[result],
+                ):
+                    self.assertEqual(
+                        collect._detect_codecarbon_install_method(), expected
+                    )
+
+    def test_cudnn_version(self):
+        from codecarbon.core.telemetry import collect
+
+        torch_ok = SimpleNamespace(
+            backends=SimpleNamespace(cudnn=SimpleNamespace(version=lambda: 8902))
+        )
+        torch_none = SimpleNamespace(
+            backends=SimpleNamespace(cudnn=SimpleNamespace(version=lambda: None))
+        )
+        torch_broken = SimpleNamespace(backends=None)
+        cases = [(torch_ok, "8902"), (torch_none, None), (torch_broken, None)]
+        for torch, expected in cases:
+            with self.subTest(expected=expected):
+                with (
+                    patch.object(collect, "_package_installed", return_value=True),
+                    patch.dict(sys.modules, {"torch": torch}),
+                ):
+                    self.assertEqual(collect._cudnn_version(), expected)
+
+    def test_gpu_static_fields_empty_when_nvml_fails(self):
+        mock_pynvml = MagicMock()
+        mock_pynvml.nvmlInit.side_effect = RuntimeError("no driver")
+        with (
+            patch(
+                "codecarbon.core.telemetry.collect.is_nvidia_system",
+                return_value=True,
+            ),
+            patch.dict(sys.modules, {"pynvml": mock_pynvml}),
+        ):
+            payload = _build(_tracker_context())
+        self.assertNotIn("gpu_driver_version", payload)
+
 
 if __name__ == "__main__":
     unittest.main()
