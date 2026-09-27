@@ -41,25 +41,37 @@ from codecarbon.external.logger import logger
 
 #: Watt-seconds per kWh.
 _WS_PER_KWH = 3.6e6
+#: Weakest first: a request's quality is that of its weakest input.
+_QUALITIES = ("none", "modeled", "measured")
 
 
 @dataclass(frozen=True)
 class RequestEnergy:
     """One request's finished attribution.
 
-    ``energy_kwh`` is ``None`` when the request never covered a completed
-    sampling window: there is no honest number, and zero would be a lie.
+    ``energy_kwh`` and ``gpu_kwh`` are ``None`` when the request never covered
+    a completed sampling window: there is no honest number, and zero would be
+    a lie.
     """
 
     endpoint: str
+    #: CPU energy above idle, charged by the CPU time the request used.
     energy_kwh: float | None
+    #: GPU energy above idle, charged by wall-clock overlap with the window.
+    gpu_kwh: float | None
     duration_s: float
-    #: Completed sampling windows this request overlapped.
+    #: Completed sampling windows this request was in flight for.
     windows: int
-    #: Mean number of requests it competed against, window-weighted.
+    #: Mean number of requests in flight with it, per window.
     mean_concurrency: float | None
     #: CPU time the meter saw this request use, in seconds.
-    cpu_seconds: float = 0.0
+    cpu_seconds: float
+    #: ``"cpu_time"``, ``"wall"`` (GPU energy only) or ``"mixed"`` (both).
+    attribution_method: str
+    #: ``"measured"`` (RAPL, powermetrics, NVML...), ``"modeled"`` (CPU load
+    #: mode) or ``"none"`` (constant TDP, or no window), for the weakest
+    #: component the request was charged from.
+    quality: str
 
 
 class _Meter:
@@ -133,6 +145,8 @@ class _InFlight:
     cpu_seen_ns: int = 0
     end: float | None = None
     energy: float = 0.0
+    gpu_energy: float = 0.0
+    quality: str | None = None
     windows: int = 0
     concurrency_sum: float = 0.0
     #: Called with the :class:`RequestEnergy` when this request resolves.
@@ -357,6 +371,10 @@ class EnergyAttributor:
             gpu_idle_w = self._gpu_idle.update(w1, d_gpu * _WS_PER_KWH / width)
             dynamic_gpu = _dynamic(d_gpu, gpu_idle_w, width)
 
+        quality = sample.cpu_quality
+        if sample.gpu_quality is not None:
+            quality = min(quality, sample.gpu_quality, key=_QUALITIES.index)
+
         states = list(self._in_flight.values())
         # CPU: each request gets our share in proportion to the CPU time its
         # meter saw this window. If the meters claim more than the process
@@ -385,7 +403,11 @@ class EnergyAttributor:
                 states, seen, cpu_parts, gpu_parts
             ):
                 state.cpu_seen_ns = now
-                state.energy += cpu_part + gpu_part
+                state.energy += cpu_part
+                state.gpu_energy += gpu_part
+                state.quality = min(
+                    quality, state.quality or quality, key=_QUALITIES.index
+                )
                 state.windows += 1
                 state.concurrency_sum += len(states)
             self.attributed_kwh += cpu_attributed + gpu_attributed
@@ -402,15 +424,24 @@ class EnergyAttributor:
         self._prev, self._t_prev, self._times_prev = sample, w1, times
 
     def _emit(self, state: _InFlight) -> None:
+        if state.energy > 0 and state.gpu_energy > 0:
+            method = "mixed"
+        elif state.gpu_energy > 0:
+            method = "wall"
+        else:
+            method = "cpu_time"
         result = RequestEnergy(
             endpoint=state.endpoint,
             energy_kwh=state.energy if state.windows else None,
+            gpu_kwh=state.gpu_energy if state.windows else None,
             duration_s=(state.end or self._clock()) - state.start,
             windows=state.windows,
             mean_concurrency=(
                 state.concurrency_sum / state.windows if state.windows else None
             ),
             cpu_seconds=state.meter.ns / 1e9 if state.meter else 0.0,
+            attribution_method=method,
+            quality=state.quality or "none",
         )
         if state.on_resolved is not None:
             try:
@@ -428,6 +459,10 @@ class EnergyAttributor:
             "unattributed_kwh": self.unattributed_kwh,
             "settled_kwh": self.settled_kwh,
             "idle_power_w": {"cpu": self._cpu_idle.watts, "gpu": self._gpu_idle.watts},
+            "quality": {
+                "cpu": self._prev.cpu_quality if self._prev else None,
+                "gpu": self._prev.gpu_quality if self._prev else None,
+            },
             "windows_settled": self.windows_settled,
             "windows_skipped": self.windows_skipped,
             "in_flight": len(self._in_flight),  # racy read, reporting only

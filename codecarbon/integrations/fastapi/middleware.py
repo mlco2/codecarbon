@@ -28,9 +28,10 @@ def log_request(
 ) -> None:
     """Default ``on_request`` handler; logs via the ``codecarbon`` logger."""
     logger.debug(
-        "CodeCarbon %s: energy=%s kWh emissions=%s kg CO2 status=%s",
+        "CodeCarbon %s: cpu=%s kWh gpu=%s kWh emissions=%s kg CO2 status=%s",
         energy.endpoint,
         energy.energy_kwh,
+        energy.gpu_kwh,
         emissions_kg,
         status_code,
     )
@@ -149,7 +150,7 @@ class CodeCarbonMiddleware:
         if self.on_request is None:
             return
         emissions_kg = (
-            energy.energy_kwh * self._intensity
+            (energy.energy_kwh + energy.gpu_kwh) * self._intensity
             if energy.energy_kwh is not None and self._intensity is not None
             else None
         )

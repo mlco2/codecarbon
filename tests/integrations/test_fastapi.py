@@ -125,9 +125,34 @@ def test_gpu_energy_splits_by_overlap():
     late = _begin(attributor, "GET /b", start=2.0)
     attributor.on_window(_sample(_kwh(90, 2), gpu=_kwh(90, 2), timestamp=3.0, **gpu))
     # `early` overlapped twice as much of the window as `late`.
-    assert early.energy == pytest.approx(_kwh(120, 1))
-    assert late.energy == pytest.approx(_kwh(60, 1))
+    assert early.gpu_energy == pytest.approx(_kwh(120, 1))
+    assert late.gpu_energy == pytest.approx(_kwh(60, 1))
+    assert early.energy == late.energy == 0.0  # no CPU time metered
     _invariant(attributor)
+
+
+def test_request_reports_method_and_weakest_quality():
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    gpu = dict(gpu_quality="measured", cpu_quality="modeled")
+    attributor.reset_window(_sample(0.0, timestamp=0.0, **gpu))
+    attributor.on_window(_sample(0.0, timestamp=1.0, **gpu))
+    results = []
+    both = _begin(attributor, "GET /both", start=1.0, cpu_s=0.5)
+    gpu_only = _begin(attributor, "GET /gpu", start=1.0)
+    both.on_resolved = gpu_only.on_resolved = results.append
+    attributor.end(both)
+    attributor.end(gpu_only)
+    times.advance(process=1.0, busy=1.0)
+    attributor.on_window(_sample(_kwh(20, 1), gpu=_kwh(10, 1), timestamp=2.0, **gpu))
+    by_endpoint = {r.endpoint: r for r in results}
+    assert by_endpoint["GET /both"].attribution_method == "mixed"
+    assert by_endpoint["GET /both"].energy_kwh == pytest.approx(_kwh(5, 1))
+    assert by_endpoint["GET /both"].gpu_kwh == pytest.approx(_kwh(5, 1))
+    assert by_endpoint["GET /both"].cpu_seconds == 0.5
+    assert by_endpoint["GET /gpu"].attribution_method == "wall"
+    assert {r.quality for r in results} == {"modeled"}
+    assert attributor.report()["quality"] == {"cpu": "modeled", "gpu": "measured"}
 
 
 def test_backwards_counter_is_skipped_not_split():
@@ -192,7 +217,7 @@ def test_invariant_holds_under_concurrency():
 
     _invariant(attributor)
     assert len(results) == 8 * 20
-    resolved = [r.energy_kwh for r in results if r.energy_kwh is not None]
+    resolved = [r.energy_kwh + r.gpu_kwh for r in results if r.energy_kwh is not None]
     assert resolved, "no request ever covered a window"
     assert sum(resolved) == pytest.approx(attributor.attributed_kwh)
 
