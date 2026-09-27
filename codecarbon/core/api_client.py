@@ -222,12 +222,22 @@ class ApiClient:  # (AsyncClient)
             duration = payload["duration"]
             if response.status_code == 422 and duration != round(duration):
                 # Servers older than the client declare duration as an int and
-                # reject fractional seconds: retry once with a rounded value.
+                # reject fractional seconds. The old client only ever sent
+                # whole seconds, so reproduce that: below 1s there was never
+                # anything to send (rounding up would inflate a few-ms flush
+                # to a full second), otherwise retry once with the int value.
+                if duration < 1:
+                    logger.debug(
+                        "ApiClient : the API rejected a fractional duration"
+                        " below 1s, it looks older than this client. Dropping"
+                        " this emission instead of inflating its duration."
+                    )
+                    return False
                 logger.info(
                     "ApiClient : the API rejected a fractional duration, it looks"
                     " older than this client. Retrying with a rounded duration."
                 )
-                payload["duration"] = max(1, round(duration))
+                payload["duration"] = int(duration)
                 response = requests.post(
                     url=url, json=payload, timeout=2, headers=self._get_headers()
                 )
