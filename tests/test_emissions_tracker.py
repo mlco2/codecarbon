@@ -1203,3 +1203,19 @@ class TestRestartAfterStop(unittest.TestCase):
         self.assertIn("cannot be restarted", "".join(logs.output))
         # Refused, not half-restarted: nothing was rebuilt.
         self.assertIsNone(tracker._scheduler)
+
+    def test_start_task_after_stop_is_refused(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA",
+            save_to_file=False,
+            allow_multiple_runs=True,
+            measure_power_secs=10,
+        )
+        tracker.start()
+        tracker.stop()
+        with self.assertLogs("codecarbon", level="ERROR") as logs:
+            # _scheduler is None after stop(); start_task must hit the
+            # _stopped guard before touching it, not raise AttributeError.
+            tracker.start_task()
+        self.assertIn("cannot be restarted", "".join(logs.output))
+        self.assertIsNone(tracker._active_task)

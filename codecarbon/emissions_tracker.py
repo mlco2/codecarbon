@@ -755,6 +755,12 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
+        if self._stopped:
+            logger.error(
+                "This tracker was already stopped and cannot be restarted: "
+                "nothing will be measured. Create a new tracker instead."
+            )
+            return
         try:
             self._ensure_emissions_engine()
         except Exception:
