@@ -84,21 +84,13 @@ def _tracker_context(**overrides):
             "tracking_mode": "machine",
         },
     )
-    tracker = SimpleNamespace(
-        _conf=conf,
-        _hardware=[],
-        _resource_tracker=None,
-        _output_methods=[],
-        _emissions_endpoint=None,
-        _tasks={},
-        _measure_power_secs=15,
-    )
+    tracker = SimpleNamespace(_conf=conf)
     return tracker, overrides.pop("emissions", _sample_emissions())
 
 
-def _sdk_request_body(level: TelemetryLevel = TelemetryLevel.minimal) -> dict:
+def _sdk_request_body() -> dict:
     tracker, emissions = _tracker_context()
-    payload = build_payload(tracker, emissions, level=level)
+    payload = build_payload(tracker, emissions, level=TelemetryLevel.minimal)
     return CoreTelemetryCreate(**payload).model_dump(mode="json", exclude_none=True)
 
 
@@ -115,37 +107,18 @@ class TestTelemetryPayloadContract(unittest.TestCase):
         self.assertEqual(parsed.country_name, request_body["country_name"])
         self.assertIsNone(parsed.total_emissions_kg)
 
-    def test_extensive_sdk_payload_is_accepted_by_server_schema(self):
-        ServerTelemetryCreate = _load_server_telemetry_create()
-        request_body = _sdk_request_body(level=TelemetryLevel.extensive)
-
-        parsed = ServerTelemetryCreate.model_validate(request_body)
-
-        self.assertEqual(parsed.telemetry_level, "extensive")
-        self.assertEqual(parsed.total_emissions_kg, request_body["total_emissions_kg"])
-        self.assertEqual(parsed.duration_seconds, request_body["duration_seconds"])
-        self.assertEqual(
-            parsed.decorator_vs_context, request_body["decorator_vs_context"]
-        )
-
-    def test_post_private_sends_api_key_and_round_tripped_body(self):
+    def test_post_private_sends_round_tripped_body_without_token(self):
         ServerTelemetryCreate = _load_server_telemetry_create()
         request_body = _sdk_request_body()
         settings = TelemetrySettings.resolve(
-            external_conf={
-                "telemetry_api_url": "http://test.example",
-                "telemetry_api_key": "test-key",
-            }
+            external_conf={"telemetry_api_url": "http://test.example"}
         )
 
         with patch("codecarbon.core.telemetry.client.requests.post") as mock_post:
             mock_post.return_value.status_code = 201
             self.assertTrue(post_private(settings, deepcopy(request_body)))
 
-        self.assertEqual(
-            mock_post.call_args.kwargs["headers"]["x-api-token"],
-            "test-key",
-        )
+        self.assertNotIn("headers", mock_post.call_args.kwargs)
         sent_body = mock_post.call_args.kwargs["json"]
         ServerTelemetryCreate.model_validate(sent_body)
         self.assertEqual(sent_body["telemetry_level"], "minimal")

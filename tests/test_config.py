@@ -33,8 +33,6 @@ class TestConfig(unittest.TestCase):
             "CODECARBON_TELEMETRY_LEVEL",
             "CODECARBON_TELEMETRY_PROJECT_TOKEN",
             "CODECARBON_TELEMETRY_API_URL",
-            "CODECARBON_TELEMETRY_API_KEY",
-            "CODECARBON_TELEMETRY_EXPERIMENT_ID",
             "codecarbon_api_key",
             "codecarbon_experiment_id",
             "codecarbon_api_endpoint",

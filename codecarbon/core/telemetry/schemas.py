@@ -10,7 +10,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class TelemetryLevel(str, Enum):
     disabled = "disabled"
     minimal = "minimal"
-    extensive = "extensive"
 
 
 class TelemetryBase(BaseModel):
@@ -25,8 +24,6 @@ class TelemetryBase(BaseModel):
     region: Optional[str] = None
     cloud_provider: Optional[str] = None
     cloud_region: Optional[str] = None
-    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
-    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
 
     cpu_count: Optional[int] = Field(default=None, ge=0)
     cpu_physical_count: Optional[int] = Field(default=None, ge=0)
@@ -132,8 +129,6 @@ MINIMAL_TELEMETRY_FIELDS = {
     "region",
     "cloud_provider",
     "cloud_region",
-    "longitude",
-    "latitude",
     "cpu_count",
     "cpu_physical_count",
     "cpu_model",

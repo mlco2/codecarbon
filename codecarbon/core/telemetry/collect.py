@@ -9,61 +9,9 @@ import sys
 from datetime import datetime, timezone
 from typing import Any
 
-from codecarbon.core.api_client import _round_or_none
 from codecarbon.core.gpu import is_nvidia_system
 from codecarbon.core.telemetry.schemas import TelemetryLevel
-from codecarbon.output_methods.base_output import OutputMethod
 from codecarbon.output_methods.emissions_data import EmissionsData
-
-FRAMEWORK_PACKAGES = (
-    ("torch", "has_torch"),
-    ("transformers", "has_transformers"),
-    ("diffusers", "has_diffusers"),
-)
-
-OUTPUT_METHOD_LABELS = {
-    OutputMethod.CSV: "file",
-    OutputMethod.API: "api",
-    OutputMethod.LOGGER: "logger",
-    OutputMethod.PROMETHEUS: "prometheus",
-    OutputMethod.LOGFIRE: "logfire",
-}
-
-CI_ENV_VAR_LABELS = (
-    ("GITHUB_ACTIONS", "github_actions"),
-    ("GITLAB_CI", "gitlab_ci"),
-    ("CIRCLECI", "circleci"),
-    ("JENKINS_URL", "jenkins"),
-    ("CI", "ci"),
-)
-
-PACKAGE_MANAGER_ENV = (
-    ("UV", "uv"),
-    ("POETRY_ACTIVE", "poetry"),
-    ("PIP_RUN", "pip"),
-)
-
-
-def _output_methods(tracker: Any) -> list[str]:
-    methods = [
-        OUTPUT_METHOD_LABELS[method]
-        for method in getattr(tracker, "_output_methods", None) or []
-        if method in OUTPUT_METHOD_LABELS
-    ]
-    if getattr(tracker, "_emissions_endpoint", None):
-        methods.append("http")
-    return methods
-
-
-def _integration(tracker: Any) -> str:
-    from codecarbon.emissions_tracker import OfflineEmissionsTracker
-
-    if isinstance(tracker, OfflineEmissionsTracker):
-        return "offline_tracker"
-    argv = " ".join(sys.argv)
-    if "codecarbon" in argv and "monitor" in argv:
-        return "cli_monitor"
-    return "library"
 
 
 def _strip_empty(data: dict[str, Any]) -> dict[str, Any]:
@@ -72,16 +20,8 @@ def _strip_empty(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _env_label(env_vars: tuple[tuple[str, str], ...]) -> str | None:
-    return next((label for var, label in env_vars if os.environ.get(var)), None)
-
-
 def _package_installed(name: str) -> bool:
     return importlib.util.find_spec(name) is not None
-
-
-def _first_set(*values: Any) -> Any:
-    return next((value for value in values if value is not None), None)
 
 
 def _cloud_region(
@@ -124,37 +64,6 @@ def _detect_codecarbon_install_method() -> str | None:
     return None
 
 
-def _detect_notebook_environment() -> str | None:
-    if os.environ.get("COLAB_GPU") is not None or "google.colab" in sys.modules:
-        return "colab"
-    try:
-        from IPython import get_ipython
-
-        if "ZMQInteractiveShell" in get_ipython().__class__.__name__:
-            return "jupyter"
-    except Exception:
-        pass
-    return None
-
-
-def _container_info() -> tuple[bool | None, str | None]:
-    if os.environ.get("KUBERNETES_SERVICE_HOST"):
-        return True, "kubernetes"
-    if os.path.exists("/.dockerenv"):
-        return True, "docker"
-    return None, None
-
-
-def _detect_ide() -> str | None:
-    if os.environ.get("CURSOR_TRACE_ID") or os.environ.get("CURSOR_SESSION"):
-        return "cursor"
-    if os.environ.get("VSCODE_PID") or os.environ.get("TERM_PROGRAM") == "vscode":
-        return "vscode"
-    if os.environ.get("PYCHARM_HOSTED"):
-        return "pycharm"
-    return None
-
-
 def _cudnn_version() -> str | None:
     if not _package_installed("torch"):
         return None
@@ -188,32 +97,6 @@ def _gpu_static_fields() -> dict[str, Any]:
         return {}
 
 
-def _hardware_diagnostics(tracker: Any, output_methods: list[str]) -> dict[str, Any]:
-    from codecarbon.core import cpu
-
-    hardware_tracked: list[str] = []
-    for item in getattr(tracker, "_hardware", None) or []:
-        try:
-            hardware_tracked.append(item.description())
-        except Exception:
-            pass
-    gpu_detection_method = None
-    resource_tracker = getattr(tracker, "_resource_tracker", None)
-    if resource_tracker is not None:
-        gpu_tracker = getattr(resource_tracker, "gpu_tracker", None)
-        if gpu_tracker and gpu_tracker != "Unspecified":
-            gpu_detection_method = gpu_tracker
-
-    rapl_available = cpu.is_rapl_available() if platform.system() == "Linux" else None
-    return {
-        "hardware_tracked": hardware_tracked or None,
-        "hardware_detection_success": bool(hardware_tracked),
-        "rapl_available": rapl_available,
-        "gpu_detection_method": gpu_detection_method,
-        "api_mode": "online" if "api" in output_methods else "offline",
-    }
-
-
 def _minimal_payload(
     tracker: Any, emissions: EmissionsData, level: TelemetryLevel
 ) -> dict[str, Any]:
@@ -231,13 +114,6 @@ def _minimal_payload(
         "region": region,
         "cloud_provider": cloud_provider,
         "cloud_region": cloud_region,
-        # Unknown location stays null rather than a fake 0,0.
-        "longitude": _round_or_none(
-            _first_set(conf.get("longitude"), emissions.longitude)
-        ),
-        "latitude": _round_or_none(
-            _first_set(conf.get("latitude"), emissions.latitude)
-        ),
         "cpu_count": conf.get("cpu_count"),
         "cpu_physical_count": conf.get("cpu_physical_count"),
         "cpu_model": conf.get("cpu_model"),
@@ -256,56 +132,10 @@ def _minimal_payload(
     return _strip_empty(payload)
 
 
-def _extensive_payload(tracker: Any, emissions: EmissionsData) -> dict[str, Any]:
-    """Extra fields stored only for ``telemetry_level=extensive``."""
-    conf = getattr(tracker, "_conf", {})
-    output_methods = _output_methods(tracker)
-    in_container, container_runtime = _container_info()
-    framework_fields = {
-        has_field: _package_installed(package)
-        for package, has_field in FRAMEWORK_PACKAGES
-    }
-
-    return _strip_empty(
-        {
-            "tracking_mode": conf.get("tracking_mode"),
-            "decorator_vs_context": _integration(tracker),
-            "output_methods": output_methods or None,
-            "task_tracking_used": bool(getattr(tracker, "_tasks", None)),
-            "measure_power_interval_secs": getattr(
-                tracker, "_measure_power_secs", None
-            ),
-            "python_package_manager": _env_label(PACKAGE_MANAGER_ENV),
-            "in_container": in_container,
-            "container_runtime": container_runtime,
-            "ci_environment": _env_label(CI_ENV_VAR_LABELS),
-            "notebook_environment": _detect_notebook_environment(),
-            "ide_used": _detect_ide(),
-            "duration_seconds": (
-                float(emissions.duration) if emissions.duration else None
-            ),
-            "total_emissions_kg": emissions.emissions,
-            "emissions_rate_kg_per_sec": emissions.emissions_rate,
-            "energy_consumed_kwh": emissions.energy_consumed,
-            "cpu_energy_kwh": emissions.cpu_energy,
-            "gpu_energy_kwh": emissions.gpu_energy,
-            "ram_energy_kwh": emissions.ram_energy,
-            "cpu_utilization_avg": emissions.cpu_utilization_percent,
-            "gpu_utilization_avg": emissions.gpu_utilization_percent,
-            "ram_utilization_avg": emissions.ram_utilization_percent,
-            **framework_fields,
-            **_hardware_diagnostics(tracker, output_methods),
-        }
-    )
-
-
 def build_payload(
     tracker: Any,
     emissions: EmissionsData,
     level: TelemetryLevel = TelemetryLevel.minimal,
 ) -> dict[str, Any]:
     """Build a validated telemetry payload dict for ``POST /telemetry``."""
-    payload = _minimal_payload(tracker, emissions, level)
-    if level == TelemetryLevel.extensive:
-        payload.update(_extensive_payload(tracker, emissions))
-    return payload
+    return _minimal_payload(tracker, emissions, level)
