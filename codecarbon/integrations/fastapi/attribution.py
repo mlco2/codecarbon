@@ -344,7 +344,11 @@ class EnergyAttributor:
         d_gpu = sample.gpu_kwh - prev.gpu_kwh
         if min(delta, d_cpu, d_gpu) < 0:
             # Counter wraparound or reset: no honest way to split a negative.
+            # The CPU time metered in it is dropped with it, or the next
+            # window would charge it against a process time that excludes it.
             self.windows_skipped += 1
+            for state in self._in_flight.values():
+                state.cpu_seen_ns = state.meter.ns if state.meter else 0
             self._prev, self._t_prev, self._times_prev = sample, w1, times
             return
 

@@ -156,12 +156,18 @@ def test_request_reports_method_and_weakest_quality():
 
 
 def test_backwards_counter_is_skipped_not_split():
-    attributor = EnergyAttributor(cpu_times=_all_ours())
-    attributor.reset_window(_sample(5.0))
-    attributor.begin("GET /a")
-    attributor.on_window(_sample(1.0))  # RAPL wrap
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(5.0, timestamp=0.0))
+    state = _begin(attributor, cpu_s=1.0)
+    times.advance(process=1.0, busy=1.0)
+    attributor.on_window(_sample(1.0, timestamp=1.0))  # RAPL wrap
     assert attributor.windows_skipped == 1
     assert attributor.attributed_kwh == 0.0
+    # The skipped window's CPU time is not charged to the next one.
+    times.advance(process=1.0, busy=1.0)
+    attributor.on_window(_sample(1.0 + _kwh(100, 1), timestamp=2.0))
+    assert state.energy == 0.0
     _invariant(attributor)
 
 
