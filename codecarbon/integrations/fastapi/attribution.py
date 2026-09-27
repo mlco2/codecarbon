@@ -453,27 +453,21 @@ class EnergyAttributor:
         states = list(self._in_flight.values())
         # CPU: each request is charged its metered CPU time at that cost. If
         # the meters claim more than the process used (clock granularity),
-        # they are scaled down to fit, and if the charges exceed our share of
-        # the dynamic energy, they are scaled down to that.
+        # they are scaled down to fit. If all of our process's CPU time at that
+        # cost exceeds our share of the dynamic energy, one cap scales the
+        # requests and the unclaimed rest down alike.
         seen = [state.meter.total_ns() if state.meter else 0 for state in states]
         cpu_s = [(now - state.cpu_seen_ns) / 1e9 for now, state in zip(seen, states)]
         claimed_s = sum(cpu_s)
         if claimed_s > d_proc_s:
             cpu_s = [c * d_proc_s / claimed_s for c in cpu_s]
             claimed_s = d_proc_s
-        wanted = [j_per_cpu_s * c / _WS_PER_KWH for c in cpu_s]
-        total_wanted = sum(wanted)
-        cap = ours / total_wanted if total_wanted > ours else 1.0
-        cpu_parts = [w * cap for w in wanted]
+        process_wanted = j_per_cpu_s * d_proc_s / _WS_PER_KWH
+        cap = min(1.0, ours / process_wanted) if process_wanted > 0 else 1.0
+        cpu_parts = [j_per_cpu_s * c / _WS_PER_KWH * cap for c in cpu_s]
         cpu_attributed = sum(cpu_parts)
         # The rest of our process's CPU time, at the same cost and cap.
-        process_rest = max(
-            min(
-                j_per_cpu_s * max(d_proc_s - claimed_s, 0.0) / _WS_PER_KWH,
-                ours - cpu_attributed,
-            ),
-            0.0,
-        )
+        process_rest = max(min(process_wanted * cap, ours) - cpu_attributed, 0.0)
         other = dynamic_cpu - cpu_attributed - process_rest
         # GPU: no per-request signal, so split by overlap with the window.
         weights = []

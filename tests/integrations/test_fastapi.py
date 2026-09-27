@@ -348,6 +348,21 @@ def test_model_cost_per_cpu_second_is_charged_and_capped():
     _invariant(attributor)
 
 
+def test_cost_cap_is_shared_by_requests_and_process_rest():
+    """A binding cap scales metered and unmetered process CPU alike."""
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=0.0, cpu_w_per_busy_cpu=60.0))
+    state = _begin(attributor, cpu_s=0.5)
+    # Our share is 25 J for 1 CPU-second; the model asks 60 J for it, so the
+    # cap binds, and the meters claimed half of our CPU time.
+    times.advance(process=1.0, busy=4.0, total=8.0)
+    attributor.on_window(_sample(_kwh(100, 1), timestamp=1.0, cpu_w_per_busy_cpu=60.0))
+    assert state.energy == pytest.approx(_kwh(12.5, 1))
+    assert attributor.process_unattributed_kwh == pytest.approx(_kwh(12.5, 1))
+    _invariant(attributor)
+
+
 def test_fitted_cost_per_cpu_second_ignores_other_processes_load():
     """Linear machine: 5 W idle + 10 W per busy CPU. A hog doesn't move us."""
     times = _FakeTimes()
