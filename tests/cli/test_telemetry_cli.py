@@ -289,3 +289,38 @@ def test_ask_telemetry_level_once_stores_answer_in_global_config(tmp_path):
         mock_select.return_value.ask.return_value = "disabled"
         ask_telemetry_level_once()
     assert "telemetry_level = disabled" in global_path.read_text()
+
+
+def test_resolve_config_path_without_files_or_create(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
+    monkeypatch.chdir(tmp_path)
+    resolved = resolve_config_path(None)
+    assert resolved == (tmp_path / ".codecarbon.config").resolve()
+    assert not resolved.exists()
+
+
+@pytest.mark.parametrize(
+    ("conf", "answer"),
+    [({"telemetry_level": "minimal"}, "disabled"), ({}, None)],
+    ids=["already-explicit", "ctrl-c"],
+)
+def test_ask_telemetry_level_once_writes_nothing(tmp_path, conf, answer):
+    from codecarbon.cli.telemetry_cli import ask_telemetry_level_once
+
+    global_path = tmp_path / ".codecarbon.config"
+    with (
+        patch("codecarbon.cli.telemetry_cli.sys") as mock_sys,
+        patch(
+            "codecarbon.cli.telemetry_cli.get_hierarchical_config", return_value=conf
+        ),
+        patch(
+            "codecarbon.cli.telemetry_cli._config_file_paths",
+            return_value=(str(global_path), str(tmp_path / "local")),
+        ),
+        patch("codecarbon.cli.telemetry_cli.questionary.select") as mock_select,
+    ):
+        mock_sys.stdin.isatty.return_value = True
+        mock_sys.stdout.isatty.return_value = True
+        mock_select.return_value.ask.return_value = answer
+        ask_telemetry_level_once()
+    assert not global_path.exists()
