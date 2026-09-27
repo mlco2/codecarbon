@@ -173,6 +173,20 @@ def test_backwards_counter_is_skipped_not_split():
     _invariant(attributor)
 
 
+def test_zero_width_window_is_skipped_with_its_cpu_time():
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=1.0))
+    state = _begin(attributor, cpu_s=1.0)
+    times.advance(process=1.0, busy=1.0)
+    attributor.on_window(_sample(_kwh(10, 1), timestamp=1.0))  # clock stood still
+    assert attributor.windows_skipped == 1
+    times.advance(process=1.0, busy=1.0)
+    attributor.on_window(_sample(_kwh(10, 1) + _kwh(100, 1), timestamp=2.0))
+    assert state.energy == 0.0
+    _invariant(attributor)
+
+
 def test_unresolved_request_reports_no_energy():
     """A request that never covered a window gets None, not zero."""
     attributor = EnergyAttributor(cpu_times=_all_ours())

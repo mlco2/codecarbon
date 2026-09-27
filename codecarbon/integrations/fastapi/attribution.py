@@ -323,7 +323,8 @@ class EnergyAttributor:
         #: final unsampled partial window.
         self.settled_kwh = 0.0
         self.windows_settled = 0
-        #: Windows where an energy counter went backwards (RAPL wrap/reset).
+        #: Windows dropped unsplit: an energy counter went backwards (RAPL
+        #: wrap/reset), or energy arrived in a window with no width.
         self.windows_skipped = 0
         self._cpu_idle = _IdleEstimator(idle_horizon_s)
         #: J per CPU-second charged in the last window, and where it came from
@@ -395,17 +396,19 @@ class EnergyAttributor:
         times = self._cpu_times()
         w1 = sample.timestamp
         width = w1 - w0
-        if prev is None or width <= 0:
+        if prev is None:
             self._prev, self._t_prev, self._times_prev = sample, w1, times
             return
         delta = sample.total_kwh - prev.total_kwh
         d_cpu = sample.cpu_kwh - prev.cpu_kwh
         d_gpu = sample.gpu_kwh - prev.gpu_kwh
-        if min(delta, d_cpu, d_gpu) < 0:
-            # Counter wraparound or reset: no honest way to split a negative.
-            # The CPU time metered in it is dropped with it, or the next
-            # window would charge it against a process time that excludes it.
-            self.windows_skipped += 1
+        if width <= 0 or min(delta, d_cpu, d_gpu) < 0:
+            # Counter wraparound or reset, or a window with no width: no
+            # honest way to split it. The CPU time metered in it is dropped
+            # with it, or the next window would charge it against a process
+            # time that excludes it.
+            # A zero-width window with no energy lost nothing: not counted.
+            self.windows_skipped += int(width > 0 or delta != 0)
             for state in self._in_flight.values():
                 state.cpu_seen_ns = state.meter.total_ns() if state.meter else 0
             self._prev, self._t_prev, self._times_prev = sample, w1, times
