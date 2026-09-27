@@ -7,12 +7,15 @@ component into idle and dynamic energy::
 
 Idle energy (and all RAM energy) goes to ``idle_kwh``: it would have been
 drawn with no request at all, so charging it to whichever request happened to
-be in flight is wrong. The dynamic part is split across the requests that were
+be in flight is wrong. Of the dynamic CPU energy, only this process's share
+of the machine's busy CPU time is kept; the rest goes to
+``other_processes_kwh``. What is kept is split across the requests that were
 in flight, weighted by their overlap with the window and normalised **by the
 sum of the weights**. Dynamic energy of windows with nothing in flight goes to
 ``unattributed_kwh``. The invariant is::
 
-    attributed_kwh + idle_kwh + unattributed_kwh == settled_kwh
+    attributed_kwh + idle_kwh + other_processes_kwh + unattributed_kwh
+        == settled_kwh
 
 exactly, after every window. That is the property the tests pin down.
 
@@ -172,6 +175,8 @@ class EnergyAttributor:
         #: Energy the machine would have drawn with no load (idle power, and
         #: all of RAM), kWh.
         self.idle_kwh = 0.0
+        #: Dynamic CPU energy of the machine's other processes, kWh.
+        self.other_processes_kwh = 0.0
         #: Dynamic energy from windows with nothing in flight, kWh.
         self.unattributed_kwh = 0.0
         #: Energy taken in from closed windows. The buckets add up to it
@@ -257,14 +262,24 @@ class EnergyAttributor:
             self._prev, self._t_prev, self._times_prev = sample, w1, times
             return
 
-        d_busy, d_total = times[1] - times_prev[1], times[2] - times_prev[2]
+        d_proc, d_busy, d_total = (now - then for now, then in zip(times, times_prev))
         util = d_busy / d_total if d_total > 0 else None
         cpu_idle_w = sample.cpu_idle_w
         if cpu_idle_w is None:
             cpu_idle_w = self._cpu_idle.update(w1, d_cpu * _WS_PER_KWH / width, util)
         else:
             self._cpu_idle.watts = cpu_idle_w
-        dynamic = _dynamic(d_cpu, cpu_idle_w, width)
+        dynamic_cpu = _dynamic(d_cpu, cpu_idle_w, width)
+        # This process's share of the machine's busy CPU time. psutil counts in
+        # clock ticks (10 ms on Linux), so short windows are noisy: clamped.
+        if sample.cpu_per_process:
+            share = 1.0  # load mode in process tracking: already ours alone
+        elif d_busy > 0:
+            share = min(max(d_proc / d_busy, 0.0), 1.0)
+        else:
+            share = 1.0 if d_proc > 0 else 0.0
+        dynamic = dynamic_cpu * share
+        other = dynamic_cpu - dynamic
         if sample.gpu_quality is not None:
             gpu_idle_w = self._gpu_idle.update(w1, d_gpu * _WS_PER_KWH / width)
             dynamic += _dynamic(d_gpu, gpu_idle_w, width)
@@ -293,7 +308,8 @@ class EnergyAttributor:
             self.attributed_kwh += attributed
             # Rounding in the split: absorbed so the buckets still add up.
             self.unattributed_kwh += dynamic - attributed
-        self.idle_kwh += delta - dynamic
+        self.other_processes_kwh += other
+        self.idle_kwh += delta - dynamic - other
         # Banked only once the split succeeded. The caller swallows exceptions,
         # so advancing the cursor first would drop this window's energy from
         # settled_kwh; left in place, the next window covers it.
@@ -322,6 +338,7 @@ class EnergyAttributor:
         return {
             "attributed_kwh": self.attributed_kwh,
             "idle_kwh": self.idle_kwh,
+            "other_processes_kwh": self.other_processes_kwh,
             "unattributed_kwh": self.unattributed_kwh,
             "settled_kwh": self.settled_kwh,
             "idle_power_w": {"cpu": self._cpu_idle.watts, "gpu": self._gpu_idle.watts},

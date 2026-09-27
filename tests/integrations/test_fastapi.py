@@ -35,16 +35,28 @@ def _sample(total: float, *, cpu: float | None = None, gpu: float = 0.0, **kw):
     return WindowSample(**fields)
 
 
+def _all_ours():
+    """CPU times where every busy second is this process's (share 1)."""
+    n = 0.0
+
+    def times():
+        nonlocal n
+        n += 1.0
+        return n, n, 2 * n
+
+    return times
+
+
 def _invariant(attributor: EnergyAttributor) -> None:
     report = attributor.report()
-    buckets = ("attributed_kwh", "idle_kwh", "unattributed_kwh")
+    buckets = ("attributed_kwh", "idle_kwh", "other_processes_kwh", "unattributed_kwh")
     assert sum(report[b] for b in buckets) == pytest.approx(
         report["settled_kwh"], rel=1e-12, abs=1e-15
     )
 
 
 def test_idle_windows_are_unattributed():
-    attributor = EnergyAttributor()
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(0.0))
     attributor.on_window(_sample(1.0))
     assert attributor.unattributed_kwh == 1.0
@@ -53,7 +65,7 @@ def test_idle_windows_are_unattributed():
 
 
 def test_window_energy_splits_by_overlap():
-    attributor = EnergyAttributor()
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(0.0))
     early = attributor.begin("GET /a")
     time.sleep(0.02)
@@ -68,7 +80,7 @@ def test_window_energy_splits_by_overlap():
 
 
 def test_backwards_counter_is_skipped_not_split():
-    attributor = EnergyAttributor()
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(5.0))
     attributor.begin("GET /a")
     attributor.on_window(_sample(1.0))  # RAPL wrap
@@ -79,7 +91,7 @@ def test_backwards_counter_is_skipped_not_split():
 
 def test_unresolved_request_reports_no_energy():
     """A request that never covered a window gets None, not zero."""
-    attributor = EnergyAttributor()
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(0.0))
     results = []
     state = attributor.begin("GET /fast")
@@ -92,7 +104,7 @@ def test_unresolved_request_reports_no_energy():
 
 def test_invariant_holds_under_concurrency():
     """The core property: nothing is created or lost by the split."""
-    attributor = EnergyAttributor()
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(0.0))
     results: list[RequestEnergy] = []  # list.append is atomic under the GIL
     stop = threading.Event()
@@ -151,7 +163,7 @@ def _kwh(watts: float, seconds: float) -> float:
 
 
 def test_idle_power_is_the_rolling_minimum():
-    attributor = EnergyAttributor(cpu_times=_FakeTimes())
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(0.0, timestamp=0.0, cpu_idle_w=None))
     attributor.on_window(_sample(_kwh(10, 1), timestamp=1.0, cpu_idle_w=None))
     # First window: its own power is the only minimum, so it is all idle.
@@ -190,7 +202,7 @@ def test_idle_rolling_minimum_forgets_old_windows():
 
 def test_analytic_idle_and_ram_go_to_idle_bucket():
     """Load mode fixes idle at 0.1 * TDP; RAM is never charged to requests."""
-    attributor = EnergyAttributor(cpu_times=_FakeTimes())
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     attributor.reset_window(_sample(0.0, timestamp=0.0))
     state = attributor.begin("GET /a")
     state.start = 0.0
@@ -204,7 +216,7 @@ def test_analytic_idle_and_ram_go_to_idle_bucket():
 
 
 def test_gpu_idle_is_estimated_separately():
-    attributor = EnergyAttributor(cpu_times=_FakeTimes())
+    attributor = EnergyAttributor(cpu_times=_all_ours())
     gpu = dict(gpu_quality="measured")
     attributor.reset_window(_sample(0.0, timestamp=0.0, **gpu))
     attributor.on_window(_sample(_kwh(50, 1), gpu=_kwh(50, 1), timestamp=1.0, **gpu))
@@ -214,6 +226,49 @@ def test_gpu_idle_is_estimated_separately():
     assert attributor.report()["idle_power_w"]["gpu"] == pytest.approx(50)
     assert attributor.unattributed_kwh == pytest.approx(_kwh(50, 1))
     _invariant(attributor)
+
+
+def test_other_processes_keep_their_share_of_cpu_energy():
+    """Fake psutil: we used 1 of the machine's 4 busy CPU seconds."""
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=0.0))
+    state = attributor.begin("GET /a")
+    state.start = 0.0
+    times.advance(process=1.0, busy=4.0, total=8.0)
+    attributor.on_window(_sample(_kwh(40, 1), timestamp=1.0))
+    assert state.energy == pytest.approx(_kwh(10, 1))
+    assert attributor.other_processes_kwh == pytest.approx(_kwh(30, 1))
+    _invariant(attributor)
+
+
+def test_process_share_is_clamped_and_skipped_in_process_mode():
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=0.0))
+    # Tick rounding can make our CPU time exceed the machine's busy time.
+    times.advance(process=1.2, busy=1.0)
+    attributor.on_window(_sample(_kwh(40, 1), timestamp=1.0))
+    assert attributor.other_processes_kwh == 0.0
+    # Load mode with tracking_mode="process" already measured only us.
+    times.advance(process=1.0, busy=4.0)
+    attributor.on_window(_sample(_kwh(80, 1), timestamp=2.0, cpu_per_process=True))
+    assert attributor.other_processes_kwh == 0.0
+    assert attributor.unattributed_kwh == pytest.approx(_kwh(80, 1))
+    _invariant(attributor)
+
+
+def test_cpu_times_busy_excludes_idle_and_steal(monkeypatch):
+    from collections import namedtuple
+
+    from codecarbon.integrations.fastapi import attribution
+
+    Times = namedtuple("Times", "user nice system idle iowait steal guest guest_nice")
+    monkeypatch.setattr(
+        attribution.psutil, "cpu_times", lambda: Times(5, 1, 2, 10, 3, 4, 2, 1)
+    )
+    _, busy, total = attribution._cpu_times()
+    assert (busy, total) == (8, 25)
 
 
 class _FakeTracker:
@@ -234,7 +289,8 @@ class _FakeTracker:
         return 0.5
 
     def _window_sample(self):
-        return _sample(self._total_energy.kWh)
+        # Per-process energy: the real machine's other processes don't matter.
+        return _sample(self._total_energy.kWh, cpu_per_process=True)
 
     def window(self, kwh: float) -> None:
         self._total_energy.kWh += kwh
