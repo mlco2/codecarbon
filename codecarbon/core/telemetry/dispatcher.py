@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import atexit
+import os
 import threading
 import time
 from pathlib import Path
@@ -45,6 +46,22 @@ _sent_lock = threading.Lock()
 _sent = False
 
 
+def _reset_after_fork() -> None:
+    """A forked child is its own process: let it send its own telemetry too.
+
+    Also rebuilds the lock, since a lock inherited across ``fork()`` may be
+    left held if another thread owned it at fork time.
+    """
+    global _sent, _sent_lock
+    _sent = False
+    _sent_lock = threading.Lock()
+    _pending.clear()
+
+
+if hasattr(os, "register_at_fork"):
+    os.register_at_fork(after_in_child=_reset_after_fork)
+
+
 @atexit.register
 def _join_pending() -> None:
     """Give in-flight sends a short, bounded chance to finish at exit."""
@@ -82,21 +99,30 @@ class Telemetry:
         if emissions.duration is not None and emissions.duration < 1:
             logger.debug("Telemetry not sent: run shorter than 1 second.")
             return
+        # Payload building (NVML, package lookups) and the network both happen
+        # on this thread: stop() never waits on either. At exit it is joined for
+        # at most EXIT_JOIN_SECONDS, then dropped. The whole claim-and-start
+        # happens under the lock so two concurrent stop()s can't both start a
+        # thread, and _sent is only set once a thread has actually started, so
+        # stop() can never crash from telemetry and a failed start doesn't
+        # permanently suppress every later send.
         with _sent_lock:
             if _sent:
                 return
+            try:
+                thread = threading.Thread(
+                    target=self._send,
+                    args=(tracker, emissions),
+                    name=THREAD_NAME,
+                    daemon=True,
+                )
+                thread.start()
+            except Exception:
+                logger.debug("Telemetry thread failed to start.", exc_info=True)
+                return
+            self._thread = thread
+            _pending.add(thread)
             _sent = True
-        # Payload building (NVML, package lookups) and the network both happen
-        # on this thread: stop() never waits on either. At exit it is joined for
-        # at most EXIT_JOIN_SECONDS, then dropped.
-        self._thread = threading.Thread(
-            target=self._send,
-            args=(tracker, emissions),
-            name=THREAD_NAME,
-            daemon=True,
-        )
-        _pending.add(self._thread)
-        self._thread.start()
 
     def _send(self, tracker: Any, emissions: EmissionsData) -> None:
         """Build and post the payload under one time budget."""
