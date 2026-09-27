@@ -66,8 +66,7 @@ class TelemetrySettings:
                 # to send telemetry: fail closed to disabled, not minimal.
                 level = TelemetryLevel.disabled
                 logger.error(
-                    "Invalid telemetry_level %r; falling back to %r",
-                    raw,
+                    "Invalid telemetry_level provided; falling back to %r",
                     TelemetryLevel.disabled.value,
                 )
         api_url = next(
