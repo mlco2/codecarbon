@@ -5,7 +5,7 @@ import sys
 import time
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 from tests.testutils import (
@@ -250,6 +250,65 @@ class TestTrackerTelemetry(unittest.TestCase):
                 telemetry_level="disabled", save_to_api=False, save_to_file=False
             )
         self.assertEqual(self._notices(mock_warning), [])
+
+
+class TestDispatcherEdges(unittest.TestCase):
+    def _telemetry(self):
+        from codecarbon.core.telemetry.dispatcher import Telemetry
+        from codecarbon.core.telemetry.settings import TelemetrySettings
+
+        return Telemetry(TelemetrySettings.resolve(external_conf={}))
+
+    def test_send_failure_is_swallowed(self):
+        from codecarbon.core.telemetry import dispatcher
+
+        with (
+            patch.object(dispatcher, "build_payload", side_effect=RuntimeError),
+            patch.object(dispatcher, "post_private") as mock_post,
+        ):
+            self._telemetry()._send(SimpleNamespace(), SimpleNamespace())
+        mock_post.assert_not_called()
+
+    def test_notice_still_shown_when_marker_cannot_be_written(self):
+        from codecarbon.core.telemetry import dispatcher
+
+        marker = MagicMock()
+        marker.exists.side_effect = OSError("read-only")
+        with (
+            patch.object(dispatcher, "NOTICE_MARKER", marker),
+            patch.object(dispatcher.logger, "warning") as mock_warning,
+        ):
+            self._telemetry().notice_once_if_implicit()
+        mock_warning.assert_called_once()
+
+    def test_exit_joins_pending_sends(self):
+        from codecarbon.core.telemetry import dispatcher
+
+        thread = MagicMock()
+        thread.is_alive.return_value = True
+        with patch.object(dispatcher, "_pending", {thread}):
+            dispatcher._join_pending()
+        thread.join.assert_called_once()
+
+
+class TestTelemetrySettings(unittest.TestCase):
+    def test_enum_level_passes_through(self):
+        from codecarbon.core.telemetry.schemas import TelemetryLevel
+        from codecarbon.core.telemetry.settings import parse_telemetry_level
+
+        self.assertIs(
+            parse_telemetry_level(TelemetryLevel.disabled), TelemetryLevel.disabled
+        )
+
+    def test_invalid_level_falls_back_to_minimal(self):
+        from codecarbon.core.telemetry.settings import TelemetrySettings
+
+        with patch("codecarbon.core.telemetry.settings.logger") as mock_logger:
+            settings = TelemetrySettings.resolve(
+                external_conf={"telemetry_level": "extensive"}
+            )
+        self.assertEqual(settings.level.value, "minimal")
+        mock_logger.error.assert_called_once()
 
 
 if __name__ == "__main__":
