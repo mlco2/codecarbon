@@ -19,7 +19,7 @@ from codecarbon.integrations.fastapi import (
 
 
 def _sample(total: float, *, cpu: float | None = None, gpu: float = 0.0, **kw):
-    """A window sample; by default all energy is CPU energy."""
+    """A window sample; by default all energy is dynamic CPU energy."""
     fields = dict(
         timestamp=time.perf_counter(),
         total_kwh=total,
@@ -28,7 +28,7 @@ def _sample(total: float, *, cpu: float | None = None, gpu: float = 0.0, **kw):
         ram_kwh=0.0,
         cpu_quality="measured",
         gpu_quality=None,
-        cpu_idle_w=None,
+        cpu_idle_w=0.0,
         cpu_per_process=False,
     )
     fields.update(kw)
@@ -37,7 +37,8 @@ def _sample(total: float, *, cpu: float | None = None, gpu: float = 0.0, **kw):
 
 def _invariant(attributor: EnergyAttributor) -> None:
     report = attributor.report()
-    assert report["attributed_kwh"] + report["unattributed_kwh"] == pytest.approx(
+    buckets = ("attributed_kwh", "idle_kwh", "unattributed_kwh")
+    assert sum(report[b] for b in buckets) == pytest.approx(
         report["settled_kwh"], rel=1e-12, abs=1e-15
     )
 
@@ -128,6 +129,91 @@ def test_invariant_holds_under_concurrency():
     resolved = [r.energy_kwh for r in results if r.energy_kwh is not None]
     assert resolved, "no request ever covered a window"
     assert sum(resolved) == pytest.approx(attributor.attributed_kwh)
+
+
+class _FakeTimes:
+    """Scripted ``(process, busy, total)`` CPU seconds; advanced by hand."""
+
+    def __init__(self) -> None:
+        self.process = self.busy = self.total = 0.0
+
+    def advance(self, *, process=0.0, busy=0.0, total=1.0) -> None:
+        self.process += process
+        self.busy += busy
+        self.total += total
+
+    def __call__(self):
+        return self.process, self.busy, self.total
+
+
+def _kwh(watts: float, seconds: float) -> float:
+    return watts * seconds / 3.6e6
+
+
+def test_idle_power_is_the_rolling_minimum():
+    attributor = EnergyAttributor(cpu_times=_FakeTimes())
+    attributor.reset_window(_sample(0.0, timestamp=0.0, cpu_idle_w=None))
+    attributor.on_window(_sample(_kwh(10, 1), timestamp=1.0, cpu_idle_w=None))
+    # First window: its own power is the only minimum, so it is all idle.
+    assert attributor.idle_kwh == pytest.approx(_kwh(10, 1))
+    attributor.on_window(_sample(_kwh(10 + 40, 1), timestamp=2.0, cpu_idle_w=None))
+    assert attributor.unattributed_kwh == pytest.approx(_kwh(30, 1))
+    assert attributor.report()["idle_power_w"]["cpu"] == pytest.approx(10)
+    _invariant(attributor)
+
+
+def test_idle_power_uses_a_good_regression_intercept():
+    """Never idle, so the minimum (13 W) overestimates; the fit finds 5 W."""
+    times = _FakeTimes()
+    attributor = EnergyAttributor(cpu_times=times)
+    attributor.reset_window(_sample(0.0, timestamp=0.0, cpu_idle_w=None))
+    energy = 0.0
+    for i in range(1, 31):
+        util = 0.2 + 0.6 * (i % 5) / 4
+        times.advance(busy=util)
+        energy += _kwh(5 + 40 * util, 1)
+        attributor.on_window(_sample(energy, timestamp=float(i), cpu_idle_w=None))
+    assert attributor.report()["idle_power_w"]["cpu"] == pytest.approx(5)
+    _invariant(attributor)
+
+
+def test_idle_rolling_minimum_forgets_old_windows():
+    attributor = EnergyAttributor(cpu_times=_FakeTimes(), idle_horizon_s=10)
+    attributor.reset_window(_sample(0.0, timestamp=0.0, cpu_idle_w=None))
+    attributor.on_window(_sample(_kwh(10, 1), timestamp=1.0, cpu_idle_w=None))
+    energy = _kwh(10, 1)
+    for t in range(2, 20):
+        energy += _kwh(20, 1)
+        attributor.on_window(_sample(energy, timestamp=float(t), cpu_idle_w=None))
+    assert attributor.report()["idle_power_w"]["cpu"] == pytest.approx(20)
+
+
+def test_analytic_idle_and_ram_go_to_idle_bucket():
+    """Load mode fixes idle at 0.1 * TDP; RAM is never charged to requests."""
+    attributor = EnergyAttributor(cpu_times=_FakeTimes())
+    attributor.reset_window(_sample(0.0, timestamp=0.0))
+    state = attributor.begin("GET /a")
+    state.start = 0.0
+    cpu, ram = _kwh(25, 2), _kwh(3, 2)
+    attributor.on_window(
+        _sample(cpu + ram, cpu=cpu, ram_kwh=ram, timestamp=2.0, cpu_idle_w=10.0)
+    )
+    assert state.energy == pytest.approx(_kwh(15, 2))
+    assert attributor.idle_kwh == pytest.approx(_kwh(10 + 3, 2))
+    _invariant(attributor)
+
+
+def test_gpu_idle_is_estimated_separately():
+    attributor = EnergyAttributor(cpu_times=_FakeTimes())
+    gpu = dict(gpu_quality="measured")
+    attributor.reset_window(_sample(0.0, timestamp=0.0, **gpu))
+    attributor.on_window(_sample(_kwh(50, 1), gpu=_kwh(50, 1), timestamp=1.0, **gpu))
+    attributor.on_window(
+        _sample(_kwh(50 + 100, 1), gpu=_kwh(50 + 100, 1), timestamp=2.0, **gpu)
+    )
+    assert attributor.report()["idle_power_w"]["gpu"] == pytest.approx(50)
+    assert attributor.unattributed_kwh == pytest.approx(_kwh(50, 1))
+    _invariant(attributor)
 
 
 class _FakeTracker:
