@@ -267,8 +267,16 @@ def set_level(
         ),
     ] = None,
 ) -> None:
-    """Write telemetry_level to a config file."""
-    path = resolve_config_path(config, create=True)
+    """Write telemetry_level to a config file.
+
+    Without ``--config``, this always writes the GLOBAL config file (creating
+    it if missing), the same file ``ask_telemetry_level_once`` writes to: an
+    opt-out must not depend on which local file happens to exist yet.
+    """
+    if config is not None:
+        path = resolve_config_path(config, create=True)
+    else:
+        path = Path(_config_file_paths()[0])
     normalized = normalize_telemetry_level(level)
     write_telemetry_level(path, normalized)
     print(f"[green]Saved[/green] telemetry_level = {normalized} in {path}")

@@ -42,6 +42,28 @@ def test_telemetry_set_writes_config():
         assert "telemetry_level = disabled" in content
 
 
+def test_telemetry_set_without_config_writes_global_not_local(tmp_path, monkeypatch):
+    """Privacy: an opt-out without --config must land in the GLOBAL config,
+    like ``ask_telemetry_level_once`` does, not in a newly created local one.
+    """
+    home = tmp_path / "home"
+    home.mkdir()
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    monkeypatch.setattr(Path, "home", lambda: home)
+
+    runner = CliRunner()
+    result = runner.invoke(telemetry_app, ["set", "disabled"])
+    assert result.exit_code == 0
+
+    global_path = home / ".codecarbon.config"
+    local_path = work / ".codecarbon.config"
+    assert global_path.exists()
+    assert "telemetry_level = disabled" in global_path.read_text()
+    assert not local_path.exists()
+
+
 def test_telemetry_status_reports_stored_level():
     runner = CliRunner()
     with tempfile.TemporaryDirectory() as tmp:
