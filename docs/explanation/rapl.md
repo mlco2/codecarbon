@@ -96,8 +96,8 @@ and consistent measurements:
     -   Match CPU TDP specifications
     -   Provide consistent measurements across different Intel
         generations
-    -   Can be supplemented with `dram` domains for complete hardware
-        measurement (package + DRAM)
+    -   `dram` domains are never added to them: with
+        `rapl_include_dram=True` they are reported as the RAM energy
 2.  **Optional psys mode**: Set `rapl_prefer_psys=True` to use `psys`
     (platform/system) domain instead:
     -   Provides total platform power (CPU + chipset + PCIe + some other
@@ -113,9 +113,13 @@ and consistent measurements:
     -   Falls back to MSR if MMIO is unreadable
 4.  **Subdomain filtering**: Excludes `core` and `uncore` subdomains
     when `package` is available to avoid double-counting
-5.  **DRAM exclusion**: By default (`rapl_include_dram=False`), don't add
-    DRAM domain to package. As DRAM is supposed to be in RAM power, not
-    CPU in a future version of CodeCarbon.
+5.  **DRAM as RAM**: By default (`rapl_include_dram=False`), the DRAM
+    domains are not read and the RAM power is estimated. With
+    `rapl_include_dram=True` and `package` domains, the DRAM domains
+    (top-level, or children of their package as on most servers) are
+    reported as the RAM energy, never added to the CPU package. With
+    `psys`, which usually includes the memory, the DRAM domains are not
+    read and the RAM keeps its estimate.
 
 ## Platform-Specific Behavior
 

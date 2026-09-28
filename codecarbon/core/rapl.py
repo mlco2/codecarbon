@@ -69,8 +69,6 @@ class RAPLFile:
     last_energy: Optional[Energy] = field(default_factory=lambda: Energy(0))
     # Max value energy can hold before it wraps
     max_energy_reading: Energy = field(default_factory=lambda: Energy(0))
-    # DRAM domain: a separate measurement, never a mirror of a package counter
-    is_dram: bool = False
     # True when the last delta() could not measure the interval
     sample_skipped: bool = field(default=False, init=False)
     _warned_uncorrectable_wrap: bool = field(default=False, init=False)
