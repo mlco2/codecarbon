@@ -72,10 +72,13 @@ def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monke
 
     assert len(rapl._mirrored_candidates) == 1
     details = rapl.get_cpu_details(Time.from_seconds(1))
-    assert len(_counted_domains(details)) == 2
-    dram = next(f for f in rapl._rapl_files if f.is_dram)
-    assert dram.path not in rapl._mirrored_candidates
-    assert dram.name in details
+    assert len(_counted_domains(details)) == 1
+    # The DRAM domain is read apart for the RAM, never checked as a mirror
+    assert [f.path for f in rapl._dram_files] == [
+        str(tmp_path / "intel-rapl" / "intel-rapl:2" / "energy_uj")
+    ]
+    assert rapl._dram_files[0].path not in rapl._mirrored_candidates
+    assert rapl.get_dram_energy(Time.from_seconds(1)) is not None
 
 
 def test_rapl_start_reevaluates_mirror_candidates(tmp_path, monkeypatch):

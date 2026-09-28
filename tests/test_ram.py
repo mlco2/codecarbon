@@ -4,7 +4,9 @@ from textwrap import dedent
 from unittest import mock
 
 import numpy as np
+import pytest
 
+from codecarbon.core.units import Energy, Power
 from codecarbon.external.ram import RAM, RAM_SLOT_POWER_X86
 
 # TODO: need help: test multiprocess case
@@ -437,3 +439,81 @@ class TestRAM(unittest.TestCase):
             ram_power = ram.total_power()
             # Verify the calculation method was not called
             mock_calc.assert_not_called()
+
+
+def test_ram_reports_measured_dram_energy():
+    """A working RAPL DRAM domain replaces the estimate (issue #1268)."""
+    source = mock.Mock()
+    source.get_dram_energy.return_value = (
+        Power.from_watts(3.0),
+        Energy.from_energy(kWh=1e-6),
+    )
+    ram = RAM(tracking_mode="machine")
+    ram._dram_source = source
+
+    with mock.patch.object(RAM, "total_power") as estimate:
+        power, energy = ram.measure_power_and_energy(last_duration=2.0)
+
+    estimate.assert_not_called()
+    assert power.W == 3.0
+    assert energy.kWh == 1e-6
+    assert source.get_dram_energy.call_args.args[0].seconds == 2.0
+
+
+def _ram_with_dram_source(deltas_kwh):
+    source = mock.Mock()
+    source.get_dram_energy.side_effect = [
+        (Power.from_watts(kwh * 3.6e6), Energy.from_energy(kWh=kwh))
+        for kwh in deltas_kwh
+    ]
+    ram = RAM(tracking_mode="machine")
+    ram._dram_source = source
+    return ram, source
+
+
+def test_ram_live_dram_counter_reports_a_zero_delta_as_measured():
+    ram, _ = _ram_with_dram_source([1e-6, 0.0])
+    with mock.patch.object(RAM, "total_power", return_value=Power.from_watts(10)):
+        ram.measure_power_and_energy(last_duration=1)
+        power, energy = ram.measure_power_and_energy(last_duration=0.01)
+    assert power.W == 0
+    assert energy.kWh == 0
+
+
+def test_ram_negative_dram_delta_falls_back_to_estimate():
+    """An uncorrected counter wrap must not be reported as negative energy."""
+    ram, _ = _ram_with_dram_source([1e-6, -5e-6])
+    with mock.patch.object(RAM, "total_power", return_value=Power.from_watts(10)):
+        ram.measure_power_and_energy(last_duration=1)
+        power, energy = ram.measure_power_and_energy(last_duration=1)
+    assert power.W == 10
+    assert energy.kWh > 0
+
+
+def test_ram_dead_dram_counter_is_dropped_once():
+    """A DRAM counter that never moves is abandoned for the estimate."""
+    ram, source = _ram_with_dram_source([0.0] * 10)
+    with mock.patch.object(RAM, "total_power", return_value=Power.from_watts(10)):
+        for _ in range(6):
+            power, _ = ram.measure_power_and_energy(last_duration=1)
+            assert power.W == 10
+    assert ram._dram_source is None
+    assert source.get_dram_energy.call_count < 6
+
+
+@pytest.mark.parametrize(
+    "measured",
+    # No DRAM domain, or a dead counter reading a flat 0 (client CPUs)
+    [None, (Power.from_watts(0), Energy.from_energy(kWh=0))],
+)
+def test_ram_falls_back_to_estimate_without_live_dram(measured):
+    source = mock.Mock()
+    source.get_dram_energy.return_value = measured
+    ram = RAM(tracking_mode="machine")
+    ram._dram_source = source
+
+    with mock.patch.object(RAM, "total_power", return_value=Power.from_watts(10)):
+        power, energy = ram.measure_power_and_energy(last_duration=3600)
+
+    assert power.W == 10
+    assert energy.kWh == pytest.approx(0.01)

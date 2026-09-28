@@ -117,6 +117,12 @@ Tracks Nvidia GPUs energy consumption using `nvidia-ml-py` library
 
 ### RAM
 
+On Linux, with
+[`rapl_include_dram`](../how-to/configuration.md#measuring-ram-with-the-dram-energy-counter)
+enabled, the RAM energy is measured by the RAPL `dram` domain when it
+exists and its counter increases. Otherwise, it is estimated as described
+below.
+
 CodeCarbon v2 uses a 3 Watts for 8 GB ratio
 [source](https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use)
 .
@@ -225,7 +231,7 @@ twice, so CodeCarbon keeps the package channels only. On multi-die CPUs
 where every die mirrors the same socket-wide counter, the duplicates are
 detected and dropped as well. The `DRAM` channels are excluded too, unless
 the
-[`rapl_include_dram`](../how-to/configuration.md#including-dram-in-the-cpu-measurement)
+[`rapl_include_dram`](../how-to/configuration.md#measuring-ram-with-the-dram-energy-counter)
 option is enabled.
 
 Legacy support for `Intel Power Gadget` is kept for machines where it is
