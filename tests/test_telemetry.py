@@ -199,7 +199,7 @@ class TestTrackerTelemetry(unittest.TestCase):
         )
         self.assertIn("telemetry is on by default", printed)
 
-    def test_notice_once_per_machine_when_level_not_explicit(self, mock_cli_setup):
+    def test_notice_once_per_process_when_level_not_explicit(self, mock_cli_setup):
         self._mock_config(_conf())
         with patch(
             "codecarbon.core.telemetry.dispatcher.logger.warning"
@@ -301,17 +301,46 @@ class TestDispatcherEdges(unittest.TestCase):
             self._telemetry()._send(SimpleNamespace(), SimpleNamespace())
         mock_post.assert_not_called()
 
-    def test_notice_still_shown_when_marker_cannot_be_written(self):
+    def test_notice_shown_once_per_process_even_across_trackers(self):
+        """Many trackers in one process must only print the notice once."""
         from codecarbon.core.telemetry import dispatcher
 
-        marker = MagicMock()
-        marker.exists.side_effect = OSError("read-only")
-        with (
-            patch.object(dispatcher, "NOTICE_MARKER", marker),
-            patch.object(dispatcher.logger, "warning") as mock_warning,
-        ):
+        with patch.object(dispatcher.logger, "warning") as mock_warning:
+            self._telemetry().notice_once_if_implicit()
             self._telemetry().notice_once_if_implicit()
         mock_warning.assert_called_once()
+
+    def test_notice_shown_again_in_a_fresh_process(self):
+        """A new process (simulated by ``_reset_after_fork``) sees it again."""
+        from codecarbon.core.telemetry import dispatcher
+
+        with patch.object(dispatcher.logger, "warning") as mock_warning:
+            self._telemetry().notice_once_if_implicit()
+            dispatcher._reset_after_fork()
+            self._telemetry().notice_once_if_implicit()
+        self.assertEqual(mock_warning.call_count, 2)
+
+    def test_notice_never_shown_when_level_explicit(self):
+        from codecarbon.core.telemetry import dispatcher
+        from codecarbon.core.telemetry.settings import TelemetrySettings
+
+        telemetry = dispatcher.Telemetry(
+            TelemetrySettings.resolve(external_conf={}, override="minimal")
+        )
+        with patch.object(dispatcher.logger, "warning") as mock_warning:
+            telemetry.notice_once_if_implicit()
+        mock_warning.assert_not_called()
+
+    def test_notice_never_shown_when_disabled(self):
+        from codecarbon.core.telemetry import dispatcher
+        from codecarbon.core.telemetry.settings import TelemetrySettings
+
+        telemetry = dispatcher.Telemetry(
+            TelemetrySettings.resolve(external_conf={"telemetry_level": "disabled"})
+        )
+        with patch.object(dispatcher.logger, "warning") as mock_warning:
+            telemetry.notice_once_if_implicit()
+        mock_warning.assert_not_called()
 
     def test_exit_joins_pending_sends(self):
         from codecarbon.core.telemetry import dispatcher

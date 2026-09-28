@@ -53,10 +53,6 @@ Empty or unknown values are left out rather than sent as zeros.
 - Coordinates (latitude and longitude)
 - Voluntary [user survey](https://docs.google.com/forms/d/e/1FAIpQLSeQ5Tu_rdrpDhBJvh5R1-_iB4Ld-kgh6iNMjgaMXa8AEVPxqA/viewform) answers
 
-## Retention
-
-Retention period: TBD by maintainers.
-
 ## Configure telemetry
 
 ### Config file
@@ -103,9 +99,7 @@ Or set `CODECARBON_TELEMETRY_LEVEL=disabled`, or run `codecarbon telemetry set d
 Telemetry is on by default (`minimal`), and you are told about it once:
 
 - **Interactive CLI** (`codecarbon config` or `codecarbon monitor` in a terminal): you are asked once which level you want. The answer is saved as `telemetry_level` in `~/.codecarbon.config`.
-- **Everything else** (library use, CI, SLURM, pipes): nothing ever blocks on a prompt. CodeCarbon logs a notice **once per machine** saying what is sent and how to opt out, and remembers that it did in `~/.codecarbon/telemetry_notice_shown`.
-
-Set `telemetry_level` explicitly to skip both.
+- **Everything else** (library use, CI, SLURM, pipes): nothing ever blocks on a prompt. CodeCarbon prints a notice to stderr saying what is sent and how to choose a level. It is shown **once per process**, on every run, for as long as the level stays implicit (not set by argument, environment variable or config file) — set `telemetry_level` explicitly (via `codecarbon telemetry set minimal|disabled`, `CODECARBON_TELEMETRY_LEVEL`, or the config file) to silence it for good.
 
 ## Related
 
