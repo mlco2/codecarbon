@@ -32,6 +32,7 @@ from codecarbon.input import DataSource
 from codecarbon.lock import Lock
 from codecarbon.output_methods.base_output import BaseOutput, OutputMethod
 from codecarbon.output_methods.emissions_data import EmissionsData
+from codecarbon.output_methods.http import CodeCarbonAPIOutput
 
 if TYPE_CHECKING:
     from codecarbon.external.geography import CloudMetadata, GeoMetadata
@@ -930,6 +931,13 @@ class BaseEmissionsTracker(ABC):
             delta_emissions=emissions_data_delta,
             experiment_name=self._experiment_name,
         )
+
+        # If run creation was still in its cooldown, the emission above was
+        # dropped. This is the last chance to send it, so bypass the
+        # cooldown and retry once instead of losing the row.
+        for handler in self._output_handlers:
+            if isinstance(handler, CodeCarbonAPIOutput) and handler.run_id is None:
+                handler.out(emissions_data, emissions_data_delta, final=True)
 
         self.final_emissions_data = emissions_data
         self.final_emissions = emissions_data.emissions

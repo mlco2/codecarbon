@@ -207,19 +207,35 @@ class ApiClient:  # (AsyncClient)
         url = self.url + "/projects/" + project_id
         return self._request(self._session.get, url).json()
 
-    def add_emission(self, carbon_emission: dict):
+    def add_emission(self, carbon_emission: dict, final: bool = False):
         assert self.experiment_id is not None
         if self.run_id is None:
+            # Captured before the call: tells us whether _create_run is about
+            # to skip its attempt because of the cooldown, so we can log the
+            # expected per-tick skip at debug instead of as an error.
+            in_cooldown = (
+                not final
+                and self._run_create_failed_at is not None
+                and time.monotonic() - self._run_create_failed_at < _RUN_CREATE_COOLDOWN
+            )
             logger.warning(
                 "ApiClient.add_emission() need a run_id : the initial call may "
                 + "have failed. Retrying..."
             )
-            self._create_run(self.experiment_id)
+            self._create_run(self.experiment_id, bypass_cooldown=final)
             if self.run_id is None:
-                logger.error(
-                    "ApiClient.add_emission still no run_id, aborting for this time !"
-                )
-            return False
+                if in_cooldown:
+                    logger.debug(
+                        "ApiClient.add_emission still no run_id, run creation"
+                        " is in its cooldown, will retry later."
+                    )
+                else:
+                    logger.error(
+                        "ApiClient.add_emission still no run_id, aborting for this time !"
+                    )
+                return False
+            # Run creation just succeeded (e.g. a final-flush bypass): fall
+            # through and send this emission instead of dropping it.
         if carbon_emission["duration"] < 1:
             logger.warning(
                 "ApiClient : emissions not sent because of a duration smaller than 1."
@@ -256,9 +272,13 @@ class ApiClient:  # (AsyncClient)
             raise
         return True
 
-    def _create_run(self, experiment_id: str):
+    def _create_run(self, experiment_id: str, bypass_cooldown: bool = False):
         """
         Create the experiment for project_id
+
+        :bypass_cooldown: skip the cooldown check and retry immediately, used
+            by the final flush on tracker stop/exit so the last emission is
+            not silently dropped because of a recent failure.
         """
         if self.experiment_id is None:
             # TODO : raise an Exception ?
@@ -267,7 +287,8 @@ class ApiClient:  # (AsyncClient)
             )
             return None
         if (
-            self._run_create_failed_at is not None
+            not bypass_cooldown
+            and self._run_create_failed_at is not None
             and time.monotonic() - self._run_create_failed_at < _RUN_CREATE_COOLDOWN
         ):
             logger.debug("ApiClient - run creation failed recently, not retrying yet")
