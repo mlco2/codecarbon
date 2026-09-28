@@ -15,7 +15,13 @@ jobs:
       pull-requests: write  # for release-drafter/release-drafter to add label to PR
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      # The release number comes from pyproject.toml, kept in sync by bumpver
+      - id: version
+        run: echo "version=$(python3 -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['tool']['bumpver']['current_version'])")" >> "$GITHUB_OUTPUT"
       # Drafts your next Release notes as Pull Requests are merged into "master"
       - uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6.1.0
+        with:
+          version: ${{ steps.version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
