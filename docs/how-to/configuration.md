@@ -162,13 +162,13 @@ EmissionsTracker(tracking_mode="process")
     `"process"` mode gives a lower-bound estimate of your code's footprint.
     `"machine"` mode is more conservative and accounts for all activity on the system.
 
-## Including DRAM in the CPU Measurement
+## Measuring RAM with the DRAM Energy Counter
 
 When CodeCarbon reads the CPU energy counters, the hardware also exposes a
-`DRAM` domain measuring the memory controller. It is **excluded by default**, so
-that memory power is reported by the RAM tracker only and is not counted twice.
+`DRAM` domain measuring the memory. It is **not read by default**: the RAM
+power comes from the [estimation model](../explanation/methodology.md#ram).
 
-Set `rapl_include_dram` to add it to the CPU measurement:
+Set `rapl_include_dram` to measure the RAM with it instead:
 
 ``` ini
 [codecarbon]
@@ -181,15 +181,25 @@ Or in code:
 EmissionsTracker(rapl_include_dram=True)
 ```
 
-Despite its name, this option applies to every counter-based CPU interface:
+What it does depends on the interface:
 
-- **Linux**: the `dram` domains of the [RAPL](../explanation/rapl.md) powercap
-  interface.
+- **Linux**: the energy of the `dram` domains of the
+  [RAPL](../explanation/rapl.md) powercap interface is reported as the RAM
+  energy and power, and is not part of the CPU energy. When no `dram` domain
+  exists, the RAM keeps its estimate. Until the counter is seen moving, the
+  estimate is used, and a counter that never moves over the first few
+  measurements (client CPUs often expose a `dram` domain stuck at 0) is
+  dropped for the estimate. When the CPU is measured with the `psys` domain
+  (`rapl_prefer_psys`, or no `package` domain), which usually includes the
+  memory already, the `dram` domain is not read and the RAM keeps its
+  estimate.
 - **Windows 11**: the `DRAM` channels of the Energy Meter Interface, which
-  exposes the very same RAPL counters.
+  exposes the very same RAPL counters, are still added to the CPU energy,
+  while the RAM keeps its estimate. The memory power is then counted twice.
 
-It has no effect when CodeCarbon falls back to TDP/CPU-load estimation, since
-that mode models the CPU package only.
+The option is ignored for the RAM when `force_ram_power` is set or when
+`tracking_mode="process"`, since the DRAM counter measures the whole machine.
+It has no effect when CodeCarbon falls back to TDP/CPU-load estimation.
 
 ## Access internet through proxy server
 

@@ -11,7 +11,7 @@ The most accurate tracking methods rely on built-in hardware energy counters rat
 - **NVIDIA GPUs** using `nvmlDeviceGetTotalEnergyConsumption` return accumulated energy in millijoules.
 - **AMD GPUs** using `amdsmi_get_energy_count` yield a counter that is multiplied by its resolution and converted into millijoules.
 - **CPUs** using the RAPL interface read from files like `energy_uj` to get accumulated microjoules.
-- **RAM** using the RAPL interface read from files like `energy_uj` to get accumulated microjoules. See `rapl_include_dram` option. Not used by default. 
+- **RAM** using the RAPL `dram` domain read from files like `energy_uj` to get accumulated microjoules, on Linux. See `rapl_include_dram` option. Not used by default.
 
 At every measurement interval, CodeCarbon calculates the `energy_delta` by subtracting the previously tracked `last_energy` from the current total energy reading.
 
