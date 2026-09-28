@@ -1738,6 +1738,10 @@ def track_emissions(
                     "Please check the logs.",
                     exc_info=True,
                 )
+                tracker = None
+            # Called outside the except block so the construction error is not
+            # chained to exceptions raised by fn.
+            if tracker is None:
                 return fn(*args, **kwargs)
             tracker.start()
             try:
