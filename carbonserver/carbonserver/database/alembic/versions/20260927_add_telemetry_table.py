@@ -109,6 +109,36 @@ def _bind_is_postgres(bind) -> bool:
     return bind.dialect.name == "postgresql"
 
 
+def _ensure_retention(bind) -> None:
+    """Delete telemetry rows older than 3 years, enforced in the database.
+
+    A statement-level trigger fires after every insert and purges rows past
+    the retention window, so the policy holds regardless of what the
+    application does. The index keeps the purge's WHERE clause a cheap range
+    scan. Postgres only; SQLite (used by the migration test) has no trigger.
+    """
+    if not _bind_is_postgres(bind):
+        return
+    inspector = sa.inspect(bind)
+    existing_indexes = {ix["name"] for ix in inspector.get_indexes("telemetry")}
+    if "ix_telemetry_timestamp" not in existing_indexes:
+        op.create_index("ix_telemetry_timestamp", "telemetry", ["timestamp"])
+    op.execute("""
+        CREATE OR REPLACE FUNCTION telemetry_purge() RETURNS trigger AS $$
+        BEGIN
+            DELETE FROM telemetry WHERE timestamp < now() - interval '3 years';
+            RETURN NULL;
+        END;
+        $$ LANGUAGE plpgsql;
+        """)
+    op.execute("DROP TRIGGER IF EXISTS telemetry_retention ON telemetry;")
+    op.execute("""
+        CREATE TRIGGER telemetry_retention
+        AFTER INSERT ON telemetry
+        FOR EACH STATEMENT EXECUTE FUNCTION telemetry_purge();
+        """)
+
+
 def upgrade():
     """Anonymous SDK telemetry, one row per process (minimal level only).
 
@@ -135,6 +165,7 @@ def upgrade():
                 type_=sa.DateTime(timezone=True),
                 postgresql_using="timestamp AT TIME ZONE 'UTC'",
             )
+        _ensure_retention(bind)
         return
     op.create_table(
         "telemetry",
@@ -142,11 +173,16 @@ def upgrade():
         *(column.copy() for column in NEW_COLUMNS),
     )
     op.create_index("ix_telemetry_id", "telemetry", ["id"])
+    _ensure_retention(bind)
 
 
 def downgrade():
     """Restore the old, wider schema (as nullable columns), preserving rows."""
     bind = op.get_bind()
+    if _bind_is_postgres(bind):
+        op.execute("DROP TRIGGER IF EXISTS telemetry_retention ON telemetry;")
+        op.execute("DROP FUNCTION IF EXISTS telemetry_purge();")
+        op.execute("DROP INDEX IF EXISTS ix_telemetry_timestamp;")
     existing = {c["name"] for c in sa.inspect(bind).get_columns("telemetry")}
     for column in OLD_ONLY_COLUMNS:
         if column.name not in existing:
