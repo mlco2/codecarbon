@@ -115,10 +115,12 @@ def test_invariant_holds_under_concurrency():
 class _FakeTracker:
     """The slice of a tracker the middleware touches; windows closed by hand."""
 
-    def __init__(self, started: bool = True) -> None:
+    def __init__(self, started: bool = True, api_call_interval: int = 8) -> None:
         self._start_time = 0.0 if started else None
         self._total_energy = SimpleNamespace(kWh=0.0)
+        self._api_call_interval = api_call_interval
         self.observers = []
+        self.intensity_calls = 0
 
     def add_energy_window_observer(self, callback):
         self.observers.append(callback)
@@ -127,6 +129,7 @@ class _FakeTracker:
         self.observers.remove(callback)
 
     def _carbon_intensity_kg_per_kwh(self):
+        self.intensity_calls += 1
         return 0.5
 
     def window(self, kwh: float) -> None:
@@ -165,6 +168,18 @@ def test_request_resolves_on_next_window():
     assert (energy.endpoint, status) == ("GET /work/{n}", 200)
     assert energy.energy_kwh == pytest.approx(1.0)
     assert kg == pytest.approx(0.5)
+
+
+def test_intensity_refreshed_once_per_api_call_interval():
+    # An Electricity Maps token turns _carbon_intensity_kg_per_kwh into an
+    # HTTP call; it must not fire on every sampling window, only as often as
+    # the tracker itself refreshes (its api_call_interval).
+    tracker, seen = _FakeTracker(api_call_interval=4), []
+    with TestClient(_app(tracker, seen)) as client:
+        client.get("/work/1")  # attaches the middleware to the tracker
+        for _ in range(12):
+            tracker.window(0.1)
+    assert tracker.intensity_calls == pytest.approx(3, abs=1)
 
 
 def test_app_raising_is_reported_as_500():
