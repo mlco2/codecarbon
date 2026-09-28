@@ -53,6 +53,10 @@ Empty or unknown values are left out rather than sent as zeros.
 - Coordinates (latitude and longitude)
 - Voluntary [user survey](https://docs.google.com/forms/d/e/1FAIpQLSeQ5Tu_rdrpDhBJvh5R1-_iB4Ld-kgh6iNMjgaMXa8AEVPxqA/viewform) answers
 
+## Retention
+
+Telemetry rows are kept for at most 3 years. They do not include your IP address.
+
 ## Configure telemetry
 
 ### Config file
