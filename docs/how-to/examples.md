@@ -160,11 +160,11 @@ tracker.stop()
 
 ### Track FastAPI Requests
 
-One tracker runs for the app lifetime; the middleware splits each of its
-sampling windows across the requests that were in flight during that window,
-weighted by overlap. Per-request start/stop snapshots cannot be used here:
-with N requests in flight each one would see the whole machine's delta, so
-the sum overcounts by roughly N.
+One tracker runs for the app lifetime; the middleware splits the energy of
+each of its sampling windows across the requests that were in flight during
+that window. Per-request start/stop snapshots cannot be used here: with N
+requests in flight each one would see the whole machine's delta, so the sum
+overcounts by roughly N.
 
 Install the extra with `pip install 'codecarbon[fastapi]'`. Add the middleware
 at module level (Starlette refuses new middleware once the app has started),
@@ -201,10 +201,106 @@ tracker's scheduler thread — keep it cheap. The default callback logs at DEBUG
 completed sampling window, which in practice means it was still pending when
 the tracker stopped.
 
-`energy_kwh` is an estimated share, not a measurement of the request. The
-whole machine's energy for a window, idle power included, is split across the
-requests in flight by how long each overlapped the window. Time spent waiting
-on I/O counts the same as time spent computing, and a lone short request in an
-otherwise idle window receives that window's full energy. Sum the values per
-route over many requests rather than reading a single one, and lower
-`measure_power_secs` for finer-grained windows.
+Each window is split as follows:
+
+1. Per component, idle power times the window length is taken out first.
+   Three CPU modes fix it: CPU load mode tracking the machine uses 10% of
+   TDP, CPU load mode tracking the process uses 0 W, and constant (TDP) mode
+   counts all of its power as idle, so it charges requests nothing. Otherwise
+   idle power is estimated as the lower of the lowest window power seen over
+   the last hour and, when a power-against-CPU-utilisation fit is good
+   (R² > 0.8, at least 20 windows), that fit's intercept. All RAM energy
+   counts as idle.
+2. Of the CPU energy above idle, this process keeps its share of the
+   machine's busy CPU time (`psutil.cpu_times()`). The rest belongs to other
+   processes on the host.
+3. Each request is charged the CPU time it used, measured by
+   `time.thread_time_ns()` around every step of the request's coroutine and
+   around each call it sends to the threadpool, times the cost of one
+   CPU-second. That cost comes from the power model in CPU load mode, from
+   the slope of the power-against-load fit when it is good, and otherwise
+   from the process's average (its energy above idle over its CPU time).
+   The process's CPU time that no request claimed goes to
+   `process_unattributed_kwh` at the same cost. If all of the process's CPU
+   time at that cost would exceed its share from step 2, requests and that
+   unclaimed rest are scaled down by the same factor. Whatever the share
+   leaves over is counted under other processes.
+4. GPU energy above idle has no per-request signal, so it is split by how long
+   each request overlapped the window.
+
+The fields of `RequestEnergy`:
+
+| Field | Meaning |
+|---|---|
+| `energy_kwh` | CPU energy above idle, charged by the request's CPU time |
+| `gpu_kwh` | GPU energy above idle, charged by wall-clock overlap |
+| `cpu_seconds` | CPU time the meter saw the request use |
+| `attribution_method` | `cpu_time`, `wall` (GPU energy only) or `mixed` |
+| `quality` | `measured` (RAPL, powermetrics, NVML), `modeled` (CPU load mode) or `none` (constant TDP), for the weakest component used |
+| `windows`, `mean_concurrency` | Windows the request was in flight for, and how many requests shared them |
+
+`emissions_kg` covers `energy_kwh + gpu_kwh`. Both are `None` only when the
+request never covered a completed sampling window, which in practice means it
+was still pending when the tracker stopped.
+
+The middleware's `attributor.report()` returns the run-level buckets. They add
+up to `settled_kwh` (up to float rounding):
+
+- `attributed_kwh`: charged to requests.
+- `idle_kwh`: idle power and RAM.
+- `other_processes_kwh`: CPU energy of other processes on the host.
+- `process_unattributed_kwh`: this process's CPU energy that no request meter
+  claimed. A large value means much of the work runs where the meter cannot
+  see it (see the limits below).
+- `unattributed_kwh`: in windows with no request in flight, this process's
+  CPU energy above idle (at the cost of a CPU-second) and all GPU energy
+  above idle; in other windows, GPU energy above idle that no request
+  overlapped.
+
+It also reports the idle power in use per component (`idle_power_w`), the
+cost of a CPU-second and its source (`cpu_j_per_cpu_second`,
+`cpu_cost_source`), and the source quality of the last window.
+
+Limits:
+
+- One CPU-second is priced with a single linear slope. Power curves are
+  convex, so this overcharges at low machine load (the charges are then
+  capped at the process's share) and undercharges at high load. The upside
+  is that a request's energy barely moves when another process loads the
+  host. In CPU load mode the slope is the chord of the cubic model, so the
+  cap nearly always binds at low load and charges fall back to the average
+  cost. There, a request's energy rises when other processes load the
+  machine (by several times in our tests). Only a measured source (RAPL,
+  powermetrics, NVML, `quality == "measured"`) gives numbers that hold up
+  under a busy neighbour; the accuracy tests only run against one.
+- CPU time is a proxy for energy. Frequency scaling, SMT and wide vector
+  instructions make one CPU second cost different amounts of energy; the
+  error from this has not been measured yet.
+- The request's own coroutine is metered, and so is the work it sends to the
+  threadpool: sync (`def`) endpoints and dependencies, sync iterators of a
+  `StreamingResponse`. For the latter the middleware wraps
+  `anyio.to_thread.run_sync` process-wide while a tracker is attached; it
+  changes nothing outside a request. Pass `meter_threadpool=False` to turn
+  this off. On Linux a long sync call is charged window by window; on other
+  platforms its CPU time counts in the window where it returns.
+- The threadpool wrapper keeps one current meter per request context. With
+  nested `CodeCarbonMiddleware` instances the innermost one takes the
+  threadpool CPU time and the outer ones lose it. If another library wrapped
+  `anyio.to_thread.run_sync` before the middleware did and later restores its
+  own saved original, the middleware's wrapper drops out of the chain and
+  threadpool work goes unmetered until the process restarts.
+- In CPU load mode with `tracking_mode="process"`, the tracker's energy
+  includes child processes, but the process CPU time used for pricing does
+  not. The children's CPU energy lands in `other_processes_kwh`.
+- Tasks the request starts with `asyncio.create_task` or `gather` are not
+  metered (their sync threadpool calls are). Their CPU time, and threads the
+  application starts itself, land in `process_unattributed_kwh`.
+- GPU energy is split by wall-clock time, not by the work each request sent
+  to the GPU.
+- The idle estimate needs time to settle. Until the host has had a quiet
+  window, idle power is overestimated and requests are undercharged.
+- `psutil.cpu_times()` counts in clock ticks (10 ms on Linux), so the process
+  share is noisy for short windows. With RAPL, a `measure_power_secs` between
+  1 and 5 is a good trade-off between window resolution and that noise.
+
+Sum the values per route over many requests rather than reading a single one.

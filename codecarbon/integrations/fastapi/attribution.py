@@ -1,13 +1,27 @@
 """Fair-share per-request energy attribution.
 
-Each completed sampling window ``(t_prev, t_now, dE)`` is split across the
-requests that were in flight during it, weighted by their overlap with the
-window and normalised **by the sum of the weights**. Windows with nothing in
-flight go entirely to ``unattributed_kwh``. The invariant is::
+Each completed sampling window ``(t_prev, t_now, dE)`` is first split per
+component into idle and dynamic energy::
 
-    attributed_kwh + unattributed_kwh == settled_kwh
+    dynamic_c = max(dE_c - P_idle_c * width, 0)
 
-exactly, after every window. That is the property the tests pin down.
+Idle energy (and all RAM energy) goes to ``idle_kwh``: it would have been
+drawn with no request at all, so charging it to whichever request happened to
+be in flight is wrong. Of the dynamic CPU energy, only this process's share
+of the machine's busy CPU time is kept; the rest goes to
+``other_processes_kwh``. Each request in flight is charged the CPU time its
+meter saw in the window times the cost of a CPU-second; our CPU time no meter
+claimed goes to ``process_unattributed_kwh`` at the same cost. One cap scales
+both down when all of our CPU time at that cost exceeds what was kept, and
+whatever the cost leaves over joins ``other_processes_kwh``. Dynamic GPU energy has no per-request signal
+and is split by overlap with the window. Dynamic energy of windows with
+nothing in flight goes to ``unattributed_kwh``. The invariant is::
+
+    attributed_kwh + idle_kwh + other_processes_kwh
+        + process_unattributed_kwh + unattributed_kwh == settled_kwh
+
+up to float rounding, after every window. That is the property the tests
+pin down.
 
 Start/stop energy snapshots per request cannot do this: with N requests in
 flight each one sees the whole machine's delta, so the sum overcounts by
@@ -18,28 +32,157 @@ from __future__ import annotations
 
 import threading
 import time
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+import psutil
+
+from codecarbon.emissions_tracker import WindowSample
 from codecarbon.external.logger import logger
+
+#: Watt-seconds per kWh.
+_WS_PER_KWH = 3.6e6
+#: Weakest first: a request's quality is that of its weakest input.
+_QUALITIES = ("none", "modeled", "measured")
 
 
 @dataclass(frozen=True)
 class RequestEnergy:
     """One request's finished attribution.
 
-    ``energy_kwh`` is ``None`` when the request never covered a completed
-    sampling window: there is no honest number, and zero would be a lie.
+    ``energy_kwh`` and ``gpu_kwh`` are ``None`` when the request never covered
+    a completed sampling window: there is no honest number, and zero would be
+    a lie.
     """
 
     endpoint: str
+    #: CPU energy above idle, charged by the CPU time the request used.
     energy_kwh: float | None
+    #: GPU energy above idle, charged by wall-clock overlap with the window.
+    gpu_kwh: float | None
     duration_s: float
-    #: Completed sampling windows this request overlapped.
+    #: Completed sampling windows this request was in flight for.
     windows: int
-    #: Mean number of requests it competed against, window-weighted.
+    #: Mean number of requests in flight with it, per window.
     mean_concurrency: float | None
+    #: CPU time the meter saw this request use, in seconds.
+    cpu_seconds: float
+    #: ``"cpu_time"``, ``"wall"`` (GPU energy only) or ``"mixed"`` (both).
+    attribution_method: str
+    #: ``"measured"`` (RAPL, powermetrics, NVML...), ``"modeled"`` (CPU load
+    #: mode) or ``"none"`` (constant TDP, or no window), for the weakest
+    #: component the request was charged from.
+    quality: str
+
+
+def _thread_clock() -> int | None:
+    """The calling thread's CPU clock, readable from other threads (Linux)."""
+    if not hasattr(time, "pthread_getcpuclockid"):
+        return None
+    try:
+        return time.pthread_getcpuclockid(threading.get_ident())
+    except OSError:
+        return None
+
+
+class _Meter:
+    """CPU time used by one request, in ns.
+
+    ``ns`` is the event-loop time. It is written only by the loop thread
+    driving the request, so it needs no lock, with or without the GIL.
+    Worker-thread calls (:meth:`run_in_thread`) go through ``_lock``. While
+    one runs, :meth:`total_ns` reads its CPU clock from the outside where the
+    platform allows it (Linux), so a long sync call is charged window by
+    window. Elsewhere its CPU time only shows up once it returns.
+    """
+
+    __slots__ = ("ns", "_lock", "_thread_ns", "_running")
+
+    def __init__(self) -> None:
+        self.ns = 0
+        self._lock = threading.Lock()
+        self._thread_ns = 0
+        #: Worker thread id -> (its CPU clock or None, thread time at start).
+        self._running: dict[int, tuple[int | None, int]] = {}
+
+    def run_in_thread(self, func: Callable[..., Any], *args: Any) -> Any:
+        """Call ``func(*args)`` on this worker thread, adding its CPU time."""
+        ident = threading.get_ident()
+        clock = _thread_clock()
+        start = time.thread_time_ns()
+        with self._lock:
+            self._running[ident] = (clock, start)
+        try:
+            return func(*args)
+        finally:
+            # Read under the lock, or a total_ns() between the read and the
+            # lock could count more of this call than we add, and go backwards.
+            with self._lock:
+                del self._running[ident]
+                self._thread_ns += time.thread_time_ns() - start
+
+    def total_ns(self) -> int:
+        """CPU time so far, including worker calls still running."""
+        with self._lock:
+            total = self.ns + self._thread_ns
+            for clock, start in self._running.values():
+                if clock is not None:
+                    try:
+                        total += max(time.clock_gettime_ns(clock) - start, 0)
+                    except OSError:
+                        pass
+        return total
+
+
+class _Metered:
+    """Awaitable that drives the awaitable ``coro`` and meters it.
+
+    Adds ``time.thread_time_ns()`` spent inside each ``send``/``throw`` of its
+    ``__await__`` iterator to ``meter``. ASGI only promises an awaitable, so
+    that iterator, not ``coro`` itself, is what gets driven. Work the coroutine hands to other threads or to
+    child tasks is not seen.
+    """
+
+    __slots__ = ("_coro", "_meter")
+
+    def __init__(self, coro: Any, meter: _Meter) -> None:
+        self._coro = coro
+        self._meter = meter
+
+    def __await__(self):
+        coro, meter, clock = self._coro.__await__(), self._meter, time.thread_time_ns
+        value: Any = None
+        error: BaseException | None = None
+        while True:
+            start = clock()
+            try:
+                if error is None:
+                    yielded = coro.send(value)
+                else:
+                    yielded = coro.throw(error)
+            except StopIteration as stop:
+                meter.ns += clock() - start
+                return stop.value
+            except BaseException:
+                meter.ns += clock() - start
+                raise
+            meter.ns += clock() - start
+            value = error = None
+            try:
+                value = yield yielded
+            except GeneratorExit:
+                start = clock()
+                try:
+                    close = getattr(coro, "close", None)
+                    if close is not None:
+                        close()
+                finally:
+                    meter.ns += clock() - start
+                raise
+            except BaseException as exc:
+                error = exc
 
 
 @dataclass
@@ -48,45 +191,169 @@ class _InFlight:
 
     endpoint: str
     start: float
+    meter: _Meter | None = None
+    #: ``meter.total_ns()`` already charged in earlier windows.
+    cpu_seen_ns: int = 0
     end: float | None = None
     energy: float = 0.0
+    gpu_energy: float = 0.0
+    quality: str | None = None
     windows: int = 0
     concurrency_sum: float = 0.0
     #: Called with the :class:`RequestEnergy` when this request resolves.
     on_resolved: Callable[[RequestEnergy], None] | None = None
 
 
-class EnergyAttributor:
-    """Splits each sampling window's energy across the requests in flight."""
+def _cpu_times() -> tuple[float, float, float]:
+    """``(process CPU s, machine busy CPU s, machine total CPU s)``, cumulative.
 
-    def __init__(self) -> None:
+    Busy excludes idle, iowait and steal (time the hypervisor gave to another
+    guest). ``guest`` and ``guest_nice`` are already counted in ``user`` and
+    ``nice`` on Linux, so they are taken out of the total, as psutil does.
+    """
+    t = psutil.cpu_times()
+    total = sum(t) - getattr(t, "guest", 0.0) - getattr(t, "guest_nice", 0.0)
+    busy = total - t.idle - getattr(t, "iowait", 0.0) - getattr(t, "steal", 0.0)
+    return time.process_time(), busy, total
+
+
+class _IdleEstimator:
+    """Idle power of one component in W, and its cost per busy CPU.
+
+    Idle power is the lower of the rolling minimum of window power over
+    ``horizon_s`` and, once 20 windows with a CPU load are known and the fit
+    is good (R² > 0.8), the intercept of ``power = a + b * busy_cpus``. The
+    minimum alone overestimates idle on a server that is never idle; the
+    intercept alone is noise when load barely varies. The fit's slope ``b``
+    (W per busy CPU, i.e. J per CPU-second) is kept in :attr:`slope`.
+    """
+
+    def __init__(self, horizon_s: float) -> None:
+        self._horizon_s = horizon_s
+        # (t, power) with increasing power: the front is the window minimum.
+        self._mins: deque[tuple[float, float]] = deque()
+        self._points: deque[tuple[float, float, float]] = deque()
+        #: Latest estimate, ``None`` before the first window.
+        self.watts: float | None = None
+        #: Slope of a good fit, ``None`` without one.
+        self.slope: float | None = None
+
+    def update(self, t: float, power: float, busy_cpus: float | None = None) -> float:
+        cutoff = t - self._horizon_s
+        while self._mins and self._mins[0][0] < cutoff:
+            self._mins.popleft()
+        while self._mins and self._mins[-1][1] >= power:
+            self._mins.pop()
+        self._mins.append((t, power))
+        estimate = self._mins[0][1]
+        self.slope = None  # no load reading, no current fit to charge by
+        if busy_cpus is not None:
+            self._points.append((t, busy_cpus, power))
+            while self._points[0][0] < cutoff:
+                self._points.popleft()
+            fit = _fit(self._points)
+            self.slope = fit[1] if fit is not None and fit[1] > 0 else None
+            if fit is not None:
+                estimate = min(estimate, max(fit[0], 0.0))
+        self.watts = estimate
+        return estimate
+
+
+def _fit(points: deque[tuple[float, float, float]]) -> tuple[float, float] | None:
+    """Least-squares ``(intercept, slope)`` of power on load, ``None`` if unreliable."""
+    # ponytail: full O(n) refit per window, n = horizon / measure_power_secs
+    # (3600 at 1 s, about 1 ms). Keep running sums if that ever shows up.
+    n = len(points)
+    if n < 20:
+        return None
+    mean_x = sum(x for _, x, _ in points) / n
+    mean_p = sum(p for _, _, p in points) / n
+    sxx = sum((x - mean_x) ** 2 for _, x, _ in points)
+    syy = sum((p - mean_p) ** 2 for _, _, p in points)
+    if sxx <= 0 or syy <= 0:
+        return None
+    sxy = sum((x - mean_x) * (p - mean_p) for _, x, p in points)
+    if sxy * sxy / (sxx * syy) <= 0.8:
+        return None
+    slope = sxy / sxx
+    return mean_p - slope * mean_x, slope
+
+
+def _dynamic(delta_kwh: float, idle_w: float, width: float) -> float:
+    """Energy above idle in one window, within ``[0, delta_kwh]``."""
+    return min(max(delta_kwh - idle_w * width / _WS_PER_KWH, 0.0), delta_kwh)
+
+
+class EnergyAttributor:
+    """Splits each sampling window's dynamic energy across the requests in flight.
+
+    Args:
+        clock: Must be the clock of :attr:`WindowSample.timestamp`.
+        cpu_times: Returns cumulative ``(process, busy, total)`` CPU seconds;
+            replaceable for tests.
+        idle_horizon_s: How far back the idle-power estimate looks.
+    """
+
+    def __init__(
+        self,
+        *,
+        clock: Callable[[], float] = time.perf_counter,
+        cpu_times: Callable[[], tuple[float, float, float]] = _cpu_times,
+        idle_horizon_s: float = 3600.0,
+    ) -> None:
+        self._clock = clock
+        self._cpu_times = cpu_times
         self._in_flight: dict[int, _InFlight] = {}
         # begin/end run on the event-loop thread, on_window on the tracker's
         # scheduler thread. Never held across an on_resolved callback.
         self._lock = threading.Lock()
         #: Running sum of everything handed to requests, kWh.
         self.attributed_kwh = 0.0
-        #: Energy from windows with nothing in flight, kWh.
+        #: Energy the machine would have drawn with no load (idle power, and
+        #: all of RAM), kWh.
+        self.idle_kwh = 0.0
+        #: Dynamic CPU energy of the machine's other processes, kWh.
+        self.other_processes_kwh = 0.0
+        #: Our CPU dynamic energy that no request's meter claimed: work in
+        #: threads, child tasks, the server itself, kWh.
+        self.process_unattributed_kwh = 0.0
+        #: Dynamic energy from windows with nothing in flight, kWh.
         self.unattributed_kwh = 0.0
-        #: Energy taken in from closed windows. ``attributed + unattributed ==
-        #: settled`` holds exactly after every window; it is below the tracker's
-        #: run total by whatever a wrapped counter dropped
-        #: (``windows_skipped``) plus the final unsampled partial window.
+        #: Energy taken in from closed windows. The buckets add up to it, up
+        #: to float rounding, after every window; it is below the tracker's
+        #: run total by whatever skipped windows dropped (``windows_skipped``)
+        #: plus the final unsampled partial window. The anchor sample is read
+        #: on the request path while the scheduler thread may be measuring,
+        #: so it can be taken mid-update: the first window is then split
+        #: slightly off, but everything later is unaffected.
         self.settled_kwh = 0.0
         self.windows_settled = 0
-        #: Windows where the energy counter went backwards (RAPL wrap/reset).
+        #: Windows dropped unsplit: an energy counter went backwards (RAPL
+        #: wrap/reset), or energy arrived in a window with no width.
         self.windows_skipped = 0
-        self._t_prev = time.perf_counter()
-        self._e_prev = 0.0
+        self._cpu_idle = _IdleEstimator(idle_horizon_s)
+        #: J per CPU-second charged in the last window, and where it came from
+        #: (``"model"``, ``"fit"`` or ``"average"``).
+        self.cpu_j_per_cpu_s: float | None = None
+        self.cpu_cost_source: str | None = None
+        self._gpu_idle = _IdleEstimator(idle_horizon_s)
+        self._prev: WindowSample | None = None
+        self._t_prev = clock()
+        self._times_prev = (0.0, 0.0, 0.0)
 
-    def reset_window(self, total_energy_kwh: float = 0.0) -> None:
-        """Anchor the first window at now. Call when the tracker starts."""
-        self._t_prev = time.perf_counter()
-        self._e_prev = total_energy_kwh
+    def reset_window(self, sample: WindowSample) -> None:
+        """Anchor the first window at ``sample``. Call when the tracker starts."""
+        with self._lock:
+            self._prev = sample
+            self._t_prev = sample.timestamp
+            self._times_prev = self._cpu_times()
 
-    def begin(self, endpoint: str) -> _InFlight:
-        """Start weighting a request. Returns the handle to pass to :meth:`end`."""
-        state = _InFlight(endpoint=endpoint, start=time.perf_counter())
+    def begin(self, endpoint: str, meter: _Meter | None = None) -> _InFlight:
+        """Start weighting a request. Returns the handle to pass to :meth:`end`.
+
+        ``meter`` is the request's CPU meter; without one it gets no CPU energy.
+        """
+        state = _InFlight(endpoint=endpoint, start=self._clock(), meter=meter)
         with self._lock:
             self._in_flight[id(state)] = state
         return state
@@ -100,7 +367,7 @@ class EnergyAttributor:
         drop that energy into a zero-width window and silently lose it.
         """
         with self._lock:
-            state.end = time.perf_counter()
+            state.end = self._clock()
 
     def close(self) -> None:
         """Emit every in-flight request as-is. Call after the tracker stops."""
@@ -110,15 +377,15 @@ class EnergyAttributor:
         for state in pending:
             self._emit(state)
 
-    def on_window(self, total_energy_kwh: float) -> None:
-        """Close a sampling window with the tracker's cumulative energy.
+    def on_window(self, sample: WindowSample) -> None:
+        """Close a sampling window with the tracker's cumulative energies.
 
         Wired to
         :meth:`~codecarbon.emissions_tracker.BaseEmissionsTracker.add_energy_window_observer`,
         so it is only ever called from a real hardware sample.
         """
         with self._lock:
-            self._settle(total_energy_kwh)
+            self._settle(sample)
             finished = [
                 self._in_flight.pop(key)
                 for key, state in list(self._in_flight.items())
@@ -128,58 +395,151 @@ class EnergyAttributor:
         for state in finished:
             self._emit(state)
 
-    def _settle(self, total_energy_kwh: float) -> None:
+    def _settle(self, sample: WindowSample) -> None:
         """Split one window. Caller must hold ``self._lock``."""
-        now = time.perf_counter()
-        w0, w1 = self._t_prev, now
+        prev, w0, times_prev = self._prev, self._t_prev, self._times_prev
+        times = self._cpu_times()
+        w1 = sample.timestamp
         width = w1 - w0
-        delta = total_energy_kwh - self._e_prev
-        if width <= 0:
-            self._t_prev, self._e_prev = now, total_energy_kwh
+        if prev is None:
+            self._prev, self._t_prev, self._times_prev = sample, w1, times
             return
-        if delta < 0:
-            # Counter wraparound or reset: no honest way to split a negative.
-            self.windows_skipped += 1
-            self._t_prev, self._e_prev = now, total_energy_kwh
+        delta = sample.total_kwh - prev.total_kwh
+        d_cpu = sample.cpu_kwh - prev.cpu_kwh
+        d_gpu = sample.gpu_kwh - prev.gpu_kwh
+        if width <= 0 or min(delta, d_cpu, d_gpu) < 0:
+            # Counter wraparound or reset, or a window with no width: no
+            # honest way to split it. The CPU time metered in it is dropped
+            # with it, or the next window would charge it against a process
+            # time that excludes it.
+            # A zero-width window with no energy lost nothing: not counted.
+            self.windows_skipped += int(width > 0 or delta != 0)
+            for state in self._in_flight.values():
+                state.cpu_seen_ns = state.meter.total_ns() if state.meter else 0
+            self._prev, self._t_prev, self._times_prev = sample, w1, times
             return
 
-        states: list[_InFlight] = []
-        weights: list[float] = []
-        for state in self._in_flight.values():
+        d_proc, d_busy, d_total = (now - then for now, then in zip(times, times_prev))
+        busy_cpus = d_busy / width if d_total > 0 else None
+        cpu_idle_w = sample.cpu_idle_w
+        if cpu_idle_w is None:
+            cpu_idle_w = self._cpu_idle.update(
+                w1, d_cpu * _WS_PER_KWH / width, busy_cpus
+            )
+        else:
+            self._cpu_idle.watts = cpu_idle_w
+        dynamic_cpu = _dynamic(d_cpu, cpu_idle_w, width)
+        # This process's share of the machine's busy CPU time. psutil counts in
+        # clock ticks (10 ms on Linux), so short windows are noisy: clamped.
+        if sample.cpu_per_process:
+            share = 1.0  # load mode in process tracking: already ours alone
+        elif d_busy > 0:
+            share = min(max(d_proc / d_busy, 0.0), 1.0)
+        else:
+            share = 1.0 if d_proc > 0 else 0.0
+        ours = dynamic_cpu * share
+        dynamic_gpu = 0.0
+        if sample.gpu_quality is not None:
+            gpu_idle_w = self._gpu_idle.update(w1, d_gpu * _WS_PER_KWH / width)
+            dynamic_gpu = _dynamic(d_gpu, gpu_idle_w, width)
+
+        quality = sample.cpu_quality
+        if sample.gpu_quality is not None:
+            quality = min(quality, sample.gpu_quality, key=_QUALITIES.index)
+
+        # Cost of one CPU-second, J: the power model's, else the slope of a
+        # good fit of power on load, else our average (dynamic / CPU time).
+        # ponytail: one linear slope. On a convex power curve it undercharges
+        # at high load and overcharges at low load; the cap below bounds the
+        # second case by what our process actually drew.
+        d_proc_s = max(d_proc, 0.0)
+        if sample.cpu_w_per_busy_cpu is not None:
+            j_per_cpu_s, self.cpu_cost_source = sample.cpu_w_per_busy_cpu, "model"
+        elif self._cpu_idle.slope is not None:
+            j_per_cpu_s, self.cpu_cost_source = self._cpu_idle.slope, "fit"
+        else:
+            j_per_cpu_s = ours * _WS_PER_KWH / d_proc_s if d_proc_s > 0 else 0.0
+            self.cpu_cost_source = "average"
+        self.cpu_j_per_cpu_s = j_per_cpu_s
+
+        states = list(self._in_flight.values())
+        # CPU: each request is charged its metered CPU time at that cost. If
+        # the meters claim more than the process used (clock granularity),
+        # they are scaled down to fit. If all of our process's CPU time at that
+        # cost exceeds our share of the dynamic energy, one cap scales the
+        # requests and the unclaimed rest down alike.
+        seen = [state.meter.total_ns() if state.meter else 0 for state in states]
+        cpu_s = [(now - state.cpu_seen_ns) / 1e9 for now, state in zip(seen, states)]
+        claimed_s = sum(cpu_s)
+        if claimed_s > d_proc_s:
+            cpu_s = [c * d_proc_s / claimed_s for c in cpu_s]
+            claimed_s = d_proc_s
+        process_wanted = j_per_cpu_s * d_proc_s / _WS_PER_KWH
+        cap = min(1.0, ours / process_wanted) if process_wanted > 0 else 1.0
+        cpu_parts = [j_per_cpu_s * c / _WS_PER_KWH * cap for c in cpu_s]
+        cpu_attributed = sum(cpu_parts)
+        # The rest of our process's CPU time, at the same cost and cap.
+        process_rest = max(min(process_wanted * cap, ours) - cpu_attributed, 0.0)
+        other = dynamic_cpu - cpu_attributed - process_rest
+        # GPU: no per-request signal, so split by overlap with the window.
+        weights = []
+        for state in states:
             lo = max(state.start, w0)
             hi = min(state.end if state.end is not None else w1, w1)
-            if hi - lo <= 0:
-                continue
-            weights.append(hi - lo)
-            states.append(state)
+            weights.append(max(hi - lo, 0.0))
+        total_weight = sum(weights)
+        gpu_parts = [
+            dynamic_gpu * weight / total_weight if total_weight > 0 else 0.0
+            for weight in weights
+        ]
 
         if not states:
-            self.unattributed_kwh += delta
+            self.unattributed_kwh += process_rest + dynamic_gpu
         else:
-            total_weight = sum(weights)
-            for state, weight in zip(states, weights):
-                share = delta * (weight / total_weight)
-                state.energy += share
+            gpu_attributed = sum(gpu_parts)
+            for state, now, cpu_part, gpu_part in zip(
+                states, seen, cpu_parts, gpu_parts
+            ):
+                state.cpu_seen_ns = now
+                state.energy += cpu_part
+                state.gpu_energy += gpu_part
+                state.quality = min(
+                    quality, state.quality or quality, key=_QUALITIES.index
+                )
                 state.windows += 1
                 state.concurrency_sum += len(states)
-                self.attributed_kwh += share
-
+            self.attributed_kwh += cpu_attributed + gpu_attributed
+            self.process_unattributed_kwh += process_rest
+            # No overlap at all (or rounding): nobody to give it to.
+            self.unattributed_kwh += dynamic_gpu - gpu_attributed
+        self.other_processes_kwh += other
+        self.idle_kwh += delta - dynamic_cpu - dynamic_gpu
         # Banked only once the split succeeded. The caller swallows exceptions,
         # so advancing the cursor first would drop this window's energy from
-        # settled_kwh and break attributed + unattributed == settled.
+        # settled_kwh; left in place, the next window covers it.
         self.windows_settled += 1
         self.settled_kwh += delta
-        self._t_prev, self._e_prev = now, total_energy_kwh
+        self._prev, self._t_prev, self._times_prev = sample, w1, times
 
     def _emit(self, state: _InFlight) -> None:
+        if state.energy > 0 and state.gpu_energy > 0:
+            method = "mixed"
+        elif state.gpu_energy > 0:
+            method = "wall"
+        else:
+            method = "cpu_time"
         result = RequestEnergy(
             endpoint=state.endpoint,
             energy_kwh=state.energy if state.windows else None,
-            duration_s=(state.end or time.perf_counter()) - state.start,
+            gpu_kwh=state.gpu_energy if state.windows else None,
+            duration_s=(state.end or self._clock()) - state.start,
             windows=state.windows,
             mean_concurrency=(
                 state.concurrency_sum / state.windows if state.windows else None
             ),
+            cpu_seconds=state.meter.total_ns() / 1e9 if state.meter else 0.0,
+            attribution_method=method,
+            quality=state.quality or "none",
         )
         if state.on_resolved is not None:
             try:
@@ -191,8 +551,18 @@ class EnergyAttributor:
         """Run-level accounting, for checking what the split did."""
         return {
             "attributed_kwh": self.attributed_kwh,
+            "idle_kwh": self.idle_kwh,
+            "other_processes_kwh": self.other_processes_kwh,
+            "process_unattributed_kwh": self.process_unattributed_kwh,
             "unattributed_kwh": self.unattributed_kwh,
             "settled_kwh": self.settled_kwh,
+            "idle_power_w": {"cpu": self._cpu_idle.watts, "gpu": self._gpu_idle.watts},
+            "cpu_j_per_cpu_second": self.cpu_j_per_cpu_s,
+            "cpu_cost_source": self.cpu_cost_source,
+            "quality": {
+                "cpu": self._prev.cpu_quality if self._prev else None,
+                "gpu": self._prev.gpu_quality if self._prev else None,
+            },
             "windows_settled": self.windows_settled,
             "windows_skipped": self.windows_skipped,
             "in_flight": len(self._in_flight),  # racy read, reporting only

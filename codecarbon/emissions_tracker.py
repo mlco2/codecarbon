@@ -23,7 +23,13 @@ from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
-from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
+from codecarbon.external.hardware import (
+    CONSUMPTION_PERCENTAGE_CONSTANT,
+    CPU,
+    GPU,
+    MODE_CPU_LOAD,
+    AppleSiliconChip,
+)
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
@@ -54,6 +60,39 @@ if TYPE_CHECKING:
 #      python-distinguish-default-argument-and-argument-provided-with-default-value
 
 _sentinel = object()
+
+#: CPU modes that read an energy or power counter from the hardware.
+_MEASURED_CPU_MODES = ("intel_rapl", "windows_emi", "intel_power_gadget")
+
+
+@dataclasses.dataclass(frozen=True)
+class WindowSample:
+    """The tracker's state at the end of one sampling window.
+
+    Energies are cumulative since the tracker started, in kWh, PUE included.
+    Quality is ``"measured"`` for a hardware counter (RAPL, EMI, Power Gadget,
+    powermetrics, NVML), ``"modeled"`` for CPU load mode and ``"none"`` for a
+    constant TDP guess.
+    """
+
+    #: ``time.perf_counter()`` when the sample was taken.
+    timestamp: float
+    total_kwh: float
+    cpu_kwh: float
+    gpu_kwh: float
+    ram_kwh: float
+    cpu_quality: str
+    #: ``None`` when no GPU is tracked.
+    gpu_quality: Optional[str]
+    #: CPU idle power in W when the power model fixes it (load and constant
+    #: modes), ``None`` when it has to be estimated from the measurements.
+    cpu_idle_w: Optional[float]
+    #: Extra CPU power per busy logical CPU in W (J per CPU-second) when the
+    #: power model fixes it, ``None`` when it has to be fitted.
+    cpu_w_per_busy_cpu: Optional[float]
+    #: The CPU energy already covers only this process (load mode with
+    #: ``tracking_mode="process"``), not the whole machine.
+    cpu_per_process: bool
 
 
 class BaseEmissionsTracker(ABC):
@@ -296,7 +335,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
-        self._window_observers: List[Callable[[float], None]] = []
+        self._window_observers: List[Callable[[WindowSample], None]] = []
         self._scheduler_paused_by_task = False
         self._hardware = []
         self._hardware_initialized = False
@@ -1005,8 +1044,10 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
-    def add_energy_window_observer(self, callback: Callable[[float], None]) -> None:
-        """Call ``callback(total_energy_kwh)`` after every completed sampling window.
+    def add_energy_window_observer(
+        self, callback: Callable[[WindowSample], None]
+    ) -> None:
+        """Call ``callback(sample)`` after every completed sampling window.
 
         The callback runs on whichever thread took the sample (normally the
         scheduler thread), so it must be cheap. Used by the FastAPI per-request
@@ -1014,22 +1055,83 @@ class BaseEmissionsTracker(ABC):
         that were in flight during it.
 
         Args:
-            callback: Receives the tracker's cumulative energy in kWh.
+            callback: Receives a :class:`WindowSample` with the tracker's
+                cumulative energy per component.
         """
         self._window_observers.append(callback)
 
-    def remove_energy_window_observer(self, callback: Callable[[float], None]) -> None:
+    def remove_energy_window_observer(
+        self, callback: Callable[[WindowSample], None]
+    ) -> None:
         """Remove a callback registered with :meth:`add_energy_window_observer`."""
         if callback in self._window_observers:
             self._window_observers.remove(callback)
 
+    def _window_sample(self) -> WindowSample:
+        """Snapshot of the cumulative energies and how they were obtained."""
+        cpu_quality, gpu_quality = "none", None
+        cpu_idle_w: Optional[float] = None
+        cpu_w_per_busy_cpu: Optional[float] = None
+        cpu_per_process = False
+        for hardware in self._hardware:
+            if isinstance(hardware, CPU):
+                if hardware._mode in _MEASURED_CPU_MODES:
+                    cpu_quality = "measured"
+                elif hardware._mode == MODE_CPU_LOAD:
+                    cpu_quality = "modeled"
+                    cpu_per_process = hardware._tracking_mode == "process"
+                    # Machine load mode draws tdp * (0.1 + 0.9 * load^3), so
+                    # idle is exactly 0.1 * TDP. Process mode has no floor.
+                    cpu_idle_w = 0.0 if cpu_per_process else 0.1 * hardware._tdp
+                    cpu_idle_w *= self._pue
+                    # Process mode is linear in CPU time: TDP / CPUs per busy
+                    # CPU. Machine mode is cubic in load; its chord from idle
+                    # to full load, 0.9 * TDP / CPUs, is the linear stand-in.
+                    if cpu_per_process:
+                        slope, cpus = hardware._tdp, hardware._cpu_count
+                    else:
+                        slope, cpus = 0.9 * hardware._tdp, psutil.cpu_count()
+                    cpu_w_per_busy_cpu = slope * self._pue / max(cpus or 1, 1)
+                elif hardware._mode == "constant":
+                    # Constant mode never moves: all of it is idle power.
+                    cpu_idle_w = (
+                        hardware._tdp * CONSUMPTION_PERCENTAGE_CONSTANT * self._pue
+                    )
+                    cpu_w_per_busy_cpu = 0.0
+            elif isinstance(hardware, AppleSiliconChip):
+                if hardware.chip_part == "CPU":
+                    cpu_quality = "measured"
+                elif hardware.chip_part == "GPU":
+                    gpu_quality = "measured"
+            elif isinstance(hardware, GPU):
+                gpu_quality = "measured"
+        return WindowSample(
+            timestamp=self._last_measured_time,
+            total_kwh=self._total_energy.kWh,
+            cpu_kwh=self._total_cpu_energy.kWh,
+            gpu_kwh=self._total_gpu_energy.kWh,
+            ram_kwh=self._total_ram_energy.kWh,
+            cpu_quality=cpu_quality,
+            gpu_quality=gpu_quality,
+            cpu_idle_w=cpu_idle_w,
+            cpu_w_per_busy_cpu=cpu_w_per_busy_cpu,
+            cpu_per_process=cpu_per_process,
+        )
+
     def _notify_energy_window_observers(self) -> None:
-        # Copy: an observer may be removed from another thread mid-iteration.
-        for callback in tuple(self._window_observers):
-            try:
-                callback(self._total_energy.kWh)
-            except Exception:
-                logger.exception("CodeCarbon energy window observer failed")
+        if not self._window_observers:
+            return
+        # Observers are integrations: nothing they touch may break measurement.
+        try:
+            sample = self._window_sample()
+            # Copy: an observer may be removed from another thread mid-iteration.
+            for callback in tuple(self._window_observers):
+                try:
+                    callback(sample)
+                except Exception:
+                    logger.exception("CodeCarbon energy window observer failed")
+        except Exception:
+            logger.exception("CodeCarbon energy window sample failed")
 
     def _carbon_intensity_kg_per_kwh(self) -> float:
         """Current carbon intensity, kg CO2eq per kWh, without touching run totals.
