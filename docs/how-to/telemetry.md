@@ -55,7 +55,7 @@ Empty or unknown values are left out rather than sent as zeros.
 
 ## Retention
 
-Telemetry rows are kept for at most 3 years. They do not include your IP address.
+Telemetry rows are deleted automatically after 3 years. They do not include your IP address.
 
 ## Configure telemetry
 

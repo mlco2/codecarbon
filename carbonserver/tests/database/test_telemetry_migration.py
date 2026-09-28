@@ -115,6 +115,8 @@ def test_upgrade_alters_timestamp_to_timezone_aware_on_existing_postgres_table()
             with (
                 patch.object(module, "_bind_is_postgres", return_value=True),
                 patch("alembic.op.alter_column") as mock_alter,
+                patch("alembic.op.create_index"),
+                patch("alembic.op.execute"),
             ):
                 module.upgrade()
     (call,) = mock_alter.call_args_list
@@ -177,6 +179,7 @@ def test_downgrade_alters_timestamp_back_to_naive_on_postgres():
             with (
                 patch.object(module, "_bind_is_postgres", return_value=True),
                 patch("alembic.op.alter_column") as mock_alter,
+                patch("alembic.op.execute"),
             ):
                 module.downgrade()
     (call,) = mock_alter.call_args_list
@@ -184,6 +187,64 @@ def test_downgrade_alters_timestamp_back_to_naive_on_postgres():
     assert args == ("telemetry", "timestamp")
     assert kwargs["type_"].timezone is False
     assert kwargs["postgresql_using"] == "timestamp AT TIME ZONE 'UTC'"
+
+
+def test_ensure_retention_is_a_noop_on_sqlite():
+    """SQLite has no plpgsql triggers; ``_ensure_retention`` must not touch
+    the connection at all, and the migration must still succeed."""
+    module = _load_migration()
+    engine = sa.create_engine("sqlite:///:memory:")
+    with engine.connect() as conn:
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            module.upgrade()  # must not raise
+        indexes = {ix["name"] for ix in sa.inspect(conn).get_indexes("telemetry")}
+    assert "ix_telemetry_timestamp" not in indexes
+
+
+def test_upgrade_creates_retention_index_trigger_and_function_on_postgres():
+    """On Postgres, upgrade must create the timestamp index, the purge
+    function and the statement-level AFTER INSERT trigger."""
+    module = _load_migration()
+    engine = sa.create_engine("sqlite:///:memory:")
+    with engine.connect() as conn:
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            with (
+                patch.object(module, "_bind_is_postgres", return_value=True),
+                patch("alembic.op.create_index") as mock_create_index,
+                patch("alembic.op.execute") as mock_execute,
+            ):
+                module.upgrade()
+    index_calls = [c.args for c in mock_create_index.call_args_list]
+    assert ("ix_telemetry_timestamp", "telemetry", ["timestamp"]) in index_calls
+    executed_sql = "\n".join(c.args[0] for c in mock_execute.call_args_list)
+    assert "CREATE OR REPLACE FUNCTION telemetry_purge()" in executed_sql
+    assert "DELETE FROM telemetry WHERE timestamp < now() - interval '3 years'" in (
+        executed_sql
+    )
+    assert "CREATE TRIGGER telemetry_retention" in executed_sql
+    assert "FOR EACH STATEMENT" in executed_sql
+
+
+def test_downgrade_drops_retention_trigger_function_and_index_on_postgres():
+    module = _load_migration()
+    engine = sa.create_engine("sqlite:///:memory:")
+    with engine.connect() as conn:
+        _create_old_table(conn, module)
+        ctx = MigrationContext.configure(conn)
+        with Operations.context(ctx):
+            module.upgrade()
+            with (
+                patch.object(module, "_bind_is_postgres", return_value=True),
+                patch("alembic.op.alter_column"),
+                patch("alembic.op.execute") as mock_execute,
+            ):
+                module.downgrade()
+    executed_sql = "\n".join(c.args[0] for c in mock_execute.call_args_list)
+    assert "DROP TRIGGER IF EXISTS telemetry_retention" in executed_sql
+    assert "DROP FUNCTION IF EXISTS telemetry_purge()" in executed_sql
+    assert "DROP INDEX IF EXISTS ix_telemetry_timestamp" in executed_sql
 
 
 def test_downgrade_restores_old_columns_as_nullable_preserving_rows():
