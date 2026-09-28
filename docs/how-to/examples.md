@@ -208,3 +208,12 @@ on I/O counts the same as time spent computing, and a lone short request in an
 otherwise idle window receives that window's full energy. Sum the values per
 route over many requests rather than reading a single one, and lower
 `measure_power_secs` for finer-grained windows.
+
+With `uvicorn --workers N` (or any multi-process server), each worker gets
+its own tracker in its own process, and by default a tracker measures the
+*whole machine*. Summing per-request energy across all workers then
+overcounts by roughly N×, the same overcounting the middleware avoids within
+a single process. Run a single worker per machine when you need per-request
+numbers. `tracking_mode="process"` only helps when CPU power is estimated
+from CPU load: RAPL, powermetrics and NVML counters are machine-wide, so each
+worker still sees the whole machine's energy.
