@@ -67,25 +67,25 @@ class CodeCarbonAPIOutput(BaseOutput):
     def exit(self) -> None:
         self.api.close()
 
-    def _ensure_api_run(self) -> None:
+    def _ensure_api_run(self, final: bool = False) -> None:
         if self.api.run_id is None and self.api.experiment_id is not None:
-            self.api._create_run(self.api.experiment_id)
+            self.api._create_run(self.api.experiment_id, bypass_cooldown=final)
             self.run_id = self.api.run_id
 
-    def _emit(self, delta: EmissionsData) -> None:
+    def _emit(self, delta: EmissionsData, final: bool = False) -> None:
         try:
             if self.create_run_on_emit:
-                self._ensure_api_run()
+                self._ensure_api_run(final=final)
             elif self.api.run_id is None:
                 # The owner of this output already failed to create the run.
                 logger.debug("CodeCarbonAPIOutput: no API run, emission not sent.")
                 return
-            self.api.add_emission(dataclasses.asdict(delta))
+            self.api.add_emission(dataclasses.asdict(delta), final=final)
         except Exception as e:
             logger.error(e, exc_info=True)
 
     def live_out(self, _, delta: EmissionsData):
         self._emit(delta)
 
-    def out(self, _, delta: EmissionsData):
-        self._emit(delta)
+    def out(self, _, delta: EmissionsData, final: bool = False):
+        self._emit(delta, final=final)
