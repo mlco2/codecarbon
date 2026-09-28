@@ -471,7 +471,7 @@ def monitor(
     Emissions are appended to the same emissions.csv report. See
     https://docs.codecarbon.io/latest/tutorials/cli/#track-any-command
     """
-    if telemetry_level is None:
+    if telemetry_level is None and not offline:
         ask_telemetry_level_once()
 
     external_conf = _external_config()

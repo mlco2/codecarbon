@@ -93,7 +93,7 @@ class Telemetry:
         # WARNING-only notice while still marking it as shown. Print to stderr
         # so the one-time notice is seen regardless of the configured log level.
         print(TELEMETRY_NOTICE % self.settings.level.value, file=sys.stderr)
-        logger.warning(TELEMETRY_NOTICE, self.settings.level.value)
+        logger.debug(TELEMETRY_NOTICE, self.settings.level.value)
 
     def send_at_stop(self, tracker: Any, emissions: EmissionsData) -> None:
         """Send product telemetry on the first qualifying ``stop()`` of the process."""
