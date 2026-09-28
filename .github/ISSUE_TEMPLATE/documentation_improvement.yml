@@ -1,0 +1,26 @@
+name: Documentation improvement
+description: Report something missing, wrong, or confusing in the documentation
+labels: ["documentation"]
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Which page?
+      description: URL or file path of the page that needs improvement.
+      placeholder: "https://docs.codecarbon.io/latest/how-to/configuration/"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What would you suggest instead?
+    validations:
+      required: false

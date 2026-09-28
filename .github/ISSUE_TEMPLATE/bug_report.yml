@@ -1,0 +1,122 @@
+name: Bug report
+description: Something in CodeCarbon is not working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report.
+
+        Before you start: if your emissions look wrong rather than the tool
+        crashing, please check the
+        [troubleshooting guide](https://docs.codecarbon.io/latest/how-to/troubleshooting/)
+        first — many measurement issues are configuration, especially RAPL
+        permissions on Linux.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal code to reproduce
+      description: The smallest script that shows the problem.
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: detect-output
+    attributes:
+      label: Output of `codecarbon detect`
+      description: |
+        Run `codecarbon detect` in the same environment and paste the full
+        output. This tells us what hardware and measurement backends
+        CodeCarbon found, and it answers most questions immediately.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug log
+      description: |
+        Re-run with `EmissionsTracker(log_level="debug")` and paste the
+        CodeCarbon log output. Warnings about RAPL, CPU detection, or
+        another running instance are especially relevant.
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: CodeCarbon version
+      description: "Output of `codecarbon --version`"
+      placeholder: "3.3.0"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "3.12.4"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows
+        - Windows (WSL)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where is this running?
+      options:
+        - Directly on my machine
+        - Docker / container
+        - Virtual machine
+        - Cloud VM (AWS / GCP / Azure / other)
+        - HPC cluster / SLURM
+        - CI pipeline
+        - Jupyter notebook / Colab
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: How did you install CodeCarbon?
+      options:
+        - pip
+        - uv
+        - conda + pip
+        - from source
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+    validations:
+      required: false
