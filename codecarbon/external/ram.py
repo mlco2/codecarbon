@@ -3,16 +3,19 @@ import os
 import re
 import subprocess
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple
 
 import psutil
 
-from codecarbon.core.units import Power
+from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import SLURM_JOB_ID
 from codecarbon.external.hardware import B_TO_GB, BaseHardware
 from codecarbon.external.logger import logger
 
 RAM_SLOT_POWER_X86 = 5  # Watts
+# Measurement intervals a DRAM counter may stay still before it is deemed
+# unimplemented: client CPUs often expose a DRAM domain stuck at 0
+DRAM_DEAD_AFTER_INTERVALS = 3
 
 
 @dataclass
@@ -32,6 +35,11 @@ class RAM(BaseHardware):
 
     memory_size = None
     is_arm_cpu = False
+    # Interface measuring the DRAM energy (IntelRAPL with rapl_include_dram)
+    _dram_source = None
+    # Whether the DRAM counter was seen moving, and intervals it has not
+    _dram_alive = False
+    _dram_still_intervals = 0
 
     def __init__(
         self,
@@ -340,3 +348,27 @@ class RAM(BaseHardware):
             ram_power = Power.from_watts(0)
 
         return ram_power
+
+    def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
+        """
+        Use the measured DRAM energy when a DRAM domain is read, otherwise
+        estimate it. Until the DRAM counter is seen moving, the estimate is
+        used, and a counter that never moves is dropped for good.
+        """
+        if self._dram_source is not None:
+            measured = self._dram_source.get_dram_energy(Time(seconds=last_duration))
+            # A negative delta is a counter wrap we could not correct: estimate
+            # this interval instead of reporting negative energy.
+            if measured is not None and measured[1].kWh >= 0:
+                if self._dram_alive or measured[1].kWh > 0:
+                    self._dram_alive = True
+                    return measured
+                self._dram_still_intervals += 1
+                if self._dram_still_intervals >= DRAM_DEAD_AFTER_INTERVALS:
+                    logger.warning(
+                        "The DRAM energy counter did not move over %d measurements, "
+                        "falling back to the RAM power estimation model",
+                        self._dram_still_intervals,
+                    )
+                    self._dram_source = None
+        return super().measure_power_and_energy(last_duration=last_duration)

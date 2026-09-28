@@ -109,24 +109,20 @@ def test_rapl_include_dram_true_explicit(tmp_path):
     # Create IntelRAPL with rapl_include_dram=True explicitly
     rapl = IntelRAPL(rapl_dir=str(base), rapl_include_dram=True)
 
-    # Should have 2 RAPL files: package-0 + dram
-    assert len(rapl._rapl_files) == 2, f"Expected 2 files, got {len(rapl._rapl_files)}"
-
-    # Verify both package and dram are present
-    names = [f.name for f in rapl._rapl_files]
-    # Both domains must be named so that they are summed in the reported energy
-    assert (
-        len([name for name in names if "Processor Energy" in name]) == 2
-    ), f"Expected package and DRAM to both be aggregated, got {names}"
+    # The package is a CPU counter, the DRAM domain is read apart for the RAM
+    assert [f.name for f in rapl._rapl_files] == ["Processor Energy Delta_0(kWh)"]
+    assert len(rapl._dram_files) == 1
+    assert "intel-rapl:1" in rapl._dram_files[0].path
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
-@pytest.mark.parametrize("include_dram, expected_uj", [(False, 100000), (True, 125000)])
-def test_rapl_include_dram_energy_is_aggregated(tmp_path, include_dram, expected_uj):
+@pytest.mark.parametrize("include_dram", [False, True])
+def test_rapl_cpu_energy_excludes_dram(tmp_path, monkeypatch, include_dram):
     """
-    Verify that DRAM energy actually contributes to the total reported by
-    get_cpu_details() when rapl_include_dram=True.
+    The DRAM energy is never added to the CPU energy: with
+    rapl_include_dram=True it is reported by the RAM component instead
+    (https://github.com/mlco2/codecarbon/issues/1268).
     """
+    monkeypatch.setattr(sys, "platform", "linux")
     base = tmp_path
     rapl_provider = base / "intel-rapl"
     rapl_provider.mkdir()
@@ -144,12 +140,14 @@ def test_rapl_include_dram_energy_is_aggregated(tmp_path, include_dram, expected
     (d_dram / "max_energy_range_uj").write_text("262143328850")
 
     rapl = IntelRAPL(rapl_dir=str(base), rapl_include_dram=include_dram)
+    rapl.start()
 
     # Simulate one second of consumption
     (d_package / "energy_uj").write_text(str(1000000 + 100000))
     (d_dram / "energy_uj").write_text(str(500000 + 25000))
 
     details = rapl.get_cpu_details(Time.from_seconds(1))
+    dram = rapl.get_dram_energy(Time.from_seconds(1))
 
     energy = sum(
         value
@@ -157,7 +155,13 @@ def test_rapl_include_dram_energy_is_aggregated(tmp_path, include_dram, expected
         if re.match(r"^Processor Energy Delta_\d", metric)
     )
     # micro joules -> kWh
-    assert energy == pytest.approx(expected_uj / (1000 * 3600 * 1e6))
+    assert energy == pytest.approx(100000 / (1000 * 3600 * 1e6))
+    if include_dram:
+        power, dram_energy = dram
+        assert dram_energy.kWh == pytest.approx(25000 / (1000 * 3600 * 1e6))
+        assert power.W == pytest.approx(0.025)
+    else:
+        assert dram is None
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
@@ -568,3 +572,71 @@ def test_rapl_non_power_domain_keeps_its_own_name(tmp_path):
     names = [f.name for f in rapl._rapl_files]
     assert names, "Fallback should still expose the available domain"
     assert not any("Processor Energy" in name for name in names), names
+
+
+def _make_nested_dram_tree(base, sockets):
+    """
+    Mimic real Xeon sysfs: each DRAM zone is a child of its package
+    (intel-rapl/intel-rapl:N/intel-rapl:N:0), with flat symlinks
+    intel-rapl:N and intel-rapl:N:0 next to the control type directory.
+    """
+    control = base / "intel-rapl"
+    control.mkdir()
+    dram_files = []
+    for socket in range(sockets):
+        package = control / f"intel-rapl:{socket}"
+        package.mkdir()
+        (package / "name").write_text(f"package-{socket}")
+        (package / "energy_uj").write_text("1000000")
+        (package / "max_energy_range_uj").write_text("262143328850")
+        dram = package / f"intel-rapl:{socket}:0"
+        dram.mkdir()
+        (dram / "name").write_text("dram")
+        (dram / "energy_uj").write_text("500000")
+        (dram / "max_energy_range_uj").write_text("262143328850")
+        (base / f"intel-rapl:{socket}").symlink_to(package)
+        (base / f"intel-rapl:{socket}:0").symlink_to(dram)
+        dram_files.append(dram / "energy_uj")
+    return dram_files
+
+
+@pytest.mark.parametrize("sockets", [1, 2])
+def test_rapl_reads_nested_dram_zones_once_per_socket(tmp_path, monkeypatch, sockets):
+    monkeypatch.setattr(sys, "platform", "linux")
+    dram_files = _make_nested_dram_tree(tmp_path, sockets)
+
+    # Scanning <base>/intel-rapl and <base> sees each DRAM zone twice
+    rapl = IntelRAPL(rapl_dir=str(tmp_path / "intel-rapl"), rapl_include_dram=True)
+    rapl.start()
+
+    assert len(rapl._dram_files) == sockets
+    assert len(rapl._rapl_files) == sockets
+    for dram_file in dram_files:
+        dram_file.write_text(str(500000 + 25000))
+
+    _, energy = rapl.get_dram_energy(Time.from_seconds(1))
+    assert energy.kWh == pytest.approx(sockets * 25000 / (1000 * 3600 * 1e6))
+
+
+@pytest.mark.parametrize("prefer_psys", [True, False])
+def test_rapl_psys_does_not_read_dram(tmp_path, monkeypatch, prefer_psys):
+    """psys usually includes the DRAM already: it is never read apart."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    provider = tmp_path / "intel-rapl"
+    provider.mkdir()
+    domains = [("psys", "intel-rapl:1"), ("dram", "intel-rapl:2")]
+    if prefer_psys:
+        domains.append(("package-0", "intel-rapl:0"))
+    for name, zone in domains:
+        d = provider / zone
+        d.mkdir()
+        (d / "name").write_text(name)
+        (d / "energy_uj").write_text("1000000")
+        (d / "max_energy_range_uj").write_text("262143328850")
+
+    rapl = IntelRAPL(
+        rapl_dir=str(tmp_path), rapl_include_dram=True, rapl_prefer_psys=prefer_psys
+    )
+
+    assert rapl._dram_files == []
+    assert rapl.get_dram_energy(Time.from_seconds(1)) is None
