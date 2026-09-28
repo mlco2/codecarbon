@@ -146,6 +146,8 @@ If you find CodeCarbon useful for your research, use the **Cite this repository*
                   Mathilde Léval and
                   Luis Blanche and
                   Alexis Cruveiller and
+                  Amine Saboni and
+                  Franklin Zhao and
                   Aditya Joshi and
                   Alexis Bogroff and
                   Hugues de Lavoreille and
