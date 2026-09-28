@@ -88,7 +88,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
     def test_offline_tracker_raises_on_invalid_region(self):
         # A second, offline-specific constructor path: the region check runs
         # before `super().__init__`, so it also has to reach the caller.
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             OfflineEmissionsTracker(country_iso_code="FRA", region=123)
 
     def test_offline_tracker_lowercases_valid_region(self):
@@ -99,7 +99,7 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         self.assertEqual(tracker._region, "ile-de-france")
 
     def test_offline_tracker_raises_on_invalid_country_2letter_iso_code(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             OfflineEmissionsTracker(country_iso_code="FRA", country_2letter_iso_code=42)
 
     def test_offline_tracker_uppercases_valid_country_2letter_iso_code(self):
