@@ -7,7 +7,6 @@ import os
 import sys
 import threading
 import time
-from pathlib import Path
 from typing import Any
 
 from codecarbon.core.telemetry.client import post_private
@@ -25,18 +24,14 @@ EXIT_JOIN_SECONDS = 1.0
 
 THREAD_NAME = "codecarbon-telemetry"
 
-#: Remembers, per machine, that the default-level notice was shown.
-NOTICE_MARKER = Path.home() / ".codecarbon" / "telemetry_notice_shown"
-
 TELEMETRY_NOTICE = (
     "CodeCarbon telemetry is on by default at level %r: once per process, "
     "stop() sends environment and hardware info (OS, Python and CodeCarbon "
     "versions, CPU/GPU model and count, RAM size, country/region, cloud "
-    "provider); no code, data, file paths or coordinates. Opt out with "
-    "`codecarbon telemetry set disabled` or "
-    "CODECARBON_TELEMETRY_LEVEL=disabled. Details: "
-    "https://docs.codecarbon.io/latest/how-to/telemetry/ "
-    "This notice is shown once per machine."
+    "provider); no code, data, file paths or coordinates. Choose a level "
+    "with `codecarbon telemetry set minimal|disabled` or "
+    "CODECARBON_TELEMETRY_LEVEL to silence this notice. Details: "
+    "https://docs.codecarbon.io/latest/how-to/telemetry/"
 )
 
 _pending: set[threading.Thread] = set()
@@ -46,16 +41,22 @@ _pending: set[threading.Thread] = set()
 _sent_lock = threading.Lock()
 _sent = False
 
+#: The implicit-level notice is shown at most once per process.
+_notice_lock = threading.Lock()
+_notice_shown = False
+
 
 def _reset_after_fork() -> None:
     """A forked child is its own process: let it send its own telemetry too.
 
-    Also rebuilds the lock, since a lock inherited across ``fork()`` may be
+    Also rebuilds the locks, since a lock inherited across ``fork()`` may be
     left held if another thread owned it at fork time.
     """
-    global _sent, _sent_lock
+    global _sent, _sent_lock, _notice_shown, _notice_lock
     _sent = False
     _sent_lock = threading.Lock()
+    _notice_shown = False
+    _notice_lock = threading.Lock()
     _pending.clear()
 
 
@@ -80,16 +81,14 @@ class Telemetry:
         self._thread: threading.Thread | None = None
 
     def notice_once_if_implicit(self) -> None:
-        """Explain the default tier once per machine when none was chosen."""
+        """Explain the default tier once per process while none was chosen."""
+        global _notice_shown
         if self.settings.is_explicit or self.settings.level == TelemetryLevel.disabled:
             return
-        try:
-            if NOTICE_MARKER.exists():
+        with _notice_lock:
+            if _notice_shown:
                 return
-            NOTICE_MARKER.parent.mkdir(parents=True, exist_ok=True)
-            NOTICE_MARKER.touch()
-        except OSError:
-            pass  # read-only home: showing it again beats never showing it
+            _notice_shown = True
         # `codecarbon monitor` defaults to log_level=error, which would hide a
         # WARNING-only notice while still marking it as shown. Print to stderr
         # so the one-time notice is seen regardless of the configured log level.
