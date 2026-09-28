@@ -201,13 +201,24 @@ class TestTrackerTelemetry(unittest.TestCase):
 
     def test_notice_once_per_process_when_level_not_explicit(self, mock_cli_setup):
         self._mock_config(_conf())
-        with patch(
-            "codecarbon.core.telemetry.dispatcher.logger.warning"
-        ) as mock_warning:
+        with patch("codecarbon.core.telemetry.dispatcher.logger.debug") as mock_debug:
             EmissionsTracker(save_to_api=False, save_to_file=False)
             EmissionsTracker(save_to_api=False, save_to_file=False)
-        notices = self._notices(mock_warning)
+        notices = self._notices(mock_debug)
         self.assertEqual(len(notices), 1)
+
+    def test_notice_logged_at_debug_not_warning(self, mock_cli_setup):
+        """The notice is printed to stderr once; it must not also be logged
+        at WARNING, or it would show twice at warning-or-lower log levels."""
+        self._mock_config(_conf())
+        with (
+            patch("sys.stderr"),
+            patch(
+                "codecarbon.core.telemetry.dispatcher.logger.warning"
+            ) as mock_warning,
+        ):
+            EmissionsTracker(save_to_api=False, save_to_file=False)
+        self.assertEqual(self._notices(mock_warning), [])
 
     def test_payload_built_off_the_stop_thread(self, mock_cli_setup):
         self._mock_config(_conf("minimal"))
@@ -305,20 +316,20 @@ class TestDispatcherEdges(unittest.TestCase):
         """Many trackers in one process must only print the notice once."""
         from codecarbon.core.telemetry import dispatcher
 
-        with patch.object(dispatcher.logger, "warning") as mock_warning:
+        with patch.object(dispatcher.logger, "debug") as mock_debug:
             self._telemetry().notice_once_if_implicit()
             self._telemetry().notice_once_if_implicit()
-        mock_warning.assert_called_once()
+        mock_debug.assert_called_once()
 
     def test_notice_shown_again_in_a_fresh_process(self):
         """A new process (simulated by ``_reset_after_fork``) sees it again."""
         from codecarbon.core.telemetry import dispatcher
 
-        with patch.object(dispatcher.logger, "warning") as mock_warning:
+        with patch.object(dispatcher.logger, "debug") as mock_debug:
             self._telemetry().notice_once_if_implicit()
             dispatcher._reset_after_fork()
             self._telemetry().notice_once_if_implicit()
-        self.assertEqual(mock_warning.call_count, 2)
+        self.assertEqual(mock_debug.call_count, 2)
 
     def test_notice_never_shown_when_level_explicit(self):
         from codecarbon.core.telemetry import dispatcher

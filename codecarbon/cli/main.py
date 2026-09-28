@@ -429,7 +429,7 @@ def monitor(
     ] = None,
 ):
     """Monitor your machine's carbon emissions."""
-    if telemetry_level is None:
+    if telemetry_level is None and not offline:
         ask_telemetry_level_once()
 
     external_conf = _external_config()
