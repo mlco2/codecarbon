@@ -1387,7 +1387,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._region is not None:
             if not isinstance(self._region, str):
-                raise ValueError(f"region must be a string, got {self._region!r}")
+                raise TypeError(f"region must be a string, got {self._region!r}")
             self._region: str = self._region.lower()
 
         if self._cloud_provider:
@@ -1398,7 +1398,7 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
 
         if self._country_2letter_iso_code:
             if not isinstance(self._country_2letter_iso_code, str):
-                raise ValueError(
+                raise TypeError(
                     "country_2letter_iso_code must be a string, "
                     f"got {self._country_2letter_iso_code!r}"
                 )
