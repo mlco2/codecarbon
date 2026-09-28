@@ -1,3 +1,4 @@
+import sys
 import tempfile
 import time
 import unittest
@@ -120,6 +121,26 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
 
         with self.assertLogs("codecarbon", level="ERROR"):
             self.assertEqual(fn(), 42)
+
+    def test_untracked_function_errors_are_not_chained_to_construction_error(self):
+        # The construction error is only logged: it must not become the
+        # __context__ of the user's own exception or show in sys.exc_info().
+        seen = {}
+
+        @track_emissions(
+            offline=True,
+            country_iso_code="FRA",
+            output_dir=str(self.temp_path / "does_not_exist"),
+        )
+        def fn():
+            seen["exc_info"] = sys.exc_info()
+            raise KeyError("user error")
+
+        with self.assertLogs("codecarbon", level="ERROR"):
+            with self.assertRaises(KeyError) as raised:
+                fn()
+        self.assertIsNone(raised.exception.__context__)
+        self.assertEqual(seen["exc_info"], (None, None, None))
 
     def test_resolve_offline_country_name_logs_on_invalid_iso(self):
         tracker = OfflineEmissionsTracker(
