@@ -11,6 +11,13 @@ vi.mock("react-router-dom", async () => {
     return { ...actual, useNavigate: () => navigateMock };
 });
 
+const redirectToAccountMock = vi.hoisted(() => vi.fn());
+const redirectToLogoutMock = vi.hoisted(() => vi.fn());
+vi.mock("@/api/auth", () => ({
+    redirectToAccount: redirectToAccountMock,
+    redirectToLogout: redirectToLogoutMock,
+}));
+
 const fetcherMock = vi.hoisted(() => vi.fn());
 vi.mock("@/api/swr", () => ({ fetcher: fetcherMock, swrConfig: {} }));
 vi.mock("@/api/organizations", () => ({ getOrganizations: vi.fn() }));
@@ -55,6 +62,8 @@ function renderMenu() {
 beforeEach(() => {
     fetcherMock.mockReset();
     navigateMock.mockReset();
+    redirectToAccountMock.mockReset();
+    redirectToLogoutMock.mockReset();
     mockApi();
 });
 
@@ -134,14 +143,21 @@ describe("AccountMenu", () => {
         expect(onSelectOrg).toHaveBeenCalledWith("o2");
     });
 
-    it("goes to settings from its own row", async () => {
+    it("leaves for the provider's account console from its own row", async () => {
         renderMenu();
         await userEvent.click(screen.getByRole("button", { name: "Account" }));
         await userEvent.click(
             await screen.findByRole("menuitem", { name: "Settings" }),
         );
-        await waitFor(() =>
-            expect(navigateMock).toHaveBeenCalledWith("/settings"),
+        await waitFor(() => expect(redirectToAccountMock).toHaveBeenCalled());
+    });
+
+    it("logs out through the API from its own row", async () => {
+        renderMenu();
+        await userEvent.click(screen.getByRole("button", { name: "Account" }));
+        await userEvent.click(
+            await screen.findByRole("menuitem", { name: "Log out" }),
         );
+        await waitFor(() => expect(redirectToLogoutMock).toHaveBeenCalled());
     });
 });

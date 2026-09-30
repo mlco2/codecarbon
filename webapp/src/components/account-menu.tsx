@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import useSWR from "swr";
 
+import { redirectToAccount, redirectToLogout } from "@/api/auth";
 import { getOrganizations } from "@/api/organizations";
 import { Organization, OrganizationUser, User } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
@@ -31,7 +31,6 @@ export default function AccountMenu({
     // Keyed on instead of `open`, so closing the menu does not drop the admin
     // lookup below and regroup the organizations as it animates out.
     const [hasOpened, setHasOpened] = useState(false);
-    const navigate = useNavigate();
     const newOrgModal = useModal();
     const [organizationList, setOrganizationList] = useState<
         Organization[] | undefined
@@ -141,17 +140,19 @@ export default function AccountMenu({
                         </MenuItem>
                     ))}
 
+                    {/* Email and password are owned by the identity provider,
+                        so this leaves the app for its account console. The API
+                        holds the issuer URL and redirects, the same way login
+                        does. */}
                     <MenuItem
-                        onSelect={() => navigate("/settings")}
+                        onSelect={redirectToAccount}
                         icon={<SettingsIcon className="size-6 shrink-0" />}
                     >
                         Settings
                     </MenuItem>
 
                     <MenuItem
-                        onSelect={() => {
-                            window.location.href = `${import.meta.env.VITE_API_URL}/auth/logout`;
-                        }}
+                        onSelect={redirectToLogout}
                         icon={
                             <LogoutIcon className="size-5 shrink-0 translate-x-1" />
                         }
