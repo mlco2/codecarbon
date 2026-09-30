@@ -1,7 +1,13 @@
 from typing import List
 from uuid import UUID
 
-from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
+from carbonserver.api.errors import (
+    NotAllowedError,
+    NotAllowedErrorEnum,
+    NotFoundError,
+    NotFoundErrorEnum,
+    UserException,
+)
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
 )
@@ -104,3 +110,35 @@ class OrganizationService:
         return self._user_repository.subscribe_user_to_org(
             user=user_to_add, organization_id=organization_id, is_admin=False
         )
+
+    def remove_user(self, *, organization_id: str, user_id: str, user: User = None):
+        if not self._auth_context.can_write_organization(organization_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+                    message="Operation not authorized on organization",
+                )
+            )
+        user_to_remove = self._user_repository.get_user_by_id(user_id)
+        # There is no record of who created the organization — the creator is
+        # only an admin like any other — so administrators are protected from
+        # each other rather than ranked. Demote first, then remove.
+        if self._user_repository.is_admin_in_organization(
+            organization_id, user_to_remove
+        ):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                    message="An administrator cannot be removed from the organization",
+                )
+            )
+        removed = self._user_repository.unsubscribe_user_from_org(
+            user_id=user_to_remove.id, organization_id=organization_id
+        )
+        if not removed:
+            raise UserException(
+                NotFoundError(
+                    code=NotFoundErrorEnum.NOT_FOUND,
+                    message="User is not a member of this organization",
+                )
+            )

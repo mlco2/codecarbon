@@ -28,12 +28,11 @@ const MENU_GAP = 4;
 
 export default function MemberRow({
     member,
-    onSettings,
     onDelete,
 }: Readonly<{
     member: OrganizationUser;
-    /** Undefined leaves the action in the menu but inert, as it is today. */
-    onSettings?: () => void;
+    /** Omitted for anyone who may not remove this member; the menu then has
+        nothing in it and the trigger is not rendered at all. */
     onDelete?: () => void;
 }>) {
     /* The API's name can come back empty; the email is the only field always
@@ -85,40 +84,39 @@ export default function MemberRow({
                 )}
             </TableCell>
 
-            {/* Only as wide as its trigger. */}
+            {/* Only as wide as its trigger, and empty when there is nothing
+                to offer — a disabled control would only advertise an action
+                the viewer cannot take. */}
             <TableCell className="w-px p-0 align-middle">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button
-                            type="button"
-                            className="flex cursor-pointer items-center p-5 text-cc-white outline-none transition-colors hover:text-cc-button-hover focus-visible:ring-2 focus-visible:ring-cc-lime data-[state=open]:text-cc-button-hover motion-reduce:transition-none"
+                {onDelete && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="flex cursor-pointer items-center p-5 text-cc-white outline-none transition-colors hover:text-cc-button-hover focus-visible:ring-2 focus-visible:ring-cc-lime data-[state=open]:text-cc-button-hover motion-reduce:transition-none"
+                            >
+                                <span className="sr-only">
+                                    {`Actions for ${name || member.email}`}
+                                </span>
+                                <MoreVertIcon className="size-6" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        {/*
+                         * The design fills this menu with "Resend invite" and a
+                         * "Settings" entry, neither of which has an endpoint
+                         * behind it — there is no pending invitation to resend
+                         * and no membership field to edit. Removal is the one
+                         * action the API supports, so it is the one row here.
+                         */}
+                        <MenuPanel
+                            align="end"
+                            sideOffset={MENU_GAP - TRIGGER_INSET}
+                            alignOffset={TRIGGER_INSET}
                         >
-                            <span className="sr-only">
-                                {`Actions for ${name || member.email}`}
-                            </span>
-                            <MoreVertIcon className="size-6" />
-                        </button>
-                    </DropdownMenuTrigger>
-                    {/*
-                     * The design fills this menu with "Resend invite", which has
-                     * no endpoint behind it. It keeps the two actions the page
-                     * has always offered on a member instead, and they stay
-                     * disabled while they stay unimplemented — as they were
-                     * before the redesign.
-                     */}
-                    <MenuPanel
-                        align="end"
-                        sideOffset={MENU_GAP - TRIGGER_INSET}
-                        alignOffset={TRIGGER_INSET}
-                    >
-                        <MenuItem disabled={!onSettings} onSelect={onSettings}>
-                            Settings
-                        </MenuItem>
-                        <MenuItem disabled={!onDelete} onSelect={onDelete}>
-                            Delete
-                        </MenuItem>
-                    </MenuPanel>
-                </DropdownMenu>
+                            <MenuItem onSelect={onDelete}>Delete</MenuItem>
+                        </MenuPanel>
+                    </DropdownMenu>
+                )}
             </TableCell>
         </TableRow>
     );

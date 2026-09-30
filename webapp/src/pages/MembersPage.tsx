@@ -8,6 +8,7 @@ import { z } from "zod";
 import ErrorMessage from "@/components/error-message";
 import Loader from "@/components/loader";
 import MemberRow from "@/components/member-row";
+import RemoveMemberModal from "@/components/remove-member-modal";
 import { FormField } from "@/components/ui/form-field";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import {
@@ -18,8 +19,11 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import { addOrganizationUser } from "@/api/organizations";
-import { Organization, OrganizationUser } from "@/api/schemas";
+import {
+    addOrganizationUser,
+    removeOrganizationUser,
+} from "@/api/organizations";
+import { Organization, OrganizationUser, User } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
@@ -39,6 +43,9 @@ export default function MembersPage() {
     const [email, setEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isInviting, setIsInviting] = useState(false);
+    const [memberToRemove, setMemberToRemove] =
+        useState<OrganizationUser | null>(null);
+    const [isRemoving, setIsRemoving] = useState(false);
 
     /*
      * The breadcrumb's organization name, fetched as the other redesigned pages
@@ -65,6 +72,49 @@ export default function MembersPage() {
         error: fetchError,
         isLoading,
     } = useSWR<OrganizationUser[]>(membersKey, fetcher);
+
+    /*
+     * Who may remove whom. Admin rights are recorded per organization, on the
+     * member list itself, so the viewer's own row is what says whether they
+     * administer this one. The API enforces the same rule; this only keeps the
+     * control off screens where pressing it would be refused.
+     */
+    const { data: auth } = useSWR<{ user?: User }>("/auth/check", fetcher, {
+        revalidateOnFocus: false,
+    });
+    const currentUserId = auth?.user?.id;
+    const isAdmin = Boolean(
+        currentUserId &&
+            members?.some((m) => m.id === currentUserId && m.is_admin),
+    );
+
+    async function handleRemove() {
+        if (!memberToRemove) return;
+
+        const name = memberToRemove.name?.trim() || memberToRemove.email;
+        setIsRemoving(true);
+        try {
+            await toast
+                .promise(
+                    removeOrganizationUser(organizationId!, memberToRemove.id),
+                    {
+                        loading: `Removing ${name}...`,
+                        success: `${name} was removed`,
+                        error: (err) =>
+                            err instanceof Error
+                                ? err.message
+                                : "Failed to remove member",
+                    },
+                )
+                .unwrap();
+            setMemberToRemove(null);
+            await mutate(membersKey);
+        } catch {
+            /* The dialog stays open on failure, with the toast carrying why. */
+        } finally {
+            setIsRemoving(false);
+        }
+    }
 
     const emailSchema = z.string().email("Please enter a valid email address");
 
@@ -215,7 +265,19 @@ export default function MembersPage() {
                     </TableHeader>
                     <TableBody>
                         {sortedMembers.map((member) => (
-                            <MemberRow key={member.id} member={member} />
+                            <MemberRow
+                                key={member.id}
+                                member={member}
+                                /* The API refuses to remove an administrator —
+                                   nothing records who created the organization,
+                                   so admins are protected from each other
+                                   rather than ranked. */
+                                onDelete={
+                                    isAdmin && !member.is_admin
+                                        ? () => setMemberToRemove(member)
+                                        : undefined
+                                }
+                            />
                         ))}
                     </TableBody>
                 </Table>
@@ -237,6 +299,16 @@ export default function MembersPage() {
                     </p>
                 </div>
             )}
+
+            <RemoveMemberModal
+                isOpen={memberToRemove !== null}
+                onClose={() => setMemberToRemove(null)}
+                onConfirm={handleRemove}
+                memberName={
+                    memberToRemove?.name?.trim() || memberToRemove?.email || ""
+                }
+                isRemoving={isRemoving}
+            />
         </div>
     );
 }

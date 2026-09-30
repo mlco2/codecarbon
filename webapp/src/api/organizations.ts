@@ -60,3 +60,20 @@ export async function addOrganizationUser(
         body: JSON.stringify({ email }),
     });
 }
+
+/*
+ * Remove a member from an organization.
+ *
+ * The endpoint is admin-only and refuses to remove another administrator —
+ * nothing records who created the organization, so admins are protected from
+ * each other rather than ranked. It answers with a bare status object, so the
+ * caller refetches the list.
+ */
+export async function removeOrganizationUser(
+    organizationId: string,
+    userId: string,
+): Promise<void> {
+    await fetchApiVoid(`/organizations/${organizationId}/users/${userId}`, {
+        method: "DELETE",
+    });
+}

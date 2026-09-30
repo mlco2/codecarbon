@@ -91,6 +91,30 @@ class SqlAlchemyRepository(Users):
             session.commit()
             return user
 
+    def unsubscribe_user_from_org(
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+    ) -> bool:
+        """Remove a user's membership of an organization.
+
+        :returns: Whether a membership was found and deleted.
+        :rtype: bool
+        """
+        with self.session_factory() as session:
+            membership = (
+                session.query(SqlModelMembership)
+                .filter(SqlModelMembership.user_id == user_id)
+                .filter(SqlModelMembership.organization_id == organization_id)
+                .first()
+            )
+            if membership is None:
+                return False
+
+            session.delete(membership)
+            session.commit()
+            return True
+
     def is_user_in_organization(
         self, organization_id: UUID, user: User, *, is_admin: bool | None = None
     ):

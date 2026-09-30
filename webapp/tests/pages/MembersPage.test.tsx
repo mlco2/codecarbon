@@ -17,8 +17,10 @@ vi.mock("@/api/swr", () => ({
 }));
 
 const addOrganizationUserMock = vi.hoisted(() => vi.fn());
+const removeOrganizationUserMock = vi.hoisted(() => vi.fn());
 vi.mock("@/api/organizations", () => ({
     addOrganizationUser: addOrganizationUserMock,
+    removeOrganizationUser: removeOrganizationUserMock,
 }));
 
 import MembersPage from "@/pages/MembersPage";
@@ -29,7 +31,37 @@ beforeEach(() => {
     fetcherMock.mockReset();
     addOrganizationUserMock.mockReset();
     addOrganizationUserMock.mockResolvedValue(undefined);
+    removeOrganizationUserMock.mockReset();
+    removeOrganizationUserMock.mockResolvedValue(undefined);
 });
+
+/* The viewer, and the members the list comes back with. `/auth/check` decides
+   who is looking; their own row in the list decides whether they administer
+   this organization. */
+function mockMembers(members: unknown[], viewerId: string | null = null) {
+    fetcherMock.mockImplementation((url: string) => {
+        if (url.endsWith("/users")) return Promise.resolve(members);
+        if (url === "/auth/check")
+            return Promise.resolve(viewerId ? { user: { id: viewerId } } : {});
+        return mockOrganization(url) ?? Promise.resolve(null);
+    });
+}
+
+const ADMIN = {
+    id: "u1",
+    name: "Alice",
+    email: "alice@example.com",
+    organization_id: "o1",
+    is_admin: true,
+};
+
+const MEMBER = {
+    id: "u2",
+    name: "Bob",
+    email: "bob@example.com",
+    organization_id: "o1",
+    is_admin: false,
+};
 
 function mockOrganization(url: string) {
     if (url.endsWith("/organizations/o1")) {
@@ -141,5 +173,69 @@ describe("MembersPage", () => {
         // submit never reaches the handler. The page's schema check behind it
         // covers whatever the browser lets through.
         expect(addOrganizationUserMock).not.toHaveBeenCalled();
+    });
+
+    it("offers no actions to a member who is not an admin", async () => {
+        mockMembers([ADMIN, MEMBER], MEMBER.id);
+
+        renderWithSwr(<MembersPage />);
+
+        await screen.findByText("Bob");
+        expect(
+            screen.queryByRole("button", { name: /actions for/i }),
+        ).not.toBeInTheDocument();
+    });
+
+    it("lets an admin remove a member but not another admin", async () => {
+        mockMembers([ADMIN, MEMBER], ADMIN.id);
+
+        renderWithSwr(<MembersPage />);
+
+        await screen.findByText("Bob");
+        // Alice administers the organization, so only Bob's row has a menu.
+        expect(
+            screen.queryByRole("button", { name: /actions for Alice/i }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: /actions for Bob/i }),
+        ).toBeInTheDocument();
+    });
+
+    it("removes the member only once the dialog is confirmed", async () => {
+        mockMembers([ADMIN, MEMBER], ADMIN.id);
+
+        renderWithSwr(<MembersPage />);
+
+        await screen.findByText("Bob");
+        await userEvent.click(
+            screen.getByRole("button", { name: /actions for Bob/i }),
+        );
+        await userEvent.click(
+            await screen.findByRole("menuitem", { name: "Delete" }),
+        );
+
+        // The menu item opens the dialog; nothing has been sent yet.
+        expect(removeOrganizationUserMock).not.toHaveBeenCalled();
+
+        await userEvent.click(
+            await screen.findByRole("button", { name: /remove member/i }),
+        );
+        expect(removeOrganizationUserMock).toHaveBeenCalledWith("o1", "u2");
+    });
+
+    it("offers no Settings action, which has no endpoint behind it", async () => {
+        mockMembers([ADMIN, MEMBER], ADMIN.id);
+
+        renderWithSwr(<MembersPage />);
+
+        await screen.findByText("Bob");
+        await userEvent.click(
+            screen.getByRole("button", { name: /actions for Bob/i }),
+        );
+
+        await screen.findByRole("menuitem", { name: "Delete" });
+        expect(
+            screen.queryByRole("menuitem", { name: /settings/i }),
+        ).not.toBeInTheDocument();
     });
 });
