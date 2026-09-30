@@ -9,10 +9,12 @@ import { GlobalIcon } from "./icons/global-icon";
 import { ProjectsIcon } from "./icons/projects-icon";
 import { AccountIcon } from "./icons/account-icon";
 import { MembersIcon } from "./icons/members-icon";
+import { OrganizationsIcon } from "./icons/organizations-icon";
+import OrganizationsMenu from "./organizations-menu";
 
 /*
  * The app's primary navigation: the destinations stacked at the top of a
- * vertical rail with the account item pinned to the bottom, and the same items
+ * vertical rail with the organizations and account items pinned to the bottom, and the same items
  * as a bottom bar below `md`. The rail's width lives in the `rail` token.
  *
  * Icons take their fill from `currentColor`, so colouring a control moves its
@@ -24,7 +26,8 @@ import { MembersIcon } from "./icons/members-icon";
  * are on and white otherwise.
  *
  * A plain button that forwards its props, so the destinations use it for
- * navigation and the account control uses it as a menu trigger.
+ * navigation and the organizations and account controls use it as a menu
+ * trigger.
  */
 const RailButton = React.forwardRef<
     HTMLButtonElement,
@@ -32,29 +35,35 @@ const RailButton = React.forwardRef<
         icon: (props: { className?: string }) => React.JSX.Element;
         label: string;
         isSelected?: boolean;
+        iconClassName?: string;
     }
->(({ icon: Icon, label, isSelected, className, ...props }, ref) => (
-    <button
-        ref={ref}
-        type="button"
-        aria-current={isSelected ? "page" : undefined}
-        className={cn(
-            "flex flex-1 cursor-pointer flex-col items-center gap-1 p-1.5 outline-none transition-colors",
-            "md:flex-none md:gap-2 md:p-2.5",
-            "hover:text-cc-button-hover active:text-cc-lime",
-            "focus-visible:ring-2 focus-visible:ring-cc-lime",
-            isSelected ? "text-cc-lime" : "text-cc-white",
-            "motion-reduce:transition-none",
-            className,
-        )}
-        {...props}
-    >
-        <Icon className="size-6 shrink-0 md:size-8" />
-        <span className="type-mono-medium type-rail-label text-center">
-            {label}
-        </span>
-    </button>
-));
+>(
+    (
+        { icon: Icon, label, isSelected, className, iconClassName, ...props },
+        ref,
+    ) => (
+        <button
+            ref={ref}
+            type="button"
+            aria-current={isSelected ? "page" : undefined}
+            className={cn(
+                "flex flex-1 cursor-pointer flex-col items-center gap-1 p-1.5 outline-none transition-colors",
+                "md:flex-none md:gap-2 md:p-2.5",
+                "hover:text-cc-button-hover active:text-cc-lime",
+                "focus-visible:ring-2 focus-visible:ring-cc-lime",
+                isSelected ? "text-cc-lime" : "text-cc-white",
+                "motion-reduce:transition-none",
+                className,
+            )}
+            {...props}
+        >
+            <Icon className={cn("size-6 shrink-0 md:size-8", iconClassName)} />
+            <span className="type-mono-medium type-rail-label text-center">
+                {label}
+            </span>
+        </button>
+    ),
+);
 RailButton.displayName = "RailButton";
 
 type RailItem = {
@@ -181,26 +190,40 @@ export default function SidebarRail({
             </div>
 
             {/*
-             * Account item, pinned to the bottom. The `mt-auto` and the
-             * separation live on this wrapper rather than on the button:
-             * padding inside the trigger would enlarge its hit area and drag
-             * the popover's anchor edge up with it.
+             * Organizations and account items, pinned to the bottom. The
+             * `mt-auto` and the separation live on this wrapper rather than on
+             * the buttons: padding inside a trigger would enlarge its hit area
+             * and drag the popover's anchor edge up with it.
              */}
-            <div className="flex flex-1 md:mt-auto md:w-full md:flex-none md:pt-6">
-                <AccountMenu
-                    orgs={orgs}
-                    selectedOrg={selectedOrg}
-                    onSelectOrg={(organizationId) => {
-                        setSelectedOrg(organizationId);
-                        navigate(`/${organizationId}`);
-                    }}
-                >
-                    <RailButton
-                        icon={AccountIcon}
-                        label="Account"
-                        className="w-full flex-none md:p-0"
-                    />
-                </AccountMenu>
+            <div className="contents md:mt-auto md:flex md:w-full md:flex-col md:gap-6 md:pt-6">
+                <div className="flex flex-1 md:flex-none">
+                    <OrganizationsMenu
+                        orgs={orgs}
+                        selectedOrg={selectedOrg}
+                        onSelectOrg={(organizationId) => {
+                            setSelectedOrg(organizationId);
+                            navigate(`/${organizationId}`);
+                        }}
+                    >
+                        <RailButton
+                            icon={OrganizationsIcon}
+                            label="Organiza-tions"
+                            // The building is wider than tall, so at the
+                            // shared 32px it reads smaller than its siblings.
+                            iconClassName="size-8 md:size-10"
+                            className="w-full flex-none md:p-0"
+                        />
+                    </OrganizationsMenu>
+                </div>
+                <div className="flex flex-1 md:flex-none">
+                    <AccountMenu>
+                        <RailButton
+                            icon={AccountIcon}
+                            label="Account"
+                            className="w-full flex-none md:p-0"
+                        />
+                    </AccountMenu>
+                </div>
             </div>
         </nav>
     );

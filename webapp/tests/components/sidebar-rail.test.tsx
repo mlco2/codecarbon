@@ -20,6 +20,9 @@ vi.mock("react-router-dom", async () => {
 vi.mock("@/components/account-menu", () => ({
     default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+vi.mock("@/components/organizations-menu", () => ({
+    default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 import SidebarRail from "@/components/sidebar-rail";
 import { renderWithRouter } from "../test-utils";
@@ -38,10 +41,11 @@ beforeEach(() => {
 describe("SidebarRail", () => {
     it("offers the dashboard's destinations", () => {
         renderWithRouter(<SidebarRail orgs={orgs} />);
-        ["Global", "Projects", "Members", "Account"].forEach((label) =>
-            expect(
-                screen.getByRole("button", { name: label }),
-            ).toBeInTheDocument(),
+        ["Global", "Projects", "Members", "Organizations", "Account"].forEach(
+            (label) =>
+                expect(
+                    screen.getByRole("button", { name: label }),
+                ).toBeInTheDocument(),
         );
     });
 

@@ -18,7 +18,8 @@ const config = {
                  * Structural dimensions from the redesign, each defined once
                  * and only where it belongs.
                  *
-                 * `rail` is the compact sidebar's own width. `gauge` is the
+                 * `rail` is the compact sidebar's own width, widened from the design's
+                 * 101px so the "Organizations" label fits. `gauge` is the
                  * consumed-energy ring's diameter (Figma 199.23, normalised —
                  * the ring's proportions live in the SVG viewBox, so the
                  * rendered size is free). `heading` is the gap between a
