@@ -5,6 +5,8 @@ interface ImportMetaEnv {
     readonly VITE_BASE_URL: string;
     readonly VITE_USE_MOCK_DATA?: string;
     readonly VITE_OIDC_PROFILE_URL?: string;
+    readonly VITE_MATOMO_URL?: string;
+    readonly VITE_MATOMO_SITE_ID?: string;
     readonly VITE_PROJECT_ENCRYPTION_KEY?: string; // Legacy public-link decoder only.
 }
 
