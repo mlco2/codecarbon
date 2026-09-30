@@ -494,7 +494,7 @@ class IntelRAPL:
         """Scan subdirectories of a RAPL entry for domain directories."""
         subdirs = []
         try:
-            for sub in os.listdir(entry_path):
+            for sub in sorted(os.listdir(entry_path)):
                 sub_path = os.path.join(entry_path, sub)
                 if ":" in sub and os.path.isdir(sub_path):
                     if os.path.exists(os.path.join(sub_path, "energy_uj")):
@@ -513,7 +513,7 @@ class IntelRAPL:
         """Scan a base directory for intel-rapl entries."""
         domain_dirs = []
         try:
-            for entry in os.listdir(base):
+            for entry in sorted(os.listdir(base)):
                 if not entry.startswith("intel-rapl"):
                     continue
                 entry_path = os.path.join(base, entry)
@@ -542,7 +542,7 @@ class IntelRAPL:
         if domain_dirs:
             return domain_dirs
         try:
-            for item in os.listdir(self._lin_rapl_dir):
+            for item in sorted(os.listdir(self._lin_rapl_dir)):
                 if ":" in item:
                     path = os.path.join(self._lin_rapl_dir, item)
                     if os.path.isdir(path) and os.path.exists(
@@ -897,6 +897,7 @@ class IntelRAPL:
             (rapl_file.path, float(rapl_file.last_energy))
             for rapl_file in self._rapl_files
             if "dram" not in rapl_file.name.lower()
+            and rapl_file.last_energy is not None
         ]
         self._mirrored_candidates = find_mirrored_counters(
             counters, SEQUENTIAL_READ_TOLERANCE_KWH

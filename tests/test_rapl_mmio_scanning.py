@@ -76,6 +76,20 @@ def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monke
     assert "dram" in details
 
 
+def test_rapl_start_skips_unreadable_counters(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0", 1000000), ("package-1", 1000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    energy_files[1].write_text("unreadable")
+    rapl.start()
+
+    assert rapl._rapl_files[1].last_energy is None
+    assert len(rapl._mirrored_candidates) == 0
+
+
 def test_rapl_start_reevaluates_mirror_candidates(tmp_path, monkeypatch):
     """A new start() re-runs the detection instead of compounding drops."""
     monkeypatch.setattr(sys, "platform", "linux")
