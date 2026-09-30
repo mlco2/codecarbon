@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/matomo";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -55,6 +56,7 @@ const CreateProjectModal: React.FC<ModalProps> = ({
                         organizationId,
                         formData,
                     );
+                    trackEvent("Activation", "project_created");
                     await onProjectCreated(); // Call the callback to refresh the project list
                     handleClose(); // Automatically close the modal after successful creation
                     return newProject; // Return for the success message

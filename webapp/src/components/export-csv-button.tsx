@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/matomo";
 import { Loader2 } from "lucide-react";
 import { DownloadIcon } from "@/components/icons/download-icon";
 import { useState } from "react";
@@ -27,6 +28,7 @@ export function ExportCsvButton({
     const [isExporting, setIsExporting] = useState(false);
 
     const handleDownload = () => {
+        trackEvent("Dashboard", "csv_exported");
         setIsExporting(true);
         toast.promise(
             (async () => {

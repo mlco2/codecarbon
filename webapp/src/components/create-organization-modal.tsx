@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/matomo";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -52,6 +53,7 @@ const CreateOrganizationModal: React.FC<ModalProps> = ({
                     if (!newOrganization) {
                         throw new Error("Failed to create organization");
                     }
+                    trackEvent("Activation", "organization_created");
                     await onOrganizationCreated();
                     handleClose();
                     navigate(`/${newOrganization.id}`);

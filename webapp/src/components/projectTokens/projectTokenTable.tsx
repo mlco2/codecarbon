@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/matomo";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { AccessLevel, IProjectToken } from "@/api/schemas";
@@ -52,6 +53,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                 tokenName,
                 AccessLevel.WRITE,
             );
+            trackEvent("Activation", "project_token_created");
             toast.success(`Token ${tokenName} created successfully`);
             setCreatedToken(newToken.token ?? null);
             setTokenName("");
@@ -70,6 +72,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         try {
             const success = copy(token);
             if (success) {
+                trackEvent("Activation", "project_token_copied");
                 setIsCopied(true);
                 toast.success("Token copied to clipboard");
                 copyTimerRef.current = setTimeout(

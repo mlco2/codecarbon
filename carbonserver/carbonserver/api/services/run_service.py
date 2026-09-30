@@ -5,6 +5,7 @@ from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserEx
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
 from carbonserver.api.schemas import Run, RunCreate, User
 from carbonserver.api.services.auth_context import AuthContext
+from carbonserver.api.services.matomo_tracker import MatomoTracker
 
 
 def _not_allowed() -> UserException:
@@ -21,12 +22,22 @@ class RunService:
         self,
         run_repository: SqlAlchemyRepository,
         auth_context: AuthContext,
+        matomo_tracker: MatomoTracker | None = None,
     ):
         self._repository = run_repository
         self._auth_context = auth_context
+        self._matomo_tracker = matomo_tracker
 
     def add_run(self, run: RunCreate, user: User = None) -> Run:
         created_run = self._repository.add_run(run)
+        # The last step of the activation funnel: an experiment receiving its
+        # first run shows someone actually integrated the package.
+        if (
+            self._matomo_tracker
+            and self._matomo_tracker.enabled
+            and self._repository.count_runs_from_experiment(run.experiment_id) == 1
+        ):
+            self._matomo_tracker.track_event("Activation", "first_run_received")
         return created_run
 
     def read_run(self, run_id: UUID, user: User = None) -> Run:

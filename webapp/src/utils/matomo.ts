@@ -23,6 +23,8 @@ declare global {
     }
 }
 
+let enabled = false;
+
 function push(command: MatomoCommand) {
     (window._paq = window._paq || []).push(command);
 }
@@ -32,12 +34,33 @@ function trackPageView(pathname: string) {
     push(["trackPageView"]);
 }
 
+/**
+ * Record a custom event. A no-op until `initMatomo` has enabled tracking, so
+ * call sites never need to check the environment. Pass only categories and
+ * counts: nothing that identifies a person.
+ */
+export function trackEvent(
+    category: string,
+    action: string,
+    name?: string,
+    value?: number,
+): void {
+    if (!enabled) return;
+    const command: MatomoCommand = ["trackEvent", category, action];
+    if (name !== undefined || value !== undefined) command.push(name ?? "");
+    if (value !== undefined) command.push(value);
+    push(command);
+}
+
 export function initMatomo(router: TrackedRouter): void {
     const baseUrl = import.meta.env.VITE_MATOMO_URL;
     const siteId = import.meta.env.VITE_MATOMO_SITE_ID;
     if (!baseUrl || !siteId) return;
+    enabled = true;
 
     const url = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+    // Cookieless, so the dashboard needs no consent banner for analytics.
+    push(["disableCookies"]);
     push(["enableLinkTracking"]);
     push(["setTrackerUrl", `${url}matomo.php`]);
     push(["setSiteId", siteId]);

@@ -1,4 +1,5 @@
 import { cn } from "@/helpers/utils";
+import { useChartViewTime } from "@/hooks/useChartViewTime";
 
 /*
  * A titled block of the dashboard: heading, a line saying what it is for, and
@@ -23,8 +24,10 @@ export default function ChartSection({
     className?: string;
     children: React.ReactNode;
 }>) {
+    const ref = useChartViewTime<HTMLElement>(title);
+
     return (
-        <section className={cn("flex flex-col gap-6", className)}>
+        <section ref={ref} className={cn("flex flex-col gap-6", className)}>
             <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
                     <h3 className="type-display type-section-title min-w-0 text-cc-white">

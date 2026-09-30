@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/matomo";
 import { ShareIcon } from "@/components/icons/share-icon";
 import { IconButton } from "@/components/ui/icon-button";
 import { SecondaryButton } from "@/components/ui/secondary-button";
@@ -43,6 +44,7 @@ export default function ShareProjectButton({
     const copyToClipboard = () => {
         try {
             copy(publicUrl);
+            trackEvent("Sharing", "public_link_copied");
             setCopied(true);
             toast.success("Public link copied to clipboard");
             copyTimerRef.current = setTimeout(() => setCopied(false), 2000);

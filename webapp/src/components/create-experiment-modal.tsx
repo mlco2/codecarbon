@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/matomo";
 import { useEffect, useRef, useState } from "react";
 import { ClipboardCheck, ClipboardCopy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -84,6 +85,7 @@ export default function CreateExperimentModal({
 
         try {
             const newExperiment = await createExperiment(experimentData);
+            trackEvent("Activation", "experiment_created");
             setCreatedExperiment(newExperiment);
             setIsCreated(true);
             await onExperimentCreated?.();

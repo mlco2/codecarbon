@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { initMatomo } from "@/utils/matomo";
+import { initMatomo, trackEvent } from "@/utils/matomo";
 
 function fakeRouter(pathname: string) {
     let listener: ((s: { location: { pathname: string } }) => void) | null =
@@ -56,5 +56,35 @@ describe("initMatomo", () => {
         expect(document.head.querySelector("script")?.src).toBe(
             "https://matomo.example.com/matomo.js",
         );
+    });
+
+    it("records events with an optional name and value once enabled", () => {
+        vi.stubEnv("VITE_MATOMO_URL", "https://matomo.example.com");
+        vi.stubEnv("VITE_MATOMO_SITE_ID", "3");
+        initMatomo(fakeRouter("/home"));
+
+        trackEvent("Activation", "project_created");
+        trackEvent("Dashboard", "date_range_applied", undefined, 30);
+        trackEvent("Dashboard", "chart_viewed", "Emissions", 12);
+
+        expect(window._paq).toContainEqual([
+            "trackEvent",
+            "Activation",
+            "project_created",
+        ]);
+        expect(window._paq).toContainEqual([
+            "trackEvent",
+            "Dashboard",
+            "date_range_applied",
+            "",
+            30,
+        ]);
+        expect(window._paq).toContainEqual([
+            "trackEvent",
+            "Dashboard",
+            "chart_viewed",
+            "Emissions",
+            12,
+        ]);
     });
 });

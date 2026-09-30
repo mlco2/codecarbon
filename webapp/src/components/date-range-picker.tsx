@@ -1,3 +1,4 @@
+import { trackEvent } from "@/utils/matomo";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -46,6 +47,13 @@ export function DateRangePicker({
     };
 
     const handleApply = () => {
+        if (tempDateRange?.from && tempDateRange.to) {
+            const days = Math.round(
+                (tempDateRange.to.getTime() - tempDateRange.from.getTime()) /
+                    86_400_000,
+            );
+            trackEvent("Dashboard", "date_range_applied", undefined, days);
+        }
         onDateChange(tempDateRange);
         setOpen(false);
     };
