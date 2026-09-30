@@ -208,6 +208,9 @@ export default function SidebarRail({
                         <RailButton
                             icon={OrganizationsIcon}
                             label="Organiza-tions"
+                            // The hyphen only lets the word break on the
+                            // narrow rail; assistive tech gets the real word.
+                            aria-label="Organizations"
                             // The building is wider than tall, so at the
                             // shared 32px it reads smaller than its siblings.
                             iconClassName="size-8 md:size-10"
