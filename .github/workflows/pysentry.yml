@@ -1,0 +1,23 @@
+# PySentry audits uv.lock natively and uploads findings to the Security tab.
+# continue-on-error keeps it advisory: it never blocks a PR.
+# Sources, fail-on threshold and per-group policy live in .pysentry.toml,
+# which the pre-commit hook reads too, so CI and local scans stay identical.
+name: pysentry
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: PySentry audit
+      uses: nyudenkov/pysentry@d351b9969fc6b9287347295245bcf5b13447e634 # v0.5.0
