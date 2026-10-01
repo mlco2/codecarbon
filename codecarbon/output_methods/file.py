@@ -22,7 +22,11 @@ class FileOutput(BaseOutput):
     """
 
     def __init__(
-        self, output_file_name: str, output_dir: str, on_csv_write: str = "append"
+        self,
+        output_file_name: str,
+        output_dir: str,
+        on_csv_write: str = "append",
+        enable_live_out: bool = False,
     ):
         """
         Initialize the FileOutput object.
@@ -31,6 +35,8 @@ class FileOutput(BaseOutput):
             output_file_name: name of file to write to.
             output_dir: path to directory to write to.
             on_csv_write: "append" or "update", whether or not to append or overwrite a file if it exists
+            enable_live_out: when True, also write on live measurement intervals
+                (same cadence as API/Prometheus: ``api_call_interval * measure_power_secs``).
 
         Raises:
             ValueError: If the on_csv_write value is invalid.
@@ -46,6 +52,7 @@ class FileOutput(BaseOutput):
             raise OSError(f"Folder '{output_dir}' doesn't exist !")
         self.output_dir: str = output_dir
         self.on_csv_write: str = on_csv_write
+        self.enable_live_out: bool = enable_live_out
         self.save_file_path = os.path.join(self.output_dir, self.output_file_name)
         logger.info(
             f"Emissions data (if any) will be saved to file {os.path.abspath(self.save_file_path)}"
@@ -68,6 +75,11 @@ class FileOutput(BaseOutput):
             except StopIteration:
                 return True
             return sorted(headers) == sorted(data.values.keys())
+
+    def live_out(self, total: EmissionsData, delta: EmissionsData):
+        """Write a measurement row on the live interval when enabled."""
+        if self.enable_live_out:
+            self.out(total, delta)
 
     def out(self, total: EmissionsData, _):
         """
