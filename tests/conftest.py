@@ -23,6 +23,18 @@ def _reset_process_hardware_cache():
 
 
 @pytest.fixture(autouse=True)
+def _isolate_telemetry(monkeypatch):
+    """Keep tests off the real telemetry endpoint.
+
+    Telemetry needs no key, so any tracker a test stops would post to
+    api.codecarbon.io. Tests that exercise telemetry clear this variable.
+    """
+    monkeypatch.setenv("CODECARBON_TELEMETRY_LEVEL", "disabled")
+    monkeypatch.setattr("codecarbon.core.telemetry.dispatcher._sent", False)
+    monkeypatch.setattr("codecarbon.core.telemetry.dispatcher._notice_shown", False)
+
+
+@pytest.fixture(autouse=True)
 def _no_real_browser(monkeypatch):
     """Keep tests headless: never let code under test open a browser tab."""
     monkeypatch.setattr("webbrowser.open", lambda *args, **kwargs: True)

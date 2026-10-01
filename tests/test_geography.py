@@ -127,3 +127,14 @@ class TestGeoMetadata(unittest.TestCase):
         self.assertEqual("CAN", geo.country_iso_code)
         self.assertEqual("Canada", geo.country_name)
         self.assertEqual("ontario", geo.region)
+        self.assertFalse(geo.is_default)
+
+    @responses.activate
+    def test_geo_metadata_marks_the_fallback_as_default(self):
+        responses.add(responses.GET, self.geo_js_url, body=ConnectionError("down"))
+        responses.add(
+            responses.GET, "https://ipinfo.io/json", body=ConnectionError("down")
+        )
+        geo = GeoMetadata.from_geo_js(self.geo_js_url)
+        self.assertEqual("Canada", geo.country_name)
+        self.assertTrue(geo.is_default)

@@ -18,7 +18,7 @@ def heavy_computation(run_time_secs: float = 3):
         pass
 
 
-empty_conf = "[codecarbon]"
+disabled_conf = "[codecarbon]\ntelemetry_level = disabled\n"
 
 
 class TestOfflineEmissionsTracker(unittest.TestCase):
@@ -32,7 +32,8 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         # ./.codecarbon.config so that the user's local configuration does not
         # alter tests
         patcher = mock.patch(
-            "builtins.open", new_callable=get_custom_mock_open(empty_conf, empty_conf)
+            "builtins.open",
+            new_callable=get_custom_mock_open(disabled_conf, disabled_conf),
         )
         self.addCleanup(patcher.stop)
         patcher.start()

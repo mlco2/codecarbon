@@ -18,4 +18,9 @@ else
 fi
 echo "Starting uvicorn server..."
 # uvicorn --reload main:app --host 0.0.0.0 --port 8000
+# ponytail: --forwarded-allow-ips=* trusts X-Forwarded-For from any peer, so
+# request.client.host (used e.g. by the telemetry rate limiter) can be
+# spoofed by the caller unless a real reverse proxy always overwrites that
+# header first. Kept as-is (maintainer decision); tighten to the proxy's
+# actual IP/CIDR if that stops being guaranteed.
 uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
