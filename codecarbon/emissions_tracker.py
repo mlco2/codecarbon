@@ -55,6 +55,14 @@ if TYPE_CHECKING:
 
 _sentinel = object()
 
+# One decimal place, so about 11.1 km at the equator.
+_COORDINATE_PRECISION = 1
+
+
+def _round_coordinate(value: Optional[float]) -> Optional[float]:
+    """Reduce the precision of a latitude or longitude for privacy."""
+    return value if value is None else round(value, _COORDINATE_PRECISION)
+
 
 class BaseEmissionsTracker(ABC):
     """
@@ -383,8 +391,11 @@ class BaseEmissionsTracker(ABC):
         self._geo = self._get_geo_metadata()
         cloud: CloudMetadata = self._get_cloud_metadata()
         if cloud.is_on_private_infra:
-            self._conf["longitude"] = self._geo.longitude
-            self._conf["latitude"] = self._geo.latitude
+            # Reduce precision for privacy, see docs/reference/output.md.
+            # self._geo keeps the full precision coordinates, they are needed
+            # for the Electricity Maps carbon intensity lookup.
+            self._conf["longitude"] = _round_coordinate(self._geo.longitude)
+            self._conf["latitude"] = _round_coordinate(self._geo.latitude)
 
     def __init__(
         self,
