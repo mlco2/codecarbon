@@ -15,8 +15,8 @@ def get_config(path: Optional[Path] = None):
         config = configparser.ConfigParser()
         config.read(str(p))
         if "codecarbon" in config.sections():
-            d = dict(config["codecarbon"])
-            return d
+            return dict(config["codecarbon"])
+        return {}
 
     else:
         raise FileNotFoundError(
@@ -34,8 +34,9 @@ def get_api_endpoint(path: Optional[Path] = None):
             if "api_endpoint" in d:
                 return d["api_endpoint"]
             else:
-                with p.open("a") as f:
-                    f.write("api_endpoint=https://api.codecarbon.io\n")
+                config["codecarbon"]["api_endpoint"] = "https://api.codecarbon.io"
+                with p.open("w") as f:
+                    config.write(f)
     return "https://api.codecarbon.io"
 
 
