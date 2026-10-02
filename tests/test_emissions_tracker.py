@@ -18,7 +18,7 @@ from codecarbon.emissions_tracker import (
     track_emissions,
     track_task_emissions,
 )
-from codecarbon.external.geography import CloudMetadata
+from codecarbon.external.geography import GEO_API_RETRIES, CloudMetadata
 from codecarbon.output import BoAmpsOutput, CodeCarbonAPIOutput, OutputMethod
 from tests.fake_modules import pynvml as fake_pynvml
 from tests.testdata import (
@@ -290,7 +290,8 @@ class TestCarbonTracker(unittest.TestCase):
         tracker.start()
         heavy_computation(run_time_secs=2)
         emissions = tracker.stop()
-        self.assertEqual(2, mocked_requests_get.call_count)
+        # The primary API is tried once more before the backup one is called.
+        self.assertEqual(GEO_API_RETRIES + 2, mocked_requests_get.call_count)
         self.assertIsInstance(emissions, float)
         self.assertAlmostEqual(1.1037980397280433e-05, emissions, places=2)
 
