@@ -20,3 +20,9 @@ def _reset_process_hardware_cache():
     yield
     clear_hardware_cache()
     detect_cpu_model.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def _no_real_browser(monkeypatch):
+    """Keep tests headless: never let code under test open a browser tab."""
+    monkeypatch.setattr("webbrowser.open", lambda *args, **kwargs: True)

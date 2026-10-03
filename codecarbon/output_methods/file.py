@@ -108,9 +108,7 @@ class FileOutput(BaseOutput):
         else:
             df = pd.read_csv(self.save_file_path)
             df_run = df.loc[df.run_id == total.run_id]
-            if len(df_run) < 1:
-                df = pd.concat([df, new_df])
-            elif len(df_run) > 1:
+            if len(df_run) > 1:
                 logger.warning(
                     f"CSV contains more than 1 ({len(df_run)})"
                     + f" rows with current run ID ({total.run_id})."
@@ -118,12 +116,11 @@ class FileOutput(BaseOutput):
                 )
                 df = pd.concat([df, new_df])
             else:
-                update_values = {}
-                for col, val in dict(total.values).items():
-                    update_values[col] = df[col].dtype.type(val)
-                df.loc[df.run_id == total.run_id, update_values.keys()] = (
-                    update_values.values()
-                )
+                # Drop the previous row for this run (if any) and re-append it.
+                # Assigning column by column would coerce values to the dtype
+                # pandas inferred for the existing column, which breaks for
+                # columns that are empty in every row (read back as float64).
+                df = pd.concat([df.loc[df.run_id != total.run_id], new_df])
             df.to_csv(self.save_file_path, index=False)
 
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
