@@ -335,7 +335,7 @@ class Emissions:
             in Kgs.CO2 / kWh
         """
         # If we have the chance to have the carbon intensity for this country
-        if energy_mix.get("carbon_intensity"):
+        if energy_mix.get("carbon_intensity") is not None:
             return EmissionsPerKWh.from_g_per_kWh(energy_mix.get("carbon_intensity"))
 
         # Else we compute it from the energy mix.
@@ -353,7 +353,7 @@ class Emissions:
                 carbon_intensity_for_type = carbon_intensity_per_source.get(
                     energy_type[: -len("_TWh")]
                 )
-                if carbon_intensity_for_type:  # to ignore "total_TWh"
+                if carbon_intensity_for_type is not None:  # to ignore "total_TWh"
                     carbon_intensity += (
                         energy_per_year / energy_sum
                     ) * carbon_intensity_for_type
