@@ -104,6 +104,9 @@ class FileOutput(BaseOutput):
         elif self.on_csv_write == "append":
             # Never drop all-NA columns here: the append is headerless, so column
             # identity is positional and a missing column shifts every value after it.
+            with open(self.save_file_path, newline="") as csv_file:
+                headers = next(csv.reader(csv_file))
+            new_df = new_df.reindex(columns=headers)
             new_df.to_csv(self.save_file_path, mode="a", header=False, index=False)
         else:
             df = pd.read_csv(self.save_file_path)
