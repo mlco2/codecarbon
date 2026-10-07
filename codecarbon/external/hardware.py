@@ -30,13 +30,44 @@ B_TO_GB = 1024 * 1024 * 1024
 
 MODE_CPU_LOAD = "cpu_load"
 
-# psutil.cpu_percent blocks on first sample; prime once per process for cpu_load mode.
-_cpu_load_percent_primed = False
 
+class SystemCPULoadMeter:
+    """
+    System-wide CPU load since the previous reading, with its own baseline.
 
-def clear_cpu_load_prime_cache() -> None:
-    global _cpu_load_percent_primed
-    _cpu_load_percent_primed = False
+    psutil.cpu_percent(interval=None) keeps a single baseline per process, so any
+    other caller (like the tracker's utilization monitor) resets it and the next
+    reading only covers the few milliseconds since that call.
+    """
+
+    def __init__(self):
+        self._last_times = None
+
+    def reset(self) -> None:
+        self._last_times = psutil.cpu_times()
+
+    def percent(self, prime_interval: float = 0.05) -> float:
+        if self._last_times is None:
+            self.reset()
+            time.sleep(prime_interval)
+        current = psutil.cpu_times()
+        previous, self._last_times = self._last_times, current
+        total_delta = self._total_time(current) - self._total_time(previous)
+        busy_delta = self._busy_time(current) - self._busy_time(previous)
+        if total_delta <= 0:
+            return 0.0
+        return min(max(busy_delta / total_delta * 100, 0.0), 100.0)
+
+    @staticmethod
+    def _total_time(times) -> float:
+        total = sum(times)
+        # On Linux, guest time is already counted in user and nice time.
+        total -= getattr(times, "guest", 0) + getattr(times, "guest_nice", 0)
+        return total
+
+    @classmethod
+    def _busy_time(cls, times) -> float:
+        return cls._total_time(times) - times.idle - getattr(times, "iowait", 0)
 
 
 @dataclass
@@ -207,7 +238,9 @@ class CPU(BaseHardware):
         rapl_prefer_psys: bool = False,
     ):
         assert tracking_mode in ["machine", "process"]
-        self._power_history: List[Power] = []
+        # (power, seconds covered by that sample) pairs, averaged by total_power
+        self._power_history: List[Tuple[Power, float]] = []
+        self._last_sample_time: Optional[float] = None
         # Serializes sampling and history access between the monitor thread and
         # the measurement thread: sampling mutates state in some modes
         # (process tracking deltas, Intel Power Gadget log file).
@@ -224,8 +257,7 @@ class CPU(BaseHardware):
         # For process tracking: store last measurement time and CPU times
         self._last_measurement_time: Optional[float] = None
         self._last_cpu_times: Dict[int, float] = {}  # pid -> total cpu time
-        # First cpu_percent sample blocks briefly; later calls use interval=None.
-        self._cpu_percent_interval: Optional[float] = 0.05
+        self._cpu_load_meter = SystemCPULoadMeter()
 
         if self._mode == "intel_power_gadget":
             self._intel_interface = IntelPowerGadget(self._output_dir)
@@ -282,11 +314,7 @@ class CPU(BaseHardware):
         """
         if self._tracking_mode == "machine":
             tdp = self._tdp
-            cpu_load = psutil.cpu_percent(
-                interval=self._cpu_percent_interval, percpu=False
-            )
-            if self._cpu_percent_interval is not None:
-                self._cpu_percent_interval = None
+            cpu_load = self._cpu_load_meter.percent()
             logger.debug(f"CPU load : {self._tdp=} W and {cpu_load:.1f} %")
             # Cubic relationship with minimum 10% of TDP
             load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
@@ -297,24 +325,7 @@ class CPU(BaseHardware):
         elif self._tracking_mode == "process":
             # Use CPU times for accurate process tracking
             current_time = time.time()
-            current_cpu_times: Dict[int, float] = {}
-
-            # Get CPU time for main process and all children
-            try:
-                processes = [self._process] + self._process.children(recursive=True)
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                processes = [self._process]
-
-            for proc in processes:
-                try:
-                    cpu_times = proc.cpu_times()
-                    # Total CPU time = user + system time
-                    total_cpu_time = cpu_times.user + cpu_times.system
-                    current_cpu_times[proc.pid] = total_cpu_time
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    logger.debug(
-                        f"Process {proc.pid} disappeared or access denied when getting CPU times."
-                    )
+            current_cpu_times = self._get_process_cpu_times()
 
             # Calculate CPU usage based on delta
             if self._last_measurement_time is not None:
@@ -355,6 +366,26 @@ class CPU(BaseHardware):
         else:
             raise Exception(f"Unknown tracking_mode {self._tracking_mode}")
         return Power.from_watts(power)
+
+    def _get_process_cpu_times(self) -> Dict[int, float]:
+        """
+        CPU time (user + system) of the tracked process and all its children
+        """
+        current_cpu_times: Dict[int, float] = {}
+        try:
+            processes = [self._process] + self._process.children(recursive=True)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            processes = [self._process]
+
+        for proc in processes:
+            try:
+                cpu_times = proc.cpu_times()
+                current_cpu_times[proc.pid] = cpu_times.user + cpu_times.system
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                logger.debug(
+                    f"Process {proc.pid} disappeared or access denied when getting CPU times."
+                )
+        return current_cpu_times
 
     def _get_power_from_cpus(self) -> Power:
         """
@@ -397,14 +428,34 @@ class CPU(BaseHardware):
                 # logger.debug(f"_get_energy_from_cpus - MATCH {metric} : {value}")
         return Energy.from_energy(energy)
 
+    def _take_power_sample(self) -> Tuple[Power, float]:
+        """
+        Sample the CPU power and how many seconds it covers since the previous
+        sample. The caller must hold _power_history_lock.
+        """
+        power = self._get_power_from_cpus()
+        now = time.perf_counter()
+        duration = 0.0
+        if self._last_sample_time is not None:
+            duration = now - self._last_sample_time
+        self._last_sample_time = now
+        return power, duration
+
     def total_power(self) -> Power:
         with self._power_history_lock:
-            latest_sample = self._get_power_from_cpus()
+            latest_sample = self._take_power_sample()
             power_history = self._power_history
             self._power_history = []
         power_history.append(latest_sample)
-        power_history_in_W = [power.W for power in power_history]
-        cpu_power = sum(power_history_in_W) / len(power_history_in_W)
+        total_duration = sum(duration for _, duration in power_history)
+        if total_duration > 0:
+            # Load-based samples cover consecutive intervals of different lengths
+            cpu_power = (
+                sum(power.W * duration for power, duration in power_history)
+                / total_duration
+            )
+        else:
+            cpu_power = sum(power.W for power, _ in power_history) / len(power_history)
         return Power.from_watts(cpu_power)
 
     def measure_power_and_energy(self, last_duration: float) -> Tuple[Power, Energy]:
@@ -417,7 +468,6 @@ class CPU(BaseHardware):
         return super().measure_power_and_energy(last_duration=last_duration)
 
     def start(self):
-        global _cpu_load_percent_primed
         if self._mode in [
             "intel_power_gadget",
             "intel_rapl",
@@ -425,21 +475,22 @@ class CPU(BaseHardware):
             "apple_powermetrics",
         ]:
             self._intel_interface.start()
-        # Reset process tracking state for fresh measurements
+        # Start a fresh window: the first sample covers the time since now
         with self._power_history_lock:
             self._power_history = []
+            self._last_sample_time = time.perf_counter()
             self._last_measurement_time = None
             self._last_cpu_times = {}
-        if self._mode == MODE_CPU_LOAD:
-            if not _cpu_load_percent_primed:
-                _ = self._get_power_from_cpu_load()
-                _cpu_load_percent_primed = True
-            else:
-                self._cpu_percent_interval = None
+            if self._mode == MODE_CPU_LOAD:
+                if self._tracking_mode == "process":
+                    self._last_measurement_time = time.time()
+                    self._last_cpu_times = self._get_process_cpu_times()
+                else:
+                    self._cpu_load_meter.reset()
 
     def monitor_power(self):
         with self._power_history_lock:
-            self._power_history.append(self._get_power_from_cpus())
+            self._power_history.append(self._take_power_sample())
 
     def get_model(self):
         return self._model
