@@ -21,7 +21,7 @@ import {
 
 import {
     addOrganizationUser,
-    removeOrganizationUser,
+    removeUserFromOrganization,
 } from "@/api/organizations";
 import { Organization, OrganizationUser, User } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
@@ -74,8 +74,8 @@ export default function MembersPage() {
     } = useSWR<OrganizationUser[]>(membersKey, fetcher);
 
     /*
-     * Who may remove whom. Admin rights are recorded per organization, on the
-     * member list itself, so the viewer's own row is what says whether they
+     * Who may remove members. Admin rights are recorded per organization, on
+     * the member list itself, so the viewer's own row is what says whether they
      * administer this one. The API enforces the same rule; this only keeps the
      * control off screens where pressing it would be refused.
      */
@@ -96,7 +96,10 @@ export default function MembersPage() {
         try {
             await toast
                 .promise(
-                    removeOrganizationUser(organizationId!, memberToRemove.id),
+                    removeUserFromOrganization(
+                        organizationId!,
+                        memberToRemove.id,
+                    ),
                     {
                         loading: `Removing ${name}...`,
                         success: `${name} was removed`,
@@ -268,12 +271,11 @@ export default function MembersPage() {
                             <MemberRow
                                 key={member.id}
                                 member={member}
-                                /* The API refuses to remove an administrator —
-                                   nothing records who created the organization,
-                                   so admins are protected from each other
-                                   rather than ranked. */
+                                /* Administrators can be removed too; the API
+                                   refuses only the last one, and the toast
+                                   then carries why. */
                                 onDelete={
-                                    isAdmin && !member.is_admin
+                                    isAdmin
                                         ? () => setMemberToRemove(member)
                                         : undefined
                                 }
@@ -307,6 +309,7 @@ export default function MembersPage() {
                 memberName={
                     memberToRemove?.name?.trim() || memberToRemove?.email || ""
                 }
+                organizationName={organizationName}
                 isRemoving={isRemoving}
             />
         </div>

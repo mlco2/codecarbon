@@ -64,12 +64,11 @@ export async function addOrganizationUser(
 /*
  * Remove a member from an organization.
  *
- * The endpoint is admin-only and refuses to remove another administrator —
- * nothing records who created the organization, so admins are protected from
- * each other rather than ranked. It answers with a bare status object, so the
- * caller refetches the list.
+ * The endpoint is admin-only and refuses to remove the organization's last
+ * administrator, so an administrator can be removed while another remains. It
+ * answers with a bare status object, so the caller refetches the list.
  */
-export async function removeOrganizationUser(
+export async function removeUserFromOrganization(
     organizationId: string,
     userId: string,
 ): Promise<void> {

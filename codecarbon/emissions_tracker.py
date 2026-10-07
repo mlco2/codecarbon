@@ -689,6 +689,22 @@ class BaseEmissionsTracker(ABC):
         return hardware_info
 
     def service_shutdown(self, signum, frame):
+        """
+        Signal handler that stops the tracker on SIGTERM/SIGINT, for use when
+        CodeCarbon runs as a long-lived service. Register it with:
+
+        ```py
+        import signal
+
+        tracker = EmissionsTracker()
+        signal.signal(signal.SIGTERM, tracker.service_shutdown)
+        signal.signal(signal.SIGINT, tracker.service_shutdown)
+        ```
+
+        :param signum: Signal number, passed by `signal.signal`
+        :param frame: Current stack frame, passed by `signal.signal`
+        :return: None
+        """
         logger.warning("service_shutdown - Caught signal %d" % signum)
         self.stop()
 
@@ -903,7 +919,9 @@ class BaseEmissionsTracker(ABC):
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         self._persist_data(
-            total_emissions=emissions_data, delta_emissions=emissions_data_delta
+            total_emissions=emissions_data,
+            delta_emissions=emissions_data_delta,
+            experiment_name=self._experiment_name,
         )
 
         return emissions_data.emissions
@@ -924,12 +942,12 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
-        if not self._allow_multiple_runs:
-            # Release the lock
-            self._lock.release()
         if self._start_time is None:
-            logger.error("You first need to start the tracker.")
-            return None
+            logger.warning("Tracker already stopped or never started.")
+            return getattr(self, "final_emissions", None)
+
+        if not self._allow_multiple_runs:
+            self._lock.release()
 
         if self._scheduler:
             self._scheduler.stop()
@@ -961,6 +979,8 @@ class BaseEmissionsTracker(ABC):
 
         for handler in self._output_handlers:
             handler.exit()
+
+        self._start_time = None
 
         return emissions_data.emissions
 
@@ -1739,9 +1759,9 @@ def track_task_emissions(
 ):
     """
     Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
-    :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
+    :param tracker: global tracker used in the current execution. If none is provided, instanciates an emission
     tracker which will read default parameter from config to enable tracking
-    :param: task_name: Task to be tracked. If none is provided, an id will be used.
+    :param task_name: Task to be tracked. If none is provided, an id will be used.
     :return: The decorated function
     """
 

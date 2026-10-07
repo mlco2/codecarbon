@@ -111,7 +111,9 @@ class OrganizationService:
             user=user_to_add, organization_id=organization_id, is_admin=False
         )
 
-    def remove_user(self, *, organization_id: str, user_id: str, user: User = None):
+    def remove_user(
+        self, *, organization_id: str, user_id: UUID | str, user: User = None
+    ):
         if not self._auth_context.can_write_organization(organization_id, user):
             raise UserException(
                 NotAllowedError(
@@ -119,26 +121,25 @@ class OrganizationService:
                     message="Operation not authorized on organization",
                 )
             )
-        user_to_remove = self._user_repository.get_user_by_id(user_id)
-        # There is no record of who created the organization — the creator is
-        # only an admin like any other — so administrators are protected from
-        # each other rather than ranked. Demote first, then remove.
-        if self._user_repository.is_admin_in_organization(
-            organization_id, user_to_remove
-        ):
-            raise UserException(
-                NotAllowedError(
-                    code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
-                    message="An administrator cannot be removed from the organization",
-                )
-            )
-        removed = self._user_repository.unsubscribe_user_from_org(
-            user_id=user_to_remove.id, organization_id=organization_id
+        members = self._repository.list_users(organization_id=organization_id)
+        member_to_remove = next(
+            (member for member in members if str(member.id) == str(user_id)), None
         )
-        if not removed:
+        if member_to_remove is None:
             raise UserException(
                 NotFoundError(
                     code=NotFoundErrorEnum.NOT_FOUND,
-                    message="User is not a member of this organization",
+                    message="User not found in organization",
                 )
             )
+        admin_count = len([member for member in members if member.is_admin])
+        if member_to_remove.is_admin and admin_count == 1:
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                    message="Cannot remove the last administrator of the organization",
+                )
+            )
+        return self._user_repository.unsubscribe_user_from_org(
+            user_id=user_id, organization_id=organization_id
+        )

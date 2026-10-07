@@ -95,25 +95,26 @@ class SqlAlchemyRepository(Users):
         self,
         user_id: UUID,
         organization_id: UUID,
-    ) -> bool:
-        """Remove a user's membership of an organization.
+    ) -> None:
+        """Remove the membership linking a user to an organization.
 
-        :returns: Whether a membership was found and deleted.
-        :rtype: bool
+        :user_id: The id of the user to remove from the organization.
+        :organization_id: The id of the organization to remove the user from.
         """
         with self.session_factory() as session:
-            membership = (
+            db_membership = (
                 session.query(SqlModelMembership)
                 .filter(SqlModelMembership.user_id == user_id)
                 .filter(SqlModelMembership.organization_id == organization_id)
                 .first()
             )
-            if membership is None:
-                return False
-
-            session.delete(membership)
+            if db_membership is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"User {user_id} not found in organization {organization_id}",
+                )
+            session.delete(db_membership)
             session.commit()
-            return True
 
     def is_user_in_organization(
         self, organization_id: UUID, user: User, *, is_admin: bool | None = None

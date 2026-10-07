@@ -179,7 +179,7 @@ def organization_remove_user(
     user_id: str,
     auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     organization_service: OrganizationService = Depends(
-        Provide[ServerContainer.organization_service],
+        Provide[ServerContainer.organization_service]
     ),
 ):
     organization_service.remove_user(

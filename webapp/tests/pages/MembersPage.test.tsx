@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("react-router-dom", async () => {
@@ -17,10 +17,10 @@ vi.mock("@/api/swr", () => ({
 }));
 
 const addOrganizationUserMock = vi.hoisted(() => vi.fn());
-const removeOrganizationUserMock = vi.hoisted(() => vi.fn());
+const removeUserFromOrganizationMock = vi.hoisted(() => vi.fn());
 vi.mock("@/api/organizations", () => ({
     addOrganizationUser: addOrganizationUserMock,
-    removeOrganizationUser: removeOrganizationUserMock,
+    removeUserFromOrganization: removeUserFromOrganizationMock,
 }));
 
 import MembersPage from "@/pages/MembersPage";
@@ -31,8 +31,8 @@ beforeEach(() => {
     fetcherMock.mockReset();
     addOrganizationUserMock.mockReset();
     addOrganizationUserMock.mockResolvedValue(undefined);
-    removeOrganizationUserMock.mockReset();
-    removeOrganizationUserMock.mockResolvedValue(undefined);
+    removeUserFromOrganizationMock.mockReset();
+    removeUserFromOrganizationMock.mockResolvedValue(undefined);
 });
 
 /* The viewer, and the members the list comes back with. `/auth/check` decides
@@ -186,16 +186,16 @@ describe("MembersPage", () => {
         ).not.toBeInTheDocument();
     });
 
-    it("lets an admin remove a member but not another admin", async () => {
+    it("lets an admin remove any member, administrators included", async () => {
         mockMembers([ADMIN, MEMBER], ADMIN.id);
 
         renderWithSwr(<MembersPage />);
 
         await screen.findByText("Bob");
-        // Alice administers the organization, so only Bob's row has a menu.
+        // The API refuses only the last administrator, so both rows have a menu.
         expect(
-            screen.queryByRole("button", { name: /actions for Alice/i }),
-        ).not.toBeInTheDocument();
+            screen.getByRole("button", { name: /actions for Alice/i }),
+        ).toBeInTheDocument();
         expect(
             screen.getByRole("button", { name: /actions for Bob/i }),
         ).toBeInTheDocument();
@@ -215,12 +215,12 @@ describe("MembersPage", () => {
         );
 
         // The menu item opens the dialog; nothing has been sent yet.
-        expect(removeOrganizationUserMock).not.toHaveBeenCalled();
+        expect(removeUserFromOrganizationMock).not.toHaveBeenCalled();
 
         await userEvent.click(
             await screen.findByRole("button", { name: /remove member/i }),
         );
-        expect(removeOrganizationUserMock).toHaveBeenCalledWith("o1", "u2");
+        expect(removeUserFromOrganizationMock).toHaveBeenCalledWith("o1", "u2");
     });
 
     it("offers no Settings action, which has no endpoint behind it", async () => {
@@ -237,5 +237,74 @@ describe("MembersPage", () => {
         expect(
             screen.queryByRole("menuitem", { name: /settings/i }),
         ).not.toBeInTheDocument();
+    });
+
+    it("names the member and the organization in the confirmation", async () => {
+        mockMembers([ADMIN, MEMBER], ADMIN.id);
+
+        renderWithSwr(<MembersPage />);
+
+        await screen.findByText("Bob");
+        await userEvent.click(
+            screen.getByRole("button", { name: /actions for Bob/i }),
+        );
+        await userEvent.click(
+            await screen.findByRole("menuitem", { name: "Delete" }),
+        );
+
+        expect(
+            await screen.findByText(/Remove Bob from Acme\?/),
+        ).toBeInTheDocument();
+    });
+
+    it("does not remove a member when the confirmation is cancelled", async () => {
+        mockMembers([ADMIN, MEMBER], ADMIN.id);
+
+        renderWithSwr(<MembersPage />);
+
+        await screen.findByText("Bob");
+        await userEvent.click(
+            screen.getByRole("button", { name: /actions for Bob/i }),
+        );
+        await userEvent.click(
+            await screen.findByRole("menuitem", { name: "Delete" }),
+        );
+        await userEvent.click(
+            await screen.findByRole("button", { name: /cancel/i }),
+        );
+
+        expect(removeUserFromOrganizationMock).not.toHaveBeenCalled();
+    });
+
+    it("keeps the dialog open when the API refuses the removal", async () => {
+        removeUserFromOrganizationMock.mockRejectedValue(
+            new Error(
+                "Cannot remove the last administrator of the organization",
+            ),
+        );
+        mockMembers([ADMIN], ADMIN.id);
+
+        renderWithSwr(<MembersPage />);
+
+        await screen.findByText("Alice");
+        await userEvent.click(
+            screen.getByRole("button", { name: /actions for Alice/i }),
+        );
+        await userEvent.click(
+            await screen.findByRole("menuitem", { name: "Delete" }),
+        );
+        await userEvent.click(
+            await screen.findByRole("button", { name: /remove member/i }),
+        );
+
+        await waitFor(() =>
+            expect(removeUserFromOrganizationMock).toHaveBeenCalledWith(
+                "o1",
+                "u1",
+            ),
+        );
+        expect(
+            await screen.findByRole("button", { name: /cancel/i }),
+        ).toBeInTheDocument();
     });
 });

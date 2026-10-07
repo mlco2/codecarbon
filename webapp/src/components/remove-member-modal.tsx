@@ -7,16 +7,17 @@ import { SecondaryButton } from "./ui/secondary-button";
  * Confirm removing a member from the organization.
  *
  * The same shell as the create dialogs, with the form replaced by a sentence and
- * a pair of buttons: removal takes no input, and the API refuses to remove an
- * administrator, so the only thing left to establish is that the right person
- * was picked. There is no type-the-name gate as on project deletion — this
- * destroys nothing, and the page's own invite field puts the member back.
+ * a pair of buttons: removal takes no input, so the only thing left to
+ * establish is that the right person was picked, and from which organization.
+ * There is no type-the-name gate as on project deletion — this destroys
+ * nothing, and the page's own invite field puts the member back.
  */
 export default function RemoveMemberModal({
     isOpen,
     onClose,
     onConfirm,
     memberName,
+    organizationName,
     isRemoving,
 }: Readonly<{
     isOpen: boolean;
@@ -24,6 +25,7 @@ export default function RemoveMemberModal({
     onConfirm: () => void;
     /** Their name, or their email address when the API has no name. */
     memberName: string;
+    organizationName: string;
     isRemoving: boolean;
 }>) {
     return (
@@ -43,9 +45,10 @@ export default function RemoveMemberModal({
 
                 <div className="flex flex-col gap-7 px-6 py-8 sm:px-10 sm:py-10">
                     <DialogDescription className="type-mono-regular type-field break-words text-cc-white">
-                        Remove {memberName} from this organization? They lose
-                        access to its projects, and can be invited back by
-                        email.
+                        Remove {memberName} from {organizationName}? They lose
+                        access to the organization and all of its projects.
+                        Their emission data is kept, and they can be added back
+                        later by email.
                     </DialogDescription>
 
                     <div className="flex flex-wrap gap-4 pt-4">
