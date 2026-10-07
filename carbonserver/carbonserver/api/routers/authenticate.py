@@ -107,7 +107,6 @@ async def get_login(
 async def logout(
     request: Request,
     response: Response,
-    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     auth_provider: Optional[OIDCAuthProvider] = Depends(
         Provide[ServerContainer.auth_provider]
     ),
@@ -115,6 +114,10 @@ async def logout(
     """
     Logout user by ending the provider's SSO session, clearing our own session
     and removing the cookie.
+
+    Deliberately takes no auth dependency: the session token is verified against
+    the provider, so an expired or invalid one would be refused with a 401 before
+    this ran — which is exactly when the user most needs to be able to sign out.
     """
     if auth_provider is None:
         return RedirectResponse(settings.default_redirect_url)
