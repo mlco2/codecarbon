@@ -173,80 +173,105 @@ class TestCPULoad(unittest.TestCase):
         mocked_get_power_from_cpus.assert_called_once()
         self.assertEqual(cpu._power_history, [])
 
+    def test_cpu_sample_added_while_draining_goes_to_next_window(
+        self,
+        mocked_is_psutil_available,
+        mocked_is_powergadget_available,
+        mocked_is_rapl_available,
+    ):
+        """A monitor sample that lands while total_power averages the drained
+        history is counted in the next window, not lost (see issue #1315)."""
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+        )
+
+        class HistorySampledWhileRead(list):
+            monitor_ran = False
+
+            def __iter__(self):
+                if not HistorySampledWhileRead.monitor_ran:
+                    HistorySampledWhileRead.monitor_ran = True
+                    # Run in another thread: a deadlock here means total_power
+                    # holds the lock while reading the drained history.
+                    monitor = threading.Thread(target=cpu.monitor_power)
+                    monitor.start()
+                    monitor.join(5)
+                    assert not monitor.is_alive(), "monitor_power was blocked"
+                return super().__iter__()
+
+        cpu._power_history = HistorySampledWhileRead([Power.from_watts(10)])
+        samples = [Power.from_watts(w) for w in (1, 100, 1)]
+        with mock.patch.object(cpu, "_get_power_from_cpus", side_effect=samples):
+            first = cpu.total_power()  # [10] plus latest 1
+            second = cpu.total_power()  # monitor's 100 plus latest 1
+
+        self.assertTrue(HistorySampledWhileRead.monitor_ran)
+        self.assertEqual(first.W, (10 + 1) / 2)
+        self.assertEqual(second.W, (100 + 1) / 2)
+        self.assertEqual(cpu._power_history, [])
+
+    def test_cpu_total_power_and_monitor_power_never_sample_concurrently(
+        self,
+        mocked_is_psutil_available,
+        mocked_is_powergadget_available,
+        mocked_is_rapl_available,
+    ):
+        """Sampling mutates state in some modes (process tracking deltas, Intel
+        Power Gadget log file), so both threads must take turns."""
+        cpu = CPU.from_utils(
+            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
+        )
+        counter_lock = threading.Lock()
+        active = 0
+        max_active = 0
+
+        def slow_sample():
+            nonlocal active, max_active
+            with counter_lock:
+                active += 1
+                max_active = max(max_active, active)
+            sleep(0.005)
+            with counter_lock:
+                active -= 1
+            return Power.from_watts(1)
+
+        def run(target):
+            for _ in range(20):
+                target()
+
+        with mock.patch.object(cpu, "_get_power_from_cpus", side_effect=slow_sample):
+            threads = [
+                threading.Thread(target=run, args=(cpu.monitor_power,)),
+                threading.Thread(target=run, args=(cpu.total_power,)),
+            ]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(10)
+
+        self.assertFalse(any(thread.is_alive() for thread in threads))
+        self.assertEqual(max_active, 1)
+
     @mock.patch(
         "codecarbon.external.hardware.CPU._get_power_from_cpus",
-        return_value=Power.from_watts(1),
+        return_value=Power.from_watts(5),
     )
-    def test_cpu_total_power_keeps_samples_added_while_draining(
+    def test_cpu_start_discards_samples_from_before_the_window(
         self,
         mocked_get_power_from_cpus,
         mocked_is_psutil_available,
         mocked_is_powergadget_available,
         mocked_is_rapl_available,
     ):
-        """A sample appended by the monitor thread while total_power drains the
-        history must not be lost (see issue #1315)."""
         cpu = CPU.from_utils(
             None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
         )
-        cpu._power_history = [Power.from_watts(1)]
-        appended = threading.Event()
+        cpu._power_history = [Power.from_watts(500)]
 
-        def monitor():
-            cpu.monitor_power()
-            appended.set()
+        cpu.start()
 
-        monitor_thread = threading.Thread(target=monitor)
-        with cpu._power_history_lock:
-            monitor_thread.start()
-            # The monitor thread must wait instead of appending to a history
-            # total_power is about to discard.
-            self.assertFalse(appended.wait(0.2))
-        monitor_thread.join(1)
-
-        self.assertTrue(appended.is_set())
-        self.assertEqual(len(cpu._power_history), 2)
-
-    def test_cpu_sample_appended_right_after_the_swap_goes_to_next_window(
-        self,
-        mocked_is_psutil_available,
-        mocked_is_powergadget_available,
-        mocked_is_rapl_available,
-    ):
-        """A monitor sample that lands just after total_power swaps the history
-        is counted in the next total_power() call, not lost."""
-        cpu = CPU.from_utils(
-            None, MODE_CPU_LOAD, "Intel(R) Core(TM) i7-7600U CPU @ 2.80GHz", 100
-        )
-        cpu._power_history = [Power.from_watts(10)]
-        real_lock = cpu._power_history_lock
-
-        class MonitorAfterSwap:
-            fired = False
-
-            def __enter__(self):
-                real_lock.acquire()
-
-            def __exit__(self, *exc):
-                real_lock.release()
-                if not MonitorAfterSwap.fired:
-                    MonitorAfterSwap.fired = True
-                    monitor = threading.Thread(target=cpu.monitor_power, name="mon")
-                    monitor.start()
-                    monitor.join(1)
-
-        def fake_power():
-            watts = 100 if threading.current_thread().name == "mon" else 1
-            return Power.from_watts(watts)
-
-        cpu._power_history_lock = MonitorAfterSwap()
-        with mock.patch.object(cpu, "_get_power_from_cpus", side_effect=fake_power):
-            first = cpu.total_power()  # drains [10] plus latest 1
-            second = cpu.total_power()  # the 100 W sample plus latest 1
-
-        self.assertEqual(first.W, (10 + 1) / 2)
-        self.assertEqual(second.W, (100 + 1) / 2)
         self.assertEqual(cpu._power_history, [])
+        self.assertEqual(cpu.total_power().W, 5)
 
     @mock.patch(
         "codecarbon.external.hardware.CPU._get_power_from_cpus",

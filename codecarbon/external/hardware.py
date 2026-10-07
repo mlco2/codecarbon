@@ -208,7 +208,9 @@ class CPU(BaseHardware):
     ):
         assert tracking_mode in ["machine", "process"]
         self._power_history: List[Power] = []
-        # the monitor thread appends while the measurement thread drains
+        # Serializes sampling and history access between the monitor thread and
+        # the measurement thread: sampling mutates state in some modes
+        # (process tracking deltas, Intel Power Gadget log file).
         self._power_history_lock = threading.Lock()
         self._output_dir = output_dir
         self._mode = mode
@@ -396,8 +398,8 @@ class CPU(BaseHardware):
         return Energy.from_energy(energy)
 
     def total_power(self) -> Power:
-        latest_sample = self._get_power_from_cpus()
         with self._power_history_lock:
+            latest_sample = self._get_power_from_cpus()
             power_history = self._power_history
             self._power_history = []
         power_history.append(latest_sample)
@@ -424,8 +426,10 @@ class CPU(BaseHardware):
         ]:
             self._intel_interface.start()
         # Reset process tracking state for fresh measurements
-        self._last_measurement_time = None
-        self._last_cpu_times = {}
+        with self._power_history_lock:
+            self._power_history = []
+            self._last_measurement_time = None
+            self._last_cpu_times = {}
         if self._mode == MODE_CPU_LOAD:
             if not _cpu_load_percent_primed:
                 _ = self._get_power_from_cpu_load()
@@ -434,9 +438,8 @@ class CPU(BaseHardware):
                 self._cpu_percent_interval = None
 
     def monitor_power(self):
-        cpu_power = self._get_power_from_cpus()
         with self._power_history_lock:
-            self._power_history.append(cpu_power)
+            self._power_history.append(self._get_power_from_cpus())
 
     def get_model(self):
         return self._model
