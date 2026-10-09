@@ -247,8 +247,3 @@ def clear_cache() -> None:
         mod = sys.modules.get(mod_name)
         if mod is not None:
             getattr(mod, clear_fn)()
-
-    if "codecarbon.external.hardware" in sys.modules:
-        from codecarbon.external.hardware import clear_cpu_load_prime_cache
-
-        clear_cpu_load_prime_cache()
