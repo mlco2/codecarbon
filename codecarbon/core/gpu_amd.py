@@ -124,7 +124,7 @@ class AMDGPUDevice(GPUDevice):
             elif "power" in energy_count:
                 energy_key = "power"
             if energy_key is None:
-                logger.warning(
+                logger.debug(
                     f"Neither 'energy_accumulator' nor 'power' found in energy_count: {energy_count}"
                 )
                 return None
@@ -146,7 +146,7 @@ class AMDGPUDevice(GPUDevice):
             energy_mj = counter_value * counter_resolution_uj / 1000
             return energy_mj
         except Exception:
-            logger.warning(
+            logger.debug(
                 "Failed to retrieve AMD GPU total energy consumption", exc_info=True
             )
             return None
