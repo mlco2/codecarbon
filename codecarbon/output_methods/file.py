@@ -1,6 +1,6 @@
 import csv
 import os
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -51,23 +51,31 @@ class FileOutput(BaseOutput):
             f"Emissions data (if any) will be saved to file {os.path.abspath(self.save_file_path)}"
         )
 
-    def has_valid_headers(self, data: EmissionsData) -> bool:
+    def has_valid_headers(
+        self, data: EmissionsData, headers: Optional[List[str]] = None
+    ) -> bool:
         """
         Checks self.save_file_path has headers matching those from passed data.
 
         Args:
             data: EmissionsData object with valid headers.
+            headers: header row already read from the file; read it if None.
 
         Returns:
             True if the file has valid headers, False otherwise.
         """
-        with open(self.save_file_path) as csv_file:
-            reader = csv.reader(csv_file)
-            try:
-                headers = next(reader)
-            except StopIteration:
+        if headers is None:
+            headers = self._read_headers()
+            if headers is None:
                 return True
-            return sorted(headers) == sorted(data.values.keys())
+        return sorted(headers) == sorted(data.values.keys())
+
+    def _read_headers(self) -> Optional[List[str]]:
+        """
+        Read the header row of self.save_file_path, or None if the file is empty.
+        """
+        with open(self.save_file_path, newline="") as csv_file:
+            return next(csv.reader(csv_file), None)
 
     def out(self, total: EmissionsData, _):
         """
@@ -91,7 +99,8 @@ class FileOutput(BaseOutput):
             )
             file_exists = False
 
-        headers_match = file_exists and self.has_valid_headers(total)
+        headers = self._read_headers() if file_exists else None
+        headers_match = file_exists and self.has_valid_headers(total, headers)
         if file_exists and not headers_match:
             logger.warning("The CSV format has changed, backing up old emission file.")
             backup(self.save_file_path)
@@ -104,8 +113,10 @@ class FileOutput(BaseOutput):
         elif self.on_csv_write == "append":
             # Never drop all-NA columns here: the append is headerless, so column
             # identity is positional and a missing column shifts every value after it.
-            with open(self.save_file_path, newline="") as csv_file:
-                headers = next(csv.reader(csv_file))
+            # Header names may be in any order (see has_valid_headers), so write the
+            # values in the file's order. reindex() drops or NaN-fills mismatched
+            # columns silently: it is only safe because has_valid_headers() above
+            # guarantees the file and the record have the same set of columns.
             new_df = new_df.reindex(columns=headers)
             new_df.to_csv(self.save_file_path, mode="a", header=False, index=False)
         else:
