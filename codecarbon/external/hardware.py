@@ -551,6 +551,10 @@ class AppleSiliconChip(BaseHardware):
         return cls(output_dir=output_dir, model=model, chip_part=chip_part)
 
 
+# One `vcgencmd pmic_read_adc` line, e.g. "VDD_CORE_A current(7)=3.00000000A"
+PMIC_LINE_RE = re.compile(r"([A-Z_0-9]+)_[VA] (current|volt)\(([0-9]+)\)=([0-9.]+)")
+
+
 @dataclass
 class Raspberry(BaseHardware):
     def __init__(
@@ -559,6 +563,8 @@ class Raspberry(BaseHardware):
         model: str,
         chip_part: str = "CPU",
     ):
+        # The "CPU" rails cover the whole SoC and board except the DRAM and
+        # HDMI rails, as the PMIC has no rail for the CPU cores alone.
         if chip_part == "CPU":
             self.WANTED_COMPONENTS = (
                 "3V7_WL_SW",
@@ -572,7 +578,7 @@ class Raspberry(BaseHardware):
                 "0V8_AON",
             )
         elif chip_part == "RAM":
-            self.WANTED_COMPONENTS = ("DDR_VDD2", "DDR_VDD2", "DDR_VDDQ")
+            self.WANTED_COMPONENTS = ("DDR_VDD2", "DDR_VDDQ")
         else:
             raise Exception("Unknown chip part", chip_part)
 
@@ -608,14 +614,13 @@ class Raspberry(BaseHardware):
 
     def get_measure(self):
         components = {}
-        res = run(["vcgencmd", "pmic_read_adc"], capture_output=True)
+        res = run(["vcgencmd", "pmic_read_adc"], capture_output=True, timeout=5)
         lines = res.stdout.decode("utf-8").splitlines()
         for line in lines:
-            res = re.search(
-                "([A-Z_0-9]+)_[VA] (current|volt)\(([0-9]+)\)=([0-9.]+)",  # noqa: W605
-                line,
-            )
-            component_name, measure_type, idx, value = res.groups()
+            match = PMIC_LINE_RE.search(line)
+            if match is None:
+                continue
+            component_name, measure_type, idx, value = match.groups()
             component = components[component_name] = components.get(component_name, {})
             component[measure_type] = float(value)
         pi_power = 0

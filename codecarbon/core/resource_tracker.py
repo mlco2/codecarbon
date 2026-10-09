@@ -49,6 +49,7 @@ class ResourceTracker:
             Union[RAM, CPU, GPU, AppleSiliconChip, Raspberry]
         ] = [ram]
         if cpu.is_raspberry():
+            # The PMIC measures the DRAM rails, which beats any RAM estimate
             self.tracker._hardware = [
                 Raspberry.from_utils(self.tracker._output_dir, chip_part="RAM")
             ]

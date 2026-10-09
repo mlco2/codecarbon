@@ -1192,7 +1192,6 @@ class BaseEmissionsTracker(ABC):
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
-            logger.info(f"measuring from {hardware=}")
             h_time = time.perf_counter()
             # Compute last_duration again for more accuracy
             last_duration = time.perf_counter() - self._last_measured_time
