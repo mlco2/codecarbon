@@ -258,6 +258,24 @@ def is_psutil_available():
         return False
 
 
+def is_raspberry() -> bool:
+    """
+    Check if the Raspberry Pi PMIC power readings are available.
+
+    `vcgencmd` ships with every Raspberry Pi OS, but only the Pi 5 answers
+    `pmic_read_adc`: older boards fall back to the TDP of their CPU.
+    """
+    if not os.path.exists("/usr/bin/vcgencmd"):
+        return False
+    try:
+        res = subprocess.run(
+            ["vcgencmd", "pmic_read_adc"], capture_output=True, timeout=5
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return res.returncode == 0 and b"volt(" in res.stdout
+
+
 class IntelPowerGadget:
     """
     A class to interface with Intel Power Gadget for monitoring CPU power consumption on Windows and (non-Apple Silicon) macOS.
