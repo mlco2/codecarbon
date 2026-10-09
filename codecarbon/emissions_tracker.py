@@ -9,6 +9,7 @@ import dataclasses
 import os
 import platform
 import re
+import threading
 import time
 import uuid
 import warnings
@@ -277,6 +278,8 @@ class BaseEmissionsTracker(ABC):
         self._gpu_utilization_history: List[float] = []
         self._ram_utilization_history: List[float] = []
         self._ram_used_history: List[float] = []
+        # The monitor thread appends while the measurement thread clears/averages
+        self._utilization_history_lock = threading.Lock()
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -689,6 +692,22 @@ class BaseEmissionsTracker(ABC):
         return hardware_info
 
     def service_shutdown(self, signum, frame):
+        """
+        Signal handler that stops the tracker on SIGTERM/SIGINT, for use when
+        CodeCarbon runs as a long-lived service. Register it with:
+
+        ```py
+        import signal
+
+        tracker = EmissionsTracker()
+        signal.signal(signal.SIGTERM, tracker.service_shutdown)
+        signal.signal(signal.SIGINT, tracker.service_shutdown)
+        ```
+
+        :param signum: Signal number, passed by `signal.signal`
+        :param frame: Current stack frame, passed by `signal.signal`
+        :return: None
+        """
         logger.warning("service_shutdown - Caught signal %d" % signum)
         self.stop()
 
@@ -715,11 +734,7 @@ class BaseEmissionsTracker(ABC):
         self._ensure_hardware_ready()
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -776,11 +791,7 @@ class BaseEmissionsTracker(ABC):
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -1081,25 +1092,15 @@ class BaseEmissionsTracker(ABC):
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
             cpu_utilization_percent=(
-                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
-                if self._cpu_utilization_history
-                else 0
+                self._mean_utilization(self._cpu_utilization_history)
             ),
             gpu_utilization_percent=(
-                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
-                if self._gpu_utilization_history
-                else 0
+                self._mean_utilization(self._gpu_utilization_history)
             ),
             ram_utilization_percent=(
-                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
-                if self._ram_utilization_history
-                else 0
+                self._mean_utilization(self._ram_utilization_history)
             ),
-            ram_used_gb=(
-                sum(self._ram_used_history) / len(self._ram_used_history)
-                if self._ram_used_history
-                else 0
-            ),
+            ram_used_gb=(self._mean_utilization(self._ram_used_history)),
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
@@ -1162,6 +1163,17 @@ class BaseEmissionsTracker(ABC):
         :return: Metadata containing cloud info
         """
 
+    def _clear_utilization_history(self) -> None:
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.clear()
+            self._ram_utilization_history.clear()
+            self._ram_used_history.clear()
+            self._gpu_utilization_history.clear()
+
+    def _mean_utilization(self, history: List[float]) -> float:
+        with self._utilization_history_lock:
+            return sum(history) / len(history) if history else 0
+
     def _monitor_power(self) -> None:
         """
         Monitor the power consumption of the hardware.
@@ -1174,12 +1186,13 @@ class BaseEmissionsTracker(ABC):
                 hardware.monitor_power()
 
         # Collect CPU and RAM utilization metrics
-        self._cpu_utilization_history.append(psutil.cpu_percent())
-        self._ram_utilization_history.append(psutil.virtual_memory().percent)
-        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
+        cpu_utilization = psutil.cpu_percent()
+        ram_utilization = psutil.virtual_memory().percent
+        ram_used = psutil.virtual_memory().used / (1024**3)
 
         # Collect GPU utilization metrics (lightweight path — skips
         # heavyweight calls like process lists, memory, temperature).
+        gpu_utilizations = []
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
@@ -1190,9 +1203,13 @@ class BaseEmissionsTracker(ABC):
                         and resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
-                        self._gpu_utilization_history.append(
-                            gpu_detail["gpu_utilization"]
-                        )
+                        gpu_utilizations.append(gpu_detail["gpu_utilization"])
+
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.append(cpu_utilization)
+            self._ram_utilization_history.append(ram_utilization)
+            self._ram_used_history.append(ram_used)
+            self._gpu_utilization_history.extend(gpu_utilizations)
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
@@ -1743,9 +1760,9 @@ def track_task_emissions(
 ):
     """
     Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
-    :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
+    :param tracker: global tracker used in the current execution. If none is provided, instanciates an emission
     tracker which will read default parameter from config to enable tracking
-    :param: task_name: Task to be tracked. If none is provided, an id will be used.
+    :param task_name: Task to be tracked. If none is provided, an id will be used.
     :return: The decorated function
     """
 

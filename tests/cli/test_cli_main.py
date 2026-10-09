@@ -122,6 +122,43 @@ def test_monitor_run_and_monitor(monkeypatch):
     assert "Hello, World!" in result.output
 
 
+def test_monitor_accepts_tracker_options(monkeypatch):
+    captured = {}
+
+    class FakeTracker:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def start(self):
+            pass
+
+        def stop(self):
+            pass
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.EmissionsTracker",
+        FakeTracker,
+    )
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "test-exp")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--project-name",
+            "test-project",
+            "--no-api",
+            "--",
+            "echo",
+            "test",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["project_name"] == "test-project"
+
+
 def test_show_config_handles_access_token_errors(monkeypatch, tmp_path, capsys):
     class FakeApiClient:
         def __init__(self, endpoint_url=None):
