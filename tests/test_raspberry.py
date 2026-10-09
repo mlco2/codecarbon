@@ -67,14 +67,55 @@ def mock_vcgencmd(hardware_globals):
         yield mock_run
 
 
-def test_is_raspberry_detects_vcgencmd():
-    with patch("codecarbon.core.cpu.os.path.exists", return_value=True) as mock_exists:
+def _vcgencmd_result(stdout, returncode=0):
+    return SimpleNamespace(stdout=stdout, returncode=returncode)
+
+
+def test_is_raspberry_detects_pmic_readings():
+    with (
+        patch("codecarbon.core.cpu.os.path.exists", return_value=True) as mock_exists,
+        patch(
+            "codecarbon.core.cpu.subprocess.run",
+            return_value=_vcgencmd_result(PMIC_OUTPUT),
+        ) as mock_run,
+    ):
         assert cpu.is_raspberry() is True
     mock_exists.assert_called_once_with("/usr/bin/vcgencmd")
+    mock_run.assert_called_once_with(
+        ["vcgencmd", "pmic_read_adc"], capture_output=True, timeout=5
+    )
 
 
 def test_is_raspberry_false_without_vcgencmd():
-    with patch("codecarbon.core.cpu.os.path.exists", return_value=False):
+    with (
+        patch("codecarbon.core.cpu.os.path.exists", return_value=False),
+        patch("codecarbon.core.cpu.subprocess.run") as mock_run,
+    ):
+        assert cpu.is_raspberry() is False
+    mock_run.assert_not_called()
+
+
+def test_is_raspberry_false_on_a_pi_4():
+    """A Pi 4 has vcgencmd but no PMIC, so it falls back to the CPU TDP."""
+    pi4_output = b'error=1 error_msg="Command not registered"\n'
+    with (
+        patch("codecarbon.core.cpu.os.path.exists", return_value=True),
+        patch(
+            "codecarbon.core.cpu.subprocess.run",
+            return_value=_vcgencmd_result(pi4_output, returncode=1),
+        ),
+    ):
+        assert cpu.is_raspberry() is False
+
+
+def test_is_raspberry_false_when_vcgencmd_hangs():
+    with (
+        patch("codecarbon.core.cpu.os.path.exists", return_value=True),
+        patch(
+            "codecarbon.core.cpu.subprocess.run",
+            side_effect=cpu.subprocess.TimeoutExpired("vcgencmd", 5),
+        ),
+    ):
         assert cpu.is_raspberry() is False
 
 
@@ -106,7 +147,7 @@ def test_get_model_returns_detected_model(make_raspberry):
 def test_get_measure_runs_vcgencmd(make_raspberry, mock_vcgencmd):
     make_raspberry().get_measure()
     mock_vcgencmd.assert_called_once_with(
-        ["vcgencmd", "pmic_read_adc"], capture_output=True
+        ["vcgencmd", "pmic_read_adc"], capture_output=True, timeout=5
     )
 
 
@@ -116,6 +157,13 @@ def test_get_measure_sums_cpu_rails(make_raspberry, mock_vcgencmd):
 
 def test_get_measure_sums_memory_rails(make_raspberry, mock_vcgencmd):
     assert make_raspberry("RAM").get_measure() == {"power": RAM_WATTS}
+
+
+def test_get_measure_skips_unparsable_lines(make_raspberry, hardware_globals):
+    noisy_output = b"\nunexpected line\n" + PMIC_OUTPUT
+    mock_run = MagicMock(return_value=SimpleNamespace(stdout=noisy_output))
+    with patch.dict(hardware_globals, {"run": mock_run}):
+        assert make_raspberry("CPU").get_measure() == {"power": CPU_WATTS}
 
 
 def test_total_power_reads_the_pmic(make_raspberry, mock_vcgencmd):
