@@ -1170,7 +1170,7 @@ class BaseEmissionsTracker(ABC):
         This method is called every 1 second. Even if we are in Task mode.
         """
         for hardware in self._hardware:
-            if isinstance(hardware, CPU):
+            if isinstance(hardware, (CPU, GPU)):
                 hardware.monitor_power()
 
         # Collect CPU and RAM utilization metrics

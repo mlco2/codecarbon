@@ -29,18 +29,32 @@ class GPUDevice:
     power: Power = field(default_factory=lambda: Power(0))
     # Energy consumed in kWh
     energy_delta: Energy = field(default_factory=lambda: Energy(0))
-    # Last energy reading in kWh, None if the device has no energy counter
+    # Last good energy counter reading in kWh, None if the device has no
+    # energy counter
     last_energy: Optional[Energy] = field(default_factory=lambda: Energy(0))
-    _warned_no_counter: bool = field(default=False, init=False)
+
+    # Plain class attributes (not dataclass fields) so that instances built
+    # without __init__ (e.g. ``__new__`` in tests) still have sane defaults.
+    # True while delta() integrates power instead of reading the counter.
+    _use_power_fallback = False
+    _warned_no_counter = False
+    _warned_power_failure = False
+    _warned_zero_power = False
+    # Energy reported by the power fallback since ``last_energy`` was read,
+    # subtracted once the counter comes back so nothing is counted twice.
+    _fallback_energy_since_counter = Energy(0)
 
     def start(self) -> None:
         self.last_energy = self._get_energy_kwh()
+        self._fallback_energy_since_counter = Energy(0)
+        self._power_samples = []
 
     def __post_init__(self) -> None:
         # Static details first: subclasses set flags there (e.g. AMD dual-GCD)
         # that the energy read depends on.
         self._init_static_details()
         self.last_energy = self._get_energy_kwh()
+        self._use_power_fallback = self.last_energy is None
 
     def _get_energy_kwh(self) -> Optional[Energy]:
         total_energy_consumption = self._get_total_energy_consumption()
@@ -48,39 +62,115 @@ class GPUDevice:
             return None
         return Energy.from_millijoules(total_energy_consumption)
 
-    def _delta_from_power(self, duration: Time) -> None:
+    def _read_power_watts(self) -> Optional[float]:
         try:
-            self.power = Power.from_watts(self._get_power_usage())
+            watts = float(self._get_power_usage())
         except Exception:
+            if not self._warned_power_failure:
+                self._warned_power_failure = True
+                logger.warning(
+                    f"Failed to retrieve power usage of GPU {self.gpu_index}, "
+                    "its energy will be reported as 0 while this persists.",
+                    exc_info=True,
+                )
+            else:
+                logger.debug(
+                    f"Failed to retrieve power usage of GPU {self.gpu_index}",
+                    exc_info=True,
+                )
+            return None
+        self._warned_power_failure = False
+        return watts
+
+    def sample_power(self) -> None:
+        """
+        Record an instantaneous power reading, called every second by the
+        tracker. Only does work while the energy counter is unavailable, so
+        that the power fallback averages over the whole interval instead of
+        relying on a single reading taken at its end.
+        """
+        if not self._use_power_fallback:
+            return
+        watts = self._read_power_watts()
+        if watts is not None:
+            if getattr(self, "_power_samples", None) is None:
+                self._power_samples = []
+            self._power_samples.append(watts)
+
+    def _delta_from_power(self, duration: Time) -> None:
+        # Swap the list rather than clearing it: sample_power() runs in
+        # another thread.
+        samples = getattr(self, "_power_samples", None) or []
+        self._power_samples = []
+        if not samples:
+            watts = self._read_power_watts()
+            samples = [watts] if watts is not None else []
+        watts = sum(samples) / len(samples) if samples else 0.0
+        if samples and watts == 0 and not self._warned_zero_power:
+            self._warned_zero_power = True
             logger.warning(
-                f"Failed to retrieve power usage of GPU {self.gpu_index}, "
-                "reporting 0 W for this measurement.",
-                exc_info=True,
+                f"GPU {self.gpu_index} reports 0 W power usage and has no usable "
+                "energy counter, its energy consumption will be under-reported."
             )
-            self.power = Power.from_watts(0.0)
+        self.power = Power.from_watts(watts)
         self.energy_delta = Energy.from_power_and_time(power=self.power, time=duration)
+
+    def _fall_back_to_power(self, duration: Time) -> None:
+        self._use_power_fallback = True
+        self._delta_from_power(duration)
+        self._fallback_energy_since_counter += self.energy_delta
 
     def delta(self, duration: Time) -> dict:
         """
         Compute the energy/power used since last call.
         """
         energy = self._get_energy_kwh()
-        if energy is None or self.last_energy is None:
-            # counter unsupported: integrate instantaneous power instead
-            if not self._warned_no_counter:
-                self._warned_no_counter = True
+        if energy is None:
+            if self.last_energy is None:
+                if not self._warned_no_counter:
+                    self._warned_no_counter = True
+                    logger.warning(
+                        f"GPU {self.gpu_index} does not provide a total energy "
+                        "consumption counter, falling back to averaging its "
+                        "power usage. Measurements will be less accurate."
+                    )
+            elif not self._use_power_fallback:
                 logger.warning(
-                    f"GPU {self.gpu_index} does not provide a total energy consumption counter, "
-                    "falling back to integrating instantaneous power usage. "
-                    "Measurements will be less accurate."
+                    f"Failed to read the energy counter of GPU {self.gpu_index}, "
+                    "averaging its power usage until the counter is available again."
                 )
-            self._delta_from_power(duration)
-        else:
-            self.power = Power.from_energies_and_delay(
-                energy, self.last_energy, duration
+            # Keep the last good counter reading, so the energy consumed during
+            # the outage is reconciled once the counter comes back.
+            self._fall_back_to_power(duration)
+        elif self.last_energy is None:
+            # Counter appeared after starting without one: no baseline yet.
+            self._fall_back_to_power(duration)
+            self.last_energy = energy
+            self._fallback_energy_since_counter = Energy(0)
+        elif energy.kWh < self.last_energy.kWh:
+            logger.warning(
+                f"Energy counter of GPU {self.gpu_index} went backwards "
+                "(driver reload or counter reset), using its power usage "
+                "for this measurement."
             )
-            self.energy_delta = energy - self.last_energy
-        self.last_energy = energy
+            self._fall_back_to_power(duration)
+            self.last_energy = energy
+            self._fallback_energy_since_counter = Energy(0)
+        else:
+            if self._use_power_fallback:
+                logger.info(
+                    f"Energy counter of GPU {self.gpu_index} is available again."
+                )
+                self._use_power_fallback = False
+                self._power_samples = []
+            # The counter delta also covers any fallback intervals since the
+            # last good reading: remove what those intervals already reported.
+            counter_delta = energy.kWh - self.last_energy.kWh
+            fallback = self._fallback_energy_since_counter.kWh
+            self.energy_delta = Energy(max(counter_delta - fallback, 0.0))
+            self.power = Power.from_energy_delta_and_delay(self.energy_delta, duration)
+            self.last_energy = energy
+            self._fallback_energy_since_counter = Energy(0)
         return {
             "name": self._gpu_name,
             "uuid": self._uuid,
