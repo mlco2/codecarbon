@@ -437,3 +437,9 @@ class TestRAM(unittest.TestCase):
             ram_power = ram.total_power()
             # Verify the calculation method was not called
             mock_calc.assert_not_called()
+
+    def test_default_pid_is_resolved_at_init(self):
+        # A default evaluated at import time would keep the importing
+        # process's pid, e.g. in a forked child.
+        with mock.patch("os.getpid", return_value=12345):
+            self.assertEqual(RAM(tracking_mode="process")._pid, 12345)

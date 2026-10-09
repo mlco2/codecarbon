@@ -421,6 +421,10 @@ def _external_config() -> dict:
 )
 def monitor(
     ctx: typer.Context,
+    project_name: Annotated[
+        str,
+        typer.Option(help="Project name for the current experiment."),
+    ] = None,
     measure_power_secs: Annotated[
         int,
         typer.Option(help="Interval between two measures."),
@@ -455,6 +459,7 @@ def monitor(
     # Only the options actually given are forwarded: the others are left to the
     # tracker, which resolves them from the configuration file and environment.
     cli_defaults = (
+        ("project_name", project_name),
         ("measure_power_secs", measure_power_secs),
         ("api_call_interval", api_call_interval),
         ("log_level", log_level),
