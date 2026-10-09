@@ -18,6 +18,12 @@ class TestNationalGridESOAPI(unittest.TestCase):
             region=None,
             country_2letter_iso_code="GB",
         )
+        # Each test expects its own mocked HTTP call; the module-level cache
+        # would otherwise serve a stale value from a previous test.
+        national_grid_eso_api.clear_cache()
+
+    def tearDown(self) -> None:
+        national_grid_eso_api.clear_cache()
 
     # ------------------------------------------------------------------
     # is_supported
@@ -44,7 +50,11 @@ class TestNationalGridESOAPI(unittest.TestCase):
         responses.add(
             responses.GET,
             national_grid_eso_api.URL,
-            json={"data": [{"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}]},
+            json={
+                "data": [
+                    {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
+                ]
+            },
             status=200,
         )
         result = national_grid_eso_api.get_emissions(self._energy, self._geo)
@@ -57,7 +67,11 @@ class TestNationalGridESOAPI(unittest.TestCase):
         responses.add(
             responses.GET,
             national_grid_eso_api.URL,
-            json={"data": [{"intensity": {"forecast": 266, "actual": 0, "index": "very low"}}]},
+            json={
+                "data": [
+                    {"intensity": {"forecast": 266, "actual": 0, "index": "very low"}}
+                ]
+            },
             status=200,
         )
         result = national_grid_eso_api.get_emissions(self._energy, self._geo)
@@ -69,7 +83,17 @@ class TestNationalGridESOAPI(unittest.TestCase):
         responses.add(
             responses.GET,
             national_grid_eso_api.URL,
-            json={"data": [{"intensity": {"forecast": 266, "actual": None, "index": "moderate"}}]},
+            json={
+                "data": [
+                    {
+                        "intensity": {
+                            "forecast": 266,
+                            "actual": None,
+                            "index": "moderate",
+                        }
+                    }
+                ]
+            },
             status=200,
         )
         result = national_grid_eso_api.get_emissions(self._energy, self._geo)
@@ -107,7 +131,17 @@ class TestNationalGridESOAPI(unittest.TestCase):
         responses.add(
             responses.GET,
             national_grid_eso_api.URL,
-            json={"data": [{"intensity": {"forecast": None, "actual": None, "index": "unknown"}}]},
+            json={
+                "data": [
+                    {
+                        "intensity": {
+                            "forecast": None,
+                            "actual": None,
+                            "index": "unknown",
+                        }
+                    }
+                ]
+            },
             status=200,
         )
         with self.assertRaises(NationalGridESOAPIError):
@@ -129,3 +163,66 @@ class TestNationalGridESOAPI(unittest.TestCase):
     def test_get_emissions_real_api(self):
         result = national_grid_eso_api.get_emissions(self._energy, self._geo)
         assert result > 0
+
+    # ------------------------------------------------------------------
+    # caching
+    # ------------------------------------------------------------------
+
+    @responses.activate
+    def test_get_emissions_caches_within_ttl(self):
+        responses.add(
+            responses.GET,
+            national_grid_eso_api.URL,
+            json={
+                "data": [
+                    {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
+                ]
+            },
+            status=200,
+        )
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        # Only the first call should have hit the network; the rest are
+        # served from the per-run cache.
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_get_emissions_refetches_after_cache_cleared(self):
+        responses.add(
+            responses.GET,
+            national_grid_eso_api.URL,
+            json={
+                "data": [
+                    {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
+                ]
+            },
+            status=200,
+        )
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        national_grid_eso_api.clear_cache()
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        assert len(responses.calls) == 2
+
+    @responses.activate
+    def test_get_emissions_refetches_after_ttl_expires(self):
+        responses.add(
+            responses.GET,
+            national_grid_eso_api.URL,
+            json={
+                "data": [
+                    {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
+                ]
+            },
+            status=200,
+        )
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        # Simulate TTL expiry without sleeping in the test.
+        national_grid_eso_api._cache = (
+            national_grid_eso_api._cache[0],
+            national_grid_eso_api._cache[1]
+            - national_grid_eso_api._CACHE_TTL_SECONDS
+            - 1,
+        )
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        assert len(responses.calls) == 2
