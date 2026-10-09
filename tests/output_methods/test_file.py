@@ -1,7 +1,9 @@
+import csv
 import os
 import shutil
 import tempfile
 import unittest
+from dataclasses import replace
 from unittest.mock import patch
 
 import pandas as pd
@@ -86,6 +88,32 @@ class TestFileOutput(unittest.TestCase):
         df.to_csv(os.path.join(self.temp_dir, "test.csv"), index=False)
 
         self.assertTrue(file_output.has_valid_headers(self.emissions_data))
+
+    def test_file_output_preserves_reordered_header_alignment(self):
+        for mode in ("append", "update"):
+            with self.subTest(mode=mode):
+                output = FileOutput(f"{mode}.csv", self.temp_dir, on_csv_write=mode)
+                output.out(self.emissions_data, None)
+                df = pd.read_csv(output.save_file_path)
+                df[list(reversed(df.columns))].to_csv(
+                    output.save_file_path, index=False
+                )
+                next_run = replace(
+                    self.emissions_data, run_id="next_run", project_name="next_project"
+                )
+
+                output.out(next_run, None)
+
+                with open(output.save_file_path, newline="") as file:
+                    rows = list(csv.DictReader(file))
+                self.assertEqual(len(rows), 2)
+                self.assertEqual(
+                    rows[-1],
+                    {
+                        key: str(value) if value is not None else ""
+                        for key, value in next_run.values.items()
+                    },
+                )
 
     def test_has_valid_headers_failure(self):
         file_output = FileOutput("test.csv", self.temp_dir)
