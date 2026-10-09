@@ -121,7 +121,9 @@ class TestCarbonTrackerConstant(unittest.TestCase):
             expected_energy, assertdf["energy_consumed"][0], delta=expected_energy * 0.1
         )
 
-    @mock.patch("codecarbon.external.hardware.psutil.cpu_percent", return_value=50.0)
+    @mock.patch(
+        "codecarbon.external.hardware.SystemCPULoadMeter.percent", return_value=50.0
+    )
     @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
     @mock.patch.object(cpu, "is_psutil_available")
     def test_carbon_tracker_offline_load_force_cpu_power(
