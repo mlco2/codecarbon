@@ -33,6 +33,7 @@ class Emissions:
             str
         ] = None,  # Deprecated, for backward compatibility
         force_carbon_intensity_g_co2e_kwh: Optional[float] = None,
+        use_national_grid_eso_api: bool = False,
     ):
         self._data_source = data_source
 
@@ -47,6 +48,10 @@ class Emissions:
 
         self._electricitymaps_api_token = electricitymaps_api_token
         self._force_carbon_intensity_g_co2e_kwh = force_carbon_intensity_g_co2e_kwh
+        # Opt-in only: this makes a live network call on every GBR run if left
+        # on. Defaults to False, mirroring how electricitymaps_api_token being
+        # unset keeps the Electricity Maps call off.
+        self._use_national_grid_eso_api = use_national_grid_eso_api
 
     def get_cloud_emissions(
         self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
@@ -176,7 +181,7 @@ class Emissions:
                     + " >>> Using CodeCarbon's data."
                 )
 
-        if national_grid_eso_api.is_supported(geo):
+        if self._use_national_grid_eso_api and national_grid_eso_api.is_supported(geo):
             try:
                 emissions = national_grid_eso_api.get_emissions(energy, geo)
                 logger.debug(

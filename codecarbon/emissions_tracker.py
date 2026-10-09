@@ -373,6 +373,7 @@ class BaseEmissionsTracker(ABC):
             self._data_source,
             self._electricitymaps_api_token,
             force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
+            use_national_grid_eso_api=self._use_national_grid_eso_api,
         )
 
     def _ensure_geo_metadata(self) -> None:
@@ -424,6 +425,7 @@ class BaseEmissionsTracker(ABC):
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
+        use_national_grid_eso_api: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -519,6 +521,14 @@ class BaseEmissionsTracker(ABC):
                                  (CPU + chipset + PCIe). When False, uses package domains which
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
+        :param use_national_grid_eso_api: Opt-in: when True and the detected location is
+                                 Great Britain, fetch live carbon intensity from the UK
+                                 National Grid ESO Carbon Intensity API
+                                 (https://carbonintensity.org.uk/, Open Government Licence
+                                 v3.0) instead of CodeCarbon's static country-average data.
+                                 This makes a network call (short timeout, cached for the
+                                 duration of the run) and reports a Great-Britain-wide
+                                 figure, not a regional one. Defaults to False.
         """
 
         # logger.info("base tracker init")
@@ -583,6 +593,9 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
+        self._set_from_conf(
+            use_national_grid_eso_api, "use_national_grid_eso_api", False, bool
+        )
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(wue, "wue", 0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
@@ -1512,6 +1525,7 @@ def track_emissions(
     allow_multiple_runs: Optional[bool] = _sentinel,
     rapl_include_dram: Optional[bool] = _sentinel,
     rapl_prefer_psys: Optional[bool] = _sentinel,
+    use_national_grid_eso_api: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1594,6 +1608,11 @@ def track_emissions(
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
+    :param use_national_grid_eso_api: Opt-in: when True and the detected location
+                             is Great Britain, fetch live carbon intensity from the
+                             UK National Grid ESO Carbon Intensity API instead of
+                             CodeCarbon's static country-average data. Defaults to
+                             False.
 
     :return: The decorated function
     """
@@ -1650,6 +1669,7 @@ def track_emissions(
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1686,6 +1706,7 @@ def track_emissions(
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             tracker.start()
             try:
