@@ -9,6 +9,7 @@ import dataclasses
 import os
 import platform
 import re
+import threading
 import time
 import uuid
 import warnings
@@ -285,6 +286,8 @@ class BaseEmissionsTracker(ABC):
         self._gpu_utilization_history: List[float] = []
         self._ram_utilization_history: List[float] = []
         self._ram_used_history: List[float] = []
+        # The monitor thread appends while the measurement thread clears/averages
+        self._utilization_history_lock = threading.Lock()
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -304,6 +307,7 @@ class BaseEmissionsTracker(ABC):
         self._tasks: Dict[str, Task] = {}
         self._active_task: Optional[str] = None
         self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._scheduler_paused_by_task = False
         self._hardware = []
         self._hardware_initialized = False
 
@@ -512,7 +516,9 @@ class BaseEmissionsTracker(ABC):
                                 `sudo lshw -C memory -short | grep DIMM` to get RAM slots,
                                 then RAM power (W) = Number of RAM Slots × 5 Watts.
         :param pue: PUE (Power Usage Effectiveness) of the data center where the
-                    experiment is being run.
+                    experiment is being run. It multiplies both the reported power
+                    and the reported energy, including forced values: with
+                    `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
         :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
                     litres of water consumed per kilowatt-hour of electricity consumed.
         :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
@@ -697,6 +703,22 @@ class BaseEmissionsTracker(ABC):
         return hardware_info
 
     def service_shutdown(self, signum, frame):
+        """
+        Signal handler that stops the tracker on SIGTERM/SIGINT, for use when
+        CodeCarbon runs as a long-lived service. Register it with:
+
+        ```py
+        import signal
+
+        tracker = EmissionsTracker()
+        signal.signal(signal.SIGTERM, tracker.service_shutdown)
+        signal.signal(signal.SIGINT, tracker.service_shutdown)
+        ```
+
+        :param signum: Signal number, passed by `signal.signal`
+        :param frame: Current stack frame, passed by `signal.signal`
+        :return: None
+        """
         logger.warning("service_shutdown - Caught signal %d" % signum)
         self.stop()
 
@@ -723,11 +745,7 @@ class BaseEmissionsTracker(ABC):
         self._ensure_hardware_ready()
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -763,6 +781,13 @@ class BaseEmissionsTracker(ABC):
 
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
+            # Only resume it in stop_task if it was actually running, i.e. the tracker
+            # was started with start(). Pure start_task/stop_task usage must not leave
+            # a periodic measurement running behind. The flag is sticky: a second
+            # start_task call sees an already stopped scheduler and must not clear it.
+            self._scheduler_paused_by_task = (
+                self._scheduler_paused_by_task or not self._scheduler._stopped
+            )
             self._scheduler.stop()
 
         # Task background thread for measuring power
@@ -777,11 +802,7 @@ class BaseEmissionsTracker(ABC):
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -803,6 +824,16 @@ class BaseEmissionsTracker(ABC):
         )
         self._active_task = task_name
 
+    def _resume_scheduler_if_paused_by_task(self) -> None:
+        """
+        Restart the periodic scheduler if, and only if, start_task paused a running
+        one. No-op for pure start_task/stop_task usage, and when called from stop()
+        where the scheduler has already been released.
+        """
+        if self._scheduler is not None and self._scheduler_paused_by_task:
+            self._scheduler_paused_by_task = False
+            self._scheduler.start()
+
     def stop_task(self, task_name: str = None) -> EmissionsData:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
@@ -815,6 +846,9 @@ class BaseEmissionsTracker(ABC):
         task_name = task_name if task_name else self._active_task
         if self._tasks.get(task_name) is None:
             logger.warning("stop_task : No active task to stop.")
+            # Still resume, so an unknown task name does not leave the periodic
+            # scheduler paused for the rest of the run.
+            self._resume_scheduler_if_paused_by_task()
             return None
         self._measure_power_and_energy()
         emissions_data = (
@@ -859,6 +893,8 @@ class BaseEmissionsTracker(ABC):
         self._active_task = None
         self._active_task_emissions_at_start = None  # Clear task-specific start data
 
+        self._resume_scheduler_if_paused_by_task()
+
         return task_emission_data
 
     @suppress(Exception)
@@ -889,7 +925,9 @@ class BaseEmissionsTracker(ABC):
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         self._persist_data(
-            total_emissions=emissions_data, delta_emissions=emissions_data_delta
+            total_emissions=emissions_data,
+            delta_emissions=emissions_data_delta,
+            experiment_name=self._experiment_name,
         )
 
         return emissions_data.emissions
@@ -910,12 +948,12 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
-        if not self._allow_multiple_runs:
-            # Release the lock
-            self._lock.release()
         if self._start_time is None:
-            logger.error("You first need to start the tracker.")
-            return None
+            logger.warning("Tracker already stopped or never started.")
+            return getattr(self, "final_emissions", None)
+
+        if not self._allow_multiple_runs:
+            self._lock.release()
 
         if self._scheduler:
             self._scheduler.stop()
@@ -947,6 +985,8 @@ class BaseEmissionsTracker(ABC):
 
         for handler in self._output_handlers:
             handler.exit()
+
+        self._start_time = None
 
         return emissions_data.emissions
 
@@ -1063,25 +1103,15 @@ class BaseEmissionsTracker(ABC):
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
             cpu_utilization_percent=(
-                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
-                if self._cpu_utilization_history
-                else 0
+                self._mean_utilization(self._cpu_utilization_history)
             ),
             gpu_utilization_percent=(
-                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
-                if self._gpu_utilization_history
-                else 0
+                self._mean_utilization(self._gpu_utilization_history)
             ),
             ram_utilization_percent=(
-                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
-                if self._ram_utilization_history
-                else 0
+                self._mean_utilization(self._ram_utilization_history)
             ),
-            ram_used_gb=(
-                sum(self._ram_used_history) / len(self._ram_used_history)
-                if self._ram_used_history
-                else 0
-            ),
+            ram_used_gb=(self._mean_utilization(self._ram_used_history)),
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
@@ -1144,6 +1174,17 @@ class BaseEmissionsTracker(ABC):
         :return: Metadata containing cloud info
         """
 
+    def _clear_utilization_history(self) -> None:
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.clear()
+            self._ram_utilization_history.clear()
+            self._ram_used_history.clear()
+            self._gpu_utilization_history.clear()
+
+    def _mean_utilization(self, history: List[float]) -> float:
+        with self._utilization_history_lock:
+            return sum(history) / len(history) if history else 0
+
     def _monitor_power(self) -> None:
         """
         Monitor the power consumption of the hardware.
@@ -1156,12 +1197,13 @@ class BaseEmissionsTracker(ABC):
                 hardware.monitor_power()
 
         # Collect CPU and RAM utilization metrics
-        self._cpu_utilization_history.append(psutil.cpu_percent())
-        self._ram_utilization_history.append(psutil.virtual_memory().percent)
-        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
+        cpu_utilization = psutil.cpu_percent()
+        ram_utilization = psutil.virtual_memory().percent
+        ram_used = psutil.virtual_memory().used / (1024**3)
 
         # Collect GPU utilization metrics (lightweight path — skips
         # heavyweight calls like process lists, memory, temperature).
+        gpu_utilizations = []
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
@@ -1172,9 +1214,13 @@ class BaseEmissionsTracker(ABC):
                         and resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
-                        self._gpu_utilization_history.append(
-                            gpu_detail["gpu_utilization"]
-                        )
+                        gpu_utilizations.append(gpu_detail["gpu_utilization"])
+
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.append(cpu_utilization)
+            self._ram_utilization_history.append(ram_utilization)
+            self._ram_used_history.append(ram_used)
+            self._gpu_utilization_history.extend(gpu_utilizations)
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
@@ -1185,7 +1231,8 @@ class BaseEmissionsTracker(ABC):
                 power,
                 energy,
             ) = hardware.measure_power_and_energy(last_duration=last_duration)
-            # Apply the PUE of the datacenter to the consumed energy
+            # Apply the PUE of the datacenter
+            power *= self._pue
             energy *= self._pue
             water = Water.from_litres(litres=self._wue * energy.kWh)
             self._total_energy += energy
@@ -1595,7 +1642,9 @@ def track_emissions(
     :param force_ram_power: Force the RAM power consumption in watts. Estimate with
                             `sudo lshw -C memory -short | grep DIMM` for RAM slots,
                             then RAM power (W) = Number of RAM Slots × 5 Watts.
-    :param pue: PUE (Power Usage Effectiveness) of the data center.
+    :param pue: PUE (Power Usage Effectiveness) of the data center. It multiplies both
+                the reported power and the reported energy, including forced values:
+                with `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
     :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
                 litres of water consumed per kilowatt-hour of electricity consumed.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
@@ -1722,9 +1771,9 @@ def track_task_emissions(
 ):
     """
     Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
-    :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
+    :param tracker: global tracker used in the current execution. If none is provided, instanciates an emission
     tracker which will read default parameter from config to enable tracking
-    :param: task_name: Task to be tracked. If none is provided, an id will be used.
+    :param task_name: Task to be tracked. If none is provided, an id will be used.
     :return: The decorated function
     """
 
