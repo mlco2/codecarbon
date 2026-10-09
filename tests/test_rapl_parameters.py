@@ -336,21 +336,20 @@ def test_rapl_both_parameters_together(tmp_path):
     ), f"Expected 1 file (psys only), got {len(rapl1._rapl_files)}"
     assert "intel-rapl:2" in rapl1._rapl_files[0].path, "Should use psys"
 
-    # Test 2: rapl_prefer_psys=False with rapl_include_dram=True (should use package + dram)
+    # Test 2: rapl_prefer_psys=False with rapl_include_dram=True (package in the
+    # CPU total, DRAM read separately for the RAM component)
     rapl2 = IntelRAPL(
         rapl_dir=str(base), rapl_prefer_psys=False, rapl_include_dram=True
     )
     assert (
-        len(rapl2._rapl_files) == 2
-    ), f"Expected 2 files (package + dram), got {len(rapl2._rapl_files)}"
-    # Both domains get an aggregated name so their energy is summed in the total
-    names = [f.name for f in rapl2._rapl_files]
-    assert all(
-        "Processor Energy" in name for name in names
-    ), f"All selected domains should be aggregated, got: {names}"
-    paths = [f.path for f in rapl2._rapl_files]
-    assert any("intel-rapl:0" in path for path in paths), "Missing package domain"
-    assert any("intel-rapl:1" in path for path in paths), "Missing DRAM domain"
+        len(rapl2._rapl_files) == 1
+    ), f"Expected 1 CPU file (package only), got {len(rapl2._rapl_files)}"
+    assert "intel-rapl:0" in rapl2._rapl_files[0].path, "Should use package"
+    assert "Processor Energy" in rapl2._rapl_files[0].name
+    assert (
+        len(rapl2._dram_files) == 1
+    ), f"Expected 1 DRAM file, got {len(rapl2._dram_files)}"
+    assert "intel-rapl:1" in rapl2._dram_files[0].path, "Missing DRAM domain"
 
     # Test 3: rapl_prefer_psys=False with rapl_include_dram=False (should use only package)
     rapl3 = IntelRAPL(
@@ -548,7 +547,8 @@ def test_rapl_fallback_respects_include_dram(tmp_path, include_dram):
 
     rapl = IntelRAPL(rapl_dir=str(tmp_path), rapl_include_dram=include_dram)
 
-    assert any(f.is_dram for f in rapl._rapl_files) is include_dram
+    assert all("intel-rapl:1" not in f.path for f in rapl._rapl_files)
+    assert len(rapl._dram_files) == (1 if include_dram else 0)
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
