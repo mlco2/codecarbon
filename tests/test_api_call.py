@@ -138,6 +138,39 @@ class TestApi(unittest.TestCase):
             assert payload["ram_utilization_percent"] == 56.5
             assert payload["wue"] == 0.8
 
+    def test_create_run_rounds_coordinates(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                conf=conf,
+                create_run_automatically=False,
+            )
+
+            api._create_run("exp-1")
+
+            payload = m.last_request.json()
+            self.assertEqual(payload["longitude"], -7.6)
+            self.assertEqual(payload["latitude"], 33.6)
+
+    def test_create_run_keeps_unknown_coordinates_null(self):
+        offline_conf = dict(conf, longitude=None, latitude=None)
+        with requests_mock.Mocker() as m:
+            m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
+            api = ApiClient(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                conf=offline_conf,
+                create_run_automatically=False,
+            )
+
+            self.assertEqual(api._create_run("exp-1"), "run-1")
+
+            payload = m.last_request.json()
+            self.assertIsNone(payload["longitude"])
+            self.assertIsNone(payload["latitude"])
+
     def test_check_auth_raises_on_error(self):
         with requests_mock.Mocker() as m:
             m.get("http://test.com/auth/check", text="bad", status_code=401)

@@ -22,6 +22,11 @@ from codecarbon.core.schemas import (
 from codecarbon.external.logger import logger
 
 
+def _round_or_none(value: float | None) -> float | None:
+    """Round a coordinate, keeping None when it is unknown."""
+    return None if value is None else round(value, 1)
+
+
 def get_datetime_with_timezone():
     import arrow
 
@@ -242,8 +247,8 @@ class ApiClient:  # (AsyncClient)
                 gpu_count=self.conf.get("gpu_count"),
                 gpu_model=self.conf.get("gpu_model"),
                 # Reduce precision for Privacy
-                longitude=round(self.conf.get("longitude", 0), 1),
-                latitude=round(self.conf.get("latitude", 0), 1),
+                longitude=_round_or_none(self.conf.get("longitude")),
+                latitude=_round_or_none(self.conf.get("latitude")),
                 region=self.conf.get("region"),
                 provider=self.conf.get("provider"),
                 ram_total_size=self.conf.get("ram_total_size"),

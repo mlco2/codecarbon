@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "project": "CodeCarbon",
+  "project_url": "https://codecarbon.io/",
+  "repo": "..",
+  "build_command": [
+    "python -m pip wheel --no-deps --no-build-isolation -w {build_cache_dir} {build_dir}"
+  ],
+  "branches": ["master"],
+  "pythons": ["3.11"],
+  "benchmark_dir": "benchmarks",
+  "env_dir": "env",
+  "results_dir": "results",
+  "html_dir": "html",
+  "show_commit_url": "https://github.com/mlco2/codecarbon/commit/",
+  "environment_type": "virtualenv"
+}

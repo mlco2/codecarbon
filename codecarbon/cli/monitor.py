@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from typing import Optional
 
 import typer
 from rich import print
@@ -12,9 +13,9 @@ from typing_extensions import Annotated
 def run_and_monitor(
     ctx: typer.Context,
     log_level: Annotated[
-        str,
+        Optional[str],
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
-    ] = "error",
+    ] = None,
     offline: bool = False,
     **tracker_args,
 ):
@@ -51,7 +52,11 @@ def run_and_monitor(
     from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
     from codecarbon.external.logger import set_logger_level
 
-    set_logger_level(log_level)
+    # `log_level` is None when nothing set it: leave it to the tracker, which
+    # resolves it from the configuration file and the environment.
+    if log_level is not None:
+        set_logger_level(log_level)
+        tracker_args["log_level"] = log_level
 
     # Get the command from remaining args (strip nested subcommand / `--` leftovers)
     command = list(getattr(ctx, "args", None) or [])
@@ -67,7 +72,6 @@ def run_and_monitor(
 
     tracker_cls = OfflineEmissionsTracker if offline else EmissionsTracker
     tracker = tracker_cls(
-        log_level=log_level,
         save_to_logger=False,
         tracking_mode="process",
         **tracker_args,
