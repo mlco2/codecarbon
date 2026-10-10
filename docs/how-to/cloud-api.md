@@ -34,6 +34,8 @@ if __name__ =="__main__":
 
 The decorator will automatically send your emissions data to the dashboard. You can also specify additional options in `@track_emissions()` or in `.codecarbon.config`.
 
+`start()` registers the run on the API with a blocking HTTP call, and `tracker.run_id` then switches from a locally generated id to the API run id, so every output shares it. If the API is unreachable, tracking continues with the local id and switches to the API run id once the run is created.
+
 ## Create Projects & Experiments
 
 By default, `codecarbon login` creates a default experiment in your first project. If you want to organize runs by experiment, you can specify an `experiment_id` explicitly. Set the experiment ID in two ways:
