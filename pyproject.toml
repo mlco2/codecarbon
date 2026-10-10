@@ -187,6 +187,12 @@ version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 "codecarbon/_version.py" = [
     '^__version__ = "{version}"$',
 ]
+"CITATION.cff" = [
+    '^version: {version}$',
+]
+"README.md" = [
+    '^  version      = {{version}},$',
+]
 
 [tool.pytest.ini_options]
 pythonpath = "."

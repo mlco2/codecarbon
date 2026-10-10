@@ -1,4 +1,13 @@
-# Model Comparisons {#model_examples}
+# Model Comparisons (Third-Party Data) {#model_examples}
+
+!!! warning "These numbers were not produced by CodeCarbon"
+
+    Every figure and chart on this page comes from published third-party
+    research that used **Microsoft Azure cloud tooling** to estimate emissions
+    (see [References](#references)). They are reproduced here only as an
+    illustration of the orders of magnitude involved in model training.
+    CodeCarbon measures differently and will report different values — see
+    [Methodology](methodology.md) for what CodeCarbon actually does.
 
 The following table shows the different electricity consumption of
 popular NLP and Computer Vision models:

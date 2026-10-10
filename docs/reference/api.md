@@ -1,4 +1,4 @@
-# Parameters
+# API Reference
 
 Parameters can be set via `EmissionsTracker()`, `OfflineEmissionsTracker()`, the
 `@track_emissions` decorator, config files, or environment variables. See
@@ -25,6 +25,22 @@ All parameters are documented below:
       show_root_heading: true
       show_signature: false
 
+### Methods
+
+::: codecarbon.emissions_tracker.BaseEmissionsTracker
+    options:
+      members:
+        - start
+        - stop
+        - flush
+        - start_task
+        - stop_task
+        - get_detected_hardware
+        - service_shutdown
+      show_root_heading: false
+      show_signature: true
+      heading_level: 4
+
 ## OfflineEmissionsTracker (additional parameters)
 
 `OfflineEmissionsTracker` adds these parameters for offline mode:
@@ -46,3 +62,18 @@ and `country_iso_code` for offline mode:
     options:
       show_root_heading: true
       show_signature: false
+
+## Task-level tracking
+
+Use these to measure individual tasks inside a single run. See
+`examples/task_inference.py` and `examples/task_loop_same_task.py`.
+
+::: codecarbon.emissions_tracker.TaskEmissionsTracker
+    options:
+      show_root_heading: true
+      show_signature: true
+
+::: codecarbon.emissions_tracker.track_task_emissions
+    options:
+      show_root_heading: true
+      show_signature: true
