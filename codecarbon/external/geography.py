@@ -12,6 +12,9 @@ import requests
 from codecarbon.core.cloud import get_env_cloud_details
 from codecarbon.external.logger import logger
 
+GEO_API_TIMEOUT: float = 5
+GEO_API_RETRIES: int = 1
+
 
 @dataclass
 class CloudMetadata:
@@ -88,10 +91,29 @@ class GeoMetadata:
             self.region,
         )
 
+    @staticmethod
+    def _get_geo_json(url: str, retries: int = 0) -> Dict:
+        """
+        Query a geolocation API, retrying only when the network itself fails,
+        so a slow or busy connection does not send us straight to the fallback.
+        """
+        for attempt in range(retries + 1):
+            try:
+                return requests.get(url, timeout=GEO_API_TIMEOUT).json()
+            except (
+                requests.exceptions.Timeout,
+                requests.exceptions.ConnectionError,
+            ) as e:
+                if attempt == retries:
+                    raise
+                logger.debug(
+                    f"Could not reach {url}, retrying ({attempt + 1}/{retries}) - Exception : {e}"
+                )
+
     @classmethod
     def from_geo_js(cls, url: str) -> "GeoMetadata":
         try:
-            response: Dict = requests.get(url, timeout=0.5).json()
+            response: Dict = cls._get_geo_json(url, retries=GEO_API_RETRIES)
 
             region = response.get("region", "").lower()
             if not region:
@@ -114,7 +136,7 @@ class GeoMetadata:
         geo_url_backup = "https://ipinfo.io/json"
 
         try:
-            geo_response: Dict = requests.get(geo_url_backup, timeout=0.5).json()
+            geo_response: Dict = cls._get_geo_json(geo_url_backup)
 
             # extract latitude and longitude from loc (e.g., "loc": "37.4056,-122.0775")
             loc = geo_response.get("loc", "").split(",")
@@ -140,7 +162,7 @@ class GeoMetadata:
         except Exception as e:
             # If both API calls fail, default to Canada
             logger.warning(
-                f"Unable to access geographical location through fallback API. Using 'Canada' as the default value - Exception : {e} - url={geo_url_backup}"
+                f"Unable to access geographical location through fallback API. Defaulting to Canada, so emissions will be computed with the Canadian carbon intensity - Exception : {e} - url={geo_url_backup}"
             )
 
             return cls(
