@@ -7,6 +7,7 @@ It can work with any OIDC-compliant provider (Keycloak, Auth0, etc.).
 
 import logging
 from typing import Any, Dict, Optional
+from urllib.parse import urlencode
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Response
@@ -95,6 +96,50 @@ class OIDCAuthProvider:
                     )
         except Exception as e:
             LOGGER.warning("Token revocation failed (non-blocking): %s", e)
+
+    async def get_end_session_url(
+        self, post_logout_redirect_uri: str, id_token: Optional[str] = None
+    ) -> Optional[str]:
+        """Build the provider's RP-initiated logout URL (OIDC session management).
+
+        Revoking the access token only invalidates our own credential — the
+        provider keeps its SSO session, so the next login silently re-issues a
+        token and the user never appears to have signed out. Sending the browser
+        here is what actually ends that session.
+
+        Returns None when the provider exposes no end_session_endpoint, so the
+        caller can fall back to a plain local logout.
+        """
+        try:
+            metadata = await self.client.load_server_metadata()
+        except Exception as e:  # never block logout on a metadata failure
+            LOGGER.warning("Could not load OIDC metadata for logout: %s", e)
+            return None
+
+        end_session_endpoint = metadata.get("end_session_endpoint")
+        if not end_session_endpoint:
+            LOGGER.debug(
+                "OIDC provider does not expose an end_session_endpoint, "
+                "falling back to a local-only logout"
+            )
+            return None
+
+        params = {"post_logout_redirect_uri": post_logout_redirect_uri}
+        # A redirect target is only honoured alongside one of these two; the
+        # id_token is the stronger hint, but it is absent if the session was
+        # established before we started keeping it.
+        if id_token:
+            params["id_token_hint"] = id_token
+        else:
+            params["client_id"] = settings.oidc_client_id
+        return f"{end_session_endpoint}?{urlencode(params)}"
+
+    @staticmethod
+    def get_account_url() -> str:
+        """The provider-hosted account console, where users manage their own
+        email and password. Derived from the issuer the same way the login URL
+        is, so there is nothing extra to configure."""
+        return f"{settings.oidc_issuer_url.rstrip('/')}/account/"
 
     @staticmethod
     def create_redirect_response(url: str) -> Response:

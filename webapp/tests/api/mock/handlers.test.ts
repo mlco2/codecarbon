@@ -48,6 +48,66 @@ describe("resolveMock — organizations", () => {
         expect((r.body as { name: string }).name).toBe("Mock Organization");
     });
 
+    /*
+     * The real endpoint filters the emissions table by timestamp; these pin the
+     * mock to the same behaviour so the dashboard's date picker can be exercised
+     * — and regressions in date handling caught — without a live backend.
+     */
+    describe("org sums honour the date range", () => {
+        type Report = {
+            emissions: number;
+            energy_consumed: number;
+            duration: number;
+        };
+        const sums = (qs = ""): Report =>
+            resolveMock(url(`/organizations/${ID.org}/sums${qs}`), "GET")
+                .body as Report;
+        const iso = (daysAgo: number) =>
+            new Date(Date.now() - daysAgo * 86_400_000).toISOString();
+
+        it("aggregates every emission when no range is given", () => {
+            const all = sums();
+            // 12 + 12 + 6 sampled rows across the fixture's three runs.
+            expect(all.duration).toBe(30 * 5 * 60);
+            expect(all.emissions).toBeGreaterThan(0);
+            expect(all.energy_consumed).toBeGreaterThan(0);
+        });
+
+        it("excludes runs outside the range", () => {
+            const all = sums();
+            // Fixtures sit at now-20d (x2) and now-5d; a 7-day window keeps only
+            // the most recent one, which has 6 of the 30 rows.
+            const week = sums(`?start_date=${iso(7)}&end_date=${iso(0)}`);
+            expect(week.duration).toBe(6 * 5 * 60);
+            expect(week.emissions).toBeLessThan(all.emissions);
+            expect(week.emissions).toBeGreaterThan(0);
+        });
+
+        it("returns zeros for a range containing nothing", () => {
+            const empty = sums(`?start_date=${iso(400)}&end_date=${iso(390)}`);
+            expect(empty).toMatchObject({
+                emissions: 0,
+                energy_consumed: 0,
+                duration: 0,
+            });
+        });
+
+        it("widening the range can only add emissions", () => {
+            const week = sums(`?start_date=${iso(7)}&end_date=${iso(0)}`);
+            const month = sums(`?start_date=${iso(30)}&end_date=${iso(0)}`);
+            expect(month.emissions).toBeGreaterThan(week.emissions);
+            expect(month.duration).toBeGreaterThan(week.duration);
+        });
+
+        it("ignores an unparseable date rather than failing", () => {
+            const r = resolveMock(
+                url(`/organizations/${ID.org}/sums?start_date=not-a-date`),
+                "GET",
+            );
+            expect(r.status).toBe(200);
+        });
+    });
+
     it("synthesizes an added user on POST /add-user", () => {
         const r = resolveMock(
             url(`/organizations/${ID.org}/add-user`),

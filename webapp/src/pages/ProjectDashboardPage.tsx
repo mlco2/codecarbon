@@ -1,5 +1,6 @@
-import BreadcrumbHeader from "@/components/breadcrumb";
+import ProjectActions from "@/components/project-actions";
 import ProjectDashboard from "@/components/project-dashboard";
+import ProjectVisibilityBadge from "@/components/project-visibility-badge";
 import {
     calculateConvertedValues,
     calculateRadialChartData,
@@ -16,6 +17,7 @@ import { Experiment, ExperimentReport, Project } from "@/api/schemas";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DateRange } from "react-day-picker";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 export default function ProjectDashboardPage() {
     const { projectId, organizationId } = useParams<{
@@ -133,24 +135,68 @@ export default function ProjectDashboardPage() {
     );
 
     return (
-        <div className="h-full w-full overflow-auto">
-            <BreadcrumbHeader
-                pathSegments={[
+        /*
+         * The redesign's content column, as the Global dashboard and the Projects
+         * page use it: one scrolling region whose padding is the single horizontal
+         * gutter for everything inside.
+         *
+         * Only the shell is redesigned so far — the surface, the breadcrumb and
+         * the page heading. The panels below are still the old dashboard.
+         */
+        <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-cc-page-background px-5 pb-10 pt-4 sm:px-10 lg:px-20 lg:pb-8 lg:pt-5">
+            {/* Parent crumbs hover to white: the current crumb is the green one,
+                so hovering a link must not make it look like the page you are
+                already on. */}
+            <Breadcrumb
+                className="pb-8 lg:pb-16"
+                items={[
                     {
-                        title: organizationName || organizationId!,
-                        href: `/${organizationId}`,
+                        label: organizationName || organizationId || "",
+                        to: `/${organizationId}`,
                     },
                     {
-                        title: "Projects",
-                        href: `/${organizationId}/projects`,
+                        label: "Projects",
+                        to: `/${organizationId}/projects`,
                     },
-                    {
-                        title: `Project ${project.name || ""}`,
-                        href: null,
-                    },
+                    { label: project.name },
                 ]}
             />
-            <div className="flex flex-col gap-4 p-4 md:gap-8 md:p-8">
+
+            {/* The heading holds everything about the project itself: its name,
+                whether it is public, what it is, and the actions that apply to
+                it. The actions sit at the end of the row and drop below the
+                name when there is no room for both. */}
+            <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4 border-b border-cc-rule pb-5 lg:pb-6">
+                <div className="flex min-w-0 flex-col gap-2">
+                    {/* The visibility pill belongs with the name it describes,
+                        so it sits on the title's line and wraps under it when
+                        there is no room. */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <h1 className="type-display type-page-title min-w-0 text-cc-white">
+                            {project.name}
+                        </h1>
+                        {project.public !== undefined && (
+                            <ProjectVisibilityBadge isPublic={project.public} />
+                        )}
+                    </div>
+                    {project.description && (
+                        <p className="type-mono-medium type-page-subtitle text-cc-white">
+                            {project.description}
+                        </p>
+                    )}
+                </div>
+
+                <ProjectActions
+                    project={project}
+                    experimentsReportData={experimentsReportData}
+                    runData={runData}
+                    onRefresh={handleRefresh}
+                    onProjectUpdated={handleSettingsClick}
+                    className="shrink-0"
+                />
+            </header>
+
+            <div className="flex flex-col gap-4 pt-6 md:gap-8 lg:pt-8">
                 <ProjectDashboard
                     project={project}
                     date={date}
@@ -166,7 +212,6 @@ export default function ProjectDashboardPage() {
                     projectExperiments={projectExperiments}
                     onExperimentClick={handleExperimentClick}
                     onRunClick={handleRunClick}
-                    onSettingsClick={handleSettingsClick}
                     onRefresh={handleRefresh}
                     isLoading={isLoading}
                 />

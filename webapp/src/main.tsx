@@ -6,9 +6,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { router } from "./router";
 import { swrConfig } from "./api/swr";
 import { installMockFetch } from "./api/mock";
+import { initMatomo } from "./utils/matomo";
 import "./globals.css";
 
 installMockFetch();
+initMatomo(router);
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
