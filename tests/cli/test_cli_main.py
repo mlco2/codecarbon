@@ -2,6 +2,7 @@
 
 import os
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 import requests
@@ -422,6 +423,36 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
     assert calls["started"] == 1
     assert calls["kwargs"]["country_iso_code"] == "FRA"
     assert calls["kwargs"]["region"] == "IDF"
+
+
+def test_monitor_offline_skips_telemetry_prompt(monkeypatch):
+    """``codecarbon monitor --offline`` never sends telemetry, so it must not
+    ask the interactive telemetry-level question either."""
+
+    class FakeOfflineTracker:
+        def __init__(self, **kwargs):
+            self._another_instance_already_running = True
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
+    )
+    monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
+    ask_mock = MagicMock()
+    monkeypatch.setattr(cli_main, "ask_telemetry_level_once", ask_mock)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        ["monitor", "--offline", "--country-iso-code", "FRA"],
+    )
+    assert result.exit_code == 0
+    ask_mock.assert_not_called()
 
 
 def _fake_offline_monitor(monkeypatch, tmp_path):

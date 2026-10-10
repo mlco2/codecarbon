@@ -22,6 +22,9 @@ import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
+from codecarbon.core.telemetry import Telemetry
+from codecarbon.core.telemetry.schemas import TelemetryLevel
+from codecarbon.core.telemetry.settings import TelemetrySettings
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
@@ -428,6 +431,7 @@ class BaseEmissionsTracker(ABC):
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
+        telemetry_level: Optional[str] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -525,10 +529,26 @@ class BaseEmissionsTracker(ABC):
                                  (CPU + chipset + PCIe). When False, uses package domains which
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
+        :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
+                                Overrides config file and ``CODECARBON_TELEMETRY_LEVEL`` when set.
+                                Defaults to ``minimal``.
         """
 
-        # logger.info("base tracker init")
         self._external_conf = get_hierarchical_config()
+        # Resolve the tier from the constructor kwarg first so that
+        # ``EmissionsTracker(telemetry_level="disabled")`` really wins.
+        # Offline mode is chosen for no-network runs, so it must never call
+        # out, including for telemetry, regardless of config/env/kwarg.
+        if isinstance(self, OfflineEmissionsTracker):
+            telemetry_settings = TelemetrySettings.resolve(
+                external_conf={}, override=TelemetryLevel.disabled
+            )
+        else:
+            telemetry_settings = TelemetrySettings.resolve(
+                external_conf=self._external_conf,
+                override=None if telemetry_level is _sentinel else telemetry_level,
+            )
+        self._telemetry = Telemetry(telemetry_settings)
         self._set_from_conf(
             force_carbon_intensity_g_co2e_kwh,
             "force_carbon_intensity_g_co2e_kwh",
@@ -609,7 +629,12 @@ class BaseEmissionsTracker(ABC):
         self._initialize_runtime_state()
         self._initialize_scheduler_state()
         self._initialize_emissions_context()
+        self._telemetry.notice_once_if_implicit()
         self._init_output_methods(api_key=self._api_key)
+
+    @suppress(Exception)
+    def _send_telemetry_at_stop(self, emissions_data: EmissionsData) -> None:
+        self._telemetry.send_at_stop(self, emissions_data)
 
     def _init_output_methods(self, *, api_key: str = None):
         """
@@ -962,6 +987,7 @@ class BaseEmissionsTracker(ABC):
 
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
+        self._send_telemetry_at_stop(emissions_data)
 
         self._persist_data(
             total_emissions=emissions_data,
@@ -1559,6 +1585,7 @@ def track_emissions(
     allow_multiple_runs: Optional[bool] = _sentinel,
     rapl_include_dram: Optional[bool] = _sentinel,
     rapl_prefer_psys: Optional[bool] = _sentinel,
+    telemetry_level: Optional[str] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1643,6 +1670,7 @@ def track_emissions(
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
+    :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
 
     :return: The decorated function
     """
@@ -1699,6 +1727,7 @@ def track_emissions(
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    telemetry_level=telemetry_level,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1735,6 +1764,7 @@ def track_emissions(
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    telemetry_level=telemetry_level,
                 )
             tracker.start()
             try:

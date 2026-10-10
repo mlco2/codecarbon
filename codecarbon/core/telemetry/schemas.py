@@ -1,4 +1,4 @@
-"""Schemas for telemetry data submitted to the CarbonServer API."""
+"""Telemetry payload schemas aligned with carbonserver ``telemetry_sql_models.Telemetry``."""
 
 from datetime import datetime
 from enum import Enum
@@ -16,23 +16,7 @@ class TelemetryLevel(str, Enum):
 
 
 class TelemetryBase(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-        use_enum_values=True,
-        json_schema_extra={
-            "example": {
-                "timestamp": "2026-05-03T12:00:00+00:00",
-                "telemetry_level": "minimal",
-                "os": "Linux-5.10.0-x86_64",
-                "country_name": "France",
-                "country_iso_code": "FRA",
-                "cpu_count": 12,
-                "cpu_model": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
-                "python_version": "3.11.5",
-                "codecarbon_version": "3.0.0",
-            }
-        },
-    )
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
     timestamp: datetime
     telemetry_level: TelemetryLevel
@@ -71,7 +55,3 @@ class TelemetryBase(BaseModel):
 
 class TelemetryCreate(TelemetryBase):
     pass
-
-
-class Telemetry(TelemetryBase):
-    id: str
