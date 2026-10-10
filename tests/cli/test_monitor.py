@@ -142,12 +142,13 @@ def test_run_and_monitor_uses_online_tracker_by_default(monkeypatch):
     with pytest.raises(typer.Exit) as exc_info:
         monitor_module.run_and_monitor(
             SimpleNamespace(args=["echo", "hi"]),
-            save_to_api=True,
+            output_methods=["api"],
         )
 
     assert exc_info.value.exit_code == 0
     assert captured["kwargs"]["tracking_mode"] == "process"
-    assert captured["kwargs"]["save_to_api"] is True
+    assert captured["kwargs"]["output_methods"] == ["api"]
+    assert not any(k.startswith("save_to_") for k in captured["kwargs"])
 
 
 def _run_and_monitor_capturing(monkeypatch, **kwargs):

@@ -72,7 +72,6 @@ def run_and_monitor(
 
     tracker_cls = OfflineEmissionsTracker if offline else EmissionsTracker
     tracker = tracker_cls(
-        save_to_logger=False,
         tracking_mode="process",
         **tracker_args,
     )
