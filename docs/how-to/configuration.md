@@ -135,6 +135,39 @@ EmissionsTracker(electricitymaps_api_token="your-token-here")
     compatibility but is deprecated and will be removed in a future version.
     Use `electricitymaps_api_token` instead.
 
+## National Grid ESO API (Great Britain)
+
+For runs detected as being in Great Britain, CodeCarbon can optionally use
+live carbon intensity data from the
+[National Grid ESO Carbon Intensity API](https://carbonintensity.org.uk/)
+instead of the static country-average data, by setting
+`use_national_grid_eso_api=True`. This is **opt-in and off by default**,
+the same way the Electricity Maps integration above is off until you provide
+a token — it is not used automatically.
+
+``` python
+EmissionsTracker(use_national_grid_eso_api=True)
+```
+
+Or in your config file:
+
+``` ini
+[codecarbon]
+use_national_grid_eso_api = true
+```
+
+**Attribution and terms of use:** data is published by National Grid ESO
+under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+See [carbonintensity.org.uk](https://carbonintensity.org.uk/) for full terms.
+
+**Scope:** the API reports a single **Great-Britain-wide (national)** carbon
+intensity figure. It does not provide regional or sub-national data, so this
+is not a substitute for CodeCarbon's USA/Canada/Nordic regional emissions
+support.
+
+If `electricitymaps_api_token` is also set, Electricity Maps takes priority
+and this source is only used as a fallback if that call fails.
+
 ## Tracking Mode
 
 The `tracking_mode` parameter controls how CodeCarbon measures power consumption. It accepts two values:

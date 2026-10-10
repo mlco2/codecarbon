@@ -375,3 +375,76 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         self.assertIsNone(emissions)
+
+    # ------------------------------------------------------------------
+    # National Grid ESO API (opt-in)
+    # ------------------------------------------------------------------
+
+    @patch("codecarbon.core.national_grid_eso_api.get_emissions")
+    def test_national_grid_eso_not_called_by_default(self, mocked_get_emissions):
+        # GIVEN: use_national_grid_eso_api defaults to False
+        emissions_calculator = Emissions(self._data_source)
+        geo = GeoMetadata(country_iso_code="GBR", country_name="United Kingdom")
+
+        # WHEN
+        emissions_calculator.get_private_infra_emissions(Energy.from_energy(kWh=1), geo)
+
+        # THEN: the live API is never called unless explicitly opted in
+        mocked_get_emissions.assert_not_called()
+
+    @patch("codecarbon.core.national_grid_eso_api.get_emissions")
+    def test_national_grid_eso_called_when_opted_in(self, mocked_get_emissions):
+        # GIVEN
+        mocked_get_emissions.return_value = 0.5
+        emissions_calculator = Emissions(
+            self._data_source, use_national_grid_eso_api=True
+        )
+        geo = GeoMetadata(country_iso_code="GBR", country_name="United Kingdom")
+        energy = Energy.from_energy(kWh=1)
+
+        # WHEN
+        emissions = emissions_calculator.get_private_infra_emissions(energy, geo)
+
+        # THEN
+        mocked_get_emissions.assert_called_once_with(energy, geo)
+        self.assertEqual(emissions, 0.5)
+
+    @patch("codecarbon.core.national_grid_eso_api.get_emissions")
+    def test_national_grid_eso_not_called_for_other_countries_even_when_opted_in(
+        self, mocked_get_emissions
+    ):
+        # GIVEN
+        emissions_calculator = Emissions(
+            self._data_source, use_national_grid_eso_api=True
+        )
+        geo = GeoMetadata(country_iso_code="FRA", country_name="France")
+
+        # WHEN
+        emissions_calculator.get_private_infra_emissions(Energy.from_energy(kWh=1), geo)
+
+        # THEN
+        mocked_get_emissions.assert_not_called()
+
+    @patch("codecarbon.core.national_grid_eso_api.get_emissions")
+    @patch("codecarbon.core.electricitymaps_api.get_emissions")
+    def test_national_grid_eso_not_called_when_electricitymaps_succeeds(
+        self, mocked_em_get_emissions, mocked_ngeso_get_emissions
+    ):
+        # GIVEN: both Electricity Maps and National Grid ESO are opted in,
+        # but Electricity Maps takes priority and succeeds
+        mocked_em_get_emissions.return_value = 0.3
+        emissions_calculator = Emissions(
+            self._data_source,
+            electricitymaps_api_token="token",
+            use_national_grid_eso_api=True,
+        )
+        geo = GeoMetadata(country_iso_code="GBR", country_name="United Kingdom")
+
+        # WHEN
+        emissions = emissions_calculator.get_private_infra_emissions(
+            Energy.from_energy(kWh=1), geo
+        )
+
+        # THEN
+        self.assertEqual(emissions, 0.3)
+        mocked_ngeso_get_emissions.assert_not_called()

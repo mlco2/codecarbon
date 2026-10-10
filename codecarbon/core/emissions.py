@@ -8,7 +8,7 @@ https://github.com/responsibleproblemsolving/energy-usage
 
 from typing import TYPE_CHECKING, Dict, Optional
 
-from codecarbon.core import electricitymaps_api
+from codecarbon.core import electricitymaps_api, national_grid_eso_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
@@ -33,6 +33,7 @@ class Emissions:
             str
         ] = None,  # Deprecated, for backward compatibility
         force_carbon_intensity_g_co2e_kwh: Optional[float] = None,
+        use_national_grid_eso_api: bool = False,
     ):
         self._data_source = data_source
 
@@ -47,6 +48,10 @@ class Emissions:
 
         self._electricitymaps_api_token = electricitymaps_api_token
         self._force_carbon_intensity_g_co2e_kwh = force_carbon_intensity_g_co2e_kwh
+        # Opt-in only: this makes a live network call on every GBR run if left
+        # on. Defaults to False, mirroring how electricitymaps_api_token being
+        # unset keeps the Electricity Maps call off.
+        self._use_national_grid_eso_api = use_national_grid_eso_api
 
     def get_cloud_emissions(
         self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
@@ -172,6 +177,21 @@ class Emissions:
             except Exception as e:
                 logger.error(
                     "electricitymaps_api.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
+
+        if self._use_national_grid_eso_api and national_grid_eso_api.is_supported(geo):
+            try:
+                emissions = national_grid_eso_api.get_emissions(energy, geo)
+                logger.debug(
+                    "national_grid_eso_api.get_emissions: "
+                    + f"Retrieved emissions for {geo.country_name} using National Grid ESO API: {emissions * 1000} g CO2eq"
+                )
+                return emissions
+            except Exception as e:
+                logger.error(
+                    "national_grid_eso_api.get_emissions: "
                     + str(e)
                     + " >>> Using CodeCarbon's data."
                 )
