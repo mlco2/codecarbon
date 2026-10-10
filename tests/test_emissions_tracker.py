@@ -1215,3 +1215,44 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+    @responses.activate
+    def test_stop_does_not_retry_run_creation_twice_when_server_down(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # GIVEN a server that always fails to create a run, and a tracker
+        # whose cooldown will have already expired by the time stop() runs
+        # (no prior attempt at all here, so the very first attempt happens
+        # during stop()'s persist step).
+        responses.add(
+            responses.POST,
+            "http://test-api.com/runs",
+            json={"message": "down"},
+            status=503,
+        )
+        tracker = EmissionsTracker(
+            measure_power_secs=1,
+            save_to_file=False,
+            output_methods=[OutputMethod.API],
+            api_endpoint="http://test-api.com",
+            experiment_id="11111111-1111-1111-1111-111111111111",
+            api_key="fake-key",
+        )
+
+        # WHEN
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        tracker.stop()
+
+        # THEN stop() should only attempt run creation once: the persist
+        # step's attempt already ran (and failed) this call, so the final
+        # bypass retry must be skipped instead of hitting the server again.
+        run_calls = [c for c in responses.calls if c.request.url.endswith("/runs")]
+        self.assertEqual(1, len(run_calls))
