@@ -355,9 +355,10 @@ Rejection is mechanical so it can run at ingestion.
     wraparound
 11. `averageUtilizationGpu < 0.7` when a `gpu` component is declared (§3.2)
 
-Records passing these rules enter the store as `pending`. **Passing validation
-is not approval.** Publication into the curated reference snapshot requires
-human review (§8.3).
+Records passing these rules are stored and are immediately readable. There is
+no review step: the mechanical rules in this section are the only gate, so they
+carry the whole weight of keeping the corpus trustworthy. `submitted_by` records
+who supplied each record.
 
 ---
 
@@ -451,9 +452,9 @@ out of scope for v1.
 
 ### 8.3 Distribution
 
-EcoLogits MUST NOT query the benchmark database at request time. Approved
-records are aggregated into a versioned snapshot, reviewed, and shipped as
-package data or fetched once at init with a disk cache.
+EcoLogits MUST NOT query the benchmark database at request time. Records are
+exported as a snapshot and fetched once at init with a disk cache, or shipped
+as package data.
 
 ---
 
@@ -485,10 +486,11 @@ Unresolved. These need answers before v1 leaves draft.
 7. **Non-NVIDIA hardware.** AMD/ROCm, Apple Silicon and CPU-only inference have
    worse measurement fidelity. `gpuTrackingMode` lets consumers filter; does the
    profile need to reject low-fidelity sources outright?
-8. **Anti-gaming.** Project tokens authenticate a project, not a submitter's
-   honesty about their hardware. BoAmps' `header.publisher.publicKey` offers a
-   signing hook — worth using, or over-engineering for the expected volume?
-   §6 catches mechanical errors, not misattribution.
+8. **Anti-gaming.** With no review step, §6 is the only gate, and it catches
+   mechanical errors rather than misattribution: authentication identifies a
+   submitter, not the accuracy of their hardware claims. BoAmps'
+   `header.publisher.publicKey` offers a signing hook. What else, if anything,
+   should the rules in §6 check to compensate?
 9. **`share < 1`.** Rule 6.9 rejects partially-allocated hardware, but BoAmps
    models `share` precisely because shared GPUs are common (MIG, vGPU, shared
    cloud instances). Is excluding them from v1 right, or does it exclude most

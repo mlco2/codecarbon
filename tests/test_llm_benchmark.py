@@ -17,6 +17,7 @@ from codecarbon.benchmark.backends import (
 )
 from codecarbon.benchmark.prompts import build_prompt, build_prompts, load_prompt_set
 from codecarbon.benchmark.record import ModelMetadata, build_boamps_record
+from codecarbon.benchmark.upload import UploadError, upload_record
 from codecarbon.benchmark.runner import (
     BenchmarkConfig,
     WindowResult,
@@ -273,6 +274,21 @@ class TestRecord(unittest.TestCase):
         with self.assertRaises(ValueError):
             ModelMetadata(name="m", parameters_number=7.0, quantization="q16")
 
+    def test_accepts_gguf_quantization_names(self):
+        """
+        A 1-bit GGUF model has no honest equivalent among fp16/int8/int4, so
+        GGUF's own type names are part of the vocabulary.
+        """
+        meta = ModelMetadata(name="m", parameters_number=8.19, quantization="q1_0")
+        self.assertEqual(meta.quantization, "q1_0")
+
+    def test_record_and_validator_vocabularies_agree(self):
+        """They are separate constants to avoid a circular import."""
+        from codecarbon.benchmark.record import QUANTIZATIONS
+        from codecarbon.benchmark.validation import REQUIRED_QUANTIZATIONS
+
+        self.assertEqual(set(QUANTIZATIONS), set(REQUIRED_QUANTIZATIONS))
+
     def test_record_is_json_serialisable(self):
         json.dumps(self.record)
 
@@ -361,6 +377,48 @@ class TestValidation(unittest.TestCase):
 
     def test_spec_version_matches_harness(self):
         self.assertEqual(self.record["llmBenchmark"]["specVersion"], SPEC_VERSION)
+
+
+class TestUpload(unittest.TestCase):
+    def test_appends_the_endpoint_path(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://server/model-benchmarks", status_code=201, json="an-id")
+            self.assertEqual(upload_record({}, "http://server"), "an-id")
+
+    def test_accepts_a_full_url(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://server/model-benchmarks", status_code=201, json="an-id")
+            self.assertEqual(
+                upload_record({}, "http://server/model-benchmarks"), "an-id"
+            )
+
+    def test_surfaces_server_side_rule_failures(self):
+        """
+        The harness ran the same rules locally, so a 422 means a version skew.
+        The failure list is what tells you which rule moved.
+        """
+        with requests_mock.Mocker() as m:
+            m.post(
+                "http://server/model-benchmarks",
+                status_code=422,
+                json={"detail": {"failures": ["rule 5: forcedOutputLength"]}},
+            )
+            with self.assertRaises(UploadError) as ctx:
+                upload_record({}, "http://server")
+        self.assertEqual(ctx.exception.failures, ["rule 5: forcedOutputLength"])
+
+    def test_sends_bearer_token(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://server/model-benchmarks", status_code=201, json="an-id")
+            upload_record({}, "http://server", api_token="tok")
+            self.assertEqual(m.last_request.headers["Authorization"], "Bearer tok")
+
+    def test_unauthorised_is_actionable(self):
+        with requests_mock.Mocker() as m:
+            m.post("http://server/model-benchmarks", status_code=403, json={})
+            with self.assertRaises(UploadError) as ctx:
+                upload_record({}, "http://server")
+        self.assertIn("--api-token", str(ctx.exception))
 
 
 if __name__ == "__main__":

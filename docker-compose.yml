@@ -18,12 +18,15 @@ services:
       - postgres
     volumes:
       - ./carbonserver:/carbonserver
+      # codecarbon is installed editable from /app, so mounting the source here
+      # keeps the shared benchmark validity rules live alongside the server code.
+      - ./codecarbon:/app/codecarbon
     environment:
       AUTH_PROVIDER: ${AUTH_PROVIDER:-none}
       ENVIRONMENT: ${ENVIRONMENT:-local}
       DATABASE_URL: postgresql://codecarbon-user:supersecret@postgres:5432/codecarbon_db
-      FRONTEND_URL: http://localhost:3000
-      CORS_ORIGINS: http://localhost:3000
+      FRONTEND_URL: http://localhost:3001
+      CORS_ORIGINS: http://localhost:3001
     ports:
       - "8008:8000"
 
@@ -37,14 +40,14 @@ services:
       - carbonserver
     environment:
       VITE_API_URL: http://localhost:8008
-      VITE_BASE_URL: http://localhost:3000
+      VITE_BASE_URL: http://localhost:3001
       VITE_USE_MOCK_DATA: "false"
       VITE_PROJECT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
     volumes:
       - ./webapp:/app
     command: sh -c "pnpm install --frozen-lockfile --force && pnpm dev --host 0.0.0.0 --port 5173"
     ports:
-      - "3000:5173"
+      - "3001:5173"
 
 volumes:
   postgres_codecarbon_data:

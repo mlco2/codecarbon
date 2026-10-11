@@ -33,11 +33,14 @@ ENV PATH="/root/.local/bin/:$PATH"
 
 # Copy project files
 COPY requirements/requirements-api.txt /app/requirements/requirements-api.txt
+COPY pyproject.toml README.md LICENSE /app/
 COPY codecarbon /app/codecarbon
 COPY carbonserver /app/carbonserver
 
 # Install carbonserver dependencies.
 RUN uv pip install --system --require-hashes -r requirements/requirements-api.txt
+
+RUN uv pip install --system --no-deps -e /app
 
 COPY ./carbonserver/docker/entrypoint.sh /opt
 RUN chmod a+x /opt/entrypoint.sh
