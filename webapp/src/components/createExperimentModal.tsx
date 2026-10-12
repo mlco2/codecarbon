@@ -24,7 +24,7 @@ export default function CreateExperimentModal({
     projectId: string;
     isOpen: boolean;
     onClose: () => void;
-    onExperimentCreated: () => void;
+    onExperimentCreated?: () => void | Promise<void>;
 }) {
     const [isCopied, setIsCopied] = useState(false);
     const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,7 +82,7 @@ export default function CreateExperimentModal({
             const newExperiment = await createExperiment(experimentData);
             setCreatedExperiment(newExperiment);
             setIsCreated(true);
-            await onExperimentCreated();
+            await onExperimentCreated?.();
             toast.success(
                 `Experiment ${experimentData.name} created successfully`,
             );

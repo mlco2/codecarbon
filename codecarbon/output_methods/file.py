@@ -1,6 +1,6 @@
 import csv
 import os
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -51,25 +51,31 @@ class FileOutput(BaseOutput):
             f"Emissions data (if any) will be saved to file {os.path.abspath(self.save_file_path)}"
         )
 
-    def has_valid_headers(self, data: EmissionsData) -> bool:
+    def has_valid_headers(
+        self, data: EmissionsData, headers: Optional[List[str]] = None
+    ) -> bool:
         """
         Checks self.save_file_path has headers matching those from passed data.
 
         Args:
             data: EmissionsData object with valid headers.
+            headers: header row already read from the file; read it if None.
 
         Returns:
             True if the file has valid headers, False otherwise.
         """
-        with open(self.save_file_path) as csv_file:
-            csv_reader = csv.DictReader(csv_file)
-            csv_entries_list = list(csv_reader)
-            if len(csv_entries_list) == 0:
-                # No entries
+        if headers is None:
+            headers = self._read_headers()
+            if headers is None:
                 return True
-            dict_from_csv = dict(csv_entries_list[0])
-            list_of_column_names = sorted(dict_from_csv.keys())
-            return sorted(data.values.keys()) == list_of_column_names
+        return sorted(headers) == sorted(data.values.keys())
+
+    def _read_headers(self) -> Optional[List[str]]:
+        """
+        Read the header row of self.save_file_path, or None if the file is empty.
+        """
+        with open(self.save_file_path, newline="") as csv_file:
+            return next(csv.reader(csv_file), None)
 
     def out(self, total: EmissionsData, _):
         """
@@ -78,9 +84,8 @@ class FileOutput(BaseOutput):
         * If the file does not exist, then create it.
         * If the file already exists but has invalid headers, then back it up and replace with new data.
         * If the file already exists and has valid headers:
-            * If it has no rows with a matching run ID, append the new data.
-            * If it has one row with a matching run ID, then replace that row with the new data.
-            * If it has > one row with a matching run ID, append the new data
+            * In "append" mode, append the new row directly.
+            * In "update" mode, deduplicate by run_id.
 
         Args:
             total: data to save.
@@ -93,25 +98,31 @@ class FileOutput(BaseOutput):
                 f"File {self.save_file_path} exists but is empty. Treating as new file."
             )
             file_exists = False
-        if file_exists and not self.has_valid_headers(total):
+
+        headers = self._read_headers() if file_exists else None
+        headers_match = file_exists and self.has_valid_headers(total, headers)
+        if file_exists and not headers_match:
             logger.warning("The CSV format has changed, backing up old emission file.")
             backup(self.save_file_path)
             file_exists = False
+
         new_df = pd.DataFrame.from_records([dict(total.values)])
+
         if not file_exists:
-            df = new_df
+            new_df.to_csv(self.save_file_path, index=False)
         elif self.on_csv_write == "append":
-            df = pd.read_csv(self.save_file_path)
-            # Filter out empty or all-NA columns only from new_df, to avoid warnings from Pandas,
-            # see https://github.com/pandas-dev/pandas/issues/55928
-            new_df = new_df.dropna(axis=1, how="all")
-            df = pd.concat([df, new_df])
+            # Never drop all-NA columns here: the append is headerless, so column
+            # identity is positional and a missing column shifts every value after it.
+            # Header names may be in any order (see has_valid_headers), so write the
+            # values in the file's order. reindex() drops or NaN-fills mismatched
+            # columns silently: it is only safe because has_valid_headers() above
+            # guarantees the file and the record have the same set of columns.
+            new_df = new_df.reindex(columns=headers)
+            new_df.to_csv(self.save_file_path, mode="a", header=False, index=False)
         else:
             df = pd.read_csv(self.save_file_path)
             df_run = df.loc[df.run_id == total.run_id]
-            if len(df_run) < 1:
-                df = pd.concat([df, new_df])
-            elif len(df_run) > 1:
+            if len(df_run) > 1:
                 logger.warning(
                     f"CSV contains more than 1 ({len(df_run)})"
                     + f" rows with current run ID ({total.run_id})."
@@ -119,15 +130,12 @@ class FileOutput(BaseOutput):
                 )
                 df = pd.concat([df, new_df])
             else:
-                update_values = {}
-                for col, val in dict(total.values).items():
-                    # Explicitly cast new values to prevent warnings about incompatible dtypes.
-                    update_values[col] = df[col].dtype.type(val)
-                df.loc[df.run_id == total.run_id, update_values.keys()] = (
-                    update_values.values()
-                )
-
-        df.to_csv(self.save_file_path, index=False)
+                # Drop the previous row for this run (if any) and re-append it.
+                # Assigning column by column would coerce values to the dtype
+                # pandas inferred for the existing column, which breaks for
+                # columns that are empty in every row (read back as float64).
+                df = pd.concat([df.loc[df.run_id != total.run_id], new_df])
+            df.to_csv(self.save_file_path, index=False)
 
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
         """

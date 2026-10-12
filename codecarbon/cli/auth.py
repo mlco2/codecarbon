@@ -16,9 +16,9 @@ from urllib.parse import parse_qs, urlparse
 import requests
 from authlib.common.security import generate_token
 from authlib.integrations.requests_client import OAuth2Session
-from authlib.jose import JsonWebKey
-from authlib.jose import jwt as jose_jwt
 from authlib.oauth2.rfc7636 import create_s256_code_challenge
+from joserfc import jwt as jose_jwt
+from joserfc.jwk import KeySet
 
 AUTH_CLIENT_ID = os.environ.get(
     "AUTH_CLIENT_ID",
@@ -86,8 +86,15 @@ def _discover_endpoints():
 
 def _save_credentials(tokens):
     """Save OAuth tokens to the local credentials file."""
-    with open(_CREDENTIALS_FILE, "w") as f:
-        json.dump(tokens, f)
+    try:
+        with open(_CREDENTIALS_FILE, "w") as f:
+            json.dump(tokens, f)
+    except OSError as e:
+        raise ValueError(
+            f"Could not write the credentials file {_CREDENTIALS_FILE.resolve()} "
+            f"(error: {e}). Please run the command from a directory you can "
+            "write to."
+        )
 
 
 def _load_credentials():
@@ -110,9 +117,9 @@ def _validate_access_token(access_token: str) -> bool:
         discovery = _discover_endpoints()
         jwks_resp = requests.get(discovery["jwks_uri"])
         jwks_resp.raise_for_status()
-        keyset = JsonWebKey.import_key_set(jwks_resp.json())
-        claims = jose_jwt.decode(access_token, keyset)
-        claims.validate()
+        keyset = KeySet.import_key_set(jwks_resp.json())
+        token = jose_jwt.decode(access_token, keyset)
+        jose_jwt.JWTClaimsRegistry().validate(token.claims)
         return True
     except requests.RequestException as exc:
         logger.warning(
@@ -169,6 +176,7 @@ def authorize():
     server = HTTPServer(("localhost", _REDIRECT_PORT), _CallbackHandler)
 
     print("Opening browser for authentication...")
+    print(f"If no browser opens, copy this URL into your browser:\n{uri}")
     webbrowser.open(uri)
 
     server.handle_request()

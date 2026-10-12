@@ -62,7 +62,24 @@ class TestCPU(unittest.TestCase):
     def test_is_powergadget_available_returns_false_on_exception(
         self, mock_powergadget
     ):
+        from codecarbon.core.cpu import clear_powergadget_cache
+
+        clear_powergadget_cache()
         self.assertFalse(is_powergadget_available())
+        clear_powergadget_cache()
+
+    def test_is_powergadget_available_returns_cached_value(self):
+        from codecarbon.core.cpu import clear_powergadget_cache
+
+        clear_powergadget_cache()
+        with mock.patch("codecarbon.core.cpu.IntelPowerGadget"):
+            self.assertTrue(is_powergadget_available())
+        with mock.patch(
+            "codecarbon.core.cpu.IntelPowerGadget",
+            side_effect=Exception("should not instantiate"),
+        ):
+            self.assertTrue(is_powergadget_available())
+        clear_powergadget_cache()
 
     @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_with_nice(self, mock_cpu_times):
@@ -73,12 +90,24 @@ class TestCPU(unittest.TestCase):
         self.assertTrue(is_psutil_available())
 
     @mock.patch("psutil.cpu_times")
-    def test_is_psutil_available_with_small_nice(self, mock_cpu_times):
-        # Test when nice attribute is too small
+    def test_is_psutil_available_with_small_nice_uses_fallback(self, mock_cpu_times):
+        # Test when nice attribute is too small, as on macOS
         mock_times = mock.Mock()
         mock_times.nice = 0.00001
         mock_cpu_times.return_value = mock_times
-        self.assertFalse(is_psutil_available())
+        with mock.patch("psutil.cpu_percent") as mock_cpu_percent:
+            self.assertTrue(is_psutil_available())
+            mock_cpu_percent.assert_called_once_with(interval=0.0, percpu=False)
+
+    @mock.patch("psutil.cpu_times")
+    def test_is_psutil_not_available_when_small_nice_fallback_fails(
+        self, mock_cpu_times
+    ):
+        mock_times = mock.Mock()
+        mock_times.nice = 0.00001
+        mock_cpu_times.return_value = mock_times
+        with mock.patch("psutil.cpu_percent", side_effect=Exception("Test error")):
+            self.assertFalse(is_psutil_available())
 
     @mock.patch("psutil.cpu_times")
     def test_is_psutil_available_without_nice(self, mock_cpu_times):
@@ -309,7 +338,7 @@ class TestIntelPowerGadget(unittest.TestCase):
         mock_warning.assert_called_once()
 
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
-    @mock.patch("codecarbon.core.cpu.pd.read_csv", side_effect=Exception("bad csv"))
+    @mock.patch("pandas.read_csv", side_effect=Exception("bad csv"))
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
     def test_get_cpu_details_returns_empty_dict_on_read_error(
         self, mock_setup, mock_read_csv, mock_log_values
@@ -385,6 +414,23 @@ class TestTDP(unittest.TestCase):
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
         model = "AMD Ryzen Threadripper 1950X 16-Core Processor"
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
+
+    def test_get_cpu_power_from_registry_ultra_9_285k(self):
+        tdp = TDP()
+        model = "Intel(R) Core(TM) Ultra 9 285K"
+        self.assertEqual(tdp._get_cpu_power_from_registry(model), 125)
+
+    def test_get_cpu_power_from_registry_returns_none_without_match(self):
+        tdp = TDP.__new__(TDP)
+        with (
+            mock.patch("codecarbon.input.DataSource") as mock_data_source,
+            mock.patch.object(tdp, "_get_matching_cpu", return_value=None),
+        ):
+            mock_data_source.return_value.get_cpu_power_data.return_value = (
+                mock.sentinel.cpu_power_df
+            )
+
+            self.assertIsNone(tdp._get_cpu_power_from_registry("Mystery CPU"))
 
     def test_get_matching_cpu(self):
         tdp = TDP()
@@ -573,6 +619,63 @@ class TestTDP(unittest.TestCase):
         self.assertEqual(tdp.model, "Mystery CPU")
         self.assertEqual(tdp.tdp, 8 * DEFAULT_POWER_PER_CORE)
 
+    def test_main_returns_unknown_when_cpu_detection_fails(self):
+        with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=None):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Unknown")
+        self.assertIsNone(tdp.tdp)
+
+    def test_apple_m2_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M2", 22),
+            ("Apple M2 Pro", 35),
+            ("Apple M2 Max", 50),
+            ("Apple M2 Ultra", 105),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_apple_m3_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M3", 22),
+            ("Apple M3 Pro", 35),
+            ("Apple M3 Max", 50),
+            ("Apple M3 Ultra", 100),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_apple_m4_chips_have_correct_tdp(self):
+        for chip, expected_tdp in [
+            ("Apple M4", 20),
+            ("Apple M4 Pro", 35),
+            ("Apple M4 Max", 55),
+            ("Apple M4 Ultra", 110),
+        ]:
+            with mock.patch("codecarbon.core.cpu.detect_cpu_model", return_value=chip):
+                tdp = TDP()
+                self.assertEqual(tdp.model, chip)
+                self.assertEqual(tdp.tdp, expected_tdp)
+
+    def test_unknown_apple_chip_falls_back_gracefully(self):
+        with (
+            mock.patch(
+                "codecarbon.core.cpu.detect_cpu_model",
+                return_value="Apple M5 Pro",
+            ),
+            mock.patch("codecarbon.core.cpu.is_psutil_available", return_value=True),
+            mock.patch("codecarbon.core.cpu.count_cpus", return_value=10),
+        ):
+            tdp = TDP()
+
+        self.assertEqual(tdp.model, "Apple M5 Pro")
+        self.assertEqual(tdp.tdp, 10 * DEFAULT_POWER_PER_CORE)
+
 
 class TestResourceTrackerCPUTracking(unittest.TestCase):
     def test_set_cpu_tracking_skips_tdp_when_rapl_available(self):
@@ -593,11 +696,20 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
         with (
             mock.patch(
-                "codecarbon.core.resource_tracker.cpu.TDP",
+                "codecarbon.core.resource_tracker.get_cached_tdp",
                 side_effect=AssertionError(
                     "TDP should not be instantiated when RAPL is active"
                 ),
             ) as mocked_tdp,
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_linux_os", return_value=True
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_mac_os", return_value=False
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_windows_os", return_value=False
+            ),
             mock.patch(
                 "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
                 return_value=False,
@@ -621,6 +733,7 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         mocked_from_utils.assert_called_once_with(
             output_dir=tracker._output_dir,
             mode="intel_rapl",
+            tracking_mode=tracker._tracking_mode,
             rapl_include_dram=tracker._rapl_include_dram,
             rapl_prefer_psys=tracker._rapl_prefer_psys,
         )
@@ -646,7 +759,8 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
         with (
             mock.patch(
-                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+                "codecarbon.core.resource_tracker.get_cached_tdp",
+                return_value=fake_tdp,
             ) as mocked_tdp,
             mock.patch(
                 "codecarbon.core.resource_tracker.ResourceTracker._setup_cpu_load_mode",
@@ -670,7 +784,7 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         ):
             resource_tracker.set_CPU_tracking()
 
-        mocked_tdp.assert_called_once_with()
+        mocked_tdp.assert_called_once()
         mocked_setup_cpu_load.assert_called_once_with(fake_tdp, 100)
         mocked_fallback.assert_not_called()
 
@@ -693,11 +807,21 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
 
         with (
             mock.patch(
-                "codecarbon.core.resource_tracker.cpu.TDP", return_value=fake_tdp
+                "codecarbon.core.resource_tracker.get_cached_tdp",
+                return_value=fake_tdp,
             ) as mocked_tdp,
             mock.patch(
                 "codecarbon.core.resource_tracker.ResourceTracker._setup_fallback_tracking"
             ) as mocked_fallback,
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_mac_os", return_value=False
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_linux_os", return_value=False
+            ),
+            mock.patch(
+                "codecarbon.core.resource_tracker.is_windows_os", return_value=False
+            ),
             mock.patch(
                 "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
                 return_value=False,
@@ -713,7 +837,7 @@ class TestResourceTrackerCPUTracking(unittest.TestCase):
         ):
             resource_tracker.set_CPU_tracking()
 
-        mocked_tdp.assert_called_once_with()
+        mocked_tdp.assert_called_once()
         mocked_fallback.assert_called_once_with(fake_tdp, 80)
 
 

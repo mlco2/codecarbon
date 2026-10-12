@@ -1,9 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
-import { IProjectToken } from "@/api/schemas";
+import { AccessLevel, IProjectToken } from "@/api/schemas";
 import { getProjectTokens, createProjectToken } from "@/api/projectTokens";
 import CustomRowToken from "@/components/projectTokens/custom-row-token";
-import { useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Loader2, ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,23 +43,21 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         if (isSubmitting) return;
 
         setIsSubmitting(true);
-
         try {
-            const access = 2;
-            const newToken = await toast
-                .promise(createProjectToken(projectId, tokenName, access), {
-                    loading: `Creating token ${tokenName}...`,
-                    success: `Token ${tokenName} created successfully`,
-                    error: (error) =>
-                        `Failed to create token: ${error instanceof Error ? error.message : "Unknown error"}`,
-                })
-                .unwrap();
-
-            setCreatedToken(newToken.token);
+            const newToken = await createProjectToken(
+                projectId,
+                tokenName,
+                AccessLevel.WRITE,
+            );
+            toast.success(`Token ${tokenName} created successfully`);
+            setCreatedToken(newToken.token ?? null);
             setTokenName("");
             refreshTokens();
         } catch (error) {
             console.error("Failed to create token:", error);
+            toast.error(
+                `Failed to create token: ${error instanceof Error ? error.message : "Unknown error"}`,
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -88,6 +86,20 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
         setCreatedToken(null);
         setIsCreatingToken(false);
     };
+
+    const sortedTokens = useMemo(
+        () =>
+            tokens
+                ? tokens
+                      .slice()
+                      .sort((a, b) =>
+                          (a.name ?? "")
+                              .toLowerCase()
+                              .localeCompare((b.name ?? "").toLowerCase()),
+                      )
+                : null,
+        [tokens],
+    );
 
     return (
         <div className="flex-col p-4 md:gap-8 md:p-4 justify-between">
@@ -176,7 +188,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
             <Card>
                 <Table>
                     <TableBody>
-                        {tokens === null ? (
+                        {sortedTokens === null ? (
                             <tr>
                                 <td colSpan={3} className="text-center py-6">
                                     <div className="flex justify-center">
@@ -184,7 +196,7 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                                     </div>
                                 </td>
                             </tr>
-                        ) : tokens.length === 0 ? (
+                        ) : sortedTokens.length === 0 ? (
                             <tr>
                                 <td colSpan={3} className="text-center py-6">
                                     <p className="text-muted-foreground">
@@ -197,19 +209,13 @@ export const ProjectTokensTable = ({ projectId }: { projectId: string }) => {
                                 </td>
                             </tr>
                         ) : (
-                            tokens
-                                .sort((a, b) =>
-                                    a.name
-                                        .toLowerCase()
-                                        .localeCompare(b.name.toLowerCase()),
-                                )
-                                .map((projectToken, index) => (
-                                    <CustomRowToken
-                                        key={index}
-                                        projectToken={projectToken}
-                                        onTokenDeleted={refreshTokens}
-                                    />
-                                ))
+                            sortedTokens.map((projectToken) => (
+                                <CustomRowToken
+                                    key={projectToken.id}
+                                    projectToken={projectToken}
+                                    onTokenDeleted={refreshTokens}
+                                />
+                            ))
                         )}
                     </TableBody>
                 </Table>

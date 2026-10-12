@@ -59,6 +59,23 @@ describe("resolveMock — organizations", () => {
             "newbie@codecarbon.io",
         );
     });
+
+    it("removes a member on DELETE /organizations/:id/users/:userId", () => {
+        const r = resolveMock(
+            url(`/organizations/${ID.org}/users/${ID.users.member}`),
+            "DELETE",
+        );
+        expect(r.status).toBe(200);
+        expect((r.body as { status: string }).status).toBe("ok");
+    });
+
+    it("returns 404 when removing a user who is not a member", () => {
+        const r = resolveMock(
+            url(`/organizations/${ID.org}/users/not-a-member`),
+            "DELETE",
+        );
+        expect(r.status).toBe(404);
+    });
 });
 
 describe("resolveMock — projects", () => {
@@ -74,17 +91,6 @@ describe("resolveMock — projects", () => {
         const r = resolveMock(url(`/projects/${ID.projects.training}`), "GET");
         expect(r.status).toBe(200);
         expect((r.body as { id: string }).id).toBe(ID.projects.training);
-    });
-
-    it("returns a share-link encrypted_id", () => {
-        const r = resolveMock(
-            url(`/projects/${ID.projects.inference}/share-link`),
-            "GET",
-        );
-        expect(r.status).toBe(200);
-        expect((r.body as { encrypted_id: string }).encrypted_id).toBe(
-            ID.projects.inference,
-        );
     });
 
     it("204s on project deletion", () => {

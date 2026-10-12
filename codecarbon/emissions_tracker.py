@@ -3,26 +3,27 @@ Contains implementations of the Public facing API: EmissionsTracker,
 OfflineEmissionsTracker, context manager and decorator @track_emissions
 """
 
+from __future__ import annotations
+
 import dataclasses
 import os
 import platform
 import re
+import threading
 import time
 import uuid
+import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
-from codecarbon.core.emissions import Emissions
-from codecarbon.core.resource_tracker import ResourceTracker
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
-from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.ram import RAM
@@ -30,16 +31,12 @@ from codecarbon.external.scheduler import PeriodicScheduler
 from codecarbon.external.task import Task
 from codecarbon.input import DataSource
 from codecarbon.lock import Lock
-from codecarbon.output import (
-    BaseOutput,
-    CodeCarbonAPIOutput,
-    EmissionsData,
-    FileOutput,
-    HTTPOutput,
-    LogfireOutput,
-    LoggerOutput,
-    PrometheusOutput,
-)
+from codecarbon.output_methods.base_output import BaseOutput, OutputMethod
+from codecarbon.output_methods.emissions_data import EmissionsData
+
+if TYPE_CHECKING:
+    from codecarbon.external.geography import CloudMetadata, GeoMetadata
+    from codecarbon.output_methods.logger import LoggerOutput
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
 # from the script call
@@ -162,6 +159,236 @@ class BaseEmissionsTracker(ABC):
         # return final value (why not?)
         return value
 
+    def _configure_multiple_runs(self, allow_multiple_runs) -> bool:
+        self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
+        if self._allow_multiple_runs:
+            logger.warning(
+                "Multiple instances of codecarbon are allowed to run at the same time."
+            )
+            return False
+
+        try:
+            self._lock = Lock()
+            self._lock.acquire()
+        except FileExistsError:
+            logger.error(
+                f"Error: Another instance of codecarbon is probably running as we find `{self._lock.lockfile_path}`. Turn off the other instance to be able to run this one or use `allow_multiple_runs` or delete the file. Exiting."
+            )
+            self._another_instance_already_running = True
+            return True
+
+        return False
+
+    def _configure_electricitymaps_token(
+        self, electricitymaps_api_token, co2_signal_api_token
+    ) -> None:
+        if co2_signal_api_token is not _sentinel:
+            logger.warning(
+                "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
+                "Please use 'electricitymaps_api_token' instead."
+            )
+            if electricitymaps_api_token is _sentinel:
+                electricitymaps_api_token = co2_signal_api_token
+
+        self._set_from_conf(electricitymaps_api_token, "electricitymaps_api_token")
+
+        if self._electricitymaps_api_token is not None:
+            return
+
+        self._set_from_conf(_sentinel, "co2_signal_api_token", prevent_setter=True)
+        old_token = self._external_conf.get("co2_signal_api_token")
+        if old_token:
+            logger.warning(
+                "Configuration parameter 'co2_signal_api_token' is deprecated. "
+                "Please update your config to use 'electricitymaps_api_token' instead."
+            )
+            self._electricitymaps_api_token = old_token
+
+    def _resolve_output_methods(
+        self,
+        output_methods,
+        save_to_file,
+        save_to_api,
+        save_to_logger,
+        save_to_prometheus,
+        save_to_logfire,
+    ) -> None:
+        save_to_flags = {
+            "save_to_file": save_to_file,
+            "save_to_api": save_to_api,
+            "save_to_logger": save_to_logger,
+            "save_to_prometheus": save_to_prometheus,
+            "save_to_logfire": save_to_logfire,
+        }
+        if any(value is not _sentinel for value in save_to_flags.values()):
+            warnings.warn(
+                "The save_to_* parameters are deprecated and will be removed in a "
+                "future version. Use output_methods=[OutputMethod.CSV, ...] instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        self._set_from_conf(output_methods, "output_methods")
+        if isinstance(self._output_methods, str):
+            self._output_methods = [
+                OutputMethod(method.strip())
+                for method in self._output_methods.split(",")
+                if method.strip()
+            ]
+
+        if self._output_methods is not None and self._output_methods is not _sentinel:
+            self._save_to_file = OutputMethod.CSV in self._output_methods
+            self._save_to_api = OutputMethod.API in self._output_methods
+            self._save_to_logger = OutputMethod.LOGGER in self._output_methods
+            self._save_to_prometheus = OutputMethod.PROMETHEUS in self._output_methods
+            self._save_to_logfire = OutputMethod.LOGFIRE in self._output_methods
+            self._conf["save_to_file"] = self._save_to_file
+            self._conf["save_to_api"] = self._save_to_api
+            self._conf["save_to_logger"] = self._save_to_logger
+            self._conf["save_to_prometheus"] = self._save_to_prometheus
+            self._conf["save_to_logfire"] = self._save_to_logfire
+            return
+
+        self._set_from_conf(save_to_api, "save_to_api", False, bool)
+        self._set_from_conf(save_to_file, "save_to_file", True, bool)
+        self._set_from_conf(save_to_logger, "save_to_logger", False, bool)
+        self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
+        self._set_from_conf(save_to_logfire, "save_to_logfire", False, bool)
+
+        self._output_methods = []
+        if self._save_to_file:
+            self._output_methods.append(OutputMethod.CSV)
+        if self._save_to_api:
+            self._output_methods.append(OutputMethod.API)
+        if self._save_to_logger:
+            self._output_methods.append(OutputMethod.LOGGER)
+        if self._save_to_prometheus:
+            self._output_methods.append(OutputMethod.PROMETHEUS)
+        if self._save_to_logfire:
+            self._output_methods.append(OutputMethod.LOGFIRE)
+
+    def _initialize_runtime_state(self) -> None:
+        self._start_time: Optional[float] = None
+        self._last_measured_time: float = time.perf_counter()
+        self._total_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_emissions: float = 0.0
+        self._last_energy_covered: Energy = Energy.from_energy(kWh=0)
+        self._total_water: Water = Water.from_litres(litres=0)
+        self._cpu_utilization_history: List[float] = []
+        self._gpu_utilization_history: List[float] = []
+        self._ram_utilization_history: List[float] = []
+        self._ram_used_history: List[float] = []
+        # The monitor thread appends while the measurement thread clears/averages
+        self._utilization_history_lock = threading.Lock()
+        self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
+        self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
+        self._cpu_power: Power = Power.from_watts(watts=0)
+        self._gpu_power: Power = Power.from_watts(watts=0)
+        self._ram_power: Power = Power.from_watts(watts=0)
+        self._cpu_power_sum: float = 0.0
+        self._gpu_power_sum: float = 0.0
+        self._ram_power_sum: float = 0.0
+        self._power_measurement_count: int = 0
+        self._measure_occurrence: int = 0
+        self._cloud = None
+        self._previous_emissions = None
+        self._geo = None
+        self._task_start_measurement_values = {}
+        self._task_stop_measurement_values = {}
+        self._tasks: Dict[str, Task] = {}
+        self._active_task: Optional[str] = None
+        self._active_task_emissions_at_start: Optional[EmissionsData] = None
+        self._scheduler_paused_by_task = False
+        self._hardware = []
+        self._hardware_initialized = False
+
+    def _ensure_hardware_ready(self) -> None:
+        if self._hardware_initialized:
+            return
+        self._populate_system_metadata()
+        self._initialize_hardware_tracking()
+        self._hardware_initialized = True
+        self._log_tracker_metadata()
+
+    def _populate_system_metadata(self) -> None:
+        self._conf["os"] = platform.platform()
+        self._conf["python_version"] = platform.python_version()
+        self._conf["cpu_count"] = count_cpus()
+        self._conf["cpu_physical_count"] = count_physical_cpus()
+
+    def _initialize_hardware_tracking(self) -> None:
+        from codecarbon.core.resource_tracker import ResourceTracker
+
+        resource_tracker = ResourceTracker(self)
+        resource_tracker.set_CPU_GPU_ram_tracking()
+        self._conf["hardware"] = [item.description() for item in self._hardware]
+
+    def _log_tracker_metadata(self) -> None:
+        logger.info(">>> Tracker's metadata:")
+        logger.info(f"  Platform system: {self._conf.get('os')}")
+        logger.info(f"  Python version: {self._conf.get('python_version')}")
+        logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
+
+        hardware_info = self.get_detected_hardware()
+        logger.info(f"  Available RAM : {hardware_info['ram_total_size']:.3f} GB")
+        logger.info(
+            f"  CPU count: {hardware_info['cpu_count']} thread(s) in {hardware_info['cpu_physical_count']} physical CPU(s)"
+        )
+        logger.info(f"  CPU model: {hardware_info['cpu_model']}")
+        logger.info(f"  GPU count: {hardware_info['gpu_count']}")
+        if self._gpu_ids:
+            logger.info(
+                f"  GPU model: {hardware_info['gpu_model']} BUT only tracking these GPU ids : {hardware_info['gpu_ids']}"
+            )
+            return
+
+        logger.info(f"  GPU model: {hardware_info['gpu_model']}")
+
+    def _initialize_scheduler_state(self) -> None:
+        self._scheduler = PeriodicScheduler(
+            function=self._measure_power_and_energy,
+            interval=self._measure_power_secs,
+        )
+        self._scheduler_monitor_power = PeriodicScheduler(
+            function=self._monitor_power,
+            interval=1,
+        )
+
+    def _initialize_emissions_context(self) -> None:
+        self._data_source = DataSource()
+        self._geo = None
+        self._emissions = None
+
+    def _ensure_cloud_conf(self) -> None:
+        if self._conf.get("_cloud_conf_initialized"):
+            return
+        cloud = self._get_cloud_metadata()
+        self._conf["region"] = cloud.region
+        self._conf["provider"] = cloud.provider
+        self._conf["_cloud_conf_initialized"] = True
+
+    def _ensure_emissions_engine(self) -> None:
+        if self._emissions is not None:
+            return
+        from codecarbon.core.emissions import Emissions
+
+        self._emissions = Emissions(
+            self._data_source,
+            self._electricitymaps_api_token,
+            force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
+        )
+
+    def _ensure_geo_metadata(self) -> None:
+        """Load geo metadata on first use to avoid blocking tracker construction."""
+        if self._geo is not None:
+            return
+        self._geo = self._get_geo_metadata()
+        cloud: CloudMetadata = self._get_cloud_metadata()
+        if cloud.is_on_private_infra:
+            self._conf["longitude"] = self._geo.longitude
+            self._conf["latitude"] = self._geo.latitude
+
     def __init__(
         self,
         project_name: Optional[str] = _sentinel,
@@ -171,6 +398,7 @@ class BaseEmissionsTracker(ABC):
         api_key: Optional[str] = _sentinel,
         output_dir: Optional[str] = _sentinel,
         output_file: Optional[str] = _sentinel,
+        output_methods: Optional[List[OutputMethod]] = _sentinel,
         save_to_file: Optional[bool] = _sentinel,
         save_to_api: Optional[bool] = _sentinel,
         save_to_logger: Optional[bool] = _sentinel,
@@ -217,17 +445,35 @@ class BaseEmissionsTracker(ABC):
         :param output_dir: Directory path to which the experiment details are logged,
                            defaults to current directory.
         :param output_file: Name of the output CSV file, defaults to `emissions.csv`.
-        :param save_to_file: Indicates if the emission artifacts should be logged to a
+        :param output_methods: List of :class:`OutputMethod` enum values specifying where
+                               to send emissions data. Example::
+
+                                   EmissionsTracker(output_methods=[OutputMethod.CSV, OutputMethod.API])
+
+                               Available values: ``CSV``, ``API``, ``LOGGER``,
+                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``.
+                               When provided, the individual ``save_to_*`` flags are
+                               ignored. Defaults to ``[OutputMethod.CSV]``.
+                               Can also be set in config as a comma-separated string:
+                               ``output_methods=csv,api``.
+                               (HTTP output is enabled separately via
+                               ``emissions_endpoint``.)
+        :param save_to_file: [DEPRECATED] Use ``output_methods`` instead.
+                             Indicates if the emission artifacts should be logged to a
                              file, defaults to True.
-        :param save_to_api: Indicates if the emission artifacts should be sent to the
+        :param save_to_api: [DEPRECATED] Use ``output_methods`` instead.
+                            Indicates if the emission artifacts should be sent to the
                             CodeCarbon API, defaults to False.
-        :param save_to_logger: Indicates if the emission artifacts should be written
+        :param save_to_logger: [DEPRECATED] Use ``output_methods`` instead.
+                            Indicates if the emission artifacts should be written
                             to a dedicated logger, defaults to False.
         :param logging_logger: LoggerOutput object encapsulating a logging.logger
                             or a Google Cloud logger.
-        :param save_to_prometheus: Indicates if the emission artifacts should be
+        :param save_to_prometheus: [DEPRECATED] Use ``output_methods`` instead.
+                            Indicates if the emission artifacts should be
                             pushed to prometheus, defaults to False.
-        :param save_to_logfire: Indicates if the emission artifacts should be written
+        :param save_to_logfire: [DEPRECATED] Use ``output_methods`` instead.
+                            Indicates if the emission artifacts should be written
                             to a logfire observability platform, defaults to False.
         :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
         :param output_handlers: List of custom output handlers to use. Defaults to [].
@@ -260,7 +506,9 @@ class BaseEmissionsTracker(ABC):
                                 `sudo lshw -C memory -short | grep DIMM` to get RAM slots,
                                 then RAM power (W) = Number of RAM Slots × 5 Watts.
         :param pue: PUE (Power Usage Effectiveness) of the data center where the
-                    experiment is being run.
+                    experiment is being run. It multiplies both the reported power
+                    and the reported energy, including forced values: with
+                    `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
         :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
                     litres of water consumed per kilowatt-hour of electricity consumed.
         :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
@@ -268,9 +516,11 @@ class BaseEmissionsTracker(ABC):
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
         :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
                                     Defaults to True since v3 (was False in v2).
-        :param rapl_include_dram: Include DRAM (memory) power in RAPL measurements on Linux,
-                                  defaults to False. When True, measures CPU package + DRAM.
-                                  Only affects systems where RAPL exposes separate DRAM domains.
+        :param rapl_include_dram: Include DRAM (memory) power in the counter-based CPU
+                                  measurements, defaults to False. When True, measures
+                                  CPU package + DRAM. Applies to the Linux RAPL interface
+                                  and to the Windows Energy Meter Interface, on systems
+                                  exposing separate DRAM domains/channels.
         :param rapl_prefer_psys: Prefer psys (platform) RAPL domain over package domains on
                                  Linux, defaults to False. When True, uses total platform power
                                  (CPU + chipset + PCIe). When False, uses package domains which
@@ -307,52 +557,15 @@ class BaseEmissionsTracker(ABC):
         self._force_carbon_intensity_g_co2e_kwh = parsed_intensity
         self._conf["force_carbon_intensity_g_co2e_kwh"] = parsed_intensity
         self.force_carbon_intensity_g_co2e_kwh = parsed_intensity
-        self._set_from_conf(allow_multiple_runs, "allow_multiple_runs", True, bool)
-        if self._allow_multiple_runs:
-            logger.warning(
-                "Multiple instances of codecarbon are allowed to run at the same time."
-            )
-        else:
-            # Acquire lock file to prevent multiple instances of codecarbon running
-            # at the same time
-            try:
-                self._lock = Lock()
-                self._lock.acquire()
-            except FileExistsError:
-                logger.error(
-                    f"Error: Another instance of codecarbon is probably running as we find `{self._lock.lockfile_path}`. Turn off the other instance to be able to run this one or use `allow_multiple_runs` or delete the file. Exiting."
-                )
-                # Do not continue if another instance of codecarbon is running
-                self._another_instance_already_running = True
-                return
+        if self._configure_multiple_runs(allow_multiple_runs):
+            return
 
         self._set_from_conf(api_call_interval, "api_call_interval", 8, int)
         self._set_from_conf(api_endpoint, "api_endpoint", "https://api.codecarbon.io")
         self._set_from_conf(api_key, "api_key", "api_key")
-
-        # Handle backward compatibility for co2_signal_api_token
-        if co2_signal_api_token is not _sentinel:
-            logger.warning(
-                "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
-                "Please use 'electricitymaps_api_token' instead."
-            )
-            if electricitymaps_api_token is _sentinel:
-                electricitymaps_api_token = co2_signal_api_token
-
-        self._set_from_conf(electricitymaps_api_token, "electricitymaps_api_token")
-        # Also check for old config name for backward compatibility
-        if (
-            not hasattr(self, "_electricitymaps_api_token")
-            or self._electricitymaps_api_token is None
-        ):
-            self._set_from_conf(_sentinel, "co2_signal_api_token", prevent_setter=True)
-            old_token = self._external_conf.get("co2_signal_api_token")
-            if old_token:
-                logger.warning(
-                    "Configuration parameter 'co2_signal_api_token' is deprecated. "
-                    "Please update your config to use 'electricitymaps_api_token' instead."
-                )
-                self._electricitymaps_api_token = old_token
+        self._configure_electricitymaps_token(
+            electricitymaps_api_token, co2_signal_api_token
+        )
 
         self._set_from_conf(emissions_endpoint, "emissions_endpoint")
         self._set_from_conf(experiment_name, "experiment_name", "base")
@@ -362,12 +575,16 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(output_dir, "output_dir", ".")
         self._set_from_conf(output_file, "output_file", "emissions.csv")
         self._set_from_conf(project_name, "project_name", "codecarbon")
-        self._set_from_conf(save_to_api, "save_to_api", False, bool)
-        self._set_from_conf(save_to_file, "save_to_file", True, bool)
-        self._set_from_conf(save_to_logger, "save_to_logger", False, bool)
+        self._resolve_output_methods(
+            output_methods,
+            save_to_file,
+            save_to_api,
+            save_to_logger,
+            save_to_prometheus,
+            save_to_logfire,
+        )
+
         self._set_from_conf(logging_logger, "logging_logger")
-        self._set_from_conf(save_to_prometheus, "save_to_prometheus", False, bool)
-        self._set_from_conf(save_to_logfire, "save_to_logfire", False, bool)
         self._set_from_conf(prometheus_url, "prometheus_url", "localhost:9091")
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
@@ -393,107 +610,30 @@ class BaseEmissionsTracker(ABC):
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
-
-        self._start_time: Optional[float] = None
-        self._last_measured_time: float = time.perf_counter()
-        self._total_energy: Energy = Energy.from_energy(kWh=0)
-        self._total_emissions: float = 0.0
-        self._last_energy_covered: Energy = Energy.from_energy(kWh=0)
-        self._total_water: Water = Water.from_litres(litres=0)
-        # CPU and RAM utilization tracking
-        self._cpu_utilization_history: List[float] = []
-        self._gpu_utilization_history: List[float] = []
-        self._ram_utilization_history: List[float] = []
-        self._ram_used_history: List[float] = []
-        self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
-        self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
-        self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
-        self._cpu_power: Power = Power.from_watts(watts=0)
-        self._gpu_power: Power = Power.from_watts(watts=0)
-        self._ram_power: Power = Power.from_watts(watts=0)
-        # Running average tracking for power
-        self._cpu_power_sum: float = 0.0
-        self._gpu_power_sum: float = 0.0
-        self._ram_power_sum: float = 0.0
-        self._power_measurement_count: int = 0
-        self._measure_occurrence: int = 0
-        self._cloud = None
-        self._previous_emissions = None
-        self._conf["os"] = platform.platform()
-        self._conf["python_version"] = platform.python_version()
-        self._conf["cpu_count"] = count_cpus()
-        self._conf["cpu_physical_count"] = count_physical_cpus()
-        self._geo = None
-        self._task_start_measurement_values = {}
-        self._task_stop_measurement_values = {}
-        self._tasks: Dict[str, Task] = {}
-        self._active_task: Optional[str] = None
-        self._active_task_emissions_at_start: Optional[EmissionsData] = None
-        # Tracking mode detection
-        self._hardware = []
-        resource_tracker = ResourceTracker(self)
-        resource_tracker.set_CPU_GPU_ram_tracking()
-
-        self._conf["hardware"] = list(map(lambda x: x.description(), self._hardware))
-
-        logger.info(">>> Tracker's metadata:")
-        logger.info(f"  Platform system: {self._conf.get('os')}")
-        logger.info(f"  Python version: {self._conf.get('python_version')}")
-        logger.info(f"  CodeCarbon version: {self._conf.get('codecarbon_version')}")
-
-        hardware_info = self.get_detected_hardware()
-        logger.info(f"  Available RAM : {hardware_info['ram_total_size']:.3f} GB")
-        logger.info(
-            f"  CPU count: {hardware_info['cpu_count']} thread(s) in {hardware_info['cpu_physical_count']} physical CPU(s)"
-        )
-        logger.info(f"  CPU model: {hardware_info['cpu_model']}")
-        logger.info(f"  GPU count: {hardware_info['gpu_count']}")
-        if self._gpu_ids:
-            logger.info(
-                f"  GPU model: {hardware_info['gpu_model']} BUT only tracking these GPU ids : {hardware_info['gpu_ids']}"
-            )
-        else:
-            logger.info(f"  GPU model: {hardware_info['gpu_model']}")
-
-        # Run `self._measure_power_and_energy` every `measure_power_secs` seconds in a
-        # background thread
-        self._scheduler = PeriodicScheduler(
-            function=self._measure_power_and_energy,
-            interval=self._measure_power_secs,
-        )
-        self._scheduler_monitor_power = PeriodicScheduler(
-            function=self._monitor_power,
-            interval=1,
-        )
-
-        self._data_source = DataSource()
-
-        cloud: CloudMetadata = self._get_cloud_metadata()
-
-        # Always populate geo metadata as it's needed for fallback when cloud region is not found
-        self._geo = self._get_geo_metadata()
-
-        if cloud.is_on_private_infra:
-            self._conf["longitude"] = self._geo.longitude
-            self._conf["latitude"] = self._geo.latitude
-            self._conf["region"] = cloud.region
-            self._conf["provider"] = cloud.provider
-        else:
-            self._conf["region"] = cloud.region
-            self._conf["provider"] = cloud.provider
-
-        self._emissions: Emissions = Emissions(
-            self._data_source,
-            self._electricitymaps_api_token,
-            force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
-        )
+        self._initialize_runtime_state()
+        self._initialize_scheduler_state()
+        self._initialize_emissions_context()
         self._init_output_methods(api_key=self._api_key)
 
     def _init_output_methods(self, *, api_key: str = None):
         """
-        Prepare the different output methods
+        Prepare the different output methods based on ``self._output_methods``.
         """
-        if self._save_to_file:
+        methods = set(self._output_methods) if self._output_methods else set()
+
+        if not methods and not self._emissions_endpoint:
+            self.run_id = uuid.uuid4()
+            return
+
+        from codecarbon.output_methods.boamps import BoAmpsOutput
+        from codecarbon.output_methods.file import FileOutput
+        from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
+        from codecarbon.output_methods.metrics.logfire import LogfireOutput
+        from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
+
+        methods = set(self._output_methods) if self._output_methods else set()
+
+        if OutputMethod.CSV in methods:
             self._output_handlers.append(
                 FileOutput(
                     self._output_file,
@@ -502,13 +642,13 @@ class BaseEmissionsTracker(ABC):
                 )
             )
 
-        if self._save_to_logger:
+        if OutputMethod.LOGGER in methods:
             self._output_handlers.append(self._logging_logger)
 
         if self._emissions_endpoint:
             self._output_handlers.append(HTTPOutput(self._emissions_endpoint))
 
-        if self._save_to_api:
+        if OutputMethod.API in methods:
             cc_api__out = CodeCarbonAPIOutput(
                 endpoint_url=self._api_endpoint,
                 experiment_id=self._experiment_id,
@@ -520,7 +660,7 @@ class BaseEmissionsTracker(ABC):
         else:
             self.run_id = uuid.uuid4()
 
-        if self._save_to_prometheus:
+        if OutputMethod.PROMETHEUS in methods:
             self._output_handlers.append(
                 PrometheusOutput(
                     self._prometheus_url,
@@ -532,14 +672,18 @@ class BaseEmissionsTracker(ABC):
                 )
             )
 
-        if self._save_to_logfire:
+        if OutputMethod.LOGFIRE in methods:
             self._output_handlers.append(LogfireOutput())
+
+        if OutputMethod.BOAMPS in methods:
+            self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """
         Get the detected hardware.
         :return: A dictionary containing hardware data.
         """
+        self._ensure_hardware_ready()
         hardware_info = {
             "ram_total_size": self._conf.get("ram_total_size"),
             "cpu_count": self._conf.get("cpu_count"),
@@ -552,6 +696,22 @@ class BaseEmissionsTracker(ABC):
         return hardware_info
 
     def service_shutdown(self, signum, frame):
+        """
+        Signal handler that stops the tracker on SIGTERM/SIGINT, for use when
+        CodeCarbon runs as a long-lived service. Register it with:
+
+        ```py
+        import signal
+
+        tracker = EmissionsTracker()
+        signal.signal(signal.SIGTERM, tracker.service_shutdown)
+        signal.signal(signal.SIGINT, tracker.service_shutdown)
+        ```
+
+        :param signum: Signal number, passed by `signal.signal`
+        :param frame: Current stack frame, passed by `signal.signal`
+        :return: None
+        """
         logger.warning("service_shutdown - Caught signal %d" % signum)
         self.stop()
 
@@ -571,29 +731,23 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
-        try:
-            _ = self._emissions
-        except AttributeError:
-            logger.error("Tracker not initialized. Please check the logs.")
-            return
         if self._start_time is not None:
             logger.warning("Already started tracking")
             return
 
+        self._ensure_hardware_ready()
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
 
         self._scheduler.start()
-        self._scheduler_monitor_power.start()
+        if self._output_handlers:
+            self._scheduler_monitor_power.start()
+        self._measure_power_and_energy()
 
     def start_task(self, task_name=None) -> None:
         """
@@ -611,13 +765,22 @@ class BaseEmissionsTracker(ABC):
             )
             return
         try:
-            _ = self._emissions
-        except AttributeError:
+            self._ensure_emissions_engine()
+        except Exception:
             logger.error("Tracker not initialized. Please check the logs.")
             return
 
+        self._ensure_hardware_ready()
+
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
+            # Only resume it in stop_task if it was actually running, i.e. the tracker
+            # was started with start(). Pure start_task/stop_task usage must not leave
+            # a periodic measurement running behind. The flag is sticky: a second
+            # start_task call sees an already stopped scheduler and must not clear it.
+            self._scheduler_paused_by_task = (
+                self._scheduler_paused_by_task or not self._scheduler._stopped
+            )
             self._scheduler.stop()
 
         # Task background thread for measuring power
@@ -632,11 +795,7 @@ class BaseEmissionsTracker(ABC):
             task_name += "_" + uuid.uuid4().__str__()
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
@@ -658,6 +817,16 @@ class BaseEmissionsTracker(ABC):
         )
         self._active_task = task_name
 
+    def _resume_scheduler_if_paused_by_task(self) -> None:
+        """
+        Restart the periodic scheduler if, and only if, start_task paused a running
+        one. No-op for pure start_task/stop_task usage, and when called from stop()
+        where the scheduler has already been released.
+        """
+        if self._scheduler is not None and self._scheduler_paused_by_task:
+            self._scheduler_paused_by_task = False
+            self._scheduler.start()
+
     def stop_task(self, task_name: str = None) -> EmissionsData:
         """
         Stop tracking a dedicated execution task. Delta energy is computed by task, to isolate its contribution to total
@@ -670,6 +839,9 @@ class BaseEmissionsTracker(ABC):
         task_name = task_name if task_name else self._active_task
         if self._tasks.get(task_name) is None:
             logger.warning("stop_task : No active task to stop.")
+            # Still resume, so an unknown task name does not leave the periodic
+            # scheduler paused for the rest of the run.
+            self._resume_scheduler_if_paused_by_task()
             return None
         self._measure_power_and_energy()
         emissions_data = (
@@ -714,6 +886,8 @@ class BaseEmissionsTracker(ABC):
         self._active_task = None
         self._active_task_emissions_at_start = None  # Clear task-specific start data
 
+        self._resume_scheduler_if_paused_by_task()
+
         return task_emission_data
 
     @suppress(Exception)
@@ -738,13 +912,15 @@ class BaseEmissionsTracker(ABC):
 
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
-        self._measure_power_and_energy()
+        self._measure_power_and_energy_if_stale()
 
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         self._persist_data(
-            total_emissions=emissions_data, delta_emissions=emissions_data_delta
+            total_emissions=emissions_data,
+            delta_emissions=emissions_data_delta,
+            experiment_name=self._experiment_name,
         )
 
         return emissions_data.emissions
@@ -765,12 +941,12 @@ class BaseEmissionsTracker(ABC):
                 "Another instance of codecarbon is already running. Exiting."
             )
             return
-        if not self._allow_multiple_runs:
-            # Release the lock
-            self._lock.release()
         if self._start_time is None:
-            logger.error("You first need to start the tracker.")
-            return None
+            logger.warning("Tracker already stopped or never started.")
+            return getattr(self, "final_emissions", None)
+
+        if not self._allow_multiple_runs:
+            self._lock.release()
 
         if self._scheduler:
             self._scheduler.stop()
@@ -786,7 +962,7 @@ class BaseEmissionsTracker(ABC):
         # Run to calculate the power used from last
         # scheduled measurement to shutdown
         # or if scheduler interval was longer than the run
-        self._measure_power_and_energy()
+        self._measure_power_and_energy_if_stale()
 
         emissions_data = self._prepare_emissions_data()
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
@@ -802,6 +978,8 @@ class BaseEmissionsTracker(ABC):
 
         for handler in self._output_handlers:
             handler.exit()
+
+        self._start_time = None
 
         return emissions_data.emissions
 
@@ -825,6 +1003,8 @@ class BaseEmissionsTracker(ABC):
         Compute emissions for the energy consumed since the last update
         and add them to the total emissions.
         """
+        self._ensure_geo_metadata()
+        self._ensure_emissions_engine()
         delta_energy = self._total_energy - self._last_energy_covered
         if delta_energy.kWh > 0:
             cloud: CloudMetadata = self._get_cloud_metadata()
@@ -845,7 +1025,8 @@ class BaseEmissionsTracker(ABC):
         :return: EmissionsData object with the total emissions data.
         """
         self._update_emissions()
-        cloud: CloudMetadata = self._get_cloud_metadata()
+        self._ensure_cloud_conf()
+        cloud = self._get_cloud_metadata()
         duration: Time = Time.from_seconds(time.perf_counter() - self._start_time)
 
         emissions = self._total_emissions
@@ -915,25 +1096,15 @@ class BaseEmissionsTracker(ABC):
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
             cpu_utilization_percent=(
-                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
-                if self._cpu_utilization_history
-                else 0
+                self._mean_utilization(self._cpu_utilization_history)
             ),
             gpu_utilization_percent=(
-                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
-                if self._gpu_utilization_history
-                else 0
+                self._mean_utilization(self._gpu_utilization_history)
             ),
             ram_utilization_percent=(
-                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
-                if self._ram_utilization_history
-                else 0
+                self._mean_utilization(self._ram_utilization_history)
             ),
-            ram_used_gb=(
-                sum(self._ram_used_history) / len(self._ram_used_history)
-                if self._ram_used_history
-                else 0
-            ),
+            ram_used_gb=(self._mean_utilization(self._ram_used_history)),
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
@@ -996,6 +1167,17 @@ class BaseEmissionsTracker(ABC):
         :return: Metadata containing cloud info
         """
 
+    def _clear_utilization_history(self) -> None:
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.clear()
+            self._ram_utilization_history.clear()
+            self._ram_used_history.clear()
+            self._gpu_utilization_history.clear()
+
+    def _mean_utilization(self, history: List[float]) -> float:
+        with self._utilization_history_lock:
+            return sum(history) / len(history) if history else 0
+
     def _monitor_power(self) -> None:
         """
         Monitor the power consumption of the hardware.
@@ -1008,24 +1190,30 @@ class BaseEmissionsTracker(ABC):
                 hardware.monitor_power()
 
         # Collect CPU and RAM utilization metrics
-        self._cpu_utilization_history.append(psutil.cpu_percent())
-        self._ram_utilization_history.append(psutil.virtual_memory().percent)
-        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
+        cpu_utilization = psutil.cpu_percent()
+        ram_utilization = psutil.virtual_memory().percent
+        ram_used = psutil.virtual_memory().used / (1024**3)
 
-        # Collect GPU utilization metrics
+        # Collect GPU utilization metrics (lightweight path — skips
+        # heavyweight calls like process lists, memory, temperature).
+        gpu_utilizations = []
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
-                gpu_details = hardware.devices.get_gpu_details()
-                for gpu_index, gpu_detail in enumerate(gpu_details):
-                    resolved_gpu_index = gpu_detail.get("gpu_index", gpu_index)
+                for gpu_detail in hardware.devices.get_gpu_utilization_list():
+                    resolved_gpu_index = gpu_detail.get("gpu_index")
                     if (
-                        resolved_gpu_index in gpu_ids_to_monitor
+                        resolved_gpu_index is not None
+                        and resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
-                        self._gpu_utilization_history.append(
-                            gpu_detail["gpu_utilization"]
-                        )
+                        gpu_utilizations.append(gpu_detail["gpu_utilization"])
+
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.append(cpu_utilization)
+            self._ram_utilization_history.append(ram_utilization)
+            self._ram_used_history.append(ram_used)
+            self._gpu_utilization_history.extend(gpu_utilizations)
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
@@ -1036,7 +1224,8 @@ class BaseEmissionsTracker(ABC):
                 power,
                 energy,
             ) = hardware.measure_power_and_energy(last_duration=last_duration)
-            # Apply the PUE of the datacenter to the consumed energy
+            # Apply the PUE of the datacenter
+            power *= self._pue
             energy *= self._pue
             water = Water.from_litres(litres=self._wue * energy.kWh)
             self._total_energy += energy
@@ -1102,6 +1291,11 @@ class BaseEmissionsTracker(ABC):
         logger.info(
             f"{self._total_energy.kWh:.6f} kWh of electricity and {self._total_water.litres:.6f} L of water were used since the beginning."
         )
+
+    def _measure_power_and_energy_if_stale(self, min_interval_s: float = 0.05) -> None:
+        """Measure only if the last sample is older than ``min_interval_s``."""
+        if time.perf_counter() - self._last_measured_time >= min_interval_s:
+            self._measure_power_and_energy()
 
     def _measure_power_and_energy(self) -> None:
         """
@@ -1216,40 +1410,48 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                     "Cloud Region must be provided " + " if cloud provider is set"
                 )
 
-            df = DataSource().get_cloud_emissions_data()
-            if (
-                len(
-                    df.loc[
-                        (df["provider"] == self._cloud_provider)
-                        & (df["region"] == self._cloud_region)
-                    ]
-                )
-                == 0
-            ):
-                logger.error(
-                    "Cloud Provider/Region "
-                    f"{self._cloud_provider} {self._cloud_region} "
-                    "not found in cloud emissions data."
-                )
-        if self._country_iso_code:
-            try:
-                self._country_name: str = DataSource().get_global_energy_mix_data()[
-                    self._country_iso_code
-                ]["country_name"]
-            except KeyError as e:
-                logger.error(
-                    "Does not support country"
-                    + f" with ISO code {self._country_iso_code} "
-                    f"Exception occurred {e}"
-                )
-
         if self._country_2letter_iso_code:
             assert isinstance(self._country_2letter_iso_code, str)
             self._country_2letter_iso_code: str = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
 
+    def _resolve_offline_country_name(self) -> None:
+        if self._country_name is not None or not self._country_iso_code:
+            return
+        try:
+            self._country_name = DataSource().get_global_energy_mix_data()[
+                self._country_iso_code
+            ]["country_name"]
+        except KeyError as e:
+            logger.error(
+                "Does not support country" + f" with ISO code {self._country_iso_code} "
+                f"Exception occurred {e}"
+            )
+
+    def _validate_offline_cloud_provider(self) -> None:
+        if not self._cloud_provider:
+            return
+        df = DataSource().get_cloud_emissions_data()
+        if (
+            len(
+                df.loc[
+                    (df["provider"] == self._cloud_provider)
+                    & (df["region"] == self._cloud_region)
+                ]
+            )
+            == 0
+        ):
+            logger.error(
+                "Cloud Provider/Region "
+                f"{self._cloud_provider} {self._cloud_region} "
+                "not found in cloud emissions data."
+            )
+
     def _get_geo_metadata(self) -> GeoMetadata:
+        from codecarbon.external.geography import GeoMetadata
+
+        self._resolve_offline_country_name()
         return GeoMetadata(
             country_iso_code=self._country_iso_code,
             country_name=self._country_name,
@@ -1258,6 +1460,9 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         )
 
     def _get_cloud_metadata(self) -> CloudMetadata:
+        from codecarbon.external.geography import CloudMetadata
+
+        self._validate_offline_cloud_provider()
         if self._cloud is None:
             self._cloud = CloudMetadata(
                 provider=self._cloud_provider, region=self._cloud_region
@@ -1272,9 +1477,13 @@ class EmissionsTracker(BaseEmissionsTracker):
     """
 
     def _get_geo_metadata(self) -> GeoMetadata:
+        from codecarbon.external.geography import GeoMetadata
+
         return GeoMetadata.from_geo_js(self._data_source.geo_js_url)
 
     def _get_cloud_metadata(self) -> CloudMetadata:
+        from codecarbon.external.geography import CloudMetadata
+
         if self._cloud is None:
             self._cloud = CloudMetadata.from_utils()
         return self._cloud
@@ -1319,6 +1528,7 @@ def track_emissions(
     api_key: Optional[str] = _sentinel,
     output_dir: Optional[str] = _sentinel,
     output_file: Optional[str] = _sentinel,
+    output_methods: Optional[List[OutputMethod]] = _sentinel,
     save_to_file: Optional[bool] = _sentinel,
     save_to_api: Optional[bool] = _sentinel,
     save_to_logger: Optional[bool] = _sentinel,
@@ -1368,18 +1578,14 @@ def track_emissions(
     :param output_dir: Directory path to which the experiment details are logged,
                        defaults to current directory.
     :param output_file: Name of output CSV file, defaults to `emissions.csv`
-    :param save_to_file: Indicates if the emission artifacts should be logged to a file,
-                         defaults to True.
-    :param save_to_api: Indicates if the emission artifacts should be send to the
-                        CodeCarbon API, defaults to False.
-    :param save_to_logger: Indicates if the emission artifacts should be written
-                        to a dedicated logger, defaults to False.
+    :param output_methods: List of OutputMethod enum values. See BaseEmissionsTracker.
+    :param save_to_file: [DEPRECATED] Use output_methods instead.
+    :param save_to_api: [DEPRECATED] Use output_methods instead.
+    :param save_to_logger: [DEPRECATED] Use output_methods instead.
     :param logging_logger: LoggerOutput object encapsulating a logging.logger
                         or a Google Cloud logger.
-    :param save_to_prometheus: Indicates if the emission artifacts should be
-                            pushed to prometheus, defaults to False.
-    :param save_to_logfire: Indicates if the emission artifacts should be
-                            pushed to logfire, defaults to False.
+    :param save_to_prometheus: [DEPRECATED] Use output_methods instead.
+    :param save_to_logfire: [DEPRECATED] Use output_methods instead.
     :param prometheus_url: url of the prometheus server, defaults to `localhost:9091`.
     :param output_handlers: List of output handlers to use.
     :param gpu_ids: User-specified known gpu ids to track.
@@ -1429,12 +1635,15 @@ def track_emissions(
     :param force_ram_power: Force the RAM power consumption in watts. Estimate with
                             `sudo lshw -C memory -short | grep DIMM` for RAM slots,
                             then RAM power (W) = Number of RAM Slots × 5 Watts.
-    :param pue: PUE (Power Usage Effectiveness) of the data center.
+    :param pue: PUE (Power Usage Effectiveness) of the data center. It multiplies both
+                the reported power and the reported energy, including forced values:
+                with `force_cpu_power=100` and `pue=1.5` the CPU is reported at 150 W.
     :param wue: WUE (Water Usage Effectiveness) of the data center. Units of L/kWh:
                 litres of water consumed per kilowatt-hour of electricity consumed.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                          in gCO2e/kWh for emissions calculations.
-    :param rapl_include_dram: Include DRAM in RAPL measurements on Linux (default: False).
+    :param rapl_include_dram: Include DRAM in the counter-based CPU measurements
+                              (Linux RAPL and Windows EMI, default: False).
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
@@ -1467,6 +1676,7 @@ def track_emissions(
                     measure_power_secs=measure_power_secs,
                     output_dir=output_dir,
                     output_file=output_file,
+                    output_methods=output_methods,
                     save_to_file=save_to_file,
                     save_to_logger=save_to_logger,
                     logging_logger=logging_logger,
@@ -1503,6 +1713,7 @@ def track_emissions(
                     api_key=api_key,
                     output_dir=output_dir,
                     output_file=output_file,
+                    output_methods=output_methods,
                     save_to_file=save_to_file,
                     save_to_api=save_to_api,
                     save_to_logger=save_to_logger,
@@ -1553,9 +1764,9 @@ def track_task_emissions(
 ):
     """
     Decorator to track emissions specific to a task. With a tracker as input, it will add task emissions to global emissions.
-    :param: tracker: global tracker used in the current execution. If none is provided, instanciates an emission
+    :param tracker: global tracker used in the current execution. If none is provided, instanciates an emission
     tracker which will read default parameter from config to enable tracking
-    :param: task_name: Task to be tracked. If none is provided, an id will be used.
+    :param task_name: Task to be tracked. If none is provided, an id will be used.
     :return: The decorated function
     """
 

@@ -2,8 +2,14 @@ from typing import List
 from unittest import mock
 from uuid import UUID
 
+import pytest
 from api.mocks import DUMMY_USER, FakeAuthContext
 
+from carbonserver.api.errors import (
+    NotAllowedErrorEnum,
+    NotFoundErrorEnum,
+    UserException,
+)
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
 )
@@ -62,7 +68,57 @@ def test_organization_service_add_org_creates_correct_org(_):
     actual_saved_org = org_service.add_organization(org_to_create, ORG_USER)
 
     repository_mock.add_organization.assert_called_with(org_to_create)
+    user_repository_mock.subscribe_user_to_org.assert_called_once_with(
+        user=ORG_USER, organization_id=ORG_1.id, is_admin=True
+    )
     assert actual_saved_org.id == expected_id
+
+
+def test_organization_service_add_user_by_mail_requires_admin():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    auth_context = mock.Mock()
+    auth_context.can_write_organization.return_value = False
+    organization_service: OrganizationService = OrganizationService(
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=auth_context,
+    )
+
+    with pytest.raises(UserException) as exc_info:
+        organization_service.add_user_by_mail(
+            organization_id=ORG_ID, email=ORG_USER.email, user=DUMMY_USER
+        )
+
+    assert exc_info.value.error.code == NotAllowedErrorEnum.NOT_IN_ORGANISATION
+    auth_context.can_write_organization.assert_called_once_with(ORG_ID, DUMMY_USER)
+    user_repository_mock.get_user_by_email.assert_not_called()
+    user_repository_mock.subscribe_user_to_org.assert_not_called()
+
+
+def test_organization_service_add_user_by_mail_adds_non_admin_member():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    auth_context = mock.Mock()
+    auth_context.can_write_organization.return_value = True
+    user_repository_mock.get_user_by_email.return_value = DUMMY_USER
+    organization_service: OrganizationService = OrganizationService(
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=auth_context,
+    )
+
+    organization_service.add_user_by_mail(
+        organization_id=ORG_ID, email=DUMMY_USER.email, user=ORG_USER
+    )
+
+    auth_context.can_write_organization.assert_called_once_with(ORG_ID, ORG_USER)
+    user_repository_mock.get_user_by_email.assert_called_once_with(
+        email=DUMMY_USER.email
+    )
+    user_repository_mock.subscribe_user_to_org.assert_called_once_with(
+        user=DUMMY_USER, organization_id=ORG_ID, is_admin=False
+    )
 
 
 def test_organiation_service_retrieves_all_existing_organizations():
@@ -142,3 +198,66 @@ def test_orgganization_service_list_users():
     repository_mock.list_users.return_value = [ORG_USER]
     actual_user_list = organization_service.list_users(ORG_ID)
     assert actual_user_list == expected_org_users
+
+
+ORG_MEMBER = OrganizationUser(
+    id="a52fe339-164d-4c2b-a8c0-f562dfce0660",
+    name="user2",
+    email="user2@local.com",
+    is_active=True,
+    organization_id=ORG_1.id,
+    is_admin=False,
+)
+
+
+def _organization_service(repository_mock, user_repository_mock) -> OrganizationService:
+    return OrganizationService(
+        user_repository=user_repository_mock,
+        organization_repository=repository_mock,
+        auth_context=FakeAuthContext(),
+    )
+
+
+def test_organization_service_removes_user_from_org():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    organization_service = _organization_service(repository_mock, user_repository_mock)
+    repository_mock.list_users.return_value = [ORG_USER, ORG_MEMBER]
+
+    organization_service.remove_user(
+        organization_id=ORG_ID, user_id=ORG_MEMBER.id, user=DUMMY_USER
+    )
+
+    user_repository_mock.unsubscribe_user_from_org.assert_called_once_with(
+        user_id=ORG_MEMBER.id, organization_id=ORG_ID
+    )
+
+
+def test_organization_service_remove_user_fails_when_user_not_in_org():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    organization_service = _organization_service(repository_mock, user_repository_mock)
+    repository_mock.list_users.return_value = [ORG_USER]
+
+    with pytest.raises(UserException) as exc_info:
+        organization_service.remove_user(
+            organization_id=ORG_ID, user_id=ORG_MEMBER.id, user=DUMMY_USER
+        )
+
+    assert exc_info.value.error.code == NotFoundErrorEnum.NOT_FOUND
+    user_repository_mock.unsubscribe_user_from_org.assert_not_called()
+
+
+def test_organization_service_remove_user_fails_on_last_admin():
+    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
+    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
+    organization_service = _organization_service(repository_mock, user_repository_mock)
+    repository_mock.list_users.return_value = [ORG_USER, ORG_MEMBER]
+
+    with pytest.raises(UserException) as exc_info:
+        organization_service.remove_user(
+            organization_id=ORG_ID, user_id=ORG_USER.id, user=DUMMY_USER
+        )
+
+    assert exc_info.value.error.code == NotAllowedErrorEnum.OPERATION_NOT_ALLOWED
+    user_repository_mock.unsubscribe_user_from_org.assert_not_called()

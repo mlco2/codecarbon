@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     auth_provider: str = Field(
         "oidc",
         validation_alias=AliasChoices("AUTH_PROVIDER", "auth_provider"),
-    )  # Options: 'oidc', 'fief' (deprecated), 'none'
+    )  # Options: 'oidc', 'none'
 
     # OIDC settings
     oidc_client_id: str = Field(
@@ -36,6 +36,10 @@ class Settings(BaseSettings):
         "",
         validation_alias=AliasChoices("FRONTEND_URL", "frontend_url"),
     )
+    default_redirect_url: str = Field(
+        "",
+        validation_alias=AliasChoices("DEFAULT_REDIRECT_URL", "default_redirect_url"),
+    )
     environment: str = Field("production")
     jwt_key: str = Field("", validation_alias=AliasChoices("JWT_KEY", "jwt_key"))
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
@@ -43,19 +47,13 @@ class Settings(BaseSettings):
         "0.0.0.0", validation_alias=AliasChoices("SERVER_HOST", "server_host")
     )
 
-    # Fief settings (deprecated)
-    fief_client_id: str = Field(
-        "",
-        validation_alias=AliasChoices("FIEF_CLIENT_ID", "fief_client_id"),
-    )
-    fief_client_secret: str = Field(
-        "",
-        validation_alias=AliasChoices("FIEF_CLIENT_SECRET", "fief_client_secret"),
-    )
-    fief_url: str = Field(
-        "",
-        validation_alias=AliasChoices("FIEF_URL", "fief_url"),
-    )
+    @model_validator(mode="after")
+    def set_default_redirect_url(self):
+        if self.default_redirect_url == "" or self.default_redirect_url is None:
+            self.default_redirect_url = (
+                f"{(self.frontend_url or 'http://localhost:3000').rstrip('/')}/home"
+            )
+        return self
 
 
 settings = Settings()

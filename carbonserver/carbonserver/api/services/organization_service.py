@@ -1,7 +1,13 @@
 from typing import List
 from uuid import UUID
 
-from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
+from carbonserver.api.errors import (
+    NotAllowedError,
+    NotAllowedErrorEnum,
+    NotFoundError,
+    NotFoundErrorEnum,
+    UserException,
+)
 from carbonserver.api.infra.repositories.repository_organizations import (
     SqlAlchemyRepository as OrganizationRepository,
 )
@@ -43,7 +49,7 @@ class OrganizationService:
             organization
         )
         self._user_repository.subscribe_user_to_org(
-            user=user, organization_id=created_organization.id
+            user=user, organization_id=created_organization.id, is_admin=True
         )
         return created_organization
 
@@ -93,8 +99,47 @@ class OrganizationService:
             return updated_organization
 
     def add_user_by_mail(self, *, organization_id: str, email: str, user: User = None):
-        # TODO: check permissions ; user must be admin on organization
+        if not self._auth_context.can_write_organization(organization_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+                    message="Operation not authorized on organization",
+                )
+            )
         user_to_add = self._user_repository.get_user_by_email(email=email)
         return self._user_repository.subscribe_user_to_org(
-            user=user_to_add, organization_id=organization_id
+            user=user_to_add, organization_id=organization_id, is_admin=False
+        )
+
+    def remove_user(
+        self, *, organization_id: str, user_id: UUID | str, user: User = None
+    ):
+        if not self._auth_context.can_write_organization(organization_id, user):
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+                    message="Operation not authorized on organization",
+                )
+            )
+        members = self._repository.list_users(organization_id=organization_id)
+        member_to_remove = next(
+            (member for member in members if str(member.id) == str(user_id)), None
+        )
+        if member_to_remove is None:
+            raise UserException(
+                NotFoundError(
+                    code=NotFoundErrorEnum.NOT_FOUND,
+                    message="User not found in organization",
+                )
+            )
+        admin_count = len([member for member in members if member.is_admin])
+        if member_to_remove.is_admin and admin_count == 1:
+            raise UserException(
+                NotAllowedError(
+                    code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
+                    message="Cannot remove the last administrator of the organization",
+                )
+            )
+        return self._user_repository.unsubscribe_user_from_org(
+            user_id=user_id, organization_id=organization_id
         )

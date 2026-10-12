@@ -1,7 +1,9 @@
+import csv
 import os
 import shutil
 import tempfile
 import unittest
+from dataclasses import replace
 from unittest.mock import patch
 
 import pandas as pd
@@ -87,6 +89,32 @@ class TestFileOutput(unittest.TestCase):
 
         self.assertTrue(file_output.has_valid_headers(self.emissions_data))
 
+    def test_file_output_preserves_reordered_header_alignment(self):
+        for mode in ("append", "update"):
+            with self.subTest(mode=mode):
+                output = FileOutput(f"{mode}.csv", self.temp_dir, on_csv_write=mode)
+                output.out(self.emissions_data, None)
+                df = pd.read_csv(output.save_file_path)
+                df[list(reversed(df.columns))].to_csv(
+                    output.save_file_path, index=False
+                )
+                next_run = replace(
+                    self.emissions_data, run_id="next_run", project_name="next_project"
+                )
+
+                output.out(next_run, None)
+
+                with open(output.save_file_path, newline="") as file:
+                    rows = list(csv.DictReader(file))
+                self.assertEqual(len(rows), 2)
+                self.assertEqual(
+                    rows[-1],
+                    {
+                        key: str(value) if value is not None else ""
+                        for key, value in next_run.values.items()
+                    },
+                )
+
     def test_has_valid_headers_failure(self):
         file_output = FileOutput("test.csv", self.temp_dir)
         file_output.out(self.emissions_data, None)
@@ -168,6 +196,62 @@ class TestFileOutput(unittest.TestCase):
         file_output.out(new_data, None)
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(df["cpu_power"].iloc[0], 2)
+
+    def test_file_output_out_update_with_always_empty_columns(self):
+        """Regression test: updating a run must not coerce incoming values to the
+        dtype pandas inferred for the existing column.
+
+        An OfflineEmissionsTracker leaves longitude/latitude empty, and
+        gpu_count/gpu_model are empty on CPU-only machines. Such columns are read
+        back from the CSV as float64, so the previous implementation evaluated
+        numpy.float64("") / numpy.float64(None) and raised on the second write.
+        """
+        empty_columns_data = EmissionsData(
+            timestamp="2023-01-01T00:00:00",
+            project_name="test_project",
+            run_id="test_run_id",
+            experiment_id="test_experiment_id",
+            duration=10,
+            emissions=0.5,
+            emissions_rate=0.05,
+            cpu_power=20,
+            gpu_power=0,
+            ram_power=5,
+            cpu_energy=200,
+            gpu_energy=0,
+            ram_energy=50,
+            energy_consumed=250,
+            water_consumed=0.1,
+            country_name="Testland",
+            country_iso_code="TS",
+            region="Test Region",
+            cloud_provider="",
+            cloud_region="",
+            os="TestOS",
+            python_version="3.8",
+            codecarbon_version="2.0",
+            cpu_count=4,
+            cpu_model="Test CPU",
+            gpu_count=None,
+            gpu_model=None,
+            longitude=None,
+            latitude=None,
+            ram_total_size=16,
+            tracking_mode="machine",
+        )
+
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="update")
+        file_output.out(empty_columns_data, None)
+
+        empty_columns_data.cpu_power = 2
+        # This should not raise.
+        file_output.out(empty_columns_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 1)
+        self.assertEqual(df["cpu_power"].iloc[0], 2)
+        self.assertIn("longitude", df.columns)
+        self.assertIn("gpu_model", df.columns)
 
     # def test_file_output_out_consistent_column_ordering(self):
     #     file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
@@ -265,6 +349,41 @@ class TestFileOutput(unittest.TestCase):
         # gpu_count and gpu_model columns must still be present (as NaN).
         self.assertIn("gpu_count", df.columns)
         self.assertIn("gpu_model", df.columns)
+
+    def test_file_output_out_append_keeps_none_columns_aligned(self):
+        """Regression test: appended rows must have the same number of fields as the
+        header, even when some values are None.
+
+        The bug: dropna(axis=1, how="all") on the single-row new_df dropped every
+        None column.  The append is headerless, so the surviving values shifted left
+        and were read back under the wrong column names.
+        """
+        none_data = EmissionsData(
+            **{
+                **self.emissions_data.values,
+                "gpu_count": None,
+                "gpu_model": None,
+                "longitude": None,
+                "latitude": None,
+                "region": None,
+            }
+        )
+
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(none_data, None)
+        file_output.out(none_data, None)
+
+        with open(file_output.save_file_path) as csv_file:
+            field_counts = {len(line.split(",")) for line in csv_file}
+        self.assertEqual(
+            len(field_counts),
+            1,
+            f"Rows have inconsistent field counts: {field_counts}",
+        )
+
+        df = pd.read_csv(file_output.save_file_path)
+        self.assertEqual(df["ram_total_size"].tolist(), [16.0, 16.0])
+        self.assertEqual(df["tracking_mode"].tolist(), ["machine", "machine"])
 
     def test_file_output_out_append_no_gpu_zero_defaults(self):
         """Test that gpu_count=0 and gpu_model="" (the new tracker defaults for
@@ -375,3 +494,41 @@ class TestFileOutput(unittest.TestCase):
         self.assertTrue(os.path.exists(expected_file))
         df = pd.read_csv(expected_file)
         self.assertEqual(len(df), 1)
+
+    def test_fast_append_with_matching_headers(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(self.emissions_data, None)
+        file_output.out(self.emissions_data, None)
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 3)
+
+    def test_schema_migration_creates_backup(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(self.emissions_data, None)
+
+        path = os.path.join(self.temp_dir, "test.csv")
+        df_old = pd.read_csv(path)
+        df_old.rename(columns={"cpu_model": "old_cpu_model"}, inplace=True)
+        df_old.to_csv(path, index=False)
+
+        self.assertFalse(file_output.has_valid_headers(self.emissions_data))
+
+        file_output.out(self.emissions_data, None)
+
+        df_bak = pd.read_csv(path + ".bak")
+        self.assertEqual(len(df_bak), 1)
+        self.assertIn("old_cpu_model", df_bak.columns)
+
+        df = pd.read_csv(path)
+        self.assertEqual(len(df), 1)
+        self.assertIn("cpu_model", df.columns)
+
+    def test_out_append_large_file_fast_path(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.out(self.emissions_data, None)
+        file_output.out(self.emissions_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 2)

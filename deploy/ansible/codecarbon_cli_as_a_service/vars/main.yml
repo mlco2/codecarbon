@@ -12,5 +12,8 @@ codecarbon_venv: "{{ codecarbon_home }}/venv"
 api_endpoint: https://api.codecarbon.io
 organization_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 project_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-experiment_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 api_key: xxx_xxxxxxxx_xxxxxxxxxxxx
+
+# experiment_id is per host: see host_vars/<inventory_hostname>.yml.
+# Do not define it here, vars_files takes precedence over host_vars and would
+# silently send every machine to the same dashboard experiment.

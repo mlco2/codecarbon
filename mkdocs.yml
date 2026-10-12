@@ -85,7 +85,6 @@ plugins:
             docstring_section_style: table
             show_source: false
   - mike:
-      version_selector: true
       canonical_version: latest
 
 extra_css:
@@ -147,6 +146,7 @@ nav:
       - HuggingFace Diffusers: how-to/diffusers.md
       - LLMs and Agents: how-to/agents.md
   - How-to Guides:
+    - Examples: how-to/examples.md
     - Configure CodeCarbon: how-to/configuration.md
     - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
     - Dashboard & Visualization:

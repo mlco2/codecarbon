@@ -1,19 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+const copyMock = vi.hoisted(() => vi.fn(() => true));
+vi.mock("copy-to-clipboard", () => ({
+    default: copyMock,
+}));
+
 import ShareProjectButton from "@/components/share-project-button";
 
-const originalFetch = globalThis.fetch;
-
 beforeEach(() => {
-    globalThis.fetch = vi.fn(async () => ({
-        ok: true,
-        status: 200,
-        json: async () => ({ encrypted_id: "enc-123" }),
-    })) as unknown as typeof fetch;
+    copyMock.mockReset();
+    copyMock.mockReturnValue(true);
 });
 
 afterEach(() => {
-    globalThis.fetch = originalFetch;
     vi.restoreAllMocks();
 });
 
@@ -30,5 +31,18 @@ describe("ShareProjectButton", () => {
         expect(
             screen.getByRole("button", { name: /share project/i }),
         ).toBeInTheDocument();
+    });
+
+    it("uses the public project id in the sharing URL", async () => {
+        render(<ShareProjectButton projectId="p1" isPublic={true} />);
+
+        await userEvent.click(
+            screen.getByRole("button", { name: /share project/i }),
+        );
+
+        const input = await screen.findByDisplayValue(
+            /\/public\/projects\/p1$/,
+        );
+        expect(input).toBeInTheDocument();
     });
 });

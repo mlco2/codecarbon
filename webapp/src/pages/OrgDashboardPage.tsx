@@ -29,7 +29,7 @@ export default function OrgDashboardPage() {
     } = useSWR<Organization>(`/organizations/${organizationId}`, fetcher);
 
     const today = new Date();
-    const [date, setDate] = useState<DateRange | undefined>({
+    const [date] = useState<DateRange | undefined>({
         from: new Date(today.getTime() - THIRTY_DAYS_MS),
         to: today,
     });
@@ -151,6 +151,9 @@ export default function OrgDashboardPage() {
                             />
                             <p className="text-xs text-muted-foreground">
                                 {tv_time_converted_value} days
+                            </p>
+                            <p className="text-sm font-medium">
+                                Of watching TV
                             </p>
                             <p className="text-sm font-medium">
                                 Of watching TV

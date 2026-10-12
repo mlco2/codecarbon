@@ -19,16 +19,9 @@ export async function createExperiment(
 
 export async function getExperiments(projectId: string): Promise<Experiment[]> {
     try {
-        const result = await fetchApi(
+        return await fetchApi(
             `/projects/${projectId}/experiments`,
             ExperimentSchema.array(),
-        );
-        // Drop experiments that somehow lack a usable id — they cannot be
-        // selected, fetched, or rendered downstream. Keeping them would
-        // surface as unselectable rows whose click silently clears the
-        // selection.
-        return result.filter(
-            (e) => typeof e.id === "string" && e.id.length > 0,
         );
     } catch (error) {
         console.error("[getExperiments] failed", error);
@@ -54,12 +47,7 @@ export async function getProjectEmissionsByExperiment(
     }
 
     try {
-        const result = await fetchApi(url, ExperimentReportSchema.array());
-        return result.filter(
-            (r) =>
-                typeof r.experiment_id === "string" &&
-                r.experiment_id.length > 0,
-        );
+        return await fetchApi(url, ExperimentReportSchema.array());
     } catch (error) {
         console.error("[getProjectEmissionsByExperiment] failed", error);
         return [];

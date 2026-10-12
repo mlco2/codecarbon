@@ -7,23 +7,14 @@ afterEach(() => {
 });
 
 describe("buildLoginUrl", () => {
-    it("constructs login URL with redirect using URL constructor", () => {
+    it("constructs the login URL", () => {
         const built = buildLoginUrl();
         expect(built).not.toBeNull();
         const url = new URL(built!);
         expect(url.origin + url.pathname).toBe(
             "http://api.test/api/auth/login",
         );
-        expect(url.searchParams.get("redirect")).toBe(
-            "http://app.test/home?auth=true",
-        );
-    });
-
-    it("encodes the redirect query parameter", () => {
-        const url = buildLoginUrl();
-        expect(url).toContain(
-            "redirect=http%3A%2F%2Fapp.test%2Fhome%3Fauth%3Dtrue",
-        );
+        expect(url.search).toBe("");
     });
 
     it("returns null and warns when VITE_API_URL is missing (pnpm dev with no .env)", () => {

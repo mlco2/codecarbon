@@ -55,6 +55,14 @@ const handlers: Handler[] = [
         if (method === "GET" && users) {
             return ok(MOCK.organization.usersByOrgId[users[1]] ?? []);
         }
+        const orgUser = pathname.match(
+            /^\/organizations\/([^/]+)\/users\/([^/]+)$/,
+        );
+        if (method === "DELETE" && orgUser) {
+            const members = MOCK.organization.usersByOrgId[orgUser[1]] ?? [];
+            const member = members.find((user) => user.id === orgUser[2]);
+            return member ? ok({ status: "ok" }) : notFound("User not found");
+        }
         const addUser = pathname.match(/^\/organizations\/([^/]+)\/add-user$/);
         if (method === "POST" && addUser) {
             const input = (body ?? {}) as { email?: string };
@@ -100,16 +108,6 @@ const handlers: Handler[] = [
                 return ok({ ...project, ...patch });
             }
             if (method === "DELETE") return noContent();
-        }
-        const publicMatch = pathname.match(/^\/projects\/public\/([^/]+)$/);
-        if (method === "GET" && publicMatch) {
-            // Treat the encrypted_id as the project id for mock purposes.
-            const project = MOCK.project.byId[publicMatch[1]];
-            return project ? ok(project) : notFound();
-        }
-        const shareLink = pathname.match(/^\/projects\/([^/]+)\/share-link$/);
-        if (method === "GET" && shareLink) {
-            return ok({ encrypted_id: shareLink[1] });
         }
         return undefined;
     },

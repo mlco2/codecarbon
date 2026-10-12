@@ -1,5 +1,6 @@
 import os
 import unittest
+from pathlib import Path
 from textwrap import dedent
 from unittest import mock
 from unittest.mock import patch
@@ -7,6 +8,7 @@ from unittest.mock import patch
 from codecarbon.core.config import (
     clean_env_key,
     get_hierarchical_config,
+    get_hierarchical_config_with_sources,
     normalize_gpu_ids,
     parse_env_config,
     parse_gpu_ids,
@@ -27,9 +29,13 @@ class TestConfig(unittest.TestCase):
             "CODECARBON_API_KEY",
             "CODECARBON_EXPERIMENT_ID",
             "CODECARBON_API_ENDPOINT",
+            "CODECARBON_TELEMETRY",
+            "CODECARBON_TELEMETRY_PROJECT_TOKEN",
             "codecarbon_api_key",
             "codecarbon_experiment_id",
             "codecarbon_api_endpoint",
+            "codecarbon_telemetry",
+            "codecarbon_telemetry_project_token",
         ]:
             os.environ.pop(key, None)
         os.environ.setdefault("CODECARBON_ALLOW_MULTIPLE_RUNS", "True")
@@ -102,21 +108,17 @@ class TestConfig(unittest.TestCase):
         )
 
     def test_read_confs(self):
-        global_conf = dedent(
-            """\
+        global_conf = dedent("""\
             [codecarbon]
             no_overwrite=path/to/somewhere
             local_overwrite=ERROR:not overwritten
             syntax_test_key= no/space= problem2
-            """
-        )
-        local_conf = dedent(
-            """\
+            """)
+        local_conf = dedent("""\
             [codecarbon]
             local_overwrite=SUCCESS:overwritten
             local_new_key=cool value
-            """
-        )
+            """)
 
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
@@ -141,23 +143,19 @@ class TestConfig(unittest.TestCase):
         },
     )
     def test_read_confs_and_parse_envs(self):
-        global_conf = dedent(
-            """\
+        global_conf = dedent("""\
             [codecarbon]
             no_overwrite=path/to/somewhere
             local_overwrite=ERROR:not overwritten
             syntax_test_key= no/space= problem2
             env_overwrite=ERROR:not overwritten
-            """
-        )
-        local_conf = dedent(
-            """\
+            """)
+        local_conf = dedent("""\
             [codecarbon]
             local_overwrite=SUCCESS:overwritten
             local_new_key=cool value
             env_overwrite=ERROR:not overwritten
-            """
-        )
+            """)
 
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
@@ -173,6 +171,65 @@ class TestConfig(unittest.TestCase):
                 "env_new_key": "cool value",
             }
             self.assertDictEqual(conf, target)
+
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CODECARBON_EXPERIMENT_ID": "SUCCESS:overwritten",
+        },
+    )
+    def test_config_sources(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            no_overwrite=path/to/somewhere
+            local_overwrite=ERROR:not overwritten
+            experiment_id=ERROR:not overwritten
+            """)
+        local_conf = dedent("""\
+            [codecarbon]
+            local_overwrite=SUCCESS:overwritten
+            local_new_key=cool value
+            """)
+
+        global_path = str((Path.home() / ".codecarbon.config").expanduser().resolve())
+        local_path = str((Path.cwd() / ".codecarbon.config").expanduser().resolve())
+
+        with patch(
+            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+        ):
+            conf, sources = get_hierarchical_config_with_sources()
+
+        self.assertEqual(conf["local_overwrite"], "SUCCESS:overwritten")
+        self.assertEqual(conf["experiment_id"], "SUCCESS:overwritten")
+        # Every key has a source, and it is the last layer that set it.
+        self.assertEqual(set(conf), set(sources))
+        self.assertEqual(sources["no_overwrite"], global_path)
+        self.assertEqual(sources["local_overwrite"], local_path)
+        self.assertEqual(sources["local_new_key"], local_path)
+        self.assertEqual(sources["experiment_id"], "CODECARBON_EXPERIMENT_ID")
+        self.assertEqual(
+            sources["allow_multiple_runs"], "CODECARBON_ALLOW_MULTIPLE_RUNS"
+        )
+
+    def test_config_sources_are_logged_without_values(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            api_key=do-not-log-me
+            measure_power_secs=10
+            """)
+
+        with patch("builtins.open", new_callable=get_custom_mock_open(global_conf, "")):
+            with self.assertLogs("codecarbon", level="INFO") as logs:
+                get_hierarchical_config()
+
+        message = "\n".join(logs.output)
+        global_path = str((Path.home() / ".codecarbon.config").expanduser().resolve())
+        self.assertIn(f"api_key from {global_path}", message)
+        self.assertIn(f"measure_power_secs from {global_path}", message)
+        self.assertIn(
+            "allow_multiple_runs from CODECARBON_ALLOW_MULTIPLE_RUNS", message
+        )
+        self.assertNotIn("do-not-log-me", message)
 
     def test_empty_conf(self):
         global_conf = ""
@@ -195,8 +252,7 @@ class TestConfig(unittest.TestCase):
         },
     )
     def test_full_hierarchy(self):
-        global_conf = dedent(
-            """\
+        global_conf = dedent("""\
             [codecarbon]
             measure_power_secs=10
             force_cpu_power=toto
@@ -204,16 +260,13 @@ class TestConfig(unittest.TestCase):
             output_dir=ERROR:not overwritten
             save_to_file=ERROR:not overwritten
             force_carbon_intensity_g_co2e_kwh=123.4
-            """
-        )
-        local_conf = dedent(
-            """\
+            """)
+        local_conf = dedent("""\
             [codecarbon]
             output_dir=/success/overwritten
             emissions_endpoint=http://testhost:2000
             gpu_ids=ERROR:not overwritten
-            """
-        )
+            """)
 
         with patch(
             "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
@@ -235,12 +288,10 @@ class TestConfig(unittest.TestCase):
             self.assertTrue(tracker._save_to_file)
 
     def test_force_carbon_intensity_constructor_overrides_config(self):
-        global_conf = dedent(
-            """\
+        global_conf = dedent("""\
             [codecarbon]
             force_carbon_intensity_g_co2e_kwh=123.4
-            """
-        )
+            """)
 
         with patch("builtins.open", new_callable=get_custom_mock_open(global_conf, "")):
             with patch("os.path.exists", return_value=True):

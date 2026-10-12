@@ -1,6 +1,7 @@
 import io
 import json
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -89,8 +90,16 @@ class TestAuthMethods(unittest.TestCase):
             loaded = auth._load_credentials()
             self.assertEqual(loaded, tokens)
 
+    @patch("builtins.open", side_effect=PermissionError(13, "Permission denied"))
+    def test_save_credentials_unwritable_directory(self, mock_open):
+        with self.assertRaises(ValueError) as ctx:
+            auth._save_credentials({"access_token": "a"})
+        message = str(ctx.exception)
+        self.assertIn(str(auth._CREDENTIALS_FILE.resolve()), message)
+        self.assertIn("Permission denied", message)
+
     @patch("codecarbon.cli.auth.requests.get")
-    @patch("codecarbon.cli.auth.JsonWebKey.import_key_set")
+    @patch("codecarbon.cli.auth.KeySet.import_key_set")
     @patch("codecarbon.cli.auth.jose_jwt.decode")
     def test_validate_access_token_valid(
         self, mock_decode, mock_import_key_set, mock_get
@@ -98,11 +107,33 @@ class TestAuthMethods(unittest.TestCase):
         mock_get.return_value.json.return_value = {"jwks_uri": "jwks"}
         mock_get.return_value.raise_for_status.return_value = None
         mock_import_key_set.return_value = "keyset"
-        mock_decode.return_value.validate.return_value = None
+        now = int(time.time())
+        mock_decode.return_value.claims = {
+            "iat": now - 10,
+            "exp": now + 300,
+            "sub": "user-123",
+        }
         with patch(
             "codecarbon.cli.auth._discover_endpoints", return_value={"jwks_uri": "jwks"}
         ):
             self.assertTrue(auth._validate_access_token("token"))
+
+    @patch("codecarbon.cli.auth.requests.get")
+    @patch("codecarbon.cli.auth.KeySet.import_key_set")
+    @patch("codecarbon.cli.auth.jose_jwt.decode")
+    def test_validate_access_token_expired_returns_false(
+        self, mock_decode, mock_import_key_set, mock_get
+    ):
+        # Expired exp must trip JWTClaimsRegistry validation
+        mock_get.return_value.json.return_value = {"jwks_uri": "jwks"}
+        mock_get.return_value.raise_for_status.return_value = None
+        mock_import_key_set.return_value = "keyset"
+        now = int(time.time())
+        mock_decode.return_value.claims = {"exp": now - 10}
+        with patch(
+            "codecarbon.cli.auth._discover_endpoints", return_value={"jwks_uri": "jwks"}
+        ):
+            self.assertFalse(auth._validate_access_token("token"))
 
     @patch("codecarbon.cli.auth._discover_endpoints", return_value={"jwks_uri": "jwks"})
     @patch(
@@ -119,7 +150,7 @@ class TestAuthMethods(unittest.TestCase):
 
     @patch("codecarbon.cli.auth._discover_endpoints", return_value={"jwks_uri": "jwks"})
     @patch("codecarbon.cli.auth.requests.get")
-    @patch("codecarbon.cli.auth.JsonWebKey.import_key_set")
+    @patch("codecarbon.cli.auth.KeySet.import_key_set")
     @patch(
         "codecarbon.cli.auth.jose_jwt.decode",
         side_effect=Exception("invalid"),

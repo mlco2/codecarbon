@@ -5,10 +5,28 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "codecarbon"
 dynamic = ["version"]
+description = "Track and reduce the CO2 emissions of your computing"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
+keywords = [
+    "carbon",
+    "co2",
+    "emissions",
+    "carbon-footprint",
+    "sustainability",
+    "green-ai",
+    "green-computing",
+    "energy",
+    "energy-consumption",
+    "power-consumption",
+    "rapl",
+    "gpu",
+    "machine-learning",
+    "mlops",
+    "monitoring",
+]
 authors = [
     { name = "Mila" },
     { name = "DataForGood" },
@@ -17,23 +35,36 @@ authors = [
     { name = "Haverford College" },
 ]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
     "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Benchmark",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
     "arrow",
     "authlib>=1.2.1",
+    "joserfc>=1.0.0",
     "click",
     "pandas>=2.3.3;python_version>='3.14'",
     "pandas;python_version<'3.14'",
     "prometheus_client",
     "psutil >= 6.0.0",
     "py-cpuinfo",
-    "pydantic",
+    "pydantic>=2.0.0,<3.0.0",
     "nvidia-ml-py",
     "rapidfuzz",
     "requests",
@@ -79,39 +110,10 @@ Changelog = "https://github.com/mlco2/codecarbon/releases"
 
 
 [dependency-groups]
-api  = [
-    "alembic<2.0.0",
-    "authlib>=1.2.1",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "fief-client[fastapi]",
-    "httpx",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
-    "pytest",
-    "pytest-asyncio",
-    "mock",
-    "responses",
-    "fastapi-oidc;python_version>='3.10'",
-    "numpy",
-    "psutil",
-    "requests-mock",
-    "rapidfuzz",
-    "PyJWT",
-    "logfire[fastapi]>=1.0.1",
-    "itsdangerous",
-]
 dev = [
     "taskipy",
     "bumpver",
     "pre-commit",
-    "ruff",
     "black",
     "mypy",
     "pytest",
@@ -148,34 +150,6 @@ viz-legacy = [
     "fire",
 ]
 
-api  = [
-    "alembic<2.0.0",
-    "authlib>=1.2.1",
-    "bcrypt<5.0.0",
-    "python-dateutil<3.0.0",
-    "dependency-injector<5.0.0",
-    "fastapi<1.0.0",
-    "fief-client[fastapi]",
-    "httpx",
-    "itsdangerous",
-    "pydantic[email]<2.0.0",
-    "psycopg2-binary<3.0.0",
-    "requests<3.0.0",
-    "sqlalchemy<2.0.0",
-    "uvicorn[standard]<1.0.0",
-    "fastapi-pagination<1.0.0",
-    "pytest",
-    "pytest-asyncio",
-    "mock",
-    "responses",
-    "fastapi-oidc;python_version>='3.10'",
-    "numpy",
-    "psutil",
-    "requests-mock",
-    "rapidfuzz",
-    "PyJWT",
-]
-
 [project.scripts]
 carbonboard = "codecarbon.viz.carbonboard:main"
 codecarbon = "codecarbon.cli.main:main"
@@ -185,18 +159,18 @@ pre-commit-install = { cmd = "pre-commit install", help = "Install pre-commit ho
 dashboard = "uv run --project carbonserver uvicorn main:app --reload"
 dashboard-ci = "uv run --project carbonserver uvicorn main:app --host 0.0.0.0 --port 8008"
 docker = "docker-compose up -d"
-test-api-unit = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/routers && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/service/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/usecase/"
+test-api-unit = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/routers && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/service/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/usecase/ && uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/repository/"
 test-api-integ = "uv run --project carbonserver --extra dev python -m pytest -vv carbonserver/tests/api/integration/"
 setup-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini upgrade head"
 downgrade-db = "cd carbonserver && uv run --project carbonserver python -m alembic -c carbonserver/database/alembic.ini downgrade base"
-carbonserver-api-requirements = "uv pip compile carbonserver/pyproject.toml --output-file requirements/requirements-api.txt"
+carbonserver-api-requirements = "uv pip compile carbonserver/pyproject.toml --generate-hashes --output-file requirements/requirements-api.txt"
 build-doc = "uv run --only-group doc zensical build -f mkdocs.yml && uv run --only-group doc python scripts/check_docs_links.py site"
 precommit-install = "pre-commit install"
 precommit-update = "pre-commit autoupdate"
-precommit = "pre-commit run --show-diff-on-failure --color=always --all-files"
 mypy-check = "mypy -m codecarbon --ignore-missing-imports --no-strict-optional --disable-error-code attr-defined --disable-error-code assignment --disable-error-code misc"
-lint = "black --check --diff . && ruff check . && mypy ."
-format = "black . && ruff check --fix --exit-non-zero-on-fix ."
+# No `lint` task: the pre-commit hooks fix what they can, so this rewrites
+# files rather than only reporting. Use `mypy-check` for a read-only check.
+format = "pre-commit run --all-files"
 test-package = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-coverage = "CODECARBON_ALLOW_MULTIPLE_RUNS=True pytest --cov --cov-report=xml --ignore=tests/test_viz_data.py -vv -m 'not integ_test' tests/"
 test-package-integ = "CODECARBON_ALLOW_MULTIPLE_RUNS=True python -m pytest -vv tests/"
@@ -206,7 +180,7 @@ docs-check-drift = "python scripts/check-docs-drift.py"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.2.7"
+current_version = "3.3.1"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]

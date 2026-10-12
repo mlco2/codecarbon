@@ -3,7 +3,6 @@ import { createOrganization } from "@/api/organizations";
 import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Organization } from "@/api/schemas";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -101,6 +100,11 @@ const CreateOrganizationModal: React.FC<ModalProps> = ({
                             }
                             placeholder="Organization Name"
                         />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="org-description">
+                            Organization Description
+                        </Label>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="org-description">

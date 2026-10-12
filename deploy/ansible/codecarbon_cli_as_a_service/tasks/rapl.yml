@@ -7,40 +7,55 @@
   become_method: sudo
 
   tasks:
-  - name: Set RAPL directory permissions
-    shell: |
-        chmod -R g+r {{ rapl_base_path }}/*
-        chown -R root:{{ codecarbon_group }} {{ rapl_base_path }}/*
-    ignore_errors: yes  # In case RAPL is not available
-  # This does not work because there is loop in folder symlink
-  # - name: Set RAPL directory permissions
-  #   file:
-  #     path: "{{ rapl_base_path }}"
-  #     state: directory
-  #     owner: root
-  #     group: "{{ codecarbon_group }}"
-  #     mode: "g+r"
-  #     recurse: yes
-  #   ignore_errors: yes  # In case RAPL is not available
-  - name: Install sysfsutils
-    apt:
-       name: sysfsutils
-       state: present
-  - name: Find all RAPL energy_uj files
-    find:
-       paths: "{{ rapl_base_path }}"
-       patterns: 
-         - "energy_uj"
-         - "name"
-       recurse: yes
-    register: rapl_files
-  - name: Configure sysfs for RAPL permissions
-    blockinfile:
-       path: /etc/sysfs.conf
-       create: yes
-       block: |
-         {% for file in rapl_files.files %}
-         mode {{ file.path | replace('/sys/','class/') }} = 0440
-         owner {{ file.path | replace('/sys/','class/') }} = root:{{ codecarbon_group }}
-         {% endfor %}
+  # A udev rule is used instead of a one-off chmod so the permissions survive
+  # reboots, and instead of sysfsutils so it does not depend on a Debian-only
+  # package. The rule fires once per powercap device, so every RAPL domain is
+  # covered without enumerating them.
+  #
+  # Only energy_uj is exposed, only to the CodeCarbon group, and read-only:
+  # energy counters are a power side channel (CVE-2020-8694, PLATYPUS).
+  - name: Install the udev rule granting RAPL access to the CodeCarbon group
+    copy:
+      dest: /etc/udev/rules.d/99-codecarbon-rapl.rules
+      owner: root
+      group: root
+      mode: "0644"
+      content: |
+        # Managed by Ansible - CodeCarbon
+        SUBSYSTEM=="powercap", ACTION=="add", TEST=="energy_uj", \
+          RUN+="/bin/chgrp {{ codecarbon_group }} /sys%p/energy_uj", \
+          RUN+="/bin/chmod 0440 /sys%p/energy_uj"
+    register: rapl_udev_rule
 
+  - name: Apply the rule to the RAPL devices already present
+    command: "{{ item }}"
+    loop:
+      - udevadm control --reload-rules
+      - udevadm trigger --subsystem-match=powercap --action=add
+    when: rapl_udev_rule.changed
+
+  - name: List the RAPL energy counters
+    find:
+      paths: "{{ rapl_base_path }}"
+      patterns: energy_uj
+      recurse: yes
+      follow: no
+    register: rapl_counters
+    ignore_errors: yes  # In case RAPL is not available
+
+  # The check is done on the gid, not on gr_name: when another group shares the
+  # same gid, the name resolves to whichever entry comes first in /etc/group,
+  # which would report a failure even though access is actually granted.
+  - name: Look up the CodeCarbon group id
+    getent:
+      database: group
+      key: "{{ codecarbon_group }}"
+
+  - name: Report RAPL counters that are still unreadable by CodeCarbon
+    debug:
+      msg: >-
+        No RAPL counter readable by the {{ codecarbon_group }} group was found.
+        CodeCarbon will fall back to power estimation instead of measurement.
+    when: rapl_counters.files | default([])
+          | selectattr('gid', 'equalto', ansible_facts.getent_group[codecarbon_group][1] | int)
+          | list | length == 0

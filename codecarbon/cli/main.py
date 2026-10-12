@@ -5,15 +5,12 @@ import time
 from pathlib import Path
 from typing import Optional
 
-import questionary
-import requests
 import typer
 from rich import print
 from rich.prompt import Confirm
 from typing_extensions import Annotated
 
 from codecarbon import __app_name__, __version__
-from codecarbon.cli.auth import authorize, get_access_token
 from codecarbon.cli.cli_utils import (
     create_new_config_file,
     get_api_endpoint,
@@ -21,10 +18,6 @@ from codecarbon.cli.cli_utils import (
     get_existing_exp_id,
     overwrite_local_config,
 )
-from codecarbon.cli.monitor import run_and_monitor
-from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
-from codecarbon.core.schemas import ExperimentCreate, OrganizationCreate, ProjectCreate
-from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
@@ -45,6 +38,20 @@ def main():
     except Exception as e:
         print(f"[bold red]Error:[/bold red] {e}")
         raise sys.exit(1)
+
+
+def _api_call(action: str, func, *args, **kwargs):
+    """
+    Run a call to the Code Carbon API, turning the errors it now raises into a
+    readable message and a clean exit instead of a traceback.
+
+    :action: what was being attempted, used as the first part of the message.
+    """
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        print(f"[yellow]{action}[/yellow]. (error: {e})")
+        raise typer.Exit(1)
 
 
 def _version_callback(value: bool) -> None:
@@ -68,6 +75,9 @@ def version(
 
 
 def show_config(path: Path = Path("./.codecarbon.config")) -> None:
+    from codecarbon.cli.auth import get_access_token
+    from codecarbon.core.api_client import ApiClient
+
     d = get_config(path)
     print("Current configuration : \n")
     print("Config file content : ")
@@ -114,24 +124,34 @@ def api_get():
     """
     ex: test-api
     """
+    from codecarbon.cli.auth import get_access_token
+    from codecarbon.core.api_client import ApiClient
+
     api_endpoint = get_api_endpoint()
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
-    organizations = api.get_list_organizations()
+    organizations = _api_call("API request failed", api.get_list_organizations)
     print(organizations)
 
 
 @codecarbon.command("login", short_help="Login to CodeCarbon")
 def login():
+    from codecarbon.cli.auth import authorize, get_access_token
+    from codecarbon.core.api_client import ApiClient
+
     authorize()
     api_endpoint = get_api_endpoint()
     api = ApiClient(endpoint_url=api_endpoint)
     access_token = get_access_token()
     api.set_access_token(access_token)
-    api.check_auth()
+    _api_call("Authentication check failed", api.check_auth)
 
 
 def get_api_key(project_id: str):
+    import requests
+
+    from codecarbon.cli.auth import get_access_token
+
     api_endpoint = get_api_endpoint()
     api_endpoint = api_endpoint.rstrip("/")
     req = requests.post(
@@ -143,6 +163,7 @@ def get_api_key(project_id: str):
         },
         headers={"Authorization": f"Bearer {get_access_token()}"},
     )
+    req.raise_for_status()
     api_key = req.json()["token"]
     return api_key
 
@@ -161,6 +182,13 @@ def config():
     """
     Initialize CodeCarbon, this will prompt you for configuration of Organisation/Team/Project/Experiment.
     """
+    from codecarbon.cli.auth import get_access_token
+    from codecarbon.core.api_client import ApiClient, get_datetime_with_timezone
+    from codecarbon.core.schemas import (
+        ExperimentCreate,
+        OrganizationCreate,
+        ProjectCreate,
+    )
 
     print("Welcome to CodeCarbon configuration wizard")
     home = Path.home()
@@ -199,7 +227,10 @@ def config():
     overwrite_local_config("api_endpoint", api_endpoint, path=file_path)
     api = ApiClient(endpoint_url=api_endpoint)
     api.set_access_token(get_access_token())
-    organizations = api.get_list_organizations()
+    organizations = _api_call(
+        "Could not list organizations from API. Please check your login and API endpoint",
+        api.get_list_organizations,
+    )
     org = questionary_prompt(
         "Pick existing organization from list or Create new organization ?",
         [org["name"] for org in organizations] + ["Create New Organization"],
@@ -216,18 +247,23 @@ def config():
             name=org_name,
             description=org_description,
         )
-        organization = api.create_organization(organization=organization_create)
-        if organization is None:
-            print("Error creating organization")
-            return
+        organization = _api_call(
+            "Could not create the organization",
+            api.create_organization,
+            organization=organization_create,
+        )
         print(f"Created organization : {organization}")
     else:
         organization = [orga for orga in organizations if orga["name"] == org][0]
     org_id = organization["id"]
     overwrite_local_config("organization_id", org_id, path=file_path)
 
-    projects = api.list_projects_from_organization(org_id)
-    project_names = [project["name"] for project in projects] if projects else []
+    projects = _api_call(
+        "Could not list projects from API",
+        api.list_projects_from_organization,
+        org_id,
+    )
+    project_names = [project["name"] for project in projects]
     project = questionary_prompt(
         "Pick existing project from list or Create new project ?",
         project_names + ["Create New Project"],
@@ -243,17 +279,21 @@ def config():
             description=project_description,
             organization_id=org_id,
         )
-        project = api.create_project(project=project_create)
+        project = _api_call(
+            "Could not create the project", api.create_project, project=project_create
+        )
         print(f"Created project : {project}")
     else:
         project = [p for p in projects if p["name"] == project][0]
     project_id = project["id"]
     overwrite_local_config("project_id", project_id, path=file_path)
 
-    experiments = api.list_experiments_from_project(project_id)
-    experiments_names = (
-        [experiment["name"] for experiment in experiments] if experiments else []
+    experiments = _api_call(
+        "Could not list experiments from API",
+        api.list_experiments_from_project,
+        project_id,
     )
+    experiments_names = [experiment["name"] for experiment in experiments]
 
     experiment = questionary_prompt(
         "Pick existing experiment from list or Create new experiment ?",
@@ -300,18 +340,50 @@ def config():
             cloud_provider=cloud_provider,
             cloud_region=cloud_region,
         )
-        experiment = api.add_experiment(experiment=experiment_create)
+        experiment = _api_call(
+            "Could not create the experiment",
+            api.add_experiment,
+            experiment=experiment_create,
+        )
 
     else:
         experiment = [e for e in experiments if e["name"] == experiment][0]
 
     overwrite_local_config("experiment_id", experiment["id"], path=file_path)
-    api_key = get_api_key(project_id)
+    api_key = _api_call("Could not get the project API key", get_api_key, project_id)
     overwrite_local_config("api_key", api_key, path=file_path)
     show_config(file_path)
     print(
         "Consult [link=https://docs.codecarbon.io/latest/how-to/configuration/]configuration documentation[/link] for more configuration options"
     )
+
+
+def _cli_provided(ctx, name: str) -> bool:
+    """
+    Whether the option `name` was typed on the command line (or set through its
+    environment variable) rather than left at its Typer default.
+
+    Options left at their default must not be forwarded to the tracker: doing so
+    would silently override the values coming from `.codecarbon.config` and the
+    `CODECARBON_*` environment variables, which the tracker reads itself.
+    """
+    get_source = getattr(ctx, "get_parameter_source", None)
+    if get_source is None:
+        # `monitor` called directly from Python, not through Click: every value
+        # given is explicit.
+        return True
+    source = get_source(name)
+    return source is None or source.name in ("COMMANDLINE", "ENVIRONMENT")
+
+
+def _external_config() -> dict:
+    """The configuration files and CODECARBON_* variables, as a plain dict."""
+    from codecarbon.core.config import get_hierarchical_config
+
+    try:
+        return dict(get_hierarchical_config())
+    except Exception:
+        return {}
 
 
 @codecarbon.command(
@@ -321,6 +393,10 @@ def config():
 )
 def monitor(
     ctx: typer.Context,
+    project_name: Annotated[
+        str,
+        typer.Option(help="Project name for the current experiment."),
+    ] = None,
     measure_power_secs: Annotated[
         int,
         typer.Option(help="Interval between two measures."),
@@ -342,17 +418,36 @@ def monitor(
         str,
         typer.Option(help="Region/province for offline mode"),
     ] = None,
+    log_level: Annotated[
+        str,
+        typer.Option(help="Log level (critical, error, warning, info, debug)"),
+    ] = "error",
 ):
     """Monitor your machine's carbon emissions."""
 
-    # Shared tracker args so monitor and run_and_monitor behave the same
+    external_conf = _external_config()
+
+    # Shared tracker args so monitor and run_and_monitor behave the same.
+    # Only the options actually given are forwarded: the others are left to the
+    # tracker, which resolves them from the configuration file and environment.
+    cli_defaults = (
+        ("project_name", project_name),
+        ("measure_power_secs", measure_power_secs),
+        ("api_call_interval", api_call_interval),
+        ("log_level", log_level),
+    )
     tracker_args = {
-        "measure_power_secs": measure_power_secs,
-        "api_call_interval": api_call_interval,
+        name: value for name, value in cli_defaults if _cli_provided(ctx, name)
     }
+    for name, value in cli_defaults:
+        if name not in tracker_args and name not in external_conf:
+            # Nothing configures it: keep the defaults advertised by `--help`
+            # (and an unattended monitor quiet) instead of the tracker's own.
+            tracker_args[name] = value
+
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
-        if not country_iso_code:
+        if not country_iso_code and not external_conf.get("country_iso_code"):
             print(
                 "ERROR: Country ISO code is required for offline mode. Add it to your configuration or provide it via the command line: `--country-iso-code FRA`",
                 file=sys.stderr,
@@ -361,8 +456,8 @@ def monitor(
 
         tracker_args = {
             **tracker_args,
-            "country_iso_code": country_iso_code,
-            "region": region,
+            **({"country_iso_code": country_iso_code} if country_iso_code else {}),
+            **({"region": region} if region else {}),
         }
     else:
         experiment_id = get_existing_exp_id()
@@ -375,8 +470,12 @@ def monitor(
 
         tracker_args = {**tracker_args, "save_to_api": api}
 
+    from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
+
     # If extra args are provided (e.g. `codecarbon monitor -- my_script.py`), delegate to `run_and_monitor`
     if getattr(ctx, "args", None):
+        from codecarbon.cli.monitor import run_and_monitor
+
         return run_and_monitor(ctx, offline=offline, **tracker_args)
 
     # Instantiate the tracker
@@ -417,6 +516,8 @@ def detect():
     """
     Detects hardware and prints information without running any measurements.
     """
+    from codecarbon.emissions_tracker import EmissionsTracker
+
     print("Detecting hardware...")
     tracker = EmissionsTracker(save_to_file=False)
     hardware_info = tracker.get_detected_hardware()
@@ -438,6 +539,8 @@ def detect():
 
 
 def questionary_prompt(prompt, list_options, default):
+    import questionary
+
     value = questionary.select(
         prompt,
         list_options,

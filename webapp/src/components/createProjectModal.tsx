@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Project } from "@/api/schemas";
 import { createProject } from "@/api/projects";
 import { Separator } from "./ui/separator";
 import { Input } from "./ui/input";
@@ -97,6 +96,11 @@ const CreateProjectModal: React.FC<ModalProps> = ({
                             }
                             placeholder="Project Name"
                         />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="project-description">
+                            Project Description
+                        </Label>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="project-description">

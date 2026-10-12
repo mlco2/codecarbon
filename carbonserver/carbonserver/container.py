@@ -8,6 +8,7 @@ from carbonserver.api.infra.repositories import (
     repository_projects,
     repository_projects_tokens,
     repository_runs,
+    repository_telemetry,
     repository_users,
 )
 from carbonserver.api.services.auth_context import AuthContext
@@ -21,6 +22,7 @@ from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.services.project_token_service import ProjectTokenService
 from carbonserver.api.services.run_service import RunService
 from carbonserver.api.services.signup_service import SignUpService
+from carbonserver.api.services.telemetry_service import TelemetryService
 from carbonserver.api.services.user_service import UserService
 from carbonserver.api.usecases.experiment.project_sum_by_experiment import (
     ProjectSumsByExperimentUsecase,
@@ -53,13 +55,18 @@ class ServerContainer(containers.DeclarativeContainer):
                 client_id=settings.oidc_client_id,
                 client_secret=settings.oidc_client_secret,
             )
-            if settings.auth_provider.lower() in ("oidc", "fief")
+            if settings.auth_provider.lower() in ("oidc")
             else None
         )
     )
 
     emission_repository = providers.Factory(
         repository_emissions.SqlAlchemyRepository,
+        session_factory=db.provided.session,
+    )
+
+    telemetry_repository = providers.Factory(
+        repository_telemetry.SqlAlchemyRepository,
         session_factory=db.provided.session,
     )
 
@@ -87,16 +94,30 @@ class ServerContainer(containers.DeclarativeContainer):
         session_factory=db.provided.session,
     )
 
+    run_repository = providers.Factory(
+        repository_runs.SqlAlchemyRepository,
+        session_factory=db.provided.session,
+    )
+
     auth_context = providers.Factory(
         AuthContext,
         user_repository=user_repository,
         token_repository=project_token_repository,
         project_repository=project_repository,
+        experiment_repository=experiment_repository,
+        run_repository=run_repository,
+        emission_repository=emission_repository,
     )
 
     emission_service = providers.Factory(
         EmissionService,
         emission_repository=emission_repository,
+        auth_context=auth_context,
+    )
+
+    telemetry_service = providers.Factory(
+        TelemetryService,
+        telemetry_repository=telemetry_repository,
     )
 
     experiment_service = providers.Factory(
@@ -108,10 +129,13 @@ class ServerContainer(containers.DeclarativeContainer):
     project_sums_by_experiment_usecase = providers.Factory(
         ProjectSumsByExperimentUsecase,
         experiment_repository=experiment_repository,
+        auth_context=auth_context,
     )
 
     project_sums_usecase = providers.Factory(
-        ProjectSumsUsecase, project_repository=project_repository
+        ProjectSumsUsecase,
+        project_repository=project_repository,
+        auth_context=auth_context,
     )
 
     project_service = providers.Factory(
@@ -126,14 +150,10 @@ class ServerContainer(containers.DeclarativeContainer):
         auth_context=auth_context,
     )
 
-    run_repository = providers.Factory(
-        repository_runs.SqlAlchemyRepository,
-        session_factory=db.provided.session,
-    )
-
     experiment_sums_by_run_usecase = providers.Factory(
         ExperimentSumsByRunUsecase,
         run_repository=run_repository,
+        auth_context=auth_context,
     )
 
     user_service = providers.Factory(
@@ -151,6 +171,7 @@ class ServerContainer(containers.DeclarativeContainer):
     organization_sums_usecase = providers.Factory(
         OrganizationSumsUsecase,
         organization_repository=organization_repository,
+        auth_context=auth_context,
     )
 
     run_service = providers.Factory(

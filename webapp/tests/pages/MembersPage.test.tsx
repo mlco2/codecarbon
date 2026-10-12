@@ -16,13 +16,40 @@ vi.mock("@/api/swr", () => ({
     swrConfig: {},
 }));
 
+const removeUserMock = vi.hoisted(() => vi.fn());
+vi.mock("@/api/organizations", () => ({
+    removeUserFromOrganization: removeUserMock,
+}));
+
 import MembersPage from "@/pages/MembersPage";
 import { renderWithRouter } from "../test-utils";
 import { SWRConfig } from "swr";
 
 beforeEach(() => {
     fetcherMock.mockReset();
+    removeUserMock.mockReset();
+    removeUserMock.mockResolvedValue(undefined);
 });
+
+function mockOrgWithMember() {
+    fetcherMock.mockImplementation((url: string) => {
+        if (url.endsWith("/users")) {
+            return Promise.resolve([
+                {
+                    id: "u1",
+                    name: "Alice",
+                    email: "alice@example.com",
+                    is_active: true,
+                    organizations: ["o1"],
+                },
+            ]);
+        }
+        if (url.endsWith("/organizations/o1")) {
+            return Promise.resolve({ id: "o1", name: "Acme", description: "" });
+        }
+        return Promise.resolve(null);
+    });
+}
 
 function renderWithSwr(node: React.ReactNode) {
     return renderWithRouter(
@@ -80,5 +107,36 @@ describe("MembersPage", () => {
             await screen.findByRole("button", { name: /\+ add a member/i }),
         );
         expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
+    });
+
+    it("removes a member through the row menu once confirmed", async () => {
+        mockOrgWithMember();
+        renderWithSwr(<MembersPage />);
+
+        expect(await screen.findByText("Alice")).toBeInTheDocument();
+        await userEvent.click(screen.getByRole("button", { name: /toggle/i }));
+        await userEvent.click(
+            await screen.findByRole("menuitem", { name: /delete/i }),
+        );
+
+        await userEvent.click(
+            await screen.findByRole("button", { name: /remove member/i }),
+        );
+        expect(removeUserMock).toHaveBeenCalledWith("o1", "u1");
+    });
+
+    it("does not remove a member when the confirmation is cancelled", async () => {
+        mockOrgWithMember();
+        renderWithSwr(<MembersPage />);
+
+        expect(await screen.findByText("Alice")).toBeInTheDocument();
+        await userEvent.click(screen.getByRole("button", { name: /toggle/i }));
+        await userEvent.click(
+            await screen.findByRole("menuitem", { name: /delete/i }),
+        );
+        await userEvent.click(
+            await screen.findByRole("button", { name: /cancel/i }),
+        );
+        expect(removeUserMock).not.toHaveBeenCalled();
     });
 });

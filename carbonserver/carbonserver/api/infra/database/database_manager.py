@@ -2,8 +2,7 @@ from contextlib import AbstractContextManager, contextmanager
 from typing import Callable
 
 from sqlalchemy import create_engine, exc, orm
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, declarative_base
 
 from carbonserver.api.errors import DBError, DBErrorEnum, DBException
 from carbonserver.logger import logger
