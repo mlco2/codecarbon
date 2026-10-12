@@ -414,8 +414,6 @@ def test_set_cpu_tracking_force_mode_constant_uses_user_power_without_recomputin
     assert tracker._hardware == [fake_cpu]
 
 
-
-
 def test_set_cpu_tracking_windows_prefers_emi():
     tracker = make_tracker()
     resource_tracker = ResourceTracker(tracker)
