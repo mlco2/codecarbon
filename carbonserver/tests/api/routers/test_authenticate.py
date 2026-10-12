@@ -213,6 +213,7 @@ def protected_client(monkeypatch):
     app = FastAPI()
     app.container = container
     app.include_router(experiments.router)
+    app.include_router(authenticate.router)
 
     async def generic(request, exc):
         return JSONResponse({"detail": "Generic error"}, status_code=500)
@@ -234,3 +235,15 @@ def test_protected_endpoint_with_invalid_token_returns_401(protected_client):
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "JWKS validation of the token failed"
+
+
+def test_auth_check_without_token_returns_null_user(protected_client):
+    # The real SignUpService.check_jwt_user(None) raises TypeError (None["sub"]); mimic it.
+    sign_up = MagicMock()
+    sign_up.check_jwt_user.side_effect = TypeError(
+        "'NoneType' object is not subscriptable"
+    )
+    protected_client.app.container.sign_up_service.override(sign_up)
+    response = protected_client.get("/auth/check")
+    assert response.status_code == 200
+    assert response.json() == {"user": None}
