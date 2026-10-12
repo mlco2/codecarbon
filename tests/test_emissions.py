@@ -50,9 +50,62 @@ class TestEmissions(unittest.TestCase):
     def test_get_carbon_intensity_per_source_data(self):
         # pytest tests/test_emissions.py::TestEmissions::test_get_carbon_intensity_per_source_data
         carbon_intensity = DataSource().get_carbon_intensity_per_source_data()
-        self.assertEqual(len(carbon_intensity.keys()), 21)
+        self.assertEqual(len(carbon_intensity.keys()), 27)
         self.assertGreater(carbon_intensity["coal"], 800)
         self.assertLess(carbon_intensity["wind"], 80)
+
+    def test_energy_mix_with_biomass_and_waste_is_not_dropped(self):
+        """
+        A mix carrying biomass and waste must be priced from the factor table.
+        Without a factor for them, the two types are left out of the computed
+        sum, the sanity check fails and the world average is returned (#1415).
+        """
+        # GIVEN
+        factors = DataSource().get_carbon_intensity_per_source_data()
+        energy_mix = {
+            "total_TWh": 10.0,
+            "hydroelectricity_TWh": 6.0,
+            "biomass_TWh": 3.0,
+            "waste_TWh": 1.0,
+        }
+
+        # WHEN
+        rate = Emissions._global_energy_mix_to_emissions_rate(energy_mix)
+
+        # THEN
+        self.assertNotAlmostEqual(
+            rate.kgs_per_kWh * 1000, factors["world_average"], places=6
+        )
+        expected = (
+            6.0 * factors["hydroelectricity"]
+            + 3.0 * factors["biomass"]
+            + 1.0 * factors["waste"]
+        ) / 10.0
+        self.assertAlmostEqual(rate.kgs_per_kWh * 1000, expected, places=6)
+
+    def test_energy_mix_with_biofuel_key_from_global_energy_mix(self):
+        """
+        global_energy_mix.json names bioenergy generation ``biofuel_TWh``, so
+        the factor has to be reachable under that name as well.
+        """
+        # GIVEN
+        factors = DataSource().get_carbon_intensity_per_source_data()
+        energy_mix = {
+            "total_TWh": 10.0,
+            "hydroelectricity_TWh": 6.0,
+            "biofuel_TWh": 4.0,
+        }
+
+        # WHEN
+        rate = Emissions._global_energy_mix_to_emissions_rate(energy_mix)
+
+        # THEN
+        self.assertNotAlmostEqual(
+            rate.kgs_per_kWh * 1000, factors["world_average"], places=6
+        )
+        expected = (6.0 * factors["hydroelectricity"] + 4.0 * factors["biomass"]) / 10.0
+        self.assertEqual(factors["biofuel"], factors["biomass"])
+        self.assertAlmostEqual(rate.kgs_per_kWh * 1000, expected, places=6)
 
     def test_get_emissions_PRIVATE_INFRA_FRA(self):
         """
