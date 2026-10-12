@@ -70,10 +70,13 @@ intensity of electricity using this table:
 | Coal | 995 |
 | Petroleum | 816 |
 | Natural Gas | 743 |
+| Biofuel | 230 |
+| Biomass | 230 |
 | Geothermal | 38 |
 | Hydroelectricity | 26 |
 | Nuclear | 29 |
 | Solar | 48 |
+| Waste | 230 |
 | Wind | 26 |
 
 *Carbon Intensity Across Energy Sources*
@@ -82,6 +85,8 @@ Sources:
 
 - [for fossil energies](https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2)
 - [for renewables energies](http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf)
+- [for biomass and biofuel](https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_ar5_annex-iii.pdf) (IPCC AR5 WG3 Annex III, Table A.III.2, median for "Biomass — dedicated")
+- [for waste](https://github.com/electricitymaps/electricitymaps-contrib/blob/b7469384a7/electricitymap/contrib/parsers/ENTSOE.py#L123) (the biomass factor, following Electricity Maps, which groups waste with biomass)
 
 Then, for example, if the Energy Mix of the Grid Electricity is 25%
 Coal, 35% Petroleum, 26% Natural Gas and 14% Nuclear:
