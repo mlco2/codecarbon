@@ -16,6 +16,7 @@ from codecarbon.emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
     track_emissions,
+    track_task_emissions,
 )
 from codecarbon.external.geography import CloudMetadata
 from codecarbon.output import BoAmpsOutput, CodeCarbonAPIOutput, OutputMethod
@@ -151,6 +152,35 @@ class TestCarbonTracker(unittest.TestCase):
         tracker._monitor_power()
 
         self.assertEqual([10, 25], tracker._gpu_utilization_history)
+
+    def test_monitor_power_waits_while_utilization_history_is_read(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        """The monitor thread must not append while the measurement thread
+        averages or clears the utilization history."""
+        import threading
+
+        tracker = EmissionsTracker(measure_power_secs=1, save_to_file=False)
+        tracker._hardware = []
+        monitor = threading.Thread(target=tracker._monitor_power)
+
+        with tracker._utilization_history_lock:
+            monitor.start()
+            monitor.join(0.2)
+            self.assertTrue(monitor.is_alive())
+            self.assertEqual([], tracker._cpu_utilization_history)
+        monitor.join(5)
+
+        self.assertFalse(monitor.is_alive())
+        self.assertEqual(1, len(tracker._cpu_utilization_history))
+        self.assertEqual(1, len(tracker._ram_used_history))
 
     def test_monitor_power_skips_gpu_when_index_is_none(
         self,
@@ -608,6 +638,38 @@ class TestCarbonTracker(unittest.TestCase):
 
         dummy_train_model()
         self.verify_output_file(self.emissions_file_path, 2)
+
+    def test_track_task_emissions_decorator(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            measure_power_secs=1,
+            output_dir=self.temp_path,
+            experiment_id="test",
+        )
+        tracker.start()
+
+        @track_task_emissions(tracker=tracker, task_name="training")
+        def dummy_train_model():
+            heavy_computation(run_time_secs=1)
+            return 42
+
+        # The decorator is transparent: same name, same return value.
+        self.assertEqual("dummy_train_model", dummy_train_model.__name__)
+        self.assertEqual(42, dummy_train_model())
+
+        # ...and the task has been measured on the tracker we passed in.
+        self.assertIn("training", tracker._tasks)
+        self.assertGreater(tracker._tasks["training"].emissions_data.duration, 0)
+        tracker.stop()
 
     def test_offline_tracker_country_name(
         self,

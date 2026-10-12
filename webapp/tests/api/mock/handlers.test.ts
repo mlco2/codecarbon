@@ -59,6 +59,23 @@ describe("resolveMock — organizations", () => {
             "newbie@codecarbon.io",
         );
     });
+
+    it("removes a member on DELETE /organizations/:id/users/:userId", () => {
+        const r = resolveMock(
+            url(`/organizations/${ID.org}/users/${ID.users.member}`),
+            "DELETE",
+        );
+        expect(r.status).toBe(200);
+        expect((r.body as { status: string }).status).toBe("ok");
+    });
+
+    it("returns 404 when removing a user who is not a member", () => {
+        const r = resolveMock(
+            url(`/organizations/${ID.org}/users/not-a-member`),
+            "DELETE",
+        );
+        expect(r.status).toBe(404);
+    });
 });
 
 describe("resolveMock — projects", () => {
