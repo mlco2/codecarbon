@@ -6,6 +6,7 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
+import re
 from typing import TYPE_CHECKING, Dict, Optional
 
 from codecarbon.core import electricitymaps_api
@@ -22,6 +23,10 @@ _NORDIC_REGIONS_BY_COUNTRY = {
     "NOR": {"NO1", "NO2", "NO3", "NO4", "NO5"},
     "FIN": {"FI"},
 }
+
+_CHINA_REGION_SUFFIX = re.compile(
+    r"\s+(autonomous region|municipality|province|sheng|shi|zizhiqu)$"
+)
 
 
 class Emissions:
@@ -180,7 +185,8 @@ class Emissions:
             geo.country_iso_code.upper() if geo.country_iso_code is not None else None
         )
         compute_with_regional_data: bool = (geo.region is not None) and (
-            country_iso_code in ["USA", "CAN"] or self._is_supported_nordic_region(geo)
+            country_iso_code in ["USA", "CAN", "CHN"]
+            or self._is_supported_nordic_region(geo)
         )
 
         if compute_with_regional_data:
@@ -231,6 +237,30 @@ class Emissions:
         )
         return geo.region.upper() in country_regions
 
+    def _try_get_china_province_emissions(
+        self, energy: Energy, geo: GeoMetadata
+    ) -> Optional[float]:
+        """
+        Computes emissions with the official 2023 MEE/NBS provincial factor.
+        Returns None if the province is unknown or not published (Tibet,
+        Hong Kong, Macao and Taiwan), so the caller uses the national value.
+        """
+        if geo.region is None:
+            return None
+
+        name = _CHINA_REGION_SUFFIX.sub("", " ".join(geo.region.lower().split()))
+        china_data = self._data_source.get_china_provincial_emissions_data()
+        for province, province_data in china_data["data"].items():
+            if name in province_data["names"]:
+                emission_factor_g = province_data["emission_factor"]
+                emissions = emission_factor_g / 1000 * energy.kWh
+                logger.debug(
+                    f"China province {province}: Retrieved emissions using static factor "
+                    + f"{emission_factor_g} gCO2/kWh: {emissions * 1000} g CO2"
+                )
+                return emissions
+        return None
+
     def get_region_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
         Computes emissions for a region on private infra.
@@ -240,10 +270,11 @@ class Emissions:
 
         get_private_infra_emissions
         ├─ Electricity Maps API (si token)
-        ├─ get_region_emissions (USA/CAN/SWE/NOR/FIN)
+        ├─ get_region_emissions (USA/CAN/CHN/SWE/NOR/FIN)
         │   └─ _try_get_nordic_region_emissions (pour SWE/NOR/FIN)
         │   └─ country_emissions_data (pour USA)
         │   └─ country_energy_mix_data (pour CAN)
+        │   └─ _try_get_china_province_emissions (pour CHN)
         └─ get_country_emissions (fallback)
 
         :param energy: Mean power consumption of the process (kWh)
@@ -258,6 +289,13 @@ class Emissions:
             geo.country_iso_code is not None
             and geo.country_iso_code.upper() in _NORDIC_REGIONS_BY_COUNTRY
         ):
+            return self.get_country_emissions(energy, geo)
+
+        # Handle China provinces (official MEE/NBS factors)
+        if geo.country_iso_code is not None and geo.country_iso_code.upper() == "CHN":
+            china_emissions = self._try_get_china_province_emissions(energy, geo)
+            if china_emissions is not None:
+                return china_emissions
             return self.get_country_emissions(energy, geo)
 
         # Handle USA and Canada regional data
