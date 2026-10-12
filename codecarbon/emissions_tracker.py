@@ -635,7 +635,6 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
             return
 
-        from codecarbon.output_methods.boamps import BoAmpsOutput
         from codecarbon.output_methods.file import FileOutput
         from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
         from codecarbon.output_methods.metrics.logfire import LogfireOutput
