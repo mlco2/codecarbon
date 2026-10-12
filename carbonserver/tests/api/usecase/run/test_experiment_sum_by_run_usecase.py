@@ -67,7 +67,9 @@ def test_detailed_sum_with_max_points_buckets_result():
     repository_mock.get_experiment_bucketed_sums_by_run.return_value = [
         {"timestamp": START_DATE, "run_count": 1000}
     ]
-    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(repository_mock)
+    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(
+        repository_mock, auth_context=FakeAuthContext()
+    )
 
     actual = experiment_sum_by_run_usecase.compute_detailed_sum(
         EXPERIMENT_ID, START_DATE, END_DATE, max_points=300
@@ -79,7 +81,9 @@ def test_detailed_sum_with_max_points_buckets_result():
 
 def test_detailed_sum_uses_max_points_as_bucket_measure():
     repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
-    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(repository_mock)
+    experiment_sum_by_run_usecase = ExperimentSumsByRunUsecase(
+        repository_mock, auth_context=FakeAuthContext()
+    )
 
     experiment_sum_by_run_usecase.compute_detailed_sum(
         EXPERIMENT_ID,
