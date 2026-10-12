@@ -329,3 +329,28 @@ class ResourceTracker:
         param tracker: BaseEmissionsTracker object
         """
         get_or_run_setup(self, self._run_full_hardware_setup)
+        self._use_measured_dram()
+
+    def _use_measured_dram(self) -> None:
+        """
+        Report the RAPL DRAM energy (rapl_include_dram=True) as the RAM energy
+        rather than the estimate. Not cached with the hardware plan, as the
+        RAM has to read the DRAM files of this very CPU instance.
+        """
+        ram = next((hw for hw in self.tracker._hardware if isinstance(hw, RAM)), None)
+        cpu_hw = next(
+            (hw for hw in self.tracker._hardware if isinstance(hw, CPU)), None
+        )
+        if (
+            ram is None
+            or cpu_hw is None
+            or ram._force_ram_power is not None
+            # The DRAM counter is machine-wide: keep the per-process estimate
+            or ram._tracking_mode != "machine"
+            or cpu_hw._mode != "intel_rapl"
+            or not cpu_hw._intel_interface._dram_files
+        ):
+            return
+        ram._dram_source = cpu_hw._intel_interface
+        self.ram_tracker = "RAPL DRAM measurement (estimation model as fallback)"
+        logger.info(f"RAM Tracking Method: {self.ram_tracker}")

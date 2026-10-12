@@ -645,3 +645,38 @@ def test_setup_fallback_tracking_cpu_load_when_tdp_falsy():
     )
     assert resource_tracker.cpu_tracker == MODE_CPU_LOAD
     assert tracker._hardware == [hardware_cpu]
+
+
+@pytest.mark.parametrize(
+    "mode, force_ram_power, dram_files, tracking_mode, wired",
+    [
+        ("intel_rapl", None, ["dram"], "machine", True),
+        # rapl_include_dram=False: no DRAM domain is read
+        ("intel_rapl", None, [], "machine", False),
+        # The user-provided RAM power wins
+        ("intel_rapl", 12.5, ["dram"], "machine", False),
+        ("windows_emi", None, ["dram"], "machine", False),
+        # The DRAM counter is machine-wide, keep the per-process estimate
+        ("intel_rapl", None, ["dram"], "process", False),
+    ],
+)
+def test_ram_uses_rapl_dram_when_available(
+    mode, force_ram_power, dram_files, tracking_mode, wired
+):
+    # The classes resource_tracker checks against: another test drops
+    # codecarbon.external.hardware from sys.modules, so a fresh import would
+    # give a different CPU class.
+    from codecarbon.core.resource_tracker import CPU, RAM
+
+    ram = RAM(tracking_mode=tracking_mode, force_ram_power=force_ram_power)
+    cpu = CPU.__new__(CPU)
+    cpu._mode = mode
+    cpu._intel_interface = SimpleNamespace(_dram_files=dram_files)
+    tracker = make_tracker(_hardware=[ram, cpu], _force_ram_power=force_ram_power)
+    resource_tracker = ResourceTracker(tracker)
+
+    with patch("codecarbon.core.resource_tracker.get_or_run_setup"):
+        resource_tracker.set_CPU_GPU_ram_tracking()
+
+    assert (getattr(ram, "_dram_source", None) is cpu._intel_interface) == wired
+    assert ("RAPL DRAM" in resource_tracker.ram_tracker) == wired
