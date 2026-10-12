@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 import requests
 import typer
+from typer import rich_utils
 from typer.testing import CliRunner
 
 from codecarbon.cli import main as cli_main
@@ -700,11 +701,13 @@ def test_monitor_explicit_experiment_id_satisfies_online_validation(monkeypatch)
     assert captured["kwargs"]["experiment_id"] == "exp-from-cli"
 
 
-def test_monitor_help_lists_explicit_tracker_options():
+def test_monitor_help_lists_explicit_tracker_options(monkeypatch):
+    # Typer's rich help reads TERMINAL_WIDTH at import time, so CliRunner's
+    # terminal_width has no effect and a narrow CI console wraps option names.
+    monkeypatch.setattr(rich_utils, "MAX_WIDTH", 200)
+    monkeypatch.setattr(rich_utils, "FORCE_TERMINAL", False)
     runner = CliRunner()
-    result = runner.invoke(
-        cli_main.codecarbon, ["monitor", "--help"], terminal_width=200
-    )
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--help"])
 
     assert result.exit_code == 0
     assert "--output-methods" in result.output
