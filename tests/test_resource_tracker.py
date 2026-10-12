@@ -620,6 +620,12 @@ def test_set_cpu_tracking_prefers_powermetrics_when_other_backends_unavailable()
     resource_tracker = ResourceTracker(tracker)
 
     with (
+        patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
+        patch("codecarbon.core.resource_tracker.is_mac_os", return_value=True),
+        patch(
+            "codecarbon.core.resource_tracker.detect_cpu_model",
+            return_value="Intel Core i7",
+        ),
         patch(
             "codecarbon.core.resource_tracker.cpu.is_powergadget_available",
             return_value=False,
