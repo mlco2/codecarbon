@@ -176,3 +176,74 @@ async def test_revoke_token_exception(oidc_provider, mock_oidc_client):
 
     # Should not raise
     await oidc_provider.revoke_token("test-access-token")
+
+
+EXPERIMENT = {
+    "name": "Run on AWS",
+    "description": "d",
+    "timestamp": "2021-04-04T08:43:00+02:00",
+    "country_name": "France",
+    "country_iso_code": "FRA",
+    "region": "france",
+    "on_cloud": True,
+    "cloud_provider": "aws",
+    "cloud_region": "eu-west-1a",
+    "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+}
+
+
+@pytest.fixture
+def protected_client(monkeypatch):
+    """Full-ish app with the catch-all 500 handler, auth enabled, provider rejecting tokens."""
+    from starlette.responses import JSONResponse
+
+    from carbonserver.api.routers import experiments
+    from carbonserver.api.services import auth_service
+
+    monkeypatch.setattr(auth_service.settings, "auth_provider", "oidc")
+    monkeypatch.setattr(auth_service.settings, "environment", "production")
+    container = ServerContainer()
+    container.wire(modules=[authenticate, experiments, auth_service])
+    provider = MagicMock()
+    provider.get_user_info = AsyncMock(side_effect=Exception("expired"))
+    container.auth_provider.override(provider)
+    container.sign_up_service.override(MagicMock())
+    container.user_service.override(MagicMock())
+    container.experiment_service.override(MagicMock())
+    app = FastAPI()
+    app.container = container
+    app.include_router(experiments.router)
+    app.include_router(authenticate.router)
+
+    async def generic(request, exc):
+        return JSONResponse({"detail": "Generic error"}, status_code=500)
+
+    app.add_exception_handler(Exception, generic)
+    yield TestClient(app, raise_server_exceptions=False)
+    container.unwire()
+
+
+def test_protected_endpoint_without_token_returns_401(protected_client):
+    response = protected_client.post("/experiments", json=EXPERIMENT)
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing or invalid access token"}
+
+
+def test_protected_endpoint_with_invalid_token_returns_401(protected_client):
+    response = protected_client.post(
+        "/experiments", json=EXPERIMENT, headers={"Authorization": "Bearer bad"}
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "JWKS validation of the token failed"
+
+
+def test_auth_check_without_token_returns_null_user(protected_client):
+    # The real SignUpService.check_jwt_user(None) raises TypeError (None["sub"]); mimic it.
+    sign_up = MagicMock()
+    sign_up.check_jwt_user.side_effect = TypeError(
+        "'NoneType' object is not subscriptable"
+    )
+    protected_client.app.container.sign_up_service.override(sign_up)
+    response = protected_client.get("/auth/check")
+    assert response.status_code == 200
+    assert response.json() == {"user": None}
