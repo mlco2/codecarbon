@@ -293,10 +293,10 @@ def render_app(df: pd.DataFrame):
     return app
 
 
-def viz(filepath: str, port: int = 8050, debug: bool = False) -> None:
+def viz(filepath: str, port: int = 8050, debug: bool = False, host=None) -> None:
     df = pd.read_csv(filepath)
     app = render_app(df)
-    app.run(port=port, debug=debug)
+    app.run(port=port, debug=debug, host=host)
 
 
 def main():

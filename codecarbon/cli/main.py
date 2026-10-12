@@ -358,6 +358,34 @@ def config():
     )
 
 
+def _cli_provided(ctx, name: str) -> bool:
+    """
+    Whether the option `name` was typed on the command line (or set through its
+    environment variable) rather than left at its Typer default.
+
+    Options left at their default must not be forwarded to the tracker: doing so
+    would silently override the values coming from `.codecarbon.config` and the
+    `CODECARBON_*` environment variables, which the tracker reads itself.
+    """
+    get_source = getattr(ctx, "get_parameter_source", None)
+    if get_source is None:
+        # `monitor` called directly from Python, not through Click: every value
+        # given is explicit.
+        return True
+    source = get_source(name)
+    return source is None or source.name in ("COMMANDLINE", "ENVIRONMENT")
+
+
+def _external_config() -> dict:
+    """The configuration files and CODECARBON_* variables, as a plain dict."""
+    from codecarbon.core.config import get_hierarchical_config
+
+    try:
+        return dict(get_hierarchical_config())
+    except Exception:
+        return {}
+
+
 @codecarbon.command(
     "monitor",
     short_help="Monitor your machine's carbon emissions.",
@@ -365,6 +393,10 @@ def config():
 )
 def monitor(
     ctx: typer.Context,
+    project_name: Annotated[
+        str,
+        typer.Option(help="Project name for the current experiment."),
+    ] = None,
     measure_power_secs: Annotated[
         int,
         typer.Option(help="Interval between two measures."),
@@ -390,9 +422,6 @@ def monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
-    project_name: Annotated[
-        str | None, typer.Option(help="Project name for the monitored run")
-    ] = None,
     api_endpoint: Annotated[
         str | None, typer.Option(help="CodeCarbon API endpoint")
     ] = None,
@@ -477,14 +506,21 @@ def monitor(
 ):
     """Monitor your machine's carbon emissions."""
 
-    # Shared tracker args so monitor and run_and_monitor behave the same
+    external_conf = _external_config()
+
+    # Shared tracker args so monitor and run_and_monitor behave the same.
+    # Only the options actually given are forwarded: the others are left to the
+    # tracker, which resolves them from the configuration file and environment.
+    cli_defaults = (
+        ("project_name", project_name),
+        ("measure_power_secs", measure_power_secs),
+        ("api_call_interval", api_call_interval),
+        ("log_level", log_level),
+    )
     tracker_args = {
-        "measure_power_secs": measure_power_secs,
-        "api_call_interval": api_call_interval,
-        "log_level": log_level,
+        name: value for name, value in cli_defaults if _cli_provided(ctx, name)
     }
     optional_tracker_args = {
-        "project_name": project_name,
         "api_endpoint": api_endpoint,
         "api_key": api_key,
         "output_dir": output_dir,
@@ -521,9 +557,15 @@ def monitor(
             if value is not None
         }
     )
+    for name, value in cli_defaults:
+        if name not in tracker_args and name not in external_conf:
+            # Nothing configures it: keep the defaults advertised by `--help`
+            # (and an unattended monitor quiet) instead of the tracker's own.
+            tracker_args[name] = value
+
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
-        if not country_iso_code:
+        if not country_iso_code and not external_conf.get("country_iso_code"):
             print(
                 "ERROR: Country ISO code is required for offline mode. Add it to your configuration or provide it via the command line: `--country-iso-code FRA`",
                 file=sys.stderr,
@@ -532,8 +574,8 @@ def monitor(
 
         tracker_args = {
             **tracker_args,
-            "country_iso_code": country_iso_code,
-            "region": region,
+            **({"country_iso_code": country_iso_code} if country_iso_code else {}),
+            **({"region": region} if region else {}),
         }
     else:
         configured_experiment_id = experiment_id or get_existing_exp_id()

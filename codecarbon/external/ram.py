@@ -1,4 +1,5 @@
 import math
+import os
 import re
 import subprocess
 from dataclasses import dataclass
@@ -34,7 +35,7 @@ class RAM(BaseHardware):
 
     def __init__(
         self,
-        pid: int = psutil.Process().pid,
+        pid: Optional[int] = None,
         children: bool = True,
         tracking_mode: str = "machine",
         force_ram_power: Optional[int] = None,
@@ -46,7 +47,7 @@ class RAM(BaseHardware):
 
         Args:
             pid (int, optional): Process id (with respect to which we'll look for
-                                 children). Defaults to psutil.Process().pid.
+                                 children). Defaults to the current process id.
             children (int, optional): Look for children of the process when computing
                                       total RAM used. Defaults to True.
             tracking_mode (str, optional): Whether to track "machine" or "process" RAM.
@@ -55,7 +56,7 @@ class RAM(BaseHardware):
                                            this value is used instead of estimating RAM power.
                                            Defaults to None.
         """
-        self._pid = pid
+        self._pid = os.getpid() if pid is None else pid
         self._children = children
         self._tracking_mode = tracking_mode
         self._force_ram_power = force_ram_power

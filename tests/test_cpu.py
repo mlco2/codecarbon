@@ -388,6 +388,11 @@ class TestTDP(unittest.TestCase):
         model = "AMD Ryzen Threadripper 1950X 16-Core Processor"
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 180)
 
+    def test_get_cpu_power_from_registry_ultra_9_285k(self):
+        tdp = TDP()
+        model = "Intel(R) Core(TM) Ultra 9 285K"
+        self.assertEqual(tdp._get_cpu_power_from_registry(model), 125)
+
     def test_get_cpu_power_from_registry_returns_none_without_match(self):
         tdp = TDP.__new__(TDP)
         with (

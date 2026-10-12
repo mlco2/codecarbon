@@ -182,6 +182,10 @@ The repository includes VS Code launch configurations in `docs/how-to/contributi
 
 The package can work standalone (offline mode) or connect to the API for cloud features and dashboard visualization.
 
+## Opening Pull Requests
+
+Fill in every section of `.github/PULL_REQUEST_TEMPLATE.md` and pass it with `gh pr create --body-file`; a plain `--body` skips the template. Leave the AI Usage Disclosure choice to the human contributor.
+
 ## Tips for Effective Development
 
 1. **Start with tests**: Run existing tests first to understand current state
