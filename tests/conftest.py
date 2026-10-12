@@ -40,3 +40,9 @@ def _stop_leaked_schedulers():
         scheduler = getattr(thread.function, "__self__", None)
         if isinstance(scheduler, PeriodicScheduler):
             scheduler.stop()
+
+
+@pytest.fixture(autouse=True)
+def _no_real_browser(monkeypatch):
+    """Keep tests headless: never let code under test open a browser tab."""
+    monkeypatch.setattr("webbrowser.open", lambda *args, **kwargs: True)

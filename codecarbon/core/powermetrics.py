@@ -93,7 +93,7 @@ def _has_powermetrics_sudo() -> bool:
         logger.debug("""Not using PowerMetrics, sudo password prompt detected.
                 If you want to enable Powermetrics please modify your sudoers file
                 as described in :
-                https://docs.codecarbon.io/latest/explanation/methodology/#power-usage
+                https://docs.codecarbon.io/latest/how-to/troubleshooting/#macos
             """)
         return False
     if process.returncode != 0:
