@@ -1,8 +1,10 @@
+import types
 import unittest
 import unittest.mock
 
-from codecarbon.core.units import Energy, WaterPerKWh
+from codecarbon.core.units import Energy, Water, WaterPerKWh
 from codecarbon.core.water_consumption import WaterConsumption
+from codecarbon.emissions_tracker import BaseEmissionsTracker
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.input import DataSource
 from tests.testutils import get_test_data_source
@@ -181,6 +183,100 @@ class TestWaterConsumption(unittest.TestCase):
         )
         # THEN: world average
         self.assertAlmostEqual(water, WORLD_AVERAGE_L_PER_KWH, places=2)
+
+
+class TestWaterConsumptionSyntheticMix(unittest.TestCase):
+    """Hand-computed cases on a 50% coal / 50% wind mix.
+
+    (0.5 * 550 + 0.5 * 11) = 280.5 gal us/MWh
+    280.5 * 3.785411784 / 1000 = 1.061808 L/kWh
+    """
+
+    L_PER_KWH = 1.061808
+
+    def _source(self, global_mix, region_mix=None):
+        source = unittest.mock.MagicMock()
+        source.get_global_energy_mix_data.return_value = global_mix
+        source.get_water_consumption_per_source_data.return_value = {
+            "coal": 550,
+            "wind": 11,
+            "world_average": 1000,
+        }
+        if region_mix is None:
+            source.get_country_energy_mix_data.side_effect = KeyError("no file")
+        else:
+            source.get_country_energy_mix_data.return_value = region_mix
+        return source
+
+    def test_country_water_consumption(self):
+        mix = {"XXX": {"coal_TWh": 50, "wind_TWh": 50, "total_TWh": 100}}
+        water = WaterConsumption(self._source(mix)).get_country_water_consumption(
+            Energy.from_energy(kWh=2),
+            GeoMetadata(country_iso_code="XXX", country_name="Xland"),
+        )
+        self.assertAlmostEqual(water, 2 * self.L_PER_KWH, places=5)
+
+    def test_region_water_consumption(self):
+        region_mix = {"qc": {"coal": 50, "wind": 50, "total": 100}}
+        water = WaterConsumption(
+            self._source({}, region_mix)
+        ).get_region_water_consumption(
+            Energy.from_energy(kWh=2),
+            GeoMetadata(country_iso_code="CAN", country_name="Canada", region="QC"),
+        )
+        self.assertAlmostEqual(water, 2 * self.L_PER_KWH, places=5)
+
+    def test_canada_region_failure_falls_back_to_country(self):
+        mix = {"CAN": {"coal_TWh": 50, "wind_TWh": 50, "total_TWh": 100}}
+        water = WaterConsumption(self._source(mix)).get_private_infra_water_consumption(
+            Energy.from_energy(kWh=1),
+            GeoMetadata(country_iso_code="CAN", country_name="Canada", region="QC"),
+        )
+        self.assertAlmostEqual(water, self.L_PER_KWH, places=5)
+
+    def test_zero_total_energy_uses_world_average(self):
+        mix = {"XXX": {"coal_TWh": 0, "total_TWh": 0}}
+        water = WaterConsumption(self._source(mix)).get_country_water_consumption(
+            Energy.from_energy(kWh=1),
+            GeoMetadata(country_iso_code="XXX", country_name="Xland"),
+        )
+        # world_average 1000 gal us/MWh = 3.785411784 L/kWh
+        self.assertAlmostEqual(water, 3.785412, places=5)
+
+
+class TestTrackerUpdateWater(unittest.TestCase):
+    def _tracker(self):
+        return types.SimpleNamespace(
+            _water_consumption=unittest.mock.MagicMock(),
+            _geo="geo",
+            _total_water=Water.from_litres(litres=1.0),
+        )
+
+    def test_private_infra_adds_to_total(self):
+        t = self._tracker()
+        t._water_consumption.get_private_infra_water_consumption.return_value = 0.5
+        BaseEmissionsTracker._update_water(
+            t, Energy.from_energy(kWh=1), CloudMetadata(provider=None, region=None)
+        )
+        self.assertEqual(t._total_water.litres, 1.5)
+
+    def test_cloud_adds_to_total(self):
+        t = self._tracker()
+        t._water_consumption.get_cloud_water_consumption.return_value = 2.0
+        BaseEmissionsTracker._update_water(
+            t, Energy.from_energy(kWh=1), CloudMetadata(provider="aws", region="x")
+        )
+        self.assertEqual(t._total_water.litres, 3.0)
+
+    def test_failure_is_swallowed(self):
+        t = self._tracker()
+        t._water_consumption.get_private_infra_water_consumption.side_effect = (
+            RuntimeError("boom")
+        )
+        BaseEmissionsTracker._update_water(
+            t, Energy.from_energy(kWh=1), CloudMetadata(provider=None, region=None)
+        )
+        self.assertEqual(t._total_water.litres, 1.0)
 
 
 if __name__ == "__main__":
