@@ -4,7 +4,7 @@ from typing import Optional
 
 import jwt
 from dependency_injector.wiring import Provide
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi.security import APIKeyCookie, HTTPBearer
 
 from carbonserver.api.errors import AuthenticationError
@@ -82,7 +82,7 @@ class UserWithAuthDependency:
             self.auth_user = None
             self.db_user = None
             if self.error_if_not_found:
-                raise HTTPException(status_code=401, detail="Unauthorized")
+                raise AuthenticationError(detail="Missing or invalid access token")
             return self
 
         self.auth_user = await self._verify_token(token, auth_provider)
