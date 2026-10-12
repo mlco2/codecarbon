@@ -1,4 +1,4 @@
-// Client-side encryption for public project sharing links.
+// Legacy client-side decryption for existing public project sharing links.
 //
 // Port of the original Node `crypto` implementation (see git history on
 // master, pre-React-migration) to the browser's Web Crypto API. The
@@ -14,10 +14,9 @@
 //   4. Output: base64url(IV ‖ ciphertext)
 //
 // `VITE_PROJECT_ENCRYPTION_KEY` is exposed to the browser via the bundle.
-// This is *obfuscation*, not real security: anyone with the bundle can
-// recover real project ids from encrypted links. That trade-off is
-// inherent to a client-only architecture — the threat model is "make ids
-// non-guessable in URLs", not "hide ids from a determined attacker".
+// This was obfuscation rather than an authorization boundary because the key
+// is present in the browser bundle. New links use the public project UUID
+// directly; this decoder remains only for backward compatibility.
 
 const TEXT_ENCODER = new TextEncoder();
 const TEXT_DECODER = new TextDecoder();
@@ -56,40 +55,13 @@ function copyBytes(view: Uint8Array): Uint8Array<ArrayBuffer> {
     return out;
 }
 
-async function deriveIv(
-    projectId: string,
-    secret: string,
-): Promise<Uint8Array<ArrayBuffer>> {
-    const subtle = getSubtle();
-    const key = await subtle.importKey(
-        "raw",
-        TEXT_ENCODER.encode(secret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"],
-    );
-    const signature = await subtle.sign(
-        "HMAC",
-        key,
-        TEXT_ENCODER.encode(projectId),
-    );
-    return copyBytes(new Uint8Array(signature).subarray(0, 16));
-}
-
 async function deriveAesKey(secret: string): Promise<CryptoKey> {
     const subtle = getSubtle();
     const padded = secret.substring(0, 32).padEnd(32, "0");
     const rawKey = TEXT_ENCODER.encode(padded).slice(0, 32);
     return subtle.importKey("raw", rawKey, { name: "AES-CBC" }, false, [
-        "encrypt",
         "decrypt",
     ]);
-}
-
-function toBase64Url(bytes: Uint8Array): string {
-    let bin = "";
-    for (const b of bytes) bin += String.fromCharCode(b);
-    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function fromBase64Url(value: string): Uint8Array {
@@ -104,31 +76,7 @@ function fromBase64Url(value: string): Uint8Array {
 }
 
 /**
- * Encrypt a project id into a URL-safe sharing token.
- * Deterministic: the same project id always produces the same output.
- */
-export async function encryptProjectId(projectId: string): Promise<string> {
-    const secret = getSecret();
-    const subtle = getSubtle();
-
-    const iv = await deriveIv(projectId, secret);
-    const key = await deriveAesKey(secret);
-
-    const ciphertext = await subtle.encrypt(
-        { name: "AES-CBC", iv },
-        key,
-        TEXT_ENCODER.encode(projectId),
-    );
-    const ciphertextBytes = new Uint8Array(ciphertext);
-
-    const combined = new Uint8Array(iv.byteLength + ciphertextBytes.byteLength);
-    combined.set(iv, 0);
-    combined.set(ciphertextBytes, iv.byteLength);
-    return toBase64Url(combined);
-}
-
-/**
- * Decrypt a sharing token back into the original project id.
+ * Decrypt a legacy sharing token back into the original project id.
  * Throws if the token is malformed or the secret is wrong.
  */
 export async function decryptProjectId(encrypted: string): Promise<string> {

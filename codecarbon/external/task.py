@@ -1,7 +1,7 @@
 import time
 from uuid import uuid4
 
-from codecarbon.output import EmissionsData, TaskEmissionsData
+from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
 
 
 class Task:

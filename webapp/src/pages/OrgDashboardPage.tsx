@@ -29,7 +29,7 @@ export default function OrgDashboardPage() {
     } = useSWR<Organization>(`/organizations/${organizationId}`, fetcher);
 
     const today = new Date();
-    const [date, setDate] = useState<DateRange | undefined>({
+    const [date] = useState<DateRange | undefined>({
         from: new Date(today.getTime() - THIRTY_DAYS_MS),
         to: today,
     });

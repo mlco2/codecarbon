@@ -85,7 +85,6 @@ plugins:
             docstring_section_style: table
             show_source: false
   - mike:
-      version_selector: true
       canonical_version: latest
 
 extra_css:

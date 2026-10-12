@@ -62,18 +62,15 @@ class SqlAlchemyRepository(Users):
 
     def list_users(self) -> List[User]:
         with self.session_factory() as session:
-            e = session.query(SqlModelUser)
-            if e is None:
-                return None
-            users: List[User] = []
-            for user in e:
-                users.append(self.map_sql_to_schema(user))
-            return users
+            return [
+                self.map_sql_to_schema(user) for user in session.query(SqlModelUser)
+            ]
 
     def subscribe_user_to_org(
         self,
         user: User,
         organization_id: UUID,
+        is_admin: bool = False,
     ) -> None:
         with self.session_factory() as session:
             e = (
@@ -88,11 +85,36 @@ class SqlAlchemyRepository(Users):
             db_membership = SqlModelMembership(
                 user_id=user.id,
                 organization_id=organization_id,
-                is_admin=True,
+                is_admin=is_admin,
             )
             session.add(db_membership)
             session.commit()
             return user
+
+    def unsubscribe_user_from_org(
+        self,
+        user_id: UUID,
+        organization_id: UUID,
+    ) -> None:
+        """Remove the membership linking a user to an organization.
+
+        :user_id: The id of the user to remove from the organization.
+        :organization_id: The id of the organization to remove the user from.
+        """
+        with self.session_factory() as session:
+            db_membership = (
+                session.query(SqlModelMembership)
+                .filter(SqlModelMembership.user_id == user_id)
+                .filter(SqlModelMembership.organization_id == organization_id)
+                .first()
+            )
+            if db_membership is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"User {user_id} not found in organization {organization_id}",
+                )
+            session.delete(db_membership)
+            session.commit()
 
     def is_user_in_organization(
         self, organization_id: UUID, user: User, *, is_admin: bool | None = None

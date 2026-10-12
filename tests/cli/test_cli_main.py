@@ -1,8 +1,11 @@
 """Tests for the CodeCarbon CLI main function."""
 
+import os
 from types import SimpleNamespace
 
 import pytest
+import requests
+import typer
 from typer.testing import CliRunner
 
 from codecarbon.cli import main as cli_main
@@ -34,12 +37,27 @@ def test_version_flag():
 
 def test_api_get_calls_api_and_prints(monkeypatch):
     runner = CliRunner()
-    monkeypatch.setattr(cli_main, "ApiClient", FakeApiClient)
-    monkeypatch.setattr(cli_main, "get_access_token", fake_get_access_token)
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FakeApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
 
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
     assert result.exit_code == 0
     assert "fake-org" in result.output
+
+
+def test_api_get_prints_friendly_error_on_api_failure(monkeypatch):
+    class FailingApiClient(FakeApiClient):
+        def get_list_organizations(self):
+            raise requests.exceptions.HTTPError("401 Unauthorized")
+
+    runner = CliRunner()
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FailingApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
+
+    result = runner.invoke(cli_main.codecarbon, ["test-api"])
+    assert result.exit_code == 1
+    assert "API request failed" in result.output
+    assert "401 Unauthorized" in result.output
 
 
 def test_api_get_uses_get_api_endpoint(monkeypatch):
@@ -51,11 +69,11 @@ def test_api_get_uses_get_api_endpoint(monkeypatch):
             super().__init__(endpoint_url=endpoint_url)
 
     runner = CliRunner()
-    monkeypatch.setattr(cli_main, "ApiClient", CustomApiClient)
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", CustomApiClient)
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda: "https://custom.codecarbon.io"
     )
-    monkeypatch.setattr(cli_main, "get_access_token", fake_get_access_token)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
 
     result = runner.invoke(cli_main.codecarbon, ["test-api"])
     assert result.exit_code == 0
@@ -85,7 +103,7 @@ def test_detect_monkeypatched_tracker(monkeypatch):
                 "gpu_ids": None,
             }
 
-    monkeypatch.setattr(cli_main, "EmissionsTracker", FakeTracker)
+    monkeypatch.setattr("codecarbon.emissions_tracker.EmissionsTracker", FakeTracker)
     runner = CliRunner()
     result = runner.invoke(cli_main.codecarbon, ["detect"])
     assert result.exit_code == 0
@@ -104,6 +122,43 @@ def test_monitor_run_and_monitor(monkeypatch):
     assert "Hello, World!" in result.output
 
 
+def test_monitor_accepts_tracker_options(monkeypatch):
+    captured = {}
+
+    class FakeTracker:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def start(self):
+            pass
+
+        def stop(self):
+            pass
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.EmissionsTracker",
+        FakeTracker,
+    )
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "test-exp")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--project-name",
+            "test-project",
+            "--no-api",
+            "--",
+            "echo",
+            "test",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["project_name"] == "test-project"
+
+
 def test_show_config_handles_access_token_errors(monkeypatch, tmp_path, capsys):
     class FakeApiClient:
         def __init__(self, endpoint_url=None):
@@ -115,7 +170,7 @@ def test_show_config_handles_access_token_errors(monkeypatch, tmp_path, capsys):
     def fake_get_access_token():
         raise ValueError("Not able to retrieve the access token, please run login.")
 
-    monkeypatch.setattr(cli_main, "ApiClient", FakeApiClient)
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FakeApiClient)
     monkeypatch.setattr(
         cli_main,
         "get_config",
@@ -129,7 +184,7 @@ def test_show_config_handles_access_token_errors(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda path: "https://api.codecarbon.io"
     )
-    monkeypatch.setattr(cli_main, "get_access_token", fake_get_access_token)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", fake_get_access_token)
 
     cli_main.show_config(tmp_path / ".codecarbon.config")
     captured = capsys.readouterr()
@@ -165,16 +220,15 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
         def check_auth(self):
             calls["check_auth"] += 1
 
-    monkeypatch.setattr(cli_main, "ApiClient", FakeApiClient)
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FakeApiClient)
     monkeypatch.setattr(
-        cli_main,
-        "authorize",
+        "codecarbon.cli.auth.authorize",
         lambda: calls.__setitem__("authorize", calls["authorize"] + 1),
     )
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda: "https://custom-login.codecarbon.io"
     )
-    monkeypatch.setattr(cli_main, "get_access_token", lambda: "login-token")
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "login-token")
 
     runner = CliRunner()
     result = runner.invoke(cli_main.codecarbon, ["login"])
@@ -185,10 +239,38 @@ def test_login_calls_authorize_and_auth_check(monkeypatch):
     assert calls["endpoint_url"] == "https://custom-login.codecarbon.io"
 
 
+def test_login_prints_friendly_error_on_auth_failure(monkeypatch):
+    class FailingApiClient:
+        def __init__(self, endpoint_url=None):
+            pass
+
+        def set_access_token(self, token):
+            pass
+
+        def check_auth(self):
+            raise requests.exceptions.HTTPError("403 Forbidden")
+
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FailingApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.authorize", lambda: None)
+    monkeypatch.setattr(
+        cli_main, "get_api_endpoint", lambda: "https://api.codecarbon.io"
+    )
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "bad-token")
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["login"])
+    assert result.exit_code == 1
+    assert "Authentication check failed" in result.output
+    assert "403 Forbidden" in result.output
+
+
 def test_get_api_key_uses_bearer_token(monkeypatch):
     captured = {}
 
     class FakeResponse:
+        def raise_for_status(self):
+            return None
+
         def json(self):
             return {"token": "project-api-token"}
 
@@ -198,14 +280,51 @@ def test_get_api_key_uses_bearer_token(monkeypatch):
         captured["headers"] = headers
         return FakeResponse()
 
-    monkeypatch.setattr(cli_main, "get_access_token", lambda: "access-token")
-    monkeypatch.setattr(cli_main.requests, "post", fake_post)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "access-token")
+    monkeypatch.setattr("requests.post", fake_post)
 
     token = cli_main.get_api_key("proj-123")
     assert token == "project-api-token"
     assert captured["url"].endswith("/projects/proj-123/api-tokens")
     assert captured["json"]["project_id"] == "proj-123"
     assert captured["headers"]["Authorization"] == "Bearer access-token"
+
+
+def test_get_api_key_raises_on_http_error(monkeypatch):
+    class FailingResponse:
+        def raise_for_status(self):
+            raise requests.exceptions.HTTPError("403 Forbidden")
+
+        def json(self):  # pragma: no cover - must not be reached
+            raise AssertionError("json() should not be called on a failed response")
+
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "access-token")
+    monkeypatch.setattr("requests.post", lambda url, json, headers: FailingResponse())
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        cli_main.get_api_key("proj-123")
+
+
+def test_api_call_prints_friendly_error_and_exits():
+    def failing():
+        raise requests.exceptions.HTTPError("500 Server Error")
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main._api_call("Could not do the thing", failing)
+    assert exc_info.value.exit_code == 1
+
+
+def test_api_call_returns_result_and_forwards_arguments():
+    captured = {}
+
+    def succeeding(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    assert cli_main._api_call("unused", succeeding, "org-1", name="test") == "ok"
+    assert captured["args"] == ("org-1",)
+    assert captured["kwargs"] == {"name": "test"}
 
 
 def test_get_token_command_prints_token(monkeypatch):
@@ -235,8 +354,8 @@ def test_show_config_prints_missing_project_and_experiment(
         def get_experiment(self, experiment_id):
             return {"id": experiment_id}
 
-    monkeypatch.setattr(cli_main, "ApiClient", FakeApiClient)
-    monkeypatch.setattr(cli_main, "get_access_token", lambda: "fake-token")
+    monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FakeApiClient)
+    monkeypatch.setattr("codecarbon.cli.auth.get_access_token", lambda: "fake-token")
     monkeypatch.setattr(
         cli_main, "get_api_endpoint", lambda path: "https://api.codecarbon.io"
     )
@@ -289,7 +408,9 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
         def stop(self):
             return None
 
-    monkeypatch.setattr(cli_main, "OfflineEmissionsTracker", FakeOfflineTracker)
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
+    )
     monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
 
     runner = CliRunner()
@@ -303,6 +424,124 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
     assert calls["kwargs"]["region"] == "IDF"
 
 
+def _fake_offline_monitor(monkeypatch, tmp_path):
+    """Patch the offline tracker and run the monitor loop in `tmp_path`."""
+    calls = {}
+
+    class FakeOfflineTracker:
+        def __init__(self, **kwargs):
+            calls["kwargs"] = kwargs
+            self._another_instance_already_running = True
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
+    )
+    monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
+    # Isolate from the config file *and* the CODECARBON_* variables of the user
+    # running the tests: `get_hierarchical_config()` merges both.
+    monkeypatch.setenv("HOME", str(tmp_path))
+    for name in [n for n in os.environ if n.startswith("CODECARBON_")]:
+        monkeypatch.delenv(name)
+    monkeypatch.chdir(tmp_path)
+    return calls
+
+
+def test_monitor_does_not_override_config_with_cli_defaults(monkeypatch, tmp_path):
+    """Options left at their default must not shadow the config file."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\n"
+        "log_level = DEBUG\n"
+        "measure_power_secs = 30\n"
+        "api_call_interval = 10\n"
+        "country_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 0
+    # Nothing is forwarded: the tracker reads those values from the config itself
+    for name in ("log_level", "measure_power_secs", "api_call_interval"):
+        assert name not in calls["kwargs"]
+
+
+def test_monitor_cli_options_win_over_config(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\nlog_level = DEBUG\nmeasure_power_secs = 30\n"
+        "country_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        ["monitor", "--offline", "--log-level", "warning", "--measure-power-secs", "5"],
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["log_level"] == "warning"
+    assert calls["kwargs"]["measure_power_secs"] == 5
+
+
+def test_monitor_stays_quiet_without_configured_log_level(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--offline", "--country-iso-code", "FRA"]
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["log_level"] == "error"
+
+
+def test_monitor_keeps_documented_defaults_without_config(monkeypatch, tmp_path):
+    """With nothing configured, the defaults advertised by `--help` are used."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--offline", "--country-iso-code", "FRA"]
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["measure_power_secs"] == 10
+    assert calls["kwargs"]["api_call_interval"] == 30
+
+
+def test_monitor_offline_rejects_empty_country_iso_code_in_config(
+    monkeypatch, tmp_path
+):
+    """An empty value in the config is not a country: the CLI must still refuse."""
+    _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text("[codecarbon]\ncountry_iso_code =\n")
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 1
+
+
+def test_monitor_offline_accepts_country_iso_code_from_config(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\ncountry_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 0
+    assert "country_iso_code" not in calls["kwargs"]
+
+
 def test_monitor_delegates_offline_flag_to_run_and_monitor(monkeypatch):
     captured = {}
 
@@ -311,7 +550,7 @@ def test_monitor_delegates_offline_flag_to_run_and_monitor(monkeypatch):
         captured["kwargs"] = kwargs
         return "ok"
 
-    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
 
     ctx = SimpleNamespace(args=["python", "-c", "print(1)"])
     result = cli_main.monitor(
@@ -332,7 +571,7 @@ def test_monitor_delegates_online_mode_to_run_and_monitor(monkeypatch):
         captured["kwargs"] = kwargs
         return "ok"
 
-    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
     monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "exp-1")
 
     ctx = SimpleNamespace(args=["python", "train.py"])
@@ -350,7 +589,7 @@ def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
         captured["kwargs"] = kwargs
         return "ok"
 
-    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
     monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "exp-1")
 
     ctx = SimpleNamespace(args=["python", "train.py"])
@@ -368,7 +607,7 @@ def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
         captured["kwargs"] = kwargs
         return "ok"
 
-    monkeypatch.setattr(cli_main, "run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
     monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
 
     ctx = SimpleNamespace(args=["python", "train.py"])
@@ -376,3 +615,41 @@ def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
     assert result == "ok"
     assert captured["offline"] is False
     assert captured["kwargs"]["save_to_api"] is False
+
+
+def test_monitor_passes_log_level_to_run_and_monitor(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+
+    ctx = SimpleNamespace(args=["echo", "hello"])
+    cli_main.monitor(
+        ctx=ctx,
+        offline=True,
+        country_iso_code="FRA",
+        log_level="debug",
+    )
+
+    assert captured["kwargs"]["log_level"] == "debug"
+
+
+def test_external_config_returns_empty_dict_on_error(monkeypatch):
+    """A malformed config file must not crash `monitor`: fall back to `{}`."""
+
+    def raise_error():
+        raise ValueError("malformed config file")
+
+    monkeypatch.setattr("codecarbon.core.config.get_hierarchical_config", raise_error)
+    assert cli_main._external_config() == {}
+
+
+def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
+
+    ctx = SimpleNamespace(args=["echo", "hi"])
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.monitor(ctx=ctx, offline=False, api=True)
+    assert exc_info.value.exit_code == 1

@@ -147,6 +147,45 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
         api_output.live_out(None, self.emissions_data)
         self.mock_add_emission.assert_called_once()
 
+    def test_codecarbon_api_live_out_creates_run_when_missing(self):
+        conf = {
+            "os": "linux",
+            "python_version": "3.12",
+            "codecarbon_version": "2.0",
+            "cpu_count": 4,
+            "cpu_model": "CPU",
+            "gpu_count": 0,
+            "gpu_model": "",
+            "longitude": 0.0,
+            "latitude": 0.0,
+            "region": "EU",
+            "provider": "AWS",
+            "ram_total_size": 16.0,
+            "tracking_mode": "machine",
+        }
+
+        with patch(
+            "codecarbon.output_methods.http.ApiClient._create_run"
+        ) as mock_create_run:
+            api_output = CodeCarbonAPIOutput(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                api_key=self.api_key,
+                conf=conf,
+            )
+            api_output.api.run_id = None
+
+            def create_run(experiment_id):
+                api_output.api.run_id = "run-created"
+                return "run-created"
+
+            mock_create_run.side_effect = create_run
+            api_output.live_out(None, self.emissions_data)
+
+        mock_create_run.assert_called_once_with("exp-1")
+        self.assertEqual(api_output.api.run_id, "run-created")
+        self.assertEqual(api_output.run_id, "run-created")
+
     @patch("codecarbon.output_methods.http.logger.error")
     def test_codecarbon_live_out_api_call_failure(self, mock_logger):
         self.mock_add_emission.side_effect = Exception("Test exception")

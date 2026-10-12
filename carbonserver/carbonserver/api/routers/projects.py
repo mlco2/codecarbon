@@ -20,8 +20,6 @@ PROJECTS_ROUTER_TAGS = ["Projects"]
 
 router = APIRouter()
 
-projects_temp_db = []
-
 
 @router.post(
     "/projects",
@@ -35,8 +33,6 @@ def add_project(
     auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
     project_service=Depends(Provide[ServerContainer.project_service]),
 ) -> Project:
-    print("Entering router")
-    print(auth_user)
     return project_service.add_project(project, auth_user.db_user)
 
 
@@ -92,7 +88,7 @@ def read_project_detailed_sums(
     project_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     project_global_sum_usecase: ProjectSumsUsecase = Depends(
         Provide[ServerContainer.project_sums_usecase]
     ),
@@ -104,7 +100,7 @@ def read_project_detailed_sums(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return project_global_sum_usecase.compute_detailed_sum(
-        project_id, start_date, end_date
+        project_id, start_date, end_date, user=auth_user.db_user
     )
 
 

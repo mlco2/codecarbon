@@ -15,4 +15,5 @@ pip install -r examples/requirements-examples.txt
 * [mnist-comet.py](mnist-comet.py): Using `CO2Tracker` with [`Comet`](https://www.comet.ml/site) for automatic experiment and emissions tracking.
 * [api_call_demo.py](api_call_demo.py): Simplest demo to send computer emissions to CodeCarbon API.
 * [api_call_debug.py](api_call_debug.py): Script to send computer emissions to CodeCarbon API. Made for debugging: debug log and send data every 20 seconds.
+* [emi_channels.py](emi_channels.py): Print every channel exposed by the Windows Energy Meter Interface and the power each of them reports, to debug CPU power measurement on Windows.
 * And many more in the [examples](../examples) folder.

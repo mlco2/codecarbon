@@ -1,5 +1,5 @@
 """
-End-to-end auth flow against a running API using Fief + fastapi-oidc.
+End-to-end auth flow against a running API using Fief.
 
 Required environment variables (test is skipped if any is missing):
     CODECARBON_API_URL        Base API URL (e.g. https://api.dev/codecarbon/api)

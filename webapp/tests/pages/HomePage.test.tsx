@@ -23,7 +23,6 @@ import { SWRConfig } from "swr";
 beforeEach(() => {
     navigateMock.mockReset();
     fetcherMock.mockReset();
-    localStorage.clear();
 });
 
 function renderWithSwr(node: React.ReactNode) {
@@ -45,8 +44,6 @@ describe("HomePage", () => {
         await waitFor(() =>
             expect(navigateMock).toHaveBeenCalledWith("/org-99"),
         );
-        expect(localStorage.getItem("organizationId")).toBe("org-99");
-        expect(localStorage.getItem("organizationName")).toBe("Acme");
     });
 
     it("shows the get-started card when the user has no organizations", async () => {

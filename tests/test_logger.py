@@ -29,7 +29,7 @@ class TestSetLoggerFormat(unittest.TestCase):
             set_logger_format()
 
             file_handlers = [
-                h for h in logger.handlers if isinstance(h, logging.FileHandler)
+                h for h in logger.handlers if type(h) is logging.FileHandler
             ]
             self.assertEqual(
                 len(file_handlers),
