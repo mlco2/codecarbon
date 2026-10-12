@@ -37,6 +37,7 @@ from codecarbon.output_methods.emissions_data import EmissionsData
 
 if TYPE_CHECKING:
     from codecarbon.external.geography import CloudMetadata, GeoMetadata
+    from codecarbon.output_methods.boamps import BoAmpsOutput
     from codecarbon.output_methods.logger import LoggerOutput
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
@@ -697,6 +698,8 @@ class BaseEmissionsTracker(ABC):
         BoAmps context. Falls back to a bare BoAmpsOutput when no metadata is provided.
         """
         metadata = getattr(self, "_metadata", None)
+
+        from codecarbon.output_methods.boamps import BoAmpsOutput
 
         if isinstance(metadata, str) and metadata:
             try:
