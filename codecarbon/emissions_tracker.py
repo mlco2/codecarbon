@@ -640,13 +640,14 @@ class BaseEmissionsTracker(ABC):
 
         if OutputMethod.LOGGER in methods:
             if self._logging_logger is None:
-                raise ValueError(
+                logger.warning(
                     "OutputMethod.LOGGER was requested but no `logging_logger`"
-                    " was provided. Unlike other output methods, LOGGER wraps"
-                    " a logging.Logger instance you supply yourself: pass"
-                    " `logging_logger=LoggerOutput(...)` to EmissionsTracker."
+                    " was provided, so the logger output is skipped. Pass"
+                    " `logging_logger=LoggerOutput(...)` to EmissionsTracker"
+                    " to enable it."
                 )
-            self._output_handlers.append(self._logging_logger)
+            else:
+                self._output_handlers.append(self._logging_logger)
 
         if self._emissions_endpoint:
             self._output_handlers.append(HTTPOutput(self._emissions_endpoint))

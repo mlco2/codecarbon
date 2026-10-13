@@ -421,7 +421,6 @@ class TestCarbonTracker(unittest.TestCase):
                 output_handlers=[],
                 save_to_file=True,
                 save_to_logger=True,
-                logging_logger=LoggerOutput(logging.getLogger("test_save_to_flags")),
             )
 
         self.assertIn(OutputMethod.CSV, tracker._output_methods)
@@ -1102,8 +1101,10 @@ class TestCarbonTracker(unittest.TestCase):
                 scheduler_warning_found, "Expected scheduler warning was not found"
             )
 
-    def test_logger_output_raises_without_logging_logger(
+    @mock.patch("codecarbon.emissions_tracker.logger")
+    def test_logger_output_warns_and_skips_without_logging_logger(
         self,
+        mock_logger,
         mock_cli_setup,
         mock_log_values,
         mocked_get_gpu_details,
@@ -1112,11 +1113,14 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        with self.assertRaises(ValueError):
-            EmissionsTracker(
-                project_name=self.project_name,
-                output_methods=["logger"],
-            )
+        tracker = EmissionsTracker(
+            project_name=self.project_name,
+            output_methods=["logger"],
+        )
+
+        self.assertNotIn(None, tracker._output_handlers)
+        warnings = [str(c.args[0]) for c in mock_logger.warning.call_args_list]
+        self.assertTrue(any("logging_logger" in w for w in warnings))
 
     def test_logger_output_succeeds_with_logging_logger(
         self,
