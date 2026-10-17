@@ -116,7 +116,7 @@ class GPU(BaseHardware):
             self.devices.start()
 
     def monitor_power(self) -> None:
-        self.devices.sample_power()
+        self.devices.sample_power(gpu_ids=self._get_gpu_ids())
 
     def measure_power_and_energy(
         self, last_duration: float, gpu_ids: Iterable[int] = None

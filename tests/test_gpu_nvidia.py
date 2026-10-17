@@ -521,6 +521,24 @@ class TestGpu(FakeGPUEnv):
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
 
+    def test_gpu_sample_power_only_reads_tracked_gpus(self):
+        import pynvml
+
+        from codecarbon.external.hardware import GPU
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("Not Supported")
+
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        try:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            gpu = GPU.from_utils(gpu_ids=[1])
+            gpu.monitor_power()
+            assert gpu.devices.devices[0]._power_samples == []
+            assert len(gpu.devices.devices[1]._power_samples) == 1
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
     def test_gpu_sample_power_failure_does_not_raise(self):
         from codecarbon.core.gpu import AllGPUDevices
 
