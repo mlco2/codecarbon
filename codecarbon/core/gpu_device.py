@@ -70,15 +70,21 @@ class GPUDevice:
         self._use_power_fallback = self.last_energy is None
 
     def _get_energy_kwh(self) -> Optional[Energy]:
+        # Set by backends when the counter cannot be read, for the warnings.
+        self._counter_error: Optional[str] = None
         total_energy_consumption = self._get_total_energy_consumption()
         if total_energy_consumption is None:
             return None
         return Energy.from_millijoules(total_energy_consumption)
 
+    def _counter_error_details(self) -> str:
+        return f" Cause: {self._counter_error}." if self._counter_error else ""
+
     def _warn_counter_read_failure(self) -> None:
         logger.warning(
             f"Failed to read the energy counter of GPU {self.gpu_index}, "
             "averaging its power usage until the counter is available again."
+            + self._counter_error_details()
         )
 
     def _read_power_watts(self) -> Optional[float]:
@@ -164,6 +170,7 @@ class GPUDevice:
                         f"GPU {self.gpu_index} does not provide a total energy "
                         "consumption counter, falling back to averaging its "
                         "power usage. Measurements will be less accurate."
+                        + self._counter_error_details()
                     )
             elif not self._use_power_fallback:
                 self._warn_counter_read_failure()

@@ -129,6 +129,7 @@ class AMDGPUDevice(GPUDevice):
             elif "power" in energy_count:
                 energy_key = "power"
             if energy_key is None:
+                self._counter_error = "amdsmi_get_energy_count has no energy counter"
                 logger.debug(
                     f"Neither 'energy_accumulator' nor 'power' found in energy_count: {energy_count}"
                 )
@@ -144,13 +145,15 @@ class AMDGPUDevice(GPUDevice):
                 if counter_value == 0:
                     if getattr(self, "_known_zero_energy_counter", False):
                         return 0
+                    self._counter_error = "energy counter reads 0"
                     return None
 
             # energy_in_µJ = counter_value * resolution_in_µJ
             # Divide by 1000 to convert µJ to mJ
             energy_mj = counter_value * counter_resolution_uj / 1000
             return energy_mj
-        except Exception:
+        except Exception as e:
+            self._counter_error = repr(e)
             logger.debug(
                 "Failed to retrieve AMD GPU total energy consumption", exc_info=True
             )

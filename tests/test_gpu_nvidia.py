@@ -600,6 +600,29 @@ class TestGpu(FakeGPUEnv):
         after = alldevices.get_delta(Time.from_seconds(3600))
         assert after[0]["delta_energy_consumption"].kWh == pytest.approx(0.010)
 
+    def test_gpu_counter_failure_warning_gives_the_cause(self):
+        import pynvml
+
+        from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Time
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("Insufficient Permissions")
+
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        try:
+            alldevices = AllGPUDevices()
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            with mock.patch("codecarbon.core.gpu_device.logger.warning") as warning:
+                alldevices.get_delta(Time.from_seconds(15))
+            messages = [call.args[0] for call in warning.call_args_list]
+            assert any(
+                "counter of GPU 0" in m and "Insufficient Permissions" in m
+                for m in messages
+            )
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
     def test_gpu_power_failure_warns_once(self):
         import pynvml
 
