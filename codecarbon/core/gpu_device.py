@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.external.logger import logger
@@ -33,27 +33,25 @@ class GPUDevice:
     # energy counter
     last_energy: Optional[Energy] = field(default_factory=lambda: Energy(0))
 
-    # Plain class attributes (not dataclass fields) so that instances built
-    # without __init__ (e.g. ``__new__`` in tests) still have sane defaults.
-    # True while delta() integrates power instead of reading the counter.
-    _use_power_fallback = False
-    _warned_no_counter = False
-    _warned_power_failure = False
-    _warned_zero_power = False
-    # Energy reported by the power fallback since ``last_energy`` was read,
-    # subtracted once the counter comes back so nothing is counted twice.
-    _fallback_energy_since_counter = Energy(0)
-
     def start(self) -> None:
         self.last_energy = self._get_energy_kwh()
         self._fallback_energy_since_counter = Energy(0)
         self._power_samples = []
 
     def __post_init__(self) -> None:
+        self._warned_no_counter = False
+        self._warned_power_failure = False
+        self._warned_zero_power = False
+        # Power readings taken by sample_power() during the current interval.
+        self._power_samples: List[float] = []
+        # Energy reported by the power fallback since ``last_energy`` was read,
+        # subtracted once the counter comes back so nothing is counted twice.
+        self._fallback_energy_since_counter = Energy(0)
         # Static details first: subclasses set flags there (e.g. AMD dual-GCD)
         # that the energy read depends on.
         self._init_static_details()
         self.last_energy = self._get_energy_kwh()
+        # True while delta() integrates power instead of reading the counter.
         self._use_power_fallback = self.last_energy is None
 
     def _get_energy_kwh(self) -> Optional[Energy]:
@@ -93,14 +91,12 @@ class GPUDevice:
             return
         watts = self._read_power_watts()
         if watts is not None:
-            if getattr(self, "_power_samples", None) is None:
-                self._power_samples = []
             self._power_samples.append(watts)
 
     def _delta_from_power(self, duration: Time) -> None:
         # Swap the list rather than clearing it: sample_power() runs in
         # another thread.
-        samples = getattr(self, "_power_samples", None) or []
+        samples = self._power_samples
         self._power_samples = []
         if not samples:
             watts = self._read_power_watts()

@@ -416,7 +416,7 @@ class TestGpu(FakeGPUEnv):
 
         alldevices = AllGPUDevices()
         alldevices.sample_power()
-        assert not getattr(alldevices.devices[0], "_power_samples", None)
+        assert alldevices.devices[0]._power_samples == []
 
     def test_gpu_sample_power_failure_does_not_raise(self):
         from codecarbon.core.gpu import AllGPUDevices
