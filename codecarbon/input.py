@@ -62,6 +62,11 @@ def _load_static_data() -> None:
     with open(path) as f:
         _CACHE["nordic_country_energy_mix"] = json.load(f)
 
+    # China provincial emission factors - used for emissions calculations
+    path = _get_resource_path("data/private_infra/2023/china_provincial_emissions.json")
+    with open(path) as f:
+        _CACHE["china_provincial_emissions"] = json.load(f)
+
 
 _STATIC_DATA_LOADED = False
 
@@ -210,6 +215,14 @@ class DataSource:
         """
         _ensure_static_data_loaded()
         return _CACHE["nordic_country_energy_mix"]
+
+    def get_china_provincial_emissions_data(self) -> Dict:
+        """
+        Returns China provincial emission factors (MEE/NBS, 2023).
+        Data is loaded on first access and cached for all tracker instances.
+        """
+        _ensure_static_data_loaded()
+        return _CACHE["china_provincial_emissions"]
 
 
 class DataSourceException(Exception):

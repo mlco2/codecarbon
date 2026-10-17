@@ -375,3 +375,146 @@ class TestEmissions(unittest.TestCase):
 
         # THEN
         self.assertIsNone(emissions)
+
+    def _china_geo(self, region, country_iso_code="CHN", country_name="China"):
+        return GeoMetadata(
+            country_iso_code=country_iso_code, country_name=country_name, region=region
+        )
+
+    def test_get_emissions_PRIVATE_INFRA_CHINA_PROVINCE(self):
+        # WHEN
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kWh=2.0), self._china_geo("Sichuan")
+        )
+
+        # THEN
+        # Sichuan: 0.1564 kgCO2/kWh in the 2023 MEE/NBS table
+        assert isinstance(emissions, float)
+        self.assertAlmostEqual(emissions, 2.0 * 0.1564, places=6)
+
+    def test_china_province_factors_match_official_table(self):
+        data = self._data_source.get_china_provincial_emissions_data()["data"]
+
+        self.assertEqual(len(data), 30)
+        self.assertNotIn("CN-XZ", data)
+        self.assertAlmostEqual(data["CN-GD"]["emission_factor"], 441.9)
+        self.assertAlmostEqual(data["CN-YN"]["emission_factor"], 133.3)
+        self.assertAlmostEqual(data["CN-TJ"]["emission_factor"], 679.6)
+
+    def test_china_province_name_variants(self):
+        expected_by_region = {
+            "beijing": "CN-BJ",
+            "Shanghai": "CN-SH",
+            "TIANJIN": "CN-TJ",
+            "Chongqing": "CN-CQ",
+            "Inner Mongolia": "CN-NM",
+            "inner mongolia autonomous region": "CN-NM",
+            "Nei Mongol": "CN-NM",
+            "Ningxia": "CN-NX",
+            "Ningxia Hui": "CN-NX",
+            "Ningxia Hui Autonomous Region": "CN-NX",
+            "Xinjiang": "CN-XJ",
+            "Xinjiang Uygur": "CN-XJ",
+            "Xinjiang Uyghur Autonomous Region": "CN-XJ",
+            "Guangxi": "CN-GX",
+            "Guangxi Zhuang": "CN-GX",
+            "  Guangdong  Province ": "CN-GD",
+            "Shaanxi": "CN-SN",
+            "Shanxi": "CN-SX",
+        }
+        data = self._data_source.get_china_provincial_emissions_data()["data"]
+        energy = Energy.from_energy(kWh=1.0)
+
+        for region, key in expected_by_region.items():
+            with self.subTest(region=region):
+                emissions = self._emissions.get_private_infra_emissions(
+                    energy, self._china_geo(region)
+                )
+                self.assertAlmostEqual(
+                    emissions, data[key]["emission_factor"] / 1000, places=6
+                )
+
+    def test_china_every_province_resolves_to_its_own_factor(self):
+        data = self._data_source.get_china_provincial_emissions_data()["data"]
+        energy = Energy.from_energy(kWh=1.0)
+
+        for key, province in data.items():
+            with self.subTest(province=key):
+                emissions = self._emissions.get_private_infra_emissions(
+                    energy, self._china_geo(province["description"])
+                )
+                self.assertAlmostEqual(
+                    emissions, province["emission_factor"] / 1000, places=6
+                )
+
+    def test_china_province_names_are_unique(self):
+        data = self._data_source.get_china_provincial_emissions_data()["data"]
+        names = [name for province in data.values() for name in province["names"]]
+
+        self.assertEqual(len(names), len(set(names)))
+
+    def test_china_unpublished_or_unknown_regions_fall_back_to_national_value(self):
+        energy = Energy.from_energy(kWh=1.0)
+        national = self._emissions.get_country_emissions(energy, self._china_geo(None))
+
+        for region in [None, "Tibet", "Xizang", "Hong Kong", "Macao", "Taiwan", "xyz"]:
+            with self.subTest(region=region):
+                emissions = self._emissions.get_private_infra_emissions(
+                    energy, self._china_geo(region)
+                )
+                self.assertAlmostEqual(emissions, national, places=6)
+
+    def test_china_fallback_does_not_log_warnings_or_errors(self):
+        with (
+            patch("codecarbon.core.emissions.logger.error") as log_error,
+            patch("codecarbon.core.emissions.logger.warning") as log_warning,
+        ):
+            self._emissions.get_private_infra_emissions(
+                Energy.from_energy(kWh=1.0), self._china_geo("Tibet")
+            )
+
+        log_error.assert_not_called()
+        log_warning.assert_not_called()
+
+    def test_china_province_name_outside_china_is_not_used(self):
+        energy = Energy.from_energy(kWh=1.0)
+        for country_iso_code, country_name in [
+            ("HKG", "Hong Kong"),
+            ("TWN", "Taiwan"),
+            ("MAC", "Macao"),
+            ("FRA", "France"),
+        ]:
+            with self.subTest(country_iso_code=country_iso_code):
+                geo = self._china_geo("Guangdong", country_iso_code, country_name)
+                emissions = self._emissions.get_private_infra_emissions(energy, geo)
+                self.assertAlmostEqual(
+                    emissions,
+                    self._emissions.get_country_emissions(energy, geo),
+                    places=6,
+                )
+
+    def test_china_province_data_error_falls_back_to_national_value(self):
+        energy = Energy.from_energy(kWh=1.0)
+        national = self._emissions.get_country_emissions(energy, self._china_geo(None))
+
+        with patch.object(
+            self._data_source,
+            "get_china_provincial_emissions_data",
+            side_effect=OSError("missing"),
+        ):
+            emissions = self._emissions.get_private_infra_emissions(
+                energy, self._china_geo("Sichuan")
+            )
+
+        self.assertAlmostEqual(emissions, national, places=6)
+
+    def test_china_forced_intensity_takes_precedence(self):
+        emissions_calculator = Emissions(
+            self._data_source, force_carbon_intensity_g_co2e_kwh=100.0
+        )
+
+        emissions = emissions_calculator.get_private_infra_emissions(
+            Energy.from_energy(kWh=1.0), self._china_geo("Sichuan")
+        )
+
+        self.assertAlmostEqual(emissions, 0.1, places=6)
