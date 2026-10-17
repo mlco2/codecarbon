@@ -418,6 +418,47 @@ class TestGpu(FakeGPUEnv):
         alldevices.sample_power()
         assert not getattr(alldevices.devices[0], "_power_samples", None)
 
+    def test_gpu_sample_power_failure_does_not_raise(self):
+        from codecarbon.core.gpu import AllGPUDevices
+
+        alldevices = AllGPUDevices()
+        with mock.patch.object(
+            alldevices.devices[0], "sample_power", side_effect=RuntimeError
+        ):
+            alldevices.sample_power()
+
+    def test_gpu_counter_appearing_after_start_sets_a_baseline(self):
+        """
+        A counter that was unavailable at start has no baseline: its first
+        reading must not be billed as energy, power is used for that interval.
+        """
+        import pynvml
+
+        from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Time
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("Not Supported")
+
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        try:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            alldevices = AllGPUDevices()
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
+            self.DETAILS["handle_0"]["total_energy_consumption"] = 500_000_000
+            first = alldevices.get_delta(Time.from_seconds(3600))
+            assert first[0]["delta_energy_consumption"].kWh == pytest.approx(0.026)
+
+            # The counter is used from the baseline set by the first reading.
+            self.DETAILS["handle_0"]["total_energy_consumption"] = (
+                500_000_000 + 36_000_000
+            )
+            after = alldevices.get_delta(Time.from_seconds(3600))
+            assert after[0]["delta_energy_consumption"].kWh == pytest.approx(0.010)
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
     def test_gpu_counter_going_backwards_falls_back_to_power(self):
         """
         A counter reset (e.g. driver reload) must not produce negative energy.
