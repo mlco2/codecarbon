@@ -577,6 +577,36 @@ class TestGpu(FakeGPUEnv):
 
         assert devices_info[0]["delta_energy_consumption"].kWh == pytest.approx(0.010)
 
+    def test_start_with_transient_counter_failure_samples_power(self):
+        """
+        A counter read failing during start() switches to the power fallback
+        right away, and is not reported as a device without counter.
+        """
+        import pynvml
+
+        from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Time
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("Not Supported")
+
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        try:
+            alldevices = AllGPUDevices()
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            with mock.patch("codecarbon.core.gpu_device.logger.warning") as warning:
+                alldevices.start()
+                self.DETAILS["handle_0"]["power_usage"] = 100000
+                alldevices.sample_power()
+                devices_info = alldevices.get_delta(Time.from_seconds(3600))
+
+            assert devices_info[0]["power_usage"].W == pytest.approx(100)
+            messages = [call.args[0] for call in warning.call_args_list]
+            assert not [m for m in messages if "does not provide" in m]
+            assert len([m for m in messages if "counter of GPU 0" in m]) == 1
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
     def test_gpu_metadata_total_power(self):
         """
         Get the total power of all GPUs

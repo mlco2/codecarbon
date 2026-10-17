@@ -35,6 +35,11 @@ class GPUDevice:
 
     def start(self) -> None:
         self.last_energy = self._get_energy_kwh()
+        if self.last_energy is not None:
+            self._has_counter = True
+        elif self._has_counter and not self._use_power_fallback:
+            self._warn_counter_read_failure()
+        self._use_power_fallback = self.last_energy is None
         self._fallback_energy_since_counter = Energy(0)
         self._power_samples = []
 
@@ -51,6 +56,9 @@ class GPUDevice:
         # that the energy read depends on.
         self._init_static_details()
         self.last_energy = self._get_energy_kwh()
+        # Whether the energy counter has ever been read successfully, to tell
+        # a device without counter from a temporary read failure.
+        self._has_counter = self.last_energy is not None
         # True while delta() integrates power instead of reading the counter.
         self._use_power_fallback = self.last_energy is None
 
@@ -59,6 +67,12 @@ class GPUDevice:
         if total_energy_consumption is None:
             return None
         return Energy.from_millijoules(total_energy_consumption)
+
+    def _warn_counter_read_failure(self) -> None:
+        logger.warning(
+            f"Failed to read the energy counter of GPU {self.gpu_index}, "
+            "averaging its power usage until the counter is available again."
+        )
 
     def _read_power_watts(self) -> Optional[float]:
         try:
@@ -122,7 +136,7 @@ class GPUDevice:
         """
         energy = self._get_energy_kwh()
         if energy is None:
-            if self.last_energy is None:
+            if not self._has_counter:
                 if not self._warned_no_counter:
                     self._warned_no_counter = True
                     logger.warning(
@@ -131,15 +145,13 @@ class GPUDevice:
                         "power usage. Measurements will be less accurate."
                     )
             elif not self._use_power_fallback:
-                logger.warning(
-                    f"Failed to read the energy counter of GPU {self.gpu_index}, "
-                    "averaging its power usage until the counter is available again."
-                )
+                self._warn_counter_read_failure()
             # Keep the last good counter reading, so the energy consumed during
             # the outage is reconciled once the counter comes back.
             self._fall_back_to_power(duration)
         elif self.last_energy is None:
             # Counter appeared after starting without one: no baseline yet.
+            self._has_counter = True
             self._fall_back_to_power(duration)
             self.last_energy = energy
             self._fallback_energy_since_counter = Energy(0)
