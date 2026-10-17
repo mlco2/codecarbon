@@ -14,8 +14,15 @@ import sys
 from functools import lru_cache
 from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
-import psutil
 from rapidfuzz import fuzz, process, utils
+
+try:
+    import psutil
+
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    psutil = None
 
 from codecarbon.core.rapl import (
     SEQUENTIAL_READ_TOLERANCE_KWH,
@@ -226,6 +233,9 @@ def is_rapl_available(rapl_dir: Optional[str] = None) -> bool:
 
 
 def is_psutil_available():
+    if not PSUTIL_AVAILABLE:
+        logger.debug("psutil module is not available.")
+        return False
     try:
         cpu_times = psutil.cpu_times()
 

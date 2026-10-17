@@ -8,7 +8,13 @@ from os.path import expandvars
 from pathlib import Path
 from typing import Optional, Union
 
-import psutil
+try:
+    import psutil
+
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    psutil = None
 
 from codecarbon.external.logger import logger
 
@@ -147,6 +153,12 @@ def _windows_get_physical_sockets():
 
 
 def count_cpus() -> int:
+    if not PSUTIL_AVAILABLE:
+        logger.warning("psutil not available, using fallback CPU count detection")
+        # Fallback to using os.cpu_count() or physical CPU count
+        cpu_count = os.cpu_count()
+        return cpu_count if cpu_count is not None else 1
+
     if SLURM_JOB_ID is None:
         return psutil.cpu_count()
 

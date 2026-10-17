@@ -166,16 +166,37 @@ class ResourceTracker:
         self.cpu_tracker = "TDP constant"
         model = tdp.model
 
-        if (max_power is None) and self.tracker._force_cpu_power:
+        if self.tracker._force_cpu_power is not None:
             user_input_power = self.tracker._force_cpu_power
             logger.debug(f"Using user input TDP: {user_input_power} W")
             self.cpu_tracker = "User Input TDP constant"
-            max_power = user_input_power
+            if max_power is None:
+                max_power = user_input_power
 
         logger.info(f"CPU Model on constant consumption mode: {model}")
         self.tracker._conf["cpu_model"] = model
 
-        if tdp:
+        # Check for forced constant mode first
+        if self.tracker._conf.get("force_mode_constant", False):
+            logger.info(
+                "Force constant mode requested - bypassing psutil and using constant CPU power"
+            )
+            model = tdp.model
+            if self.tracker._force_cpu_power is not None:
+                self.cpu_tracker = "User Input TDP constant"
+            else:
+                self.cpu_tracker = "TDP constant"
+            logger.info(f"CPU Model on forced constant consumption mode: {model}")
+            self.tracker._conf["cpu_model"] = model
+            hardware_cpu = CPU.from_utils(
+                self.tracker._output_dir, "constant", model, max_power
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            return
+
+        if self.tracker._conf.get("force_mode_cpu_load", False) and (
+            tdp.tdp is not None or self.tracker._force_cpu_power is not None
+        ):
             if cpu.is_psutil_available():
                 logger.warning(
                     "No CPU tracking mode found. Falling back on CPU load mode."
@@ -195,7 +216,8 @@ class ResourceTracker:
                 hardware_cpu = CPU.from_utils(
                     self.tracker._output_dir, "constant", model, max_power
                 )
-                self.cpu_tracker = "global constant"
+                if max_power is None:
+                    self.cpu_tracker = "global constant"
             self.tracker._hardware.append(hardware_cpu)
         else:
             if cpu.is_psutil_available():
@@ -211,11 +233,19 @@ class ResourceTracker:
                 )
                 self.cpu_tracker = MODE_CPU_LOAD
             else:
-                logger.warning(
-                    "Failed to match CPU TDP constant. Falling back on a global constant."
-                )
-                self.cpu_tracker = "global constant"
-                hardware_cpu = CPU.from_utils(self.tracker._output_dir, "constant")
+                if max_power is None:
+                    logger.warning(
+                        "Failed to match CPU TDP constant. Falling back on a global constant."
+                    )
+                    self.cpu_tracker = "global constant"
+                    hardware_cpu = CPU.from_utils(self.tracker._output_dir, "constant")
+                else:
+                    logger.warning(
+                        "No CPU tracking mode found. Falling back on CPU constant mode."
+                    )
+                    hardware_cpu = CPU.from_utils(
+                        self.tracker._output_dir, "constant", model, max_power
+                    )
             self.tracker._hardware.append(hardware_cpu)
 
     def _try_platform_cpu_backend(self) -> bool:
@@ -258,6 +288,27 @@ class ResourceTracker:
             )
             self.cpu_tracker = "User Input TDP constant"
             max_power = self.tracker._force_cpu_power
+
+        # Force constant mode takes precedence over every other CPU tracking backend.
+        if self.tracker._conf.get("force_mode_constant", False):
+            if tdp is None:
+                tdp = get_cached_tdp(cpu)
+            if max_power is None:
+                max_power = tdp.tdp * cpu_number if tdp.tdp is not None else None
+
+            logger.info(
+                "Force constant mode requested - bypassing dynamic CPU power backends"
+            )
+            if self.tracker._force_cpu_power is not None:
+                self.cpu_tracker = "User Input TDP constant"
+            else:
+                self.cpu_tracker = "TDP constant"
+            self.tracker._conf["cpu_model"] = tdp.model
+            hardware_cpu = CPU.from_utils(
+                self.tracker._output_dir, "constant", tdp.model, max_power
+            )
+            self.tracker._hardware.append(hardware_cpu)
+            return
 
         # Try force CPU load mode if requested
         if self.tracker._conf.get("force_mode_cpu_load", False):
