@@ -1699,6 +1699,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Carbon Intensity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#regional-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Regional data
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2258,6 +2275,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Carbon Intensity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#regional-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Regional data
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2565,6 +2599,53 @@ per cloud provider (
 or per country (
 <a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json">here</a>
 ).</p>
+<h3 id="regional-data">Regional data<a class="headerlink" href="#regional-data" title="Permanent link">&para;</a></h3>
+<p>For some countries, CodeCarbon has sub-national carbon intensity data
+and uses it when the geolocation service (or the <code>region</code> parameter)
+reports a region in one of them:</p>
+<table>
+<thead>
+<tr>
+<th>Country</th>
+<th>Granularity</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>United States</td>
+<td>State</td>
+<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json">Emissions per state, 2016</a></td>
+</tr>
+<tr>
+<td>Canada</td>
+<td>Province</td>
+<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json">Energy mix per province, 2023</a></td>
+</tr>
+<tr>
+<td>Sweden, Norway, Finland</td>
+<td>Electricity bidding zone (SE1-SE4, NO1-NO5, FI)</td>
+<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/nordic_emissions.json">ENTSO-E generation mix, 2025</a></td>
+</tr>
+<tr>
+<td>China</td>
+<td>Province (30 provinces, municipalities and autonomous regions)</td>
+<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/china_provincial_emissions.json">MEE/NBS Announcement 2025 No. 47, 2023 factors</a></td>
+</tr>
+</tbody>
+</table>
+<p>For China, the values are the official provincial average electricity
+CO₂ emission factors published by the Ministry of Ecology and
+Environment and the National Bureau of Statistics
+(<a href="https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html">source</a>).
+They range from 133 gCO₂/kWh in Yunnan to 680 gCO₂/kWh in Tianjin,
+whereas the national value is 582 gCO₂eq/kWh. Note that these official
+factors count CO₂ only (no other greenhouse gases, no lifecycle
+emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
+Kong, Macao and Taiwan are not in the official table and use the
+country value.</p>
+<p>When a region is not found in the regional data, CodeCarbon falls back
+to the country value.</p>
 <p>If we don't have the global carbon intensity or electricity of a
 country, but we have its electricity mix, we used to compute the carbon
 intensity of electricity using this table:</p>
