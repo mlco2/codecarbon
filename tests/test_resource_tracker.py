@@ -337,7 +337,8 @@ def test_try_platform_cpu_backend_mac_intel_uses_power_gadget():
     mock_power_gadget.assert_called_once_with()
 
 
-def test_try_platform_cpu_backend_mac_intel_falls_back_to_powermetrics():
+def test_try_platform_cpu_backend_mac_intel_does_not_use_powermetrics():
+    """Intel powermetrics output has no CPU power line: every sample would be 0."""
     tracker = make_tracker()
     resource_tracker = ResourceTracker(tracker)
 
@@ -360,9 +361,9 @@ def test_try_platform_cpu_backend_mac_intel_falls_back_to_powermetrics():
         ),
         patch.object(resource_tracker, "_setup_powermetrics") as mock_powermetrics,
     ):
-        assert resource_tracker._try_platform_cpu_backend() is True
+        assert resource_tracker._try_platform_cpu_backend() is False
 
-    mock_powermetrics.assert_called_once_with()
+    mock_powermetrics.assert_not_called()
 
 
 def test_set_cpu_tracking_mac_arm_falls_back_to_powermetrics_when_cpu_load_unavailable():
