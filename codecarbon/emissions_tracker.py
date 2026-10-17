@@ -796,8 +796,9 @@ class BaseEmissionsTracker(ABC):
             hardware.start()
 
         self._scheduler.start()
-        if self._output_handlers:
-            self._scheduler_monitor_power.start()
+        # Always started: it also samples power for hardware without an
+        # energy counter, needed even when nothing is written out.
+        self._scheduler_monitor_power.start()
         self._measure_power_and_energy()
 
     def start_task(self, task_name=None) -> None:
@@ -873,10 +874,13 @@ class BaseEmissionsTracker(ABC):
         Restart the periodic scheduler if, and only if, start_task paused a running
         one. No-op for pure start_task/stop_task usage, and when called from stop()
         where the scheduler has already been released.
+        The 1s monitoring scheduler, stopped by stop_task, is restarted with it.
         """
         if self._scheduler is not None and self._scheduler_paused_by_task:
             self._scheduler_paused_by_task = False
             self._scheduler.start()
+            if self._scheduler_monitor_power is not None:
+                self._scheduler_monitor_power.start()
 
     def stop_task(self, task_name: str = None) -> EmissionsData:
         """
@@ -1237,7 +1241,7 @@ class BaseEmissionsTracker(ABC):
         This method is called every 1 second. Even if we are in Task mode.
         """
         for hardware in self._hardware:
-            if isinstance(hardware, CPU):
+            if isinstance(hardware, (CPU, GPU)):
                 hardware.monitor_power()
 
         # Collect CPU and RAM utilization metrics

@@ -1090,6 +1090,33 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertFalse(tracker._scheduler._stopped)
         tracker.stop()
 
+    def test_power_monitor_keeps_running_around_tasks(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # The 1s monitor samples power for hardware without an energy counter:
+        # it must run even without output handlers, and survive a task.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start()
+        self.assertFalse(tracker._scheduler_monitor_power._stopped)
+        tracker.start_task("task-in-run")
+        tracker.stop_task()
+        self.assertFalse(tracker._scheduler_monitor_power._stopped)
+        tracker.stop()
+
+        # Pure start_task/stop_task usage leaves nothing running.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start_task("task-only")
+        tracker.stop_task()
+        self.assertTrue(tracker._scheduler_monitor_power._stopped)
+        tracker.stop()
+
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
     @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
     @mock.patch(

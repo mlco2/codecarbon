@@ -28,7 +28,7 @@ class CloudMetadata:
             """
             projects/705208488469/zones/us-central1-a -> us-central1
             """
-            google_region_regex = r"[a-z]+-[a-z]+[0-9]"
+            google_region_regex = r"[a-z]+-[a-z]+[0-9]+"
             return re.search(google_region_regex, zone).group(0)
 
         extract_region_for_provider: Dict[str, Callable] = {
