@@ -20,7 +20,7 @@ At every measurement interval, CodeCarbon calculates the `energy_delta` by subtr
 Some GPUs do not expose an energy counter (pre-Volta NVIDIA cards, many virtualised or MIG GPUs, some AMD GPUs), or a read fails temporarily. In that case CodeCarbon logs a warning and falls back to the instantaneous power reading (`nvmlDeviceGetPowerUsage`, `amdsmi_get_power_info`):
 
 - While the fallback is active, power is sampled every second by the tracker's monitoring loop, and the energy of the interval is the **average of these samples** multiplied by the interval duration. This is less accurate than a hardware counter: changes in load between two samples are missed.
-- If the counter fails temporarily, the last good counter reading is kept. When the counter comes back, the energy it measured over the outage replaces the estimate, and only the difference is reported, so nothing is counted twice.
+- If the counter fails temporarily, the last good counter reading is kept. When the counter comes back, the energy it measured over the outage replaces the estimate, and only the difference is reported, so nothing is counted twice. An over-estimate is deducted from the following intervals, and the power reported for the recovered interval is the average over the whole outage.
 - If the counter goes backwards (driver reload, counter reset), the power reading is used for that interval and the counter is re-baselined.
 - If the GPU reports 0 W, or its power cannot be read either, a warning is logged once, since its energy will be under-reported.
 

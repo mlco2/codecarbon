@@ -409,9 +409,42 @@ class TestGpu(FakeGPUEnv):
             assert recovered[0]["delta_energy_consumption"].kWh == pytest.approx(
                 0.050, rel=1e-5
             )
-            assert recovered[0]["power_usage"].W == pytest.approx(50, rel=1e-5)
+            # Power is averaged over both hours covered by the counter delta.
+            assert recovered[0]["power_usage"].W == pytest.approx(38, rel=1e-5)
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
+    def test_gpu_counter_recovery_does_not_spike_power(self):
+        """
+        When the counter comes back after a long outage, the power must be
+        averaged over the outage instead of the last short interval.
+        """
+        import pynvml
+
+        from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Time
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("Not Supported")
+
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        original_power = pynvml.nvmlDeviceGetPowerUsage
+        try:
+            alldevices = AllGPUDevices()  # baseline read: 1000 mJ
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            pynvml.nvmlDeviceGetPowerUsage = raise_exception
+            for _ in range(40):
+                alldevices.get_delta(Time.from_seconds(15))
+
+            # 200 W drawn over the 600 s outage and the 15 s recovered interval.
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+            pynvml.nvmlDeviceGetPowerUsage = original_power
+            self.DETAILS["handle_0"]["total_energy_consumption"] = 1000 + 200 * 615_000
+            recovered = alldevices.get_delta(Time.from_seconds(15))
+            assert recovered[0]["power_usage"].W == pytest.approx(200, rel=1e-5)
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+            pynvml.nvmlDeviceGetPowerUsage = original_power
 
     def test_gpu_fallback_averages_sampled_power(self):
         """

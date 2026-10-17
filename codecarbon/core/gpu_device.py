@@ -41,6 +41,7 @@ class GPUDevice:
             self._warn_counter_read_failure()
         self._use_power_fallback = self.last_energy is None
         self._fallback_energy_since_counter = Energy(0)
+        self._fallback_seconds_since_counter = 0.0
         self._power_samples = []
 
     def __post_init__(self) -> None:
@@ -53,6 +54,7 @@ class GPUDevice:
         # fallback since ``last_energy`` was read), subtracted from the next
         # counter deltas so nothing is counted twice.
         self._fallback_energy_since_counter = Energy(0)
+        self._fallback_seconds_since_counter = 0.0
         # Static details first: subclasses set flags there (e.g. AMD dual-GCD)
         # that the energy read depends on.
         self._init_static_details()
@@ -130,6 +132,7 @@ class GPUDevice:
         self._use_power_fallback = True
         self._delta_from_power(duration)
         self._fallback_energy_since_counter += self.energy_delta
+        self._fallback_seconds_since_counter += duration.seconds
 
     def delta(self, duration: Time) -> dict:
         """
@@ -156,6 +159,7 @@ class GPUDevice:
             self._fall_back_to_power(duration)
             self.last_energy = energy
             self._fallback_energy_since_counter = Energy(0)
+            self._fallback_seconds_since_counter = 0.0
         elif energy.kWh < self.last_energy.kWh:
             logger.warning(
                 f"Energy counter of GPU {self.gpu_index} went backwards "
@@ -165,6 +169,7 @@ class GPUDevice:
             self._fall_back_to_power(duration)
             self.last_energy = energy
             self._fallback_energy_since_counter = Energy(0)
+            self._fallback_seconds_since_counter = 0.0
         else:
             if self._use_power_fallback:
                 logger.info(
@@ -179,9 +184,15 @@ class GPUDevice:
             counter_delta = energy.kWh - self.last_energy.kWh
             remaining = counter_delta - self._fallback_energy_since_counter.kWh
             self.energy_delta = Energy(max(remaining, 0.0))
-            self.power = Power.from_energy_delta_and_delay(self.energy_delta, duration)
+            # The counter delta spans the outage too: average the power over
+            # that whole span, not over the last interval only.
+            span = Time.from_seconds(
+                duration.seconds + self._fallback_seconds_since_counter
+            )
+            self.power = Power.from_energy_delta_and_delay(Energy(counter_delta), span)
             self.last_energy = energy
             self._fallback_energy_since_counter = Energy(max(-remaining, 0.0))
+            self._fallback_seconds_since_counter = 0.0
         return {
             "name": self._gpu_name,
             "uuid": self._uuid,
