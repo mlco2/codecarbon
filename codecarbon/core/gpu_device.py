@@ -49,8 +49,9 @@ class GPUDevice:
         self._warned_zero_power = False
         # Power readings taken by sample_power() during the current interval.
         self._power_samples: List[float] = []
-        # Energy reported by the power fallback since ``last_energy`` was read,
-        # subtracted once the counter comes back so nothing is counted twice.
+        # Energy already reported but not yet measured by the counter (power
+        # fallback since ``last_energy`` was read), subtracted from the next
+        # counter deltas so nothing is counted twice.
         self._fallback_energy_since_counter = Energy(0)
         # Static details first: subclasses set flags there (e.g. AMD dual-GCD)
         # that the energy read depends on.
@@ -173,12 +174,14 @@ class GPUDevice:
                 self._power_samples = []
             # The counter delta also covers any fallback intervals since the
             # last good reading: remove what those intervals already reported.
+            # If the fallback over-estimated, report nothing now and carry the
+            # excess forward, so it is deducted from the next intervals.
             counter_delta = energy.kWh - self.last_energy.kWh
-            fallback = self._fallback_energy_since_counter.kWh
-            self.energy_delta = Energy(max(counter_delta - fallback, 0.0))
+            remaining = counter_delta - self._fallback_energy_since_counter.kWh
+            self.energy_delta = Energy(max(remaining, 0.0))
             self.power = Power.from_energy_delta_and_delay(self.energy_delta, duration)
             self.last_energy = energy
-            self._fallback_energy_since_counter = Energy(0)
+            self._fallback_energy_since_counter = Energy(max(-remaining, 0.0))
         return {
             "name": self._gpu_name,
             "uuid": self._uuid,

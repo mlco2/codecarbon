@@ -341,6 +341,43 @@ class TestGpu(FakeGPUEnv):
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
 
+    def test_gpu_counter_recovery_corrects_fallback_over_estimate(self):
+        """
+        When the fallback reported more than the counter measured over the
+        outage, the excess is deducted from the following intervals.
+        """
+        import pynvml
+
+        from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Time
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("Not Supported")
+
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        try:
+            alldevices = AllGPUDevices()  # baseline read: 1000 mJ
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            fallback = alldevices.get_delta(Time.from_seconds(3600))
+            assert fallback[0]["delta_energy_consumption"].kWh == pytest.approx(0.026)
+
+            # Only 0.016 kWh were really consumed: 0.010 kWh over-reported.
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+            self.DETAILS["handle_0"]["total_energy_consumption"] = 1000 + 57_600_000
+            recovered = alldevices.get_delta(Time.from_seconds(3600))
+            assert recovered[0]["delta_energy_consumption"].kWh == 0
+
+            # 0.030 kWh consumed next, minus the 0.010 kWh already reported.
+            self.DETAILS["handle_0"]["total_energy_consumption"] = (
+                1000 + 57_600_000 + 108_000_000
+            )
+            after = alldevices.get_delta(Time.from_seconds(3600))
+            assert after[0]["delta_energy_consumption"].kWh == pytest.approx(
+                0.020, rel=1e-5
+            )
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
     def test_gpu_counter_recovery_uses_counter_for_the_recovered_interval(self):
         """
         After a single missed counter read, the next interval must use the
