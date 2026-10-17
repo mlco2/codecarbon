@@ -34,6 +34,33 @@ or per country (
 [here](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json)
 ).
 
+### Regional data
+
+For some countries, CodeCarbon has sub-national carbon intensity data
+and uses it when the geolocation service (or the `region` parameter)
+reports a region in one of them:
+
+| Country | Granularity | Source |
+|---------|-------------|--------|
+| United States | State | [Emissions per state, 2016](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json) |
+| Canada | Province | [Energy mix per province, 2023](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json) |
+| Sweden, Norway, Finland | Electricity bidding zone (SE1-SE4, NO1-NO5, FI) | [ENTSO-E generation mix, 2025](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/nordic_emissions.json) |
+| China | Province (30 provinces, municipalities and autonomous regions) | [MEE/NBS Announcement 2025 No. 47, 2023 factors](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/china_provincial_emissions.json) |
+
+For China, the values are the official provincial average electricity
+CO₂ emission factors published by the Ministry of Ecology and
+Environment and the National Bureau of Statistics
+([source](https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html)).
+They range from 133 gCO₂/kWh in Yunnan to 680 gCO₂/kWh in Tianjin,
+whereas the national value is 582 gCO₂eq/kWh. Note that these official
+factors count CO₂ only (no other greenhouse gases, no lifecycle
+emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
+Kong, Macao and Taiwan are not in the official table and use the
+country value.
+
+When a region is not found in the regional data, CodeCarbon falls back
+to the country value.
+
 If we don't have the global carbon intensity or electricity of a
 country, but we have its electricity mix, we used to compute the carbon
 intensity of electricity using this table:
