@@ -233,7 +233,8 @@ def test_add_emission_with_default_wue_value(client, custom_test_server):
         "gpu_energy": 0.0,
         "ram_energy": 2.0,
         "energy_consumed": 57.21874,
-        # Note: wue and water_consumed are not provided, should default to 0
+        # Note: wue and water_consumed are not provided: wue defaults to 0,
+        # water_consumed to None (unknown)
     }
 
     repository_mock = mock.Mock(spec=EmissionRepository)
@@ -271,8 +272,8 @@ def test_add_emission_with_default_wue_value(client, custom_test_server):
     called_emission = repository_mock.add_emission.call_args[0][0]
     assert called_emission.wue == 0, "WUE should default to 0 when not provided"
     assert (
-        called_emission.water_consumed == 0
-    ), "water_consumed should default to 0 when not provided"
+        called_emission.water_consumed is None
+    ), "water_consumed should default to None when not provided"
 
 
 def test_add_emission_with_custom_wue_value(client, custom_test_server):

@@ -69,7 +69,7 @@ export function exportExperimentsToCsv(
     if (experiments && experiments.length > 0) {
         experiments.forEach((exp) => {
             csvRows.push(
-                `${exp.experiment_id},${exp.name},${exp.emissions},${exp.energy_consumed},${exp.water_consumed},${exp.duration}`,
+                `${exp.experiment_id},${exp.name},${exp.emissions},${exp.energy_consumed},${exp.water_consumed ?? ""},${exp.duration}`,
             );
         });
     }
@@ -112,7 +112,7 @@ export async function exportRunsToCsv(
     if (runs && runs.length > 0) {
         runs.forEach((run) => {
             const metadata = metadataMap.get(run.runId);
-            let row = `${run.runId},${run.timestamp},${run.emissions},${run.energy_consumed},${run.water_consumed},${run.duration}`;
+            let row = `${run.runId},${run.timestamp},${run.emissions},${run.energy_consumed},${run.water_consumed ?? ""},${run.duration}`;
 
             // Add metadata fields if available
             if (metadata) {
@@ -157,7 +157,7 @@ export function exportEmissionsTimeSeriesCsv(
     if (timeSeries.emissions && timeSeries.emissions.length > 0) {
         timeSeries.emissions.forEach((emission) => {
             csvRows.push(
-                `${emission.timestamp},${emission.emissions_sum},${emission.emissions_rate},${emission.cpu_power},${emission.gpu_power},${emission.ram_power},${emission.cpu_energy},${emission.gpu_energy},${emission.ram_energy},${emission.energy_consumed},${emission.water_consumed}`,
+                `${emission.timestamp},${emission.emissions_sum},${emission.emissions_rate},${emission.cpu_power},${emission.gpu_power},${emission.ram_power},${emission.cpu_energy},${emission.gpu_energy},${emission.ram_energy},${emission.energy_consumed},${emission.water_consumed ?? ""}`,
             );
         });
     }

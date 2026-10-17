@@ -26,7 +26,7 @@ class EmissionBase:
     gpu_utilization_percent: Optional[float] = None
     ram_utilization_percent: Optional[float] = None
     wue: Optional[float] = 0
-    water_consumed: Optional[float] = 0
+    water_consumed: Optional[float] = None
 
 
 class EmissionCreate(EmissionBase):

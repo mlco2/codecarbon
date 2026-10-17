@@ -101,7 +101,7 @@ class EmissionBase(BaseModel):
         description="The WUE (Water Usage Effectiveness) must be greater than or equal to zero",
     )
     water_consumed: Optional[float] = Field(
-        default=0,
+        default=None,
         ge=0,
         description="The water consumed (L) must be greater than or equal to zero",
     )
@@ -196,7 +196,7 @@ class RunReport(RunBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    water_consumed: float = 0
+    water_consumed: Optional[float] = None
     duration: float
     emissions_rate: float
     emissions_count: int
@@ -290,7 +290,7 @@ class ExperimentReport(ExperimentBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    water_consumed: float = 0
+    water_consumed: Optional[float] = None
     duration: int
     emissions_rate: float
     emissions_count: int
@@ -404,7 +404,7 @@ class ProjectReport(ProjectBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    water_consumed: float = 0
+    water_consumed: Optional[float] = None
     duration: int
     emissions_rate: float
     emissions_count: int
@@ -452,7 +452,7 @@ class OrganizationReport(OrganizationBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    water_consumed: float = 0
+    water_consumed: Optional[float] = None
     duration: int
     emissions_rate: float
     emissions_count: int

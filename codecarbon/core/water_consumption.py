@@ -51,16 +51,36 @@ class WaterConsumption:
         """
         Computes water consumption for cloud infra.
         Cloud providers do not publish per-region water usage data, so the
-        water intensity of the electricity of the country hosting the
-        machine is used when known, else the world average.
+        water intensity of the electricity of the country hosting the cloud
+        region is used. When the region is unknown, the country of the
+        machine is used if known, else the world average.
         :param energy: Energy consumed by the process (kWh)
         :param cloud: Cloud provider and region of compute
         :param geo: Instance of GeoMetadata to fall back on
         :return: water consumption in L
         """
-        if geo:
+        cloud_geo = self._get_cloud_geo(cloud)
+        if cloud_geo is not None:
+            geo = cloud_geo
+        if geo is not None and geo.country_iso_code is not None:
             return self.get_private_infra_water_consumption(energy, geo)
         return self._world_average_water_intensity().l_per_kWh * energy.kWh
+
+    def _get_cloud_geo(self, cloud: CloudMetadata) -> Optional[GeoMetadata]:
+        """
+        Returns the country hosting the cloud region, as found in the cloud
+        impact data, or None if the region is unknown.
+        """
+        df = self._data_source.get_cloud_emissions_data()
+        selected = df.loc[
+            (df["provider"] == cloud.provider) & (df["region"] == cloud.region)
+        ]
+        if len(selected) != 1:
+            return None
+        row = selected.iloc[0]
+        return GeoMetadata(
+            country_iso_code=row["countryIsoCode"], country_name=row["country_name"]
+        )
 
     def get_private_infra_water_consumption(
         self, energy: Energy, geo: GeoMetadata
@@ -77,26 +97,6 @@ class WaterConsumption:
             water_per_kWh = self._get_water_intensity(geo)
             self._intensity_cache[cache_key] = water_per_kWh
         return water_per_kWh.l_per_kWh * energy.kWh  # L
-
-    def get_region_water_consumption(self, energy: Energy, geo: GeoMetadata) -> float:
-        """
-        Computes water consumption for a region on private infra,
-        using the regional energy mix when available.
-        :param energy: Energy consumed by the process (kWh)
-        :param geo: Country and region metadata
-        :return: water consumption in L
-        """
-        return self._region_water_intensity(geo).l_per_kWh * energy.kWh  # L
-
-    def get_country_water_consumption(self, energy: Energy, geo: GeoMetadata) -> float:
-        """
-        Computes water consumption for a country on private infra,
-        using the mix of energy sources of that country.
-        :param energy: Energy consumed by the process (kWh)
-        :param geo: Country and region metadata
-        :return: water consumption in L
-        """
-        return self._country_water_intensity(geo).l_per_kWh * energy.kWh  # L
 
     def _get_water_intensity(self, geo: GeoMetadata) -> WaterPerKWh:
         country_iso_code = (

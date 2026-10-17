@@ -19,7 +19,9 @@ depends_on = None
 def upgrade():
     op.add_column(
         "emissions",
-        sa.Column("water_consumed", sa.Float(), nullable=False, server_default="0"),
+        # NULL means "unknown": rows created before this migration, or by clients
+        # that do not report water, must not be counted as 0 L.
+        sa.Column("water_consumed", sa.Float(), nullable=True),
     )
 
 

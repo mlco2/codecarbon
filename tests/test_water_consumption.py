@@ -122,7 +122,7 @@ class TestWaterConsumption(unittest.TestCase):
 
     def test_get_water_consumption_PRIVATE_INFRA_CANADA_region(self):
         # WHEN: hydro-heavy Canadian region
-        water = self._water.get_region_water_consumption(
+        water = self._water.get_private_infra_water_consumption(
             Energy.from_energy(kWh=1),
             GeoMetadata(country_iso_code="CAN", country_name="Canada", region="quebec"),
         )
@@ -141,7 +141,7 @@ class TestWaterConsumption(unittest.TestCase):
                 region="california",
             ),
         )
-        water_country = self._water.get_country_water_consumption(
+        water_country = self._water.get_private_infra_water_consumption(
             Energy.from_energy(kWh=1),
             GeoMetadata(country_iso_code="USA", country_name="United States"),
         )
@@ -184,6 +184,45 @@ class TestWaterConsumption(unittest.TestCase):
         # THEN: world average
         self.assertAlmostEqual(water, WORLD_AVERAGE_L_PER_KWH, places=2)
 
+    def test_get_water_consumption_CLOUD_uses_cloud_region_country(self):
+        # WHEN: a known cloud region and no geo, as for an offline tracker
+        # configured with only cloud_provider / cloud_region
+        water = self._water.get_cloud_water_consumption(
+            Energy.from_energy(kWh=1),
+            CloudMetadata(provider="gcp", region="europe-west1"),
+        )
+        # THEN: the country hosting the region (Belgium) is used
+        water_country = self._water.get_private_infra_water_consumption(
+            Energy.from_energy(kWh=1),
+            GeoMetadata(country_iso_code="BEL", country_name="Belgium"),
+        )
+        self.assertAlmostEqual(water, water_country, places=6)
+        self.assertNotAlmostEqual(water, WORLD_AVERAGE_L_PER_KWH, places=2)
+
+    def test_get_water_consumption_CLOUD_region_wins_over_geo(self):
+        # WHEN: the geo disagrees with the cloud region, the cloud region is
+        # used, like for the carbon emissions
+        water = self._water.get_cloud_water_consumption(
+            Energy.from_energy(kWh=1),
+            CloudMetadata(provider="gcp", region="europe-west1"),
+            GeoMetadata(country_iso_code="FRA", country_name="France"),
+        )
+        water_country = self._water.get_private_infra_water_consumption(
+            Energy.from_energy(kWh=1),
+            GeoMetadata(country_iso_code="BEL", country_name="Belgium"),
+        )
+        self.assertAlmostEqual(water, water_country, places=6)
+
+    def test_get_water_consumption_CLOUD_geo_without_country(self):
+        # WHEN: unknown cloud region and a geo with no country
+        water = self._water.get_cloud_water_consumption(
+            Energy.from_energy(kWh=1),
+            CloudMetadata(provider="aws", region="eu-west-1"),
+            GeoMetadata(country_iso_code=None),
+        )
+        # THEN: world average, without failing
+        self.assertAlmostEqual(water, WORLD_AVERAGE_L_PER_KWH, places=2)
+
 
 class TestWaterConsumptionSyntheticMix(unittest.TestCase):
     """Hand-computed cases on a 50% coal / 50% wind mix.
@@ -210,7 +249,7 @@ class TestWaterConsumptionSyntheticMix(unittest.TestCase):
 
     def test_country_water_consumption(self):
         mix = {"XXX": {"coal_TWh": 50, "wind_TWh": 50, "total_TWh": 100}}
-        water = WaterConsumption(self._source(mix)).get_country_water_consumption(
+        water = WaterConsumption(self._source(mix)).get_private_infra_water_consumption(
             Energy.from_energy(kWh=2),
             GeoMetadata(country_iso_code="XXX", country_name="Xland"),
         )
@@ -220,7 +259,7 @@ class TestWaterConsumptionSyntheticMix(unittest.TestCase):
         region_mix = {"qc": {"coal": 50, "wind": 50, "total": 100}}
         water = WaterConsumption(
             self._source({}, region_mix)
-        ).get_region_water_consumption(
+        ).get_private_infra_water_consumption(
             Energy.from_energy(kWh=2),
             GeoMetadata(country_iso_code="CAN", country_name="Canada", region="QC"),
         )
@@ -236,7 +275,7 @@ class TestWaterConsumptionSyntheticMix(unittest.TestCase):
 
     def test_zero_total_energy_uses_world_average(self):
         mix = {"XXX": {"coal_TWh": 0, "total_TWh": 0}}
-        water = WaterConsumption(self._source(mix)).get_country_water_consumption(
+        water = WaterConsumption(self._source(mix)).get_private_infra_water_consumption(
             Energy.from_energy(kWh=1),
             GeoMetadata(country_iso_code="XXX", country_name="Xland"),
         )
