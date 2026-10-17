@@ -488,6 +488,39 @@ class TestGpu(FakeGPUEnv):
         alldevices.sample_power()
         assert alldevices.devices[0]._power_samples == []
 
+    def test_gpu_sample_taken_during_counter_recovery_is_dropped(self):
+        """
+        A power sample read by the monitoring thread while the counter comes
+        back must not leak into a later fallback interval.
+        """
+        import pynvml
+
+        from codecarbon.core.gpu import AllGPUDevices
+        from codecarbon.core.units import Time
+
+        def raise_exception(handle):
+            raise pynvml.NVMLError("Not Supported")
+
+        original_energy = pynvml.nvmlDeviceGetTotalEnergyConsumption
+        try:
+            alldevices = AllGPUDevices()
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = raise_exception
+            alldevices.get_delta(Time.from_seconds(15))
+            device = alldevices.devices[0]
+
+            def recover_while_reading_power():
+                pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+                device.delta(Time.from_seconds(15))
+                return 999.0
+
+            with mock.patch.object(
+                device, "_read_power_watts", side_effect=recover_while_reading_power
+            ):
+                device.sample_power()
+            assert device._power_samples == []
+        finally:
+            pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
+
     def test_gpu_sample_power_failure_does_not_raise(self):
         from codecarbon.core.gpu import AllGPUDevices
 

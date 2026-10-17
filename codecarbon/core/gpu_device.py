@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -42,13 +43,16 @@ class GPUDevice:
         self._use_power_fallback = self.last_energy is None
         self._fallback_energy_since_counter = Energy(0)
         self._fallback_seconds_since_counter = 0.0
-        self._power_samples = []
+        self._take_power_samples()
 
     def __post_init__(self) -> None:
         self._warned_no_counter = False
         self._warned_power_failure = False
         self._warned_zero_power = False
         # Power readings taken by sample_power() during the current interval.
+        # sample_power() runs in the tracker's 1s monitoring thread, so the
+        # list is only accessed under this lock.
+        self._power_samples_lock = threading.Lock()
         self._power_samples: List[float] = []
         # Energy already reported but not yet measured by the counter (power
         # fallback since ``last_energy`` was read), subtracted from the next
@@ -107,14 +111,22 @@ class GPUDevice:
         if not self._use_power_fallback:
             return
         watts = self._read_power_watts()
-        if watts is not None:
-            self._power_samples.append(watts)
+        if watts is None:
+            return
+        with self._power_samples_lock:
+            # The counter may have come back while reading the power.
+            if self._use_power_fallback:
+                self._power_samples.append(watts)
+
+    def _take_power_samples(self) -> List[float]:
+        """Return the samples of the interval and start a new one."""
+        with self._power_samples_lock:
+            samples = self._power_samples
+            self._power_samples = []
+        return samples
 
     def _delta_from_power(self, duration: Time) -> None:
-        # Swap the list rather than clearing it: sample_power() runs in
-        # another thread.
-        samples = self._power_samples
-        self._power_samples = []
+        samples = self._take_power_samples()
         if not samples:
             watts = self._read_power_watts()
             samples = [watts] if watts is not None else []
@@ -175,8 +187,9 @@ class GPUDevice:
                 logger.info(
                     f"Energy counter of GPU {self.gpu_index} is available again."
                 )
-                self._use_power_fallback = False
-                self._power_samples = []
+                with self._power_samples_lock:
+                    self._use_power_fallback = False
+                    self._power_samples = []
             # The counter delta also covers any fallback intervals since the
             # last good reading: remove what those intervals already reported.
             # If the fallback over-estimated, report nothing now and carry the
