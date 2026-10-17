@@ -30,40 +30,61 @@ import pytest
 tc = TestCase()
 
 
-class FakeGPUEnv:
-    def setup_method(self):
+# Modules re-imported against the fake pynvml for each test.
+FAKE_BOUND_MODULES = (
+    "pynvml",
+    "codecarbon.core.gpu",
+    "codecarbon.core.gpu_amd",
+    "codecarbon.core.gpu_nvidia",
+    "codecarbon.core.gpu_device",
+    "codecarbon.external.hardware",
+)
+
+
+class IsolatedGPUModules:
+    """
+    Import the GPU modules against the fake pynvml, then restore the real ones.
+
+    Leaving the re-imported modules behind makes later test files see other
+    GPU/CPU classes than the ones codecarbon.emissions_tracker holds, which
+    breaks isinstance checks and mock.patch targets there.
+    """
+
+    def _isolate_gpu_modules(self):
         self.old_sys_path = copy(sys.path)
-        fake_module_path = os.path.join(os.path.dirname(__file__), "fake_modules")
-        sys.path.insert(0, fake_module_path)
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "fake_modules"))
+        self.old_module_names = set(sys.modules)
+        self.old_modules = {
+            name: sys.modules.pop(name)
+            for name in FAKE_BOUND_MODULES
+            if name in sys.modules
+        }
+        self.old_parent_attrs = {}
+        for name in FAKE_BOUND_MODULES:
+            parent, _, attr = name.rpartition(".")
+            if parent in sys.modules and hasattr(sys.modules[parent], attr):
+                self.old_parent_attrs[name] = getattr(sys.modules[parent], attr)
+                delattr(sys.modules[parent], attr)
 
-        # Clean old modules
-        try:
-            del sys.modules["pynvml"]
-        except KeyError:
-            pass
+    def _restore_gpu_modules(self):
+        sys.path = self.old_sys_path
+        for name in set(sys.modules) - self.old_module_names:
+            if name.startswith("codecarbon") or name in FAKE_BOUND_MODULES:
+                del sys.modules[name]
+        for name in FAKE_BOUND_MODULES:
+            sys.modules.pop(name, None)
+            parent, _, attr = name.rpartition(".")
+            if parent in sys.modules and hasattr(sys.modules[parent], attr):
+                delattr(sys.modules[parent], attr)
+        sys.modules.update(self.old_modules)
+        for name, module in self.old_parent_attrs.items():
+            parent, _, attr = name.rpartition(".")
+            setattr(sys.modules[parent], attr, module)
 
-        try:
-            del sys.modules["codecarbon.core.gpu"]
-        except KeyError:
-            pass
-        for module_name in (
-            "codecarbon.core.gpu_amd",
-            "codecarbon.core.gpu_nvidia",
-            "codecarbon.core.gpu_device",
-        ):
-            sys.modules.pop(module_name, None)
 
-        import codecarbon.core
-
-        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
-            if hasattr(codecarbon.core, attr):
-                delattr(codecarbon.core, attr)
-
-        import codecarbon.core
-
-        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
-            if hasattr(codecarbon.core, attr):
-                delattr(codecarbon.core, attr)
+class FakeGPUEnv(IsolatedGPUModules):
+    def setup_method(self):
+        self._isolate_gpu_modules()
 
         # Setup the state, strings are returned as bytes
         self.DETAILS = {
@@ -146,12 +167,7 @@ class FakeGPUEnv:
         pynvml.INIT_MOCK.reset_mock()
 
     def teardown_method(self):
-        # Restore the old paths
-        sys.path = self.old_sys_path
-        try:
-            del sys.modules["codecarbon.external.hardware"]
-        except KeyError:
-            pass
+        self._restore_gpu_modules()
 
 
 class TestGpu(FakeGPUEnv):
@@ -889,41 +905,9 @@ class TestGpu(FakeGPUEnv):
             assert result == expected_ids
 
 
-class TestGpuNotAvailable:
+class TestGpuNotAvailable(IsolatedGPUModules):
     def setup_method(self):
-        self.old_sys_path = copy(sys.path)
-        fake_module_path = os.path.join(os.path.dirname(__file__), "fake_modules")
-        sys.path.insert(0, fake_module_path)
-
-        # Clean old modules
-        try:
-            del sys.modules["pynvml"]
-        except KeyError:
-            pass
-
-        try:
-            del sys.modules["codecarbon.core.gpu"]
-        except KeyError:
-            pass
-        for module_name in (
-            "codecarbon.core.gpu_amd",
-            "codecarbon.core.gpu_nvidia",
-            "codecarbon.core.gpu_device",
-        ):
-            sys.modules.pop(module_name, None)
-
-        import codecarbon.core
-
-        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
-            if hasattr(codecarbon.core, attr):
-                delattr(codecarbon.core, attr)
-
-        import codecarbon.core
-
-        for attr in ["gpu", "gpu_nvidia", "gpu_amd", "gpu_device"]:
-            if hasattr(codecarbon.core, attr):
-                delattr(codecarbon.core, attr)
-
+        self._isolate_gpu_modules()
         import pynvml
 
         pynvml.INIT_MOCK.side_effect = pynvml.NVMLError("NVML Shared Library Not Found")
@@ -932,9 +916,7 @@ class TestGpuNotAvailable:
         import pynvml
 
         pynvml.INIT_MOCK.reset_mock()
-
-        # Restore the old paths
-        sys.path = self.old_sys_path
+        self._restore_gpu_modules()
 
     def test_is_gpu_details_not_available(self):
         from codecarbon.core.gpu import is_gpu_details_available
