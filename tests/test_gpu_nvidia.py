@@ -641,10 +641,12 @@ class TestGpu(FakeGPUEnv):
 
             with mock.patch("codecarbon.core.gpu_device.logger.warning") as warning:
                 for _ in range(3):
+                    alldevices.sample_power()
                     alldevices.get_delta(Time.from_seconds(15))
             messages = [call.args[0] for call in warning.call_args_list]
             power_warnings = [m for m in messages if "power usage of GPU 0" in m]
             assert len(power_warnings) == 1
+            assert alldevices.devices[0]._power_samples == []
         finally:
             pynvml.nvmlDeviceGetTotalEnergyConsumption = original_energy
             pynvml.nvmlDeviceGetPowerUsage = original_power
