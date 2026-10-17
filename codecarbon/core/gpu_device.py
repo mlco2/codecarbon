@@ -131,7 +131,12 @@ class GPUDevice:
             watts = self._read_power_watts()
             samples = [watts] if watts is not None else []
         watts = sum(samples) / len(samples) if samples else 0.0
-        if samples and watts == 0 and not self._warned_zero_power:
+        if (
+            samples
+            and watts == 0
+            and not self._warned_zero_power
+            and not self._reports_zero_power_by_design()
+        ):
             self._warned_zero_power = True
             logger.warning(
                 f"GPU {self.gpu_index} reports 0 W power usage and has no usable "
@@ -272,6 +277,10 @@ class GPUDevice:
             return str_or_bytes.decode("utf-8", errors="replace")
 
         return str_or_bytes
+
+    def _reports_zero_power_by_design(self) -> bool:
+        """Whether a 0 W reading is expected and must not be warned about."""
+        return False
 
     def emit_selection_warning(self) -> None:
         """Hook for backend-specific warnings when a GPU is explicitly selected.

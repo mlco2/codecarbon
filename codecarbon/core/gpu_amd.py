@@ -62,6 +62,11 @@ class AMDGPUDevice(GPUDevice):
             self._gpu_name
         )
 
+    def _reports_zero_power_by_design(self) -> bool:
+        # The second GCD of a dual-GCD device reports 0, its power is
+        # included in the first GCD's reading.
+        return self._known_zero_energy_counter and self.gpu_index % 2 == 1
+
     def emit_selection_warning(self) -> None:
         if not self._known_zero_energy_counter:
             return
