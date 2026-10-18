@@ -2933,6 +2933,31 @@ CPU TDP and may be unreliable on older systems.</p>
                   <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>metadata</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="dict">dict</span>, <span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Free-form metadata bag to enrich outputs. Either a dict or a
+path to a JSON file containing a dict. Individual output methods
+read their own section from it. When <code>OutputMethod.BOAMPS</code> is
+used, the <code>boamps</code> key (or, for backward compatibility, the whole
+dict) is read following the BoAmps schema structure (with <code>task</code>,
+<code>header</code>, <code>quality</code>, <code>infrastructure</code>, <code>environment</code>
+sections) to fill the required BoAmps fields (taskStage, taskFamily,
+algorithms, dataset) that cannot be auto-detected by CodeCarbon.
+Can also be set in config as a path to a JSON file:
+<code>metadata=metadata.json</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
