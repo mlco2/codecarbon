@@ -31,7 +31,10 @@ export function calculateRadialChartData(
             label: "L",
             value: parseFloat(
                 report
-                    .reduce((n, { water_consumed }) => n + (water_consumed ?? 0), 0)
+                    .reduce(
+                        (n, { water_consumed }) => n + (water_consumed ?? 0),
+                        0,
+                    )
                     .toFixed(2),
             ),
         },
