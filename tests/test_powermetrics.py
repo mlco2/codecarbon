@@ -306,6 +306,7 @@ class TestApplePowerMetrics:
         powermetrics._n_points = 3
         powermetrics._interval = 100
         powermetrics._log_file_path = "powermetrics_log.txt"
+        powermetrics._cli = "powermetrics"
         return powermetrics
 
     def test_log_values_warns_on_nonzero_returncode(self):
@@ -337,6 +338,20 @@ class TestApplePowerMetrics:
         # 3 points of 100 ms is 0.3 s of nominal work: 0.3 * 2 + 5.
         assert process.wait.call_args.kwargs["timeout"] == pytest.approx(5.6)
         assert mock_popen.call_args.kwargs["stdin"] is subprocess.DEVNULL
+
+    def test_log_values_builds_clean_command(self):
+        powermetrics = self._powermetrics_instance()
+        process = mock.Mock()
+        process.wait.return_value = 0
+
+        with mock.patch(
+            "codecarbon.core.powermetrics.subprocess.Popen", return_value=process
+        ) as mock_popen:
+            powermetrics._log_values()
+
+        cmd = mock_popen.call_args.args[0]
+        assert "" not in cmd
+        assert cmd[1] == powermetrics._cli
 
     def test_log_values_warns_on_timeout(self):
         powermetrics = self._powermetrics_instance()

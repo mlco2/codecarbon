@@ -168,10 +168,9 @@ class ApplePowermetrics:
         # Run the powermetrics command with sudo and capture its output
         cmd = [
             "sudo",
-            "powermetrics",
+            self._cli,
             "-n",
             str(self._n_points),
-            "",
             "--samplers",
             "cpu_power",
             "--format",
