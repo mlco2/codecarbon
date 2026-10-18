@@ -93,6 +93,32 @@ class BoAmpsOutput(BaseOutput):
                 f"BoAmps context file not found: {context_file_path}"
             )
 
+        return cls.from_dict(context, output_dir=output_dir)
+
+    @classmethod
+    def from_dict(cls, context: dict, output_dir: str = ".") -> "BoAmpsOutput":
+        """
+        Build a BoAmpsOutput from a free-form metadata dictionary.
+
+        The dictionary should follow the BoAmps report schema structure,
+        containing fields that cannot be auto-detected by CodeCarbon
+        (e.g., ``task``, ``header``, ``quality``, ``infrastructure``,
+        ``environment``). Any recognized section is merged with the
+        auto-detected values; unknown keys are ignored.
+
+        Args:
+            context: A dictionary of BoAmps metadata (camelCase keys, as in
+                the BoAmps JSON schema).
+            output_dir: Directory to write output reports to.
+
+        Returns:
+            A configured BoAmpsOutput instance.
+        """
+        if not isinstance(context, dict):
+            raise TypeError(
+                f"BoAmps metadata must be a dict, got {type(context).__name__}."
+            )
+
         task = None
         header = None
         quality = None

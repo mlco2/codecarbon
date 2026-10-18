@@ -6,6 +6,7 @@ OfflineEmissionsTracker, context manager and decorator @track_emissions
 from __future__ import annotations
 
 import dataclasses
+import json
 import os
 import platform
 import re
@@ -36,6 +37,7 @@ from codecarbon.output_methods.emissions_data import EmissionsData
 
 if TYPE_CHECKING:
     from codecarbon.external.geography import CloudMetadata, GeoMetadata
+    from codecarbon.output_methods.boamps import BoAmpsOutput
     from codecarbon.output_methods.logger import LoggerOutput
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
@@ -429,6 +431,7 @@ class BaseEmissionsTracker(ABC):
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
+        metadata: Optional[Union[dict, str]] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -531,6 +534,16 @@ class BaseEmissionsTracker(ABC):
                                  (CPU + chipset + PCIe). When False, uses package domains which
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
+        :param metadata: Free-form metadata bag to enrich outputs. Either a dict or a
+                         path to a JSON file containing a dict. Individual output methods
+                         read their own section from it. When ``OutputMethod.BOAMPS`` is
+                         used, the ``boamps`` key (or, for backward compatibility, the whole
+                         dict) is read following the BoAmps schema structure (with ``task``,
+                         ``header``, ``quality``, ``infrastructure``, ``environment``
+                         sections) to fill the required BoAmps fields (taskStage, taskFamily,
+                         algorithms, dataset) that cannot be auto-detected by CodeCarbon.
+                         Can also be set in config as a path to a JSON file:
+                         ``metadata=metadata.json``.
         """
 
         # logger.info("base tracker init")
@@ -593,6 +606,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
         self._set_from_conf(csv_run_name, "csv_run_name", None)
+        self._set_from_conf(metadata, "metadata")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
@@ -628,7 +642,6 @@ class BaseEmissionsTracker(ABC):
             self.run_id = uuid.uuid4()
             return
 
-        from codecarbon.output_methods.boamps import BoAmpsOutput
         from codecarbon.output_methods.file import FileOutput
         from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
         from codecarbon.output_methods.metrics.logfire import LogfireOutput
@@ -679,9 +692,42 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(LogfireOutput())
 
         if OutputMethod.BOAMPS in methods:
-            self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
+            self._output_handlers.append(self._build_boamps_output())
 
         self._init_interval_csv_output(csv_file_handler)
+
+    def _build_boamps_output(self) -> BoAmpsOutput:
+        """
+        Build a BoAmpsOutput, enriched with user-provided metadata when available.
+
+        The generic ``metadata`` (a dict or a path to a JSON file) is resolved to a
+        dict, then the BoAmps section is read from its ``boamps`` key. For backward
+        compatibility, if there is no ``boamps`` key the whole dict is used as the
+        BoAmps context. Falls back to a bare BoAmpsOutput when no metadata is provided.
+        """
+        metadata = getattr(self, "_metadata", None)
+
+        from codecarbon.output_methods.boamps import BoAmpsOutput
+
+        if isinstance(metadata, str) and metadata:
+            try:
+                with open(metadata) as f:
+                    metadata = json.load(f)
+            except FileNotFoundError:
+                logger.error(f"Metadata file not found: {metadata}")
+                metadata = None
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in metadata file '{metadata}': {e}")
+                metadata = None
+
+        if isinstance(metadata, dict):
+            boamps_context = metadata.get("boamps", metadata)
+            if isinstance(boamps_context, dict) and boamps_context:
+                return BoAmpsOutput.from_dict(
+                    boamps_context, output_dir=self._output_dir
+                )
+
+        return BoAmpsOutput(output_dir=self._output_dir)
 
     def _resolve_csv_run_filename(self) -> Optional[str]:
         """Return the interval CSV filename, or None when interval export is disabled."""
