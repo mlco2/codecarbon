@@ -174,6 +174,27 @@ EmissionsTracker(tracking_mode="process")
     `"process"` mode gives a lower-bound estimate of your code's footprint.
     `"machine"` mode is more conservative and accounts for all activity on the system.
 
+## Forcing a Constant CPU Power
+
+Set `force_mode_constant` to skip every dynamic CPU backend (RAPL, Power Gadget,
+powermetrics, CPU load) and estimate CPU power as half of the CPU TDP, or of
+`force_cpu_power` if you set it:
+
+``` ini
+[codecarbon]
+force_mode_constant = true
+force_cpu_power = 100
+```
+
+Or in code:
+
+``` python
+EmissionsTracker(force_mode_constant=True, force_cpu_power=100)
+```
+
+It takes precedence over `force_mode_cpu_load`. If your CPU is not in the TDP
+database and `force_cpu_power` is not set, a global default constant is used.
+
 ## Including DRAM in the CPU Measurement
 
 When CodeCarbon reads the CPU energy counters, the hardware also exposes a
