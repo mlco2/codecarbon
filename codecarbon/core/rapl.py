@@ -69,6 +69,8 @@ class RAPLFile:
     last_energy: Optional[Energy] = field(default_factory=lambda: Energy(0))
     # Max value energy can hold before it wraps
     max_energy_reading: Energy = field(default_factory=lambda: Energy(0))
+    # True when the last delta() could not measure the interval
+    sample_skipped: bool = field(default=False, init=False)
     _warned_uncorrectable_wrap: bool = field(default=False, init=False)
 
     def __post_init__(self):
@@ -121,6 +123,7 @@ class RAPLFile:
         self.energy_delta = Energy(0)
         self.power = Power(0)
         self.last_energy = new_last_energy
+        self.sample_skipped = True
 
     def delta(self, duration: Time) -> None:
         """
@@ -151,3 +154,4 @@ class RAPLFile:
         )
         self.energy_delta = energy - self.last_energy
         self.last_energy = new_last_energy
+        self.sample_skipped = False

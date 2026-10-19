@@ -933,7 +933,10 @@ class IntelRAPL:
                 continue
             delta = float(rapl_file.energy_delta)
             reference_delta = float(reference.energy_delta)
-            if delta <= 0 and reference_delta <= 0:
+            if rapl_file.sample_skipped or reference.sample_skipped:
+                # A skipped sample reports no energy: the interval is not conclusive
+                pending[path] = reference_path
+            elif delta <= 0 and reference_delta <= 0:
                 # Nothing was accumulated: the interval is not conclusive
                 pending[path] = reference_path
             elif counters_match(delta, reference_delta, SEQUENTIAL_READ_TOLERANCE_KWH):

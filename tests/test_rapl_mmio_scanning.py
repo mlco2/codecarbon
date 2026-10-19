@@ -181,6 +181,42 @@ def test_rapl_mirrors_near_counter_wrap_are_still_detected(tmp_path, monkeypatch
     assert len(rapl._rapl_files) == 1
 
 
+def test_rapl_candidate_with_skipped_sample_stays_pending(tmp_path, monkeypatch):
+    """A candidate whose sample was skipped (read error, uncorrectable wrap)
+    reports no energy, which must not be mistaken for an independent meter
+    and double-count the CPU."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0-die-0", 1000000000), ("package-0-die-1", 1000000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+    assert len(rapl._mirrored_candidates) == 1
+
+    # The candidate cannot be read while its reference advances by 500 J
+    energy_files[0].write_text("1500000000")
+    energy_files[1].write_text("unreadable")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._mirrored_candidates) == 1
+
+    # The candidate re-baselines on its next reading: still inconclusive
+    energy_files[0].write_text("2000000000")
+    energy_files[1].write_text("2000000000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._mirrored_candidates) == 1
+
+    # Both views advance by the same 500 J: the mirror is confirmed
+    for energy_file in energy_files:
+        energy_file.write_text("2500000000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._rapl_files) == 1
+    assert len(rapl._mirrored_candidates) == 0
+
+
 def test_rapl_inconclusive_candidate_stays_pending(tmp_path, monkeypatch):
     """A candidate that has not accumulated anything is neither dropped nor
     restored, and is resolved by a later conclusive interval."""
