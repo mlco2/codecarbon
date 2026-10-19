@@ -85,7 +85,7 @@ class DataSource:
         self.config = {
             "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
             "cloud_emissions_path": "data/cloud/impact.csv",
-            "usa_emissions_data_path": "data/private_infra/2016/usa_emissions.json",
+            "usa_emissions_data_path": "data/private_infra/2023/usa_emissions.json",
             "can_energy_mix_data_path": "data/private_infra/2023/canada_energy_mix.json",  # noqa: E501
             "global_energy_mix_data_path": "data/private_infra/global_energy_mix.json",  # noqa: E501
             "carbon_intensity_per_source_path": "data/private_infra/carbon_intensity_per_source.json",
