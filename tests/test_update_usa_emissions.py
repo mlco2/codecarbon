@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "update_usa_emissions.py"
+SCRIPT = (
+    Path(__file__).resolve().parents[1]
+    / "codecarbon/data/private_infra/update_usa_emissions.py"
+)
 DATA = (
     Path(__file__).resolve().parents[1]
     / "codecarbon/data/private_infra/2023/usa_emissions.json"

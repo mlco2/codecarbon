@@ -53,7 +53,7 @@ Agency ([source](https://www.epa.gov/egrid/download-data)). They range from
 24 gCO₂eq/kWh in Vermont to 893 gCO₂eq/kWh in West Virginia, with a national
 value of 350 gCO₂eq/kWh. To update them when EPA publishes a new edition,
 download the eGRID data workbook and run
-`uv run --with openpyxl python scripts/update_usa_emissions.py <workbook> --year <year>`.
+`uv run --with openpyxl python codecarbon/data/private_infra/update_usa_emissions.py <workbook> --year <year>`.
 
 For China, the values are the official provincial average electricity
 CO₂ emission factors published by the Ministry of Ecology and
