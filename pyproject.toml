@@ -198,4 +198,5 @@ source = [
 ]
 omit = [
     "codecarbon/viz/*",
+    "codecarbon/data/*",
 ]
