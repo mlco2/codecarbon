@@ -42,10 +42,18 @@ reports a region in one of them:
 
 | Country | Granularity | Source |
 |---------|-------------|--------|
-| United States | State | [Emissions per state, 2016](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json) |
+| United States | State | [EPA eGRID2023 emission rate per state](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/usa_emissions.json) |
 | Canada | Province | [Energy mix per province, 2023](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json) |
 | Sweden, Norway, Finland | Electricity bidding zone (SE1-SE4, NO1-NO5, FI) | [ENTSO-E generation mix, 2025](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/nordic_emissions.json) |
 | China | Province (30 provinces, municipalities and autonomous regions) | [MEE/NBS Announcement 2025 No. 47, 2023 factors](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/china_provincial_emissions.json) |
+
+For the United States, the values are the eGRID2023 state annual CO₂eq
+total output emission rates published by the U.S. Environmental Protection
+Agency ([source](https://www.epa.gov/egrid/download-data)). They range from
+24 gCO₂eq/kWh in Vermont to 893 gCO₂eq/kWh in West Virginia, with a national
+value of 350 gCO₂eq/kWh. To update them when EPA publishes a new edition,
+download the eGRID data workbook and run
+`uv run --with openpyxl python codecarbon/data/private_infra/update_usa_emissions.py <workbook> --year <year>`.
 
 For China, the values are the official provincial average electricity
 CO₂ emission factors published by the Ministry of Ecology and

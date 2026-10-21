@@ -93,7 +93,7 @@ codecarbon = [
     "data/private_infra/global_energy_mix.json",
     "data/private_infra/carbon_intensity_per_source.json",
     "data/private_infra/nordic_emissions.json",
-    "data/private_infra/2016/usa_emissions.json",
+    "data/private_infra/2023/usa_emissions.json",
     "data/private_infra/2023/canada_energy_mix.json",
     "data/private_infra/2023/china_provincial_emissions.json",
     "viz/assets/car_icon.png",
@@ -198,4 +198,5 @@ source = [
 ]
 omit = [
     "codecarbon/viz/*",
+    "codecarbon/data/*",
 ]
