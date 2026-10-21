@@ -2615,7 +2615,7 @@ reports a region in one of them:</p>
 <tr>
 <td>United States</td>
 <td>State</td>
-<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2016/usa_emissions.json">Emissions per state, 2016</a></td>
+<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/usa_emissions.json">EPA eGRID2023 emission rate per state</a></td>
 </tr>
 <tr>
 <td>Canada</td>
@@ -2634,6 +2634,13 @@ reports a region in one of them:</p>
 </tr>
 </tbody>
 </table>
+<p>For the United States, the values are the eGRID2023 state annual CO₂eq
+total output emission rates published by the U.S. Environmental Protection
+Agency (<a href="https://www.epa.gov/egrid/download-data">source</a>). They range from
+24 gCO₂eq/kWh in Vermont to 893 gCO₂eq/kWh in West Virginia, with a national
+value of 350 gCO₂eq/kWh. To update them when EPA publishes a new edition,
+download the eGRID data workbook and run
+<code>uv run --with openpyxl python codecarbon/data/private_infra/update_usa_emissions.py &lt;workbook&gt; --year &lt;year&gt;</code>.</p>
 <p>For China, the values are the official provincial average electricity
 CO₂ emission factors published by the Ministry of Ecology and
 Environment and the National Bureau of Statistics
