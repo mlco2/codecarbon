@@ -3,7 +3,7 @@
 
 Download the workbook from https://www.epa.gov/egrid/download-data, then run:
 
-    uv run --with openpyxl python codecarbon/data/private_infra/update_usa_emissions.py \\
+    uv run --with openpyxl python scripts/update_usa_emissions.py \\
         egrid2023_data_rev2.xlsx --year 2023
 
 The state rates come from the ``ST<yy>`` sheet and the national rate from the
@@ -127,12 +127,15 @@ def main() -> None:
         "--output",
         type=Path,
         default=None,
-        help="defaults to <year>/usa_emissions.json next to this script",
+        help="defaults to codecarbon/data/private_infra/<year>/usa_emissions.json",
     )
     args = parser.parse_args()
 
     output = args.output or (
-        Path(__file__).resolve().parent / str(args.year) / "usa_emissions.json"
+        Path(__file__).resolve().parents[1]
+        / "codecarbon/data/private_infra"
+        / str(args.year)
+        / "usa_emissions.json"
     )
     state_rates, national_rate = read_egrid_rates(args.workbook, args.year, args.gas)
     data = build_usa_emissions(state_rates, national_rate, args.year, args.gas)
