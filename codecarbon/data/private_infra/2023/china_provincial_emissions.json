@@ -1,0 +1,292 @@
+{
+  "data": {
+    "CN-BJ": {
+      "emission_factor": 555.4,
+      "unit": "gCO2/kWh",
+      "description": "Beijing",
+      "year": 2023,
+      "names": [
+        "beijing"
+      ]
+    },
+    "CN-TJ": {
+      "emission_factor": 679.6,
+      "unit": "gCO2/kWh",
+      "description": "Tianjin",
+      "year": 2023,
+      "names": [
+        "tianjin"
+      ]
+    },
+    "CN-HE": {
+      "emission_factor": 651.6,
+      "unit": "gCO2/kWh",
+      "description": "Hebei",
+      "year": 2023,
+      "names": [
+        "hebei"
+      ]
+    },
+    "CN-SX": {
+      "emission_factor": 663.4,
+      "unit": "gCO2/kWh",
+      "description": "Shanxi",
+      "year": 2023,
+      "names": [
+        "shanxi"
+      ]
+    },
+    "CN-NM": {
+      "emission_factor": 647.9,
+      "unit": "gCO2/kWh",
+      "description": "Inner Mongolia",
+      "year": 2023,
+      "names": [
+        "inner mongolia",
+        "nei mongol",
+        "neimenggu"
+      ]
+    },
+    "CN-LN": {
+      "emission_factor": 487.8,
+      "unit": "gCO2/kWh",
+      "description": "Liaoning",
+      "year": 2023,
+      "names": [
+        "liaoning"
+      ]
+    },
+    "CN-JL": {
+      "emission_factor": 467.1,
+      "unit": "gCO2/kWh",
+      "description": "Jilin",
+      "year": 2023,
+      "names": [
+        "jilin"
+      ]
+    },
+    "CN-HL": {
+      "emission_factor": 522.9,
+      "unit": "gCO2/kWh",
+      "description": "Heilongjiang",
+      "year": 2023,
+      "names": [
+        "heilongjiang"
+      ]
+    },
+    "CN-SH": {
+      "emission_factor": 573.7,
+      "unit": "gCO2/kWh",
+      "description": "Shanghai",
+      "year": 2023,
+      "names": [
+        "shanghai"
+      ]
+    },
+    "CN-JS": {
+      "emission_factor": 582.7,
+      "unit": "gCO2/kWh",
+      "description": "Jiangsu",
+      "year": 2023,
+      "names": [
+        "jiangsu"
+      ]
+    },
+    "CN-ZJ": {
+      "emission_factor": 497.4,
+      "unit": "gCO2/kWh",
+      "description": "Zhejiang",
+      "year": 2023,
+      "names": [
+        "zhejiang"
+      ]
+    },
+    "CN-AH": {
+      "emission_factor": 655.3,
+      "unit": "gCO2/kWh",
+      "description": "Anhui",
+      "year": 2023,
+      "names": [
+        "anhui"
+      ]
+    },
+    "CN-FJ": {
+      "emission_factor": 421.1,
+      "unit": "gCO2/kWh",
+      "description": "Fujian",
+      "year": 2023,
+      "names": [
+        "fujian"
+      ]
+    },
+    "CN-JX": {
+      "emission_factor": 583.6,
+      "unit": "gCO2/kWh",
+      "description": "Jiangxi",
+      "year": 2023,
+      "names": [
+        "jiangxi"
+      ]
+    },
+    "CN-SD": {
+      "emission_factor": 619.1,
+      "unit": "gCO2/kWh",
+      "description": "Shandong",
+      "year": 2023,
+      "names": [
+        "shandong"
+      ]
+    },
+    "CN-HA": {
+      "emission_factor": 589.7,
+      "unit": "gCO2/kWh",
+      "description": "Henan",
+      "year": 2023,
+      "names": [
+        "henan"
+      ]
+    },
+    "CN-HB": {
+      "emission_factor": 404.4,
+      "unit": "gCO2/kWh",
+      "description": "Hubei",
+      "year": 2023,
+      "names": [
+        "hubei"
+      ]
+    },
+    "CN-HN": {
+      "emission_factor": 497.6,
+      "unit": "gCO2/kWh",
+      "description": "Hunan",
+      "year": 2023,
+      "names": [
+        "hunan"
+      ]
+    },
+    "CN-GD": {
+      "emission_factor": 441.9,
+      "unit": "gCO2/kWh",
+      "description": "Guangdong",
+      "year": 2023,
+      "names": [
+        "guangdong"
+      ]
+    },
+    "CN-GX": {
+      "emission_factor": 447.6,
+      "unit": "gCO2/kWh",
+      "description": "Guangxi",
+      "year": 2023,
+      "names": [
+        "guangxi",
+        "guangxi zhuang"
+      ]
+    },
+    "CN-HI": {
+      "emission_factor": 364.8,
+      "unit": "gCO2/kWh",
+      "description": "Hainan",
+      "year": 2023,
+      "names": [
+        "hainan"
+      ]
+    },
+    "CN-CQ": {
+      "emission_factor": 558.1,
+      "unit": "gCO2/kWh",
+      "description": "Chongqing",
+      "year": 2023,
+      "names": [
+        "chongqing"
+      ]
+    },
+    "CN-SC": {
+      "emission_factor": 156.4,
+      "unit": "gCO2/kWh",
+      "description": "Sichuan",
+      "year": 2023,
+      "names": [
+        "sichuan"
+      ]
+    },
+    "CN-GZ": {
+      "emission_factor": 568.3,
+      "unit": "gCO2/kWh",
+      "description": "Guizhou",
+      "year": 2023,
+      "names": [
+        "guizhou"
+      ]
+    },
+    "CN-YN": {
+      "emission_factor": 133.3,
+      "unit": "gCO2/kWh",
+      "description": "Yunnan",
+      "year": 2023,
+      "names": [
+        "yunnan"
+      ]
+    },
+    "CN-SN": {
+      "emission_factor": 633.5,
+      "unit": "gCO2/kWh",
+      "description": "Shaanxi",
+      "year": 2023,
+      "names": [
+        "shaanxi"
+      ]
+    },
+    "CN-GS": {
+      "emission_factor": 447.1,
+      "unit": "gCO2/kWh",
+      "description": "Gansu",
+      "year": 2023,
+      "names": [
+        "gansu"
+      ]
+    },
+    "CN-QH": {
+      "emission_factor": 179.6,
+      "unit": "gCO2/kWh",
+      "description": "Qinghai",
+      "year": 2023,
+      "names": [
+        "qinghai"
+      ]
+    },
+    "CN-NX": {
+      "emission_factor": 618.7,
+      "unit": "gCO2/kWh",
+      "description": "Ningxia",
+      "year": 2023,
+      "names": [
+        "ningxia",
+        "ningxia hui"
+      ]
+    },
+    "CN-XJ": {
+      "emission_factor": 602.1,
+      "unit": "gCO2/kWh",
+      "description": "Xinjiang",
+      "year": 2023,
+      "names": [
+        "xinjiang",
+        "xinjiang uygur",
+        "xinjiang uyghur"
+      ]
+    }
+  },
+  "metadata": {
+    "source": "Ministry of Ecology and Environment (MEE) and National Bureau of Statistics (NBS) of China, Announcement 2025 No. 47 (published 2025-12-31), 'Announcement on the release of the 2023 electricity CO2 emission factors', Table 3: provincial average electricity CO2 emission factors, 2023.",
+    "source_url": "https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html",
+    "announcement": "2025 No. 47",
+    "published": "2025-12-31",
+    "year": 2023,
+    "unit": "gCO2/kWh",
+    "convention": "CO2 only (not CO2eq, no lifecycle emissions), average over all electricity generated in the province (thermal, hydro, wind, nuclear, solar), location-based, accounting for inter-provincial electricity transfers. Values are the official figures as published (kgCO2/kWh x 1000).",
+    "not_published": "Tibet (Xizang), Hong Kong, Macao and Taiwan are not in the official table; they have no entry here and fall back to the national value for China.",
+    "names": "Lower-case province names as returned by the geolocation services (ipinfo.io returns the short English name, e.g. 'Inner Mongolia', 'Ningxia', 'Xinjiang', 'Guangxi'), plus common variants. Matching is case-insensitive, ignores a trailing 'province', 'municipality' or 'autonomous region', and is exact otherwise.",
+    "last_updated": "2026-10-12"
+  }
+}

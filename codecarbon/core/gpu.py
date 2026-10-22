@@ -1,4 +1,4 @@
-from typing import List
+from typing import Iterable, List, Optional
 
 from codecarbon.core import gpu_amd, gpu_nvidia
 from codecarbon.core.gpu_device import GPUDevice
@@ -153,6 +153,18 @@ class AllGPUDevices:
         except Exception:
             logger.warning("Failed to retrieve gpu utilization", exc_info=True)
             return []
+
+    def sample_power(self, gpu_ids: Optional[Iterable[int]] = None) -> None:
+        """Record a power reading for devices without a usable energy
+        counter, called from the tracker's 1s monitoring loop.
+        :param gpu_ids: indexes of the tracked GPUs, all of them if None."""
+        for device in self.devices:
+            if gpu_ids is not None and device.gpu_index not in gpu_ids:
+                continue
+            try:
+                device.sample_power()
+            except Exception:
+                logger.debug("Failed to sample gpu power", exc_info=True)
 
     def get_delta(self, last_duration: Time) -> List:
         """Get difference since last time this function was called

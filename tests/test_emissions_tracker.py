@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import sys
@@ -11,6 +12,7 @@ import pandas as pd
 import requests
 import responses
 
+from codecarbon.core import electricitymaps_api
 from codecarbon.core.units import Energy, Power
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
@@ -385,6 +387,154 @@ class TestCarbonTracker(unittest.TestCase):
                 for handler in tracker._output_handlers
             )
         )
+
+    def test_output_methods_boamps_uses_metadata_boamps_section(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata={
+                "boamps": {
+                    "task": {
+                        "taskStage": "training",
+                        "taskFamily": "classification",
+                        "algorithms": [{"algorithmType": "random_forest"}],
+                        "dataset": [
+                            {
+                                "dataUsage": "input",
+                                "dataType": "table",
+                                "dataQuantity": 100,
+                            }
+                        ],
+                    },
+                    "quality": "high",
+                },
+                "other": {"owner": "ml-team"},
+            },
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertEqual(boamps_handler._quality, "high")
+        self.assertIsNotNone(boamps_handler._task)
+        self.assertEqual(boamps_handler._task.task_stage, "training")
+        self.assertEqual(boamps_handler._task.task_family, "classification")
+        self.assertEqual(
+            boamps_handler._task.algorithms[0].algorithm_type,
+            "random_forest",
+        )
+
+    def test_output_methods_boamps_metadata_back_compat_without_boamps_key(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata={
+                "task": {
+                    "taskStage": "inference",
+                    "taskFamily": "chatbot",
+                },
+                "quality": "medium",
+            },
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertEqual(boamps_handler._quality, "medium")
+        self.assertEqual(boamps_handler._task.task_stage, "inference")
+        self.assertEqual(boamps_handler._task.task_family, "chatbot")
+
+    def test_output_methods_boamps_reads_metadata_from_json_file(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        metadata_path = self.temp_path / "metadata.json"
+        metadata_path.write_text(
+            json.dumps(
+                {
+                    "boamps": {
+                        "task": {
+                            "taskStage": "training",
+                            "taskFamily": "classification",
+                        },
+                        "quality": "high",
+                    }
+                }
+            )
+        )
+
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata=str(metadata_path),
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertEqual(boamps_handler._quality, "high")
+        self.assertEqual(boamps_handler._task.task_stage, "training")
+
+    def test_output_methods_boamps_falls_back_on_invalid_metadata_file(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        metadata_path = self.temp_path / "bad_metadata.json"
+        metadata_path.write_text("{ invalid json")
+
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.BOAMPS],
+            metadata=str(metadata_path),
+        )
+
+        boamps_handler = next(
+            handler
+            for handler in tracker._output_handlers
+            if isinstance(handler, BoAmpsOutput)
+        )
+        self.assertIsNone(boamps_handler._task)
+        self.assertIsNone(boamps_handler._quality)
 
     def test_default_output_methods_is_csv(
         self,
@@ -872,6 +1022,33 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertFalse(tracker._scheduler._stopped)
         tracker.stop()
 
+    def test_power_monitor_keeps_running_around_tasks(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # The 1s monitor samples power for hardware without an energy counter:
+        # it must run even without output handlers, and survive a task.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start()
+        self.assertFalse(tracker._scheduler_monitor_power._stopped)
+        tracker.start_task("task-in-run")
+        tracker.stop_task()
+        self.assertFalse(tracker._scheduler_monitor_power._stopped)
+        tracker.stop()
+
+        # Pure start_task/stop_task usage leaves nothing running.
+        tracker = EmissionsTracker(save_to_file=False)
+        tracker.start_task("task-only")
+        tracker.stop_task()
+        self.assertTrue(tracker._scheduler_monitor_power._stopped)
+        tracker.stop()
+
     @mock.patch("codecarbon.external.ram.RAM.measure_power_and_energy")
     @mock.patch("codecarbon.external.hardware.CPU.measure_power_and_energy")
     @mock.patch(
@@ -1145,6 +1322,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_nvidia_system,
     ):
         # Setup mocks
+        electricitymaps_api.reset_cache()
+        self.addCleanup(electricitymaps_api.reset_cache)
         mock_geo.return_value = mock.MagicMock(
             latitude=1.0,
             longitude=1.0,
@@ -1199,7 +1378,9 @@ class TestCarbonTracker(unittest.TestCase):
         data1 = tracker._prepare_emissions_data()
         self.assertAlmostEqual(data1.emissions, 0.1)
 
-        # Step 2
+        # Step 2: drop the cache so this tick sees a fresh intensity, as it
+        # would once the TTL expires. This test is about cumulating deltas.
+        electricitymaps_api.reset_cache()
         tracker._measure_power_and_energy()
         # total_energy = 2.0, delta_energy = 1.0, intensity = 200 => delta_emissions = 0.2 kg
         # total_emissions = 0.3 kg
@@ -1207,6 +1388,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertAlmostEqual(data2.emissions, 0.3)
 
         # Step 3
+        electricitymaps_api.reset_cache()
         tracker._measure_power_and_energy()
         # total_energy = 3.0, delta_energy = 1.0, intensity = 300 => delta_emissions = 0.3 kg
         # total_emissions = 0.6 kg
