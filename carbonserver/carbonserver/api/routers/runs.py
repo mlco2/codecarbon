@@ -3,11 +3,18 @@ from typing import List, Optional, Union
 
 import dateutil.relativedelta
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Query
 from starlette import status
 
 from carbonserver.api.errors import EmptyResultException
-from carbonserver.api.schemas import AccessLevel, Empty, Run, RunCreate, RunReport
+from carbonserver.api.schemas import (
+    AccessLevel,
+    Empty,
+    Run,
+    RunBucketReport,
+    RunCreate,
+    RunReport,
+)
 from carbonserver.api.services.auth_service import (
     MandatoryUserWithAuthDependency,
     OptionalUserWithAuthDependency,
@@ -103,11 +110,13 @@ def read_experiment_detailed_sums_by_run(
     experiment_id: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
+    # Optional so existing callers still receive one row per run.
+    max_points: Optional[int] = Query(None, ge=1, le=2000),
     auth_user: UserWithAuthDependency = Depends(OptionalUserWithAuthDependency),
     experiment_global_sum_by_run_usecase: ExperimentSumsByRunUsecase = Depends(
         Provide[ServerContainer.experiment_sums_by_run_usecase]
     ),
-) -> List[RunReport]:
+) -> List[Union[RunReport, RunBucketReport]]:
     start_date = (
         start_date
         if start_date
@@ -115,7 +124,11 @@ def read_experiment_detailed_sums_by_run(
     )
     end_date = end_date if end_date else datetime.now() + timedelta(days=1)
     return experiment_global_sum_by_run_usecase.compute_detailed_sum(
-        experiment_id, start_date, end_date, user=auth_user.db_user
+        experiment_id,
+        start_date,
+        end_date,
+        max_points,
+        user=auth_user.db_user,
     )
 
 
