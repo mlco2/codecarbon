@@ -28,6 +28,9 @@ CONF_KEYS = (
     "gpu_count",
     "gpu_model",
     "gpu_ids",
+    "ram_tracking_method",
+    "cpu_tracking_method",
+    "gpu_tracking_method",
 )
 
 
