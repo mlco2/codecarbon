@@ -148,6 +148,7 @@ function makeExperimentReport(args: {
         description: args.description,
         emissions: args.emissions,
         energy_consumed: args.energyConsumed,
+        water_consumed: args.energyConsumed * 2.4,
         duration: args.durationSeconds,
     };
 }
@@ -195,6 +196,7 @@ function makeEmissionSeries(args: {
             gpu_energy: 0.3 + i * 0.02,
             ram_energy: 0.05,
             energy_consumed: 0.45 + i * 0.03,
+            water_consumed: (0.45 + i * 0.03) * 2.4,
         };
     });
 }
@@ -221,6 +223,7 @@ export interface MockRunRow {
     emissions: number;
     timestamp: string;
     energy_consumed: number;
+    water_consumed: number;
     duration: number;
 }
 
@@ -238,6 +241,7 @@ function makeRunRow(args: {
         emissions: args.emissions,
         timestamp: args.timestamp,
         energy_consumed: args.energyConsumed,
+        water_consumed: args.energyConsumed * 2.4,
         duration: args.durationSeconds,
     };
 }
@@ -268,6 +272,7 @@ const organizationReport: OrganizationReport = {
     name: organization.name,
     emissions: 1.801,
     energy_consumed: 8.023,
+    water_consumed: 19.25,
     duration: 5400,
 };
 

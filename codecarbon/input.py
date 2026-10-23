@@ -53,6 +53,11 @@ def _load_static_data() -> None:
     with open(path) as f:
         _CACHE["carbon_intensity_per_source"] = json.load(f)
 
+    # Water consumption per source
+    path = _get_resource_path("data/private_infra/water_consumption_per_source.json")
+    with open(path) as f:
+        _CACHE["water_consumption_per_source"] = json.load(f)
+
     # CPU power data
     path = _get_resource_path("data/hardware/cpu_power.csv")
     _CACHE["cpu_power"] = pd.read_csv(path)
@@ -199,6 +204,14 @@ class DataSource:
         """
         _ensure_static_data_loaded()
         return _CACHE["carbon_intensity_per_source"]
+
+    def get_water_consumption_per_source_data(self) -> Dict:
+        """
+        Returns water consumption per energy source. In gal us Water.eq/MWh.
+        Data is loaded on first access and cached for all tracker instances.
+        """
+        _ensure_static_data_loaded()
+        return _CACHE["water_consumption_per_source"]
 
     def get_cpu_power_data(self) -> pd.DataFrame:
         """
