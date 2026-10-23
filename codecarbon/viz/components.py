@@ -91,7 +91,8 @@ class Components:
                     dcc.Dropdown(
                         id="project_name",
                         options=[{"label": i, "value": i} for i in projects],
-                        value=projects[0],
+                        value=projects[0] if projects else None,
+                        clearable=False,
                     ),
                 ],
                 style={"display": "inline-block"},
