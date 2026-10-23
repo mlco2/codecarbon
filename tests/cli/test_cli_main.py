@@ -1,6 +1,7 @@
 """Tests for the CodeCarbon CLI main function."""
 
 import os
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -116,7 +117,8 @@ def test_monitor_run_and_monitor(monkeypatch):
 
     # Test with a simple command
     result = runner.invoke(
-        cli_main.codecarbon, ["monitor", "--no-api", "--", "echo", "Hello, World!"]
+        cli_main.codecarbon,
+        ["monitor", "--no-api", "--", sys.executable, "-c", "print('Hello, World!')"],
     )
     assert result.exit_code == 0
     assert "Hello, World!" in result.output
@@ -150,8 +152,8 @@ def test_monitor_accepts_tracker_options(monkeypatch):
             "test-project",
             "--no-api",
             "--",
-            "echo",
-            "test",
+            sys.executable,
+            "--version",
         ],
     )
 
