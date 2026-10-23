@@ -117,6 +117,14 @@ class SqlAlchemyRepository(Runs):
                 raise EmptyResultException(f"No runs for experiment {experiment_id}")
             return [self.map_sql_to_schema(e) for e in res]
 
+    def count_runs_from_experiment(self, experiment_id) -> int:
+        with self.session_factory() as session:
+            return (
+                session.query(func.count(SqlModelRun.id))
+                .filter(SqlModelRun.experiment_id == experiment_id)
+                .scalar()
+            )
+
     @staticmethod
     def map_sql_to_schema(run: SqlModelRun) -> Run:
         """Convert a models.Run to a schemas.Run

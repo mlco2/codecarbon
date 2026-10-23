@@ -13,6 +13,7 @@ from carbonserver.api.infra.repositories.repository_projects import (
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserRepository,
 )
+from carbonserver.api.services.matomo_tracker import MatomoTracker
 from carbonserver.api.schemas import (
     OrganizationCreate,
     ProjectCreate,
@@ -29,10 +30,12 @@ class SignUpService:
         user_repository: UserRepository,
         organization_repository: OrganizationRepository,
         project_repository: ProjectRepository,
+        matomo_tracker: MatomoTracker | None = None,
     ) -> None:
         self._user_repository: UserRepository = user_repository
         self._organization_repository: OrganizationRepository = organization_repository
         self._project_repository: ProjectRepository = project_repository
+        self._matomo_tracker = matomo_tracker
 
     def sign_up(
         self,
@@ -41,6 +44,8 @@ class SignUpService:
         created_user = self._user_repository.create_user(user)
         subscribed_user = self.new_user_setup(created_user)
         LOGGER.info(f"User {subscribed_user.id} created")
+        if self._matomo_tracker:
+            self._matomo_tracker.track_event("Activation", "account_created")
         return subscribed_user
 
     def subscribe_user_to_org(

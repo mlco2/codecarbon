@@ -1,27 +1,57 @@
-import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
-import BreadcrumbHeader from "@/components/breadcrumb";
+import { describe, expect, it } from "vitest";
+import { screen, within } from "@testing-library/react";
+
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { renderWithRouter } from "../test-utils";
 
-describe("BreadcrumbHeader", () => {
-    it("renders all segments and links the ones with hrefs", () => {
+describe("Breadcrumb", () => {
+    it("links every crumb that has a destination", () => {
         renderWithRouter(
-            <BreadcrumbHeader
-                pathSegments={[
-                    { title: "Org", href: "/org-1" },
-                    { title: "Projects", href: "/org-1/projects" },
-                    { title: "Project A", href: null },
+            <Breadcrumb
+                items={[
+                    { label: "Mozilla", to: "/o1" },
+                    { label: "Projects", to: "/o1/projects" },
+                    { label: "Bench" },
                 ]}
             />,
         );
 
-        const orgLink = screen.getByRole("link", { name: /org/i });
-        expect(orgLink).toHaveAttribute("href", "/org-1");
-        expect(screen.getByRole("link", { name: /projects/i })).toHaveAttribute(
-            "href",
-            "/org-1/projects",
+        const nav = screen.getByRole("navigation", { name: "Breadcrumb" });
+        expect(
+            within(nav).getByRole("link", { name: "Mozilla" }),
+        ).toHaveAttribute("href", "/o1");
+        expect(
+            within(nav).getByRole("link", { name: "Projects" }),
+        ).toHaveAttribute("href", "/o1/projects");
+        expect(within(nav).queryByRole("link", { name: "Bench" })).toBeNull();
+    });
+
+    /*
+     * The organisation dashboard's first crumb has nowhere to go either, so
+     * "not a link" and "the page you are on" have to stay separate: only the
+     * last crumb is current, and only it is green.
+     */
+    it("marks the last crumb as the current page, not every unlinked one", () => {
+        renderWithRouter(
+            <Breadcrumb items={[{ label: "Mozilla" }, { label: "Global" }]} />,
         );
-        // Last segment (no href) is plain text, not a link.
-        expect(screen.getByText("Project A").tagName).toBe("SPAN");
+
+        const current = screen.getAllByText(
+            (_, element) => element?.getAttribute("aria-current") === "page",
+        );
+        expect(current).toHaveLength(1);
+        expect(current[0]).toHaveTextContent("Global");
+    });
+
+    it("separates crumbs with a spaced slash", () => {
+        renderWithRouter(
+            <Breadcrumb
+                items={[{ label: "Mozilla", to: "/o1" }, { label: "Members" }]}
+            />,
+        );
+
+        expect(
+            screen.getByRole("navigation", { name: "Breadcrumb" }),
+        ).toHaveTextContent("Mozilla / Members");
     });
 });

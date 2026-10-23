@@ -176,3 +176,95 @@ async def test_revoke_token_exception(oidc_provider, mock_oidc_client):
 
     # Should not raise
     await oidc_provider.revoke_token("test-access-token")
+
+
+# --- RP-initiated logout tests ---
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_prefers_id_token_hint(oidc_provider, mock_oidc_client):
+    """The id_token is the hint the provider trusts, so it wins when present."""
+    mock_oidc_client.load_server_metadata.return_value = {
+        "end_session_endpoint": "https://auth.example.com/logout",
+    }
+
+    url = await oidc_provider.get_end_session_url(
+        "https://dashboard.test", id_token="raw-id-token"
+    )
+
+    assert url.startswith("https://auth.example.com/logout?")
+    assert "id_token_hint=raw-id-token" in url
+    assert "post_logout_redirect_uri=https%3A%2F%2Fdashboard.test" in url
+    assert "client_id" not in url
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_falls_back_to_client_id(oidc_provider, mock_oidc_client):
+    """Sessions opened before we kept the id_token still need a redirect target,
+    which the provider only honours alongside a client_id."""
+    mock_oidc_client.load_server_metadata.return_value = {
+        "end_session_endpoint": "https://auth.example.com/logout",
+    }
+
+    url = await oidc_provider.get_end_session_url("https://dashboard.test")
+
+    assert "client_id=" in url
+    assert "id_token_hint" not in url
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_without_endpoint(oidc_provider, mock_oidc_client):
+    """No end_session_endpoint means a local-only logout, not a failure."""
+    mock_oidc_client.load_server_metadata.return_value = {}
+
+    assert await oidc_provider.get_end_session_url("https://dashboard.test") is None
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_metadata_failure(oidc_provider, mock_oidc_client):
+    """Logout must never break because the provider is unreachable."""
+    mock_oidc_client.load_server_metadata.side_effect = ConnectionError("unreachable")
+
+    assert await oidc_provider.get_end_session_url("https://dashboard.test") is None
+
+
+def test_account_url_derives_from_issuer(monkeypatch):
+    """The account console is derived from the issuer, so there is no separate
+    setting to keep in sync."""
+    monkeypatch.setattr(
+        "carbonserver.api.services.auth_providers.oidc_auth_provider.settings."
+        "oidc_issuer_url",
+        "https://authentication.codecarbon.io/realms/codecarbon/",
+        raising=False,
+    )
+
+    assert (
+        OIDCAuthProvider.get_account_url()
+        == "https://authentication.codecarbon.io/realms/codecarbon/account/"
+    )
+
+
+@pytest.mark.asyncio
+async def test_login_keeps_raw_id_token_in_its_own_cookie(monkeypatch):
+    """The logout hint must live outside the size-capped session cookie, and
+    only a raw JWT string is usable as a hint."""
+    monkeypatch.setattr(authenticate.settings, "frontend_url", "https://dashboard.test")
+    token = {"access_token": "access-secret", "id_token": "raw.id.token"}
+    request = MagicMock()
+    request.url_for.return_value = "https://api.test/auth/login"
+    request.base_url = "https://api.test/"
+    request.session = {}
+    auth_provider = MagicMock()
+    auth_provider.client.authorize_access_token = AsyncMock(return_value=token)
+    auth_provider.create_redirect_response.side_effect = lambda url: Response(url)
+
+    response = await authenticate.get_login(
+        request=request,
+        code="authorization-code",
+        sign_up_service=MagicMock(),
+        auth_provider=auth_provider,
+    )
+
+    cookies = response.headers.getlist("set-cookie")
+    assert any(c.startswith("user_id_token=raw.id.token;") for c in cookies)
+    assert "id_token" not in request.session

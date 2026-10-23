@@ -17,6 +17,7 @@ from carbonserver.api.services.auth_providers.oidc_auth_provider import (
 )
 from carbonserver.api.services.emissions_service import EmissionService
 from carbonserver.api.services.experiments_service import ExperimentService
+from carbonserver.api.services.matomo_tracker import MatomoTracker
 from carbonserver.api.services.organization_service import OrganizationService
 from carbonserver.api.services.project_service import ProjectService
 from carbonserver.api.services.project_token_service import ProjectTokenService
@@ -174,10 +175,17 @@ class ServerContainer(containers.DeclarativeContainer):
         auth_context=auth_context,
     )
 
+    matomo_tracker = providers.Singleton(
+        MatomoTracker,
+        url=settings.matomo_url,
+        site_id=settings.matomo_site_id,
+    )
+
     run_service = providers.Factory(
         RunService,
         run_repository=run_repository,
         auth_context=auth_context,
+        matomo_tracker=matomo_tracker,
     )
 
     sign_up_service = providers.Factory(
@@ -185,4 +193,5 @@ class ServerContainer(containers.DeclarativeContainer):
         user_repository=user_repository,
         organization_repository=organization_repository,
         project_repository=project_repository,
+        matomo_tracker=matomo_tracker,
     )

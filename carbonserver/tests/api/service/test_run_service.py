@@ -149,3 +149,28 @@ def test_run_service_retrieves_correct_last_run_for_project_id():
     actual_run = run_service.read_project_last_run(PROJECT_ID, START_DATE, END_DATE)
 
     assert actual_run.id == expected_run_id
+
+
+def test_run_service_tracks_only_the_first_run_of_an_experiment():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    tracker_mock = mock.Mock(enabled=True)
+    run_service = RunService(
+        repository_mock, auth_context=FakeAuthContext(), matomo_tracker=tracker_mock
+    )
+    repository_mock.add_run.return_value = RUN_1
+    run_to_create = RunCreate(
+        id=RUN_ID,
+        timestamp="2021-04-04T08:43:00+02:00",
+        experiment_id=EXPERIMENT_ID,
+    )
+
+    repository_mock.count_runs_from_experiment.return_value = 1
+    run_service.add_run(run_to_create)
+    tracker_mock.track_event.assert_called_once_with(
+        "Activation", "first_run_received"
+    )
+
+    tracker_mock.reset_mock()
+    repository_mock.count_runs_from_experiment.return_value = 2
+    run_service.add_run(run_to_create)
+    tracker_mock.track_event.assert_not_called()

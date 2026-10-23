@@ -40,6 +40,11 @@ class Settings(BaseSettings):
         "",
         validation_alias=AliasChoices("DEFAULT_REDIRECT_URL", "default_redirect_url"),
     )
+    # Matomo analytics for server-side events. Off unless both are set.
+    matomo_url: str = Field("", validation_alias=AliasChoices("MATOMO_URL", "matomo_url"))
+    matomo_site_id: str = Field(
+        "", validation_alias=AliasChoices("MATOMO_SITE_ID", "matomo_site_id")
+    )
     environment: str = Field("production")
     jwt_key: str = Field("", validation_alias=AliasChoices("JWT_KEY", "jwt_key"))
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
