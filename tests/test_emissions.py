@@ -165,8 +165,9 @@ class TestEmissions(unittest.TestCase):
         )
 
         # THEN
+        # Illinois: 474.4 lbCO2eq/MWh in eGRID2023
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.11, places=2)
+        self.assertAlmostEqual(emissions, 0.3 * 474.4 * 0.00045359237, places=4)
 
     def test_get_emissions_PRIVATE_INFRA_USA_WITHOUT_REGION(self):
         # WHEN
@@ -571,3 +572,35 @@ class TestEmissions(unittest.TestCase):
         )
 
         self.assertAlmostEqual(emissions, 0.1, places=6)
+
+    def _usa_geo(self, region):
+        return GeoMetadata(
+            country_iso_code="USA", country_name="United States", region=region
+        )
+
+    def test_usa_state_rates_match_egrid2023(self):
+        data = self._data_source.get_country_emissions_data("usa")
+
+        self.assertEqual(data["_source"]["year"], 2023)
+        self.assertEqual(data["_source"]["field"], "STC2ERTA")
+        states = {k: v for k, v in data.items() if not k.startswith("_")}
+        self.assertEqual(len(states), 52)
+        self.assertAlmostEqual(data["georgia"]["emissions"], 717.4, delta=0.05)
+        self.assertAlmostEqual(data["vermont"]["emissions"], 52.2, delta=0.05)
+        self.assertAlmostEqual(data["west virginia"]["emissions"], 1968.9, delta=0.05)
+        self.assertAlmostEqual(data["usa"]["emissions"], 770.9, delta=0.05)
+
+    def test_usa_every_state_resolves_to_its_own_rate(self):
+        data = self._data_source.get_country_emissions_data("usa")
+        energy = Energy.from_energy(kWh=1.0)
+
+        for name, state in data.items():
+            if name.startswith("_") or name == "usa":
+                continue
+            with self.subTest(state=name):
+                emissions = self._emissions.get_private_infra_emissions(
+                    energy, self._usa_geo(name.title())
+                )
+                self.assertAlmostEqual(
+                    emissions, state["emissions"] * 0.00045359237, places=9
+                )
