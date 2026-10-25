@@ -1,6 +1,7 @@
 import unittest
 from unittest import mock
 
+import pytest
 import responses
 
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
@@ -13,6 +14,20 @@ from tests.testdata import (
     GEO_METADATA_USA,
     GEO_METADATA_USA_BACKUP,
 )
+
+
+@pytest.mark.parametrize(
+    "region", ["europe-west12", "europe-west10", "us-central1", "asia-northeast3"]
+)
+@pytest.mark.parametrize("prefix", ["", "projects/123/zones/"])
+def test_cloud_metadata_gcp_region_number(region, prefix):
+    metadata = {"provider": "gcp", "metadata": {"zone": f"{prefix}{region}-a"}}
+    with mock.patch(
+        "codecarbon.external.geography.get_env_cloud_details", return_value=metadata
+    ):
+        cloud = CloudMetadata.from_utils()
+    assert cloud.provider == "gcp"
+    assert cloud.region == region
 
 
 class TestCloudMetadata(unittest.TestCase):

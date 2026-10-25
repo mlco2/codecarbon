@@ -13,6 +13,12 @@ import pytest
 from codecarbon.core.cpu import IntelRAPL, is_rapl_available
 from codecarbon.core.units import Time
 
+# RAPL is read from Linux sysfs, and the fake trees use names like
+# "intel-rapl:0" that are not valid paths on Windows.
+pytestmark = pytest.mark.skipif(
+    not sys.platform.lower().startswith("lin"), reason="requires Linux"
+)
+
 
 def _make_rapl_tree(tmp_path, domains):
     """Create a fake powercap tree with the given (name, energy_uj) domains."""
@@ -74,6 +80,20 @@ def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monke
     details = rapl.get_cpu_details(Time.from_seconds(1))
     assert len(_counted_domains(details)) == 2
     assert "dram" in details
+
+
+def test_rapl_start_skips_unreadable_counters(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0", 1000000), ("package-1", 1000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    energy_files[1].write_text("unreadable")
+    rapl.start()
+
+    assert rapl._rapl_files[1].last_energy is None
+    assert len(rapl._mirrored_candidates) == 0
 
 
 def test_rapl_start_reevaluates_mirror_candidates(tmp_path, monkeypatch):
@@ -167,6 +187,42 @@ def test_rapl_mirrors_near_counter_wrap_are_still_detected(tmp_path, monkeypatch
     assert len(rapl._rapl_files) == 1
 
 
+def test_rapl_candidate_with_skipped_sample_stays_pending(tmp_path, monkeypatch):
+    """A candidate whose sample was skipped (read error, uncorrectable wrap)
+    reports no energy, which must not be mistaken for an independent meter
+    and double-count the CPU."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0-die-0", 1000000000), ("package-0-die-1", 1000000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path))
+    rapl.start()
+    assert len(rapl._mirrored_candidates) == 1
+
+    # The candidate cannot be read while its reference advances by 500 J
+    energy_files[0].write_text("1500000000")
+    energy_files[1].write_text("unreadable")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._mirrored_candidates) == 1
+
+    # The candidate re-baselines on its next reading: still inconclusive
+    energy_files[0].write_text("2000000000")
+    energy_files[1].write_text("2000000000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._mirrored_candidates) == 1
+
+    # Both views advance by the same 500 J: the mirror is confirmed
+    for energy_file in energy_files:
+        energy_file.write_text("2500000000")
+    details = rapl.get_cpu_details(Time.from_seconds(15))
+    assert len(_counted_domains(details)) == 1
+    assert len(rapl._rapl_files) == 1
+    assert len(rapl._mirrored_candidates) == 0
+
+
 def test_rapl_inconclusive_candidate_stays_pending(tmp_path, monkeypatch):
     """A candidate that has not accumulated anything is neither dropped nor
     restored, and is resolved by a later conclusive interval."""
@@ -192,7 +248,6 @@ def test_rapl_inconclusive_candidate_stays_pending(tmp_path, monkeypatch):
     assert len(rapl._mirrored_candidates) == 0
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_multiple_rapl_providers_with_mixed_permissions(tmp_path):
     """
     Verify that multiple RAPL providers (intel-rapl and intel-rapl-mmio) are
@@ -265,7 +320,6 @@ def test_multiple_rapl_providers_with_mixed_permissions(tmp_path):
             pass
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_all_providers_unreadable_returns_false(tmp_path):
     """
     Verify that is_rapl_available returns False when all main/package domains
@@ -318,7 +372,6 @@ def test_all_providers_unreadable_returns_false(tmp_path):
             pass
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_rapl_deduplication_prefers_mmio(tmp_path):
     """
     Verify that when the same domain (e.g., package-0) appears in both
@@ -377,7 +430,6 @@ def test_rapl_deduplication_prefers_mmio(tmp_path):
     ), f"Expected MMIO path, got: {package_files[0].path}"
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_psys_not_preferred_when_package_available(tmp_path):
     """
     Verify that when both psys and package domains are available, CodeCarbon prefers

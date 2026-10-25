@@ -34,6 +34,41 @@ or per country (
 [here](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json)
 ).
 
+### Regional data
+
+For some countries, CodeCarbon has sub-national carbon intensity data
+and uses it when the geolocation service (or the `region` parameter)
+reports a region in one of them:
+
+| Country | Granularity | Source |
+|---------|-------------|--------|
+| United States | State | [EPA eGRID2023 emission rate per state](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/usa_emissions.json) |
+| Canada | Province | [Energy mix per province, 2023](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json) |
+| Sweden, Norway, Finland | Electricity bidding zone (SE1-SE4, NO1-NO5, FI) | [ENTSO-E generation mix, 2025](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/nordic_emissions.json) |
+| China | Province (30 provinces, municipalities and autonomous regions) | [MEE/NBS Announcement 2025 No. 47, 2023 factors](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/china_provincial_emissions.json) |
+
+For the United States, the values are the eGRID2023 state annual CO₂eq
+total output emission rates published by the U.S. Environmental Protection
+Agency ([source](https://www.epa.gov/egrid/download-data)). They range from
+24 gCO₂eq/kWh in Vermont to 893 gCO₂eq/kWh in West Virginia, with a national
+value of 350 gCO₂eq/kWh. To update them when EPA publishes a new edition,
+download the eGRID data workbook and run
+`uv run --with openpyxl python codecarbon/data/private_infra/update_usa_emissions.py <workbook> --year <year>`.
+
+For China, the values are the official provincial average electricity
+CO₂ emission factors published by the Ministry of Ecology and
+Environment and the National Bureau of Statistics
+([source](https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html)).
+They range from 133 gCO₂/kWh in Yunnan to 680 gCO₂/kWh in Tianjin,
+whereas the national value is 582 gCO₂eq/kWh. Note that these official
+factors count CO₂ only (no other greenhouse gases, no lifecycle
+emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
+Kong, Macao and Taiwan are not in the official table and use the
+country value.
+
+When a region is not found in the regional data, CodeCarbon falls back
+to the country value.
+
 If we don't have the global carbon intensity or electricity of a
 country, but we have its electricity mix, we used to compute the carbon
 intensity of electricity using this table:
@@ -43,10 +78,13 @@ intensity of electricity using this table:
 | Coal | 995 |
 | Petroleum | 816 |
 | Natural Gas | 743 |
+| Biofuel | 230 |
+| Biomass | 230 |
 | Geothermal | 38 |
 | Hydroelectricity | 26 |
 | Nuclear | 29 |
 | Solar | 48 |
+| Waste | 230 |
 | Wind | 26 |
 
 *Carbon Intensity Across Energy Sources*
@@ -55,6 +93,8 @@ Sources:
 
 - [for fossil energies](https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2)
 - [for renewables energies](http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf)
+- [for biomass and biofuel](https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_ar5_annex-iii.pdf) (IPCC AR5 WG3 Annex III, Table A.III.2, median for "Biomass — dedicated")
+- [for waste](https://github.com/electricitymaps/electricitymaps-contrib/blob/b7469384a7/electricitymap/contrib/parsers/ENTSOE.py#L123) (the biomass factor, following Electricity Maps, which groups waste with biomass)
 
 Then, for example, if the Energy Mix of the Grid Electricity is 25%
 Coal, 35% Petroleum, 26% Natural Gas and 14% Nuclear:

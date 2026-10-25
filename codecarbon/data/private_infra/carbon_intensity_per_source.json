@@ -19,5 +19,11 @@
     "solar": 48,
     "solar_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf",
     "wind": 26,
-    "wind_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf"
+    "wind_source": "http://www.world-nuclear.org/uploadedFiles/org/WNA/Publications/Working_Group_Reports/comparison_of_lifecycle.pdf",
+    "biomass": 230,
+    "biomass_source": "IPCC AR5 WG3 Annex III, Table A.III.2, 'Biomass - dedicated', median lifecycle emissions (min 130, max 420): https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_ar5_annex-iii.pdf",
+    "biofuel": 230,
+    "biofuel_source": "Same factor as biomass. global_energy_mix.json names bioenergy generation biofuel_TWh, so the factor is reachable under that name.",
+    "waste": 230,
+    "waste_source": "One value for mixed renewable and non-renewable waste: the biomass factor, following Electricity Maps, which groups ENTSO-E B17 Waste with biomass (https://github.com/electricitymaps/electricitymaps-contrib/blob/b7469384a7/electricitymap/contrib/parsers/ENTSOE.py#L123). The non-renewable fraction varies by country and year and is not modelled."
 }
