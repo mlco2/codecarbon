@@ -71,72 +71,78 @@ export default function ProjectActions({
 
         toast.promise(
             (async () => {
-                // Prepare the experiments data with runs for each experiment
-                const experimentsWithRuns = await Promise.all(
-                    experimentsReportData.map(async (exp) => {
-                        // Fetch runs for each experiment
-                        const runs = await getRunEmissionsByExperiment(
-                            exp.experiment_id,
-                            runData.startDate,
-                            runData.endDate,
-                        );
+                try {
+                    // Prepare the experiments data with runs for each experiment
+                    const experimentsWithRuns = await Promise.all(
+                        experimentsReportData.map(async (exp) => {
+                            // Fetch runs for each experiment
+                            const runs = await getRunEmissionsByExperiment(
+                                exp.experiment_id,
+                                runData.startDate,
+                                runData.endDate,
+                            );
 
-                        // Fetch metadata and emissions for each run
-                        const runsWithDetails = await Promise.all(
-                            runs.map(async (run) => {
-                                // Get emissions time series data (includes metadata)
-                                const emissionsData =
-                                    await getEmissionsTimeSeries(run.runId);
+                            // Fetch metadata and emissions for each run
+                            const runsWithDetails = await Promise.all(
+                                runs.map(async (run) => {
+                                    // Get emissions time series data (includes metadata)
+                                    const emissionsData =
+                                        await getEmissionsTimeSeries(run.runId);
 
-                                // Return run with metadata and emissions
-                                return {
-                                    ...run,
-                                    emissions_value: run.emissions,
-                                    emissions:
-                                        emissionsData?.emissions || undefined,
-                                    metadata:
-                                        emissionsData.metadata || undefined,
-                                };
-                            }),
-                        );
+                                    // Return run with metadata and emissions
+                                    return {
+                                        ...run,
+                                        emissions_value: run.emissions,
+                                        emissions:
+                                            emissionsData?.emissions ||
+                                            undefined,
+                                        metadata:
+                                            emissionsData?.metadata ||
+                                            undefined,
+                                    };
+                                }),
+                            );
 
-                        // Return experiment data with its enhanced runs
-                        return {
-                            experiment_id: exp.experiment_id,
-                            name: exp.name,
-                            emissions: exp.emissions,
-                            energy_consumed: exp.energy_consumed,
-                            duration: exp.duration,
-                            runs: runsWithDetails,
-                        };
-                    }),
-                );
+                            // Return experiment data with its enhanced runs
+                            return {
+                                experiment_id: exp.experiment_id,
+                                name: exp.name,
+                                emissions: exp.emissions,
+                                energy_consumed: exp.energy_consumed,
+                                duration: exp.duration,
+                                runs: runsWithDetails,
+                            };
+                        }),
+                    );
 
-                // Format the project data according to the requested structure
-                const formattedData = {
-                    projects: [
-                        {
-                            // Include all project properties
-                            id: project.id,
-                            name: project.name,
-                            description: project.description,
-                            public: project.public,
-                            organizationId: project.organizationId,
-                            experiments: experimentsWithRuns,
+                    // Format the project data according to the requested structure
+                    const formattedData = {
+                        projects: [
+                            {
+                                // Include all project properties
+                                id: project.id,
+                                name: project.name,
+                                description: project.description,
+                                public: project.public,
+                                organizationId: project.organizationId,
+                                experiments: experimentsWithRuns,
 
-                            // Add extra metadata
-                            date_range: {
-                                startDate: runData.startDate,
-                                endDate: runData.endDate,
+                                // Add extra metadata
+                                date_range: {
+                                    startDate: runData.startDate,
+                                    endDate: runData.endDate,
+                                },
                             },
-                        },
-                    ],
-                };
+                        ],
+                    };
 
-                exportToJson(formattedData);
-                // Small delay to make the loading state visible
-                await new Promise((resolve) => setTimeout(resolve, 500));
-                setIsExporting(false);
+                    exportToJson(formattedData);
+                    // Small delay to make the loading state visible
+                    await new Promise((resolve) => setTimeout(resolve, 500));
+                } finally {
+                    // Also on failure, or the button stays disabled until a reload.
+                    setIsExporting(false);
+                }
             })(),
             {
                 loading: "Exporting JSON data...",

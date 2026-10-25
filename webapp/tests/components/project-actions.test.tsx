@@ -3,10 +3,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 vi.mock("@/api/projects", () => ({ updateProject: vi.fn() }));
-vi.mock("@/api/runs", () => ({
+const runsApi = vi.hoisted(() => ({
     getEmissionsTimeSeries: vi.fn(),
-    getRunEmissionsByExperiment: vi.fn().mockResolvedValue([]),
+    getRunEmissionsByExperiment: vi.fn(),
 }));
+vi.mock("@/api/runs", () => runsApi);
 vi.mock("@/components/projectTokens/projectTokenTable", () => ({
     ProjectTokensTable: () => <div />,
 }));
@@ -15,6 +16,7 @@ const exportToJsonMock = vi.hoisted(() => vi.fn());
 vi.mock("@/utils/export", () => ({ exportToJson: exportToJsonMock }));
 
 import ProjectActions from "@/components/project-actions";
+import { ExperimentReport } from "@/api/schemas";
 
 const project = {
     id: "p1",
@@ -33,14 +35,17 @@ const runData = {
 
 beforeEach(() => {
     exportToJsonMock.mockReset();
+    runsApi.getEmissionsTimeSeries.mockReset();
+    runsApi.getRunEmissionsByExperiment.mockReset();
+    runsApi.getRunEmissionsByExperiment.mockResolvedValue([]);
 });
 
-function renderActions() {
+function renderActions(experimentsReportData: ExperimentReport[] = []) {
     const onRefresh = vi.fn();
     render(
         <ProjectActions
             project={project}
-            experimentsReportData={[]}
+            experimentsReportData={experimentsReportData}
             runData={runData}
             onRefresh={onRefresh}
         />,
@@ -90,6 +95,31 @@ describe("ProjectActions", () => {
             startDate: runData.startDate,
             endDate: runData.endDate,
         });
+    });
+
+    it("lets the export be retried after it fails", async () => {
+        const experiment = {
+            experiment_id: "e1",
+            name: "Training",
+        } as ExperimentReport;
+        runsApi.getRunEmissionsByExperiment.mockRejectedValueOnce(
+            new Error("offline"),
+        );
+        // A run whose emissions cannot be fetched still exports.
+        runsApi.getRunEmissionsByExperiment.mockResolvedValueOnce([
+            { runId: "r1", emissions: 1 },
+        ]);
+        runsApi.getEmissionsTimeSeries.mockResolvedValue(null);
+        renderActions([experiment]);
+        const button = screen.getByRole("button", {
+            name: /download json export/i,
+        });
+
+        await userEvent.click(button);
+        await waitFor(() => expect(button).toBeEnabled());
+
+        await userEvent.click(button);
+        await waitFor(() => expect(exportToJsonMock).toHaveBeenCalledOnce());
     });
 
     it("opens project settings in place", async () => {
