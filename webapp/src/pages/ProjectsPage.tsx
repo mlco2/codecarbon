@@ -14,8 +14,9 @@ import { PrimaryButton } from "@/components/ui/primary-button";
 import { Table, TableBody } from "@/components/ui/table";
 
 import { fetcher } from "@/api/swr";
+import { useOrganizationName } from "@/hooks/useOrganizationName";
 import { deleteProject, getProjects } from "@/api/projects";
-import { Organization, Project } from "@/api/schemas";
+import { Project } from "@/api/schemas";
 import { useModal } from "@/hooks/useModal";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
@@ -42,24 +43,7 @@ export default function ProjectsPage() {
         null,
     );
 
-    /*
-     * The breadcrumb's organization name. Fetched like the Global dashboard does,
-     * with the name the navigation already cached as the fallback while the request
-     * is in flight, so the crumb never flashes a bare id.
-     */
-    const { data: organization } = useSWR<Organization>(
-        organizationId ? `/organizations/${organizationId}` : null,
-        fetcher,
-        { revalidateOnFocus: false },
-    );
-    let cachedOrganizationName: string | null = null;
-    try {
-        cachedOrganizationName = localStorage.getItem("organizationName");
-    } catch {
-        cachedOrganizationName = null;
-    }
-    const organizationName =
-        organization?.name || cachedOrganizationName || organizationId!;
+    const organizationName = useOrganizationName(organizationId);
 
     const {
         data: projects,

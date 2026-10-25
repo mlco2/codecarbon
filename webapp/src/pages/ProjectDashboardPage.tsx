@@ -18,18 +18,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { DateRange } from "react-day-picker";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { useOrganizationName } from "@/hooks/useOrganizationName";
 
 export default function ProjectDashboardPage() {
     const { projectId, organizationId } = useParams<{
         projectId: string;
         organizationId: string;
     }>();
-    let organizationName: string | null = null;
-    try {
-        organizationName = localStorage.getItem("organizationName");
-    } catch {
-        organizationName = null;
-    }
+    const organizationName = useOrganizationName(organizationId);
 
     const [project, setProject] = useState({
         name: "",
@@ -151,7 +147,7 @@ export default function ProjectDashboardPage() {
                 className="pb-8 lg:pb-16"
                 items={[
                     {
-                        label: organizationName || organizationId || "",
+                        label: organizationName,
                         to: `/${organizationId}`,
                     },
                     {

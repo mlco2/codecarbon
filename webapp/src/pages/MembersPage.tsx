@@ -23,8 +23,9 @@ import {
     addOrganizationUser,
     removeUserFromOrganization,
 } from "@/api/organizations";
-import { AuthUser, Organization, OrganizationUser } from "@/api/schemas";
+import { AuthUser, OrganizationUser } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
+import { useOrganizationName } from "@/hooks/useOrganizationName";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 /*
@@ -47,24 +48,7 @@ export default function MembersPage() {
         useState<OrganizationUser | null>(null);
     const [isRemoving, setIsRemoving] = useState(false);
 
-    /*
-     * The breadcrumb's organization name, fetched as the other redesigned pages
-     * fetch it, with the name the navigation already cached as the fallback so
-     * the crumb never flashes a bare id.
-     */
-    const { data: organization } = useSWR<Organization>(
-        organizationId ? `/organizations/${organizationId}` : null,
-        fetcher,
-        { revalidateOnFocus: false },
-    );
-    let cachedOrganizationName: string | null = null;
-    try {
-        cachedOrganizationName = localStorage.getItem("organizationName");
-    } catch {
-        cachedOrganizationName = null;
-    }
-    const organizationName =
-        organization?.name || cachedOrganizationName || organizationId!;
+    const organizationName = useOrganizationName(organizationId);
 
     const membersKey = `/organizations/${organizationId}/users`;
     const {
