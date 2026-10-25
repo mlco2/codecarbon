@@ -2,5 +2,5 @@
 
 @./AGENTS.md
 
-The above is binding for all work under `webapp/`. This file is gitignored;
-`AGENTS.md` is the checked-in source of truth.
+The above is binding for all work under `webapp/`. `AGENTS.md` is the source of
+truth; this file only imports it for Claude Code.

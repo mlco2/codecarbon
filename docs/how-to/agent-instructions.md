@@ -36,6 +36,7 @@ Here's what you need to know to navigate and contribute effectively.
    - Run with: `cd webapp && pnpm dev`
    - **Before editing anything under `webapp/`, read `webapp/AGENTS.md` first** —
      it is binding for all webapp work (propose before editing, never commit).
+     Claude Code loads `webapp/CLAUDE.md`, which only imports `webapp/AGENTS.md`.
 
 ### Key Directories
 
