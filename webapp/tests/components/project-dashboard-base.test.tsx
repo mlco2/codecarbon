@@ -45,6 +45,7 @@ const baseProps = {
     onDateChange: vi.fn(),
     radialChartData: {
         energy: { label: "kWh", value: 0 },
+        water: { label: "L", value: 0 },
         emissions: { label: "kg eq CO2", value: 0 },
         duration: { label: "days", value: 0 },
     },

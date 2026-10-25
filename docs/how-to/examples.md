@@ -75,6 +75,7 @@ The directory [examples/](https://github.com/mlco2/codecarbon/tree/master/exampl
 |---------|------|-------------|
 | [pue.py](https://github.com/mlco2/codecarbon/blob/master/examples/pue.py) | Python Script | Calculate Power Usage Effectiveness (PUE) with CodeCarbon |
 | [wue.py](https://github.com/mlco2/codecarbon/blob/master/examples/wue.py) | Python Script | Calculate Water Usage Effectiveness (WUE) of your computing |
+| [water_consumption.py](https://github.com/mlco2/codecarbon/blob/master/examples/water_consumption.py) | Python Script | Estimate the water consumed by your computing (direct WUE + electricity generation) |
 
 ## Interactive Notebooks
 
