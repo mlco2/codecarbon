@@ -29,14 +29,19 @@ class RunService:
         self._matomo_tracker = matomo_tracker
 
     def add_run(self, run: RunCreate, user: User = None) -> Run:
-        created_run = self._repository.add_run(run)
-        # The last step of the activation funnel: an experiment receiving its
-        # first run shows someone actually integrated the package.
-        if (
-            self._matomo_tracker
+        # The last step of the activation funnel: an organization receiving its
+        # first run shows someone actually integrated the package. Counted per
+        # organization, which sign-up creates one of, so it pairs with
+        # account_created rather than firing again for every new experiment.
+        # Checked before the insert, so concurrent first runs over-count rather
+        # than go missing.
+        first_run = (
+            self._matomo_tracker is not None
             and self._matomo_tracker.enabled
-            and self._repository.count_runs_from_experiment(run.experiment_id) == 1
-        ):
+            and not self._repository.organization_has_runs(run.experiment_id)
+        )
+        created_run = self._repository.add_run(run)
+        if first_run:
             self._matomo_tracker.track_event("Activation", "first_run_received")
         return created_run
 

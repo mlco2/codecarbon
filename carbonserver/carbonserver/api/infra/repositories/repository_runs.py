@@ -117,13 +117,31 @@ class SqlAlchemyRepository(Runs):
                 raise EmptyResultException(f"No runs for experiment {experiment_id}")
             return [self.map_sql_to_schema(e) for e in res]
 
-    def count_runs_from_experiment(self, experiment_id) -> int:
+    def organization_has_runs(self, experiment_id) -> bool:
+        """Whether the organization owning this experiment already has a run."""
         with self.session_factory() as session:
-            return (
-                session.query(func.count(SqlModelRun.id))
-                .filter(SqlModelRun.experiment_id == experiment_id)
+            organization_id = (
+                session.query(SqlModelProject.organization_id)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelExperiment.project_id == SqlModelProject.id,
+                )
+                .filter(SqlModelExperiment.id == experiment_id)
                 .scalar()
             )
+            return session.query(
+                session.query(SqlModelRun.id)
+                .join(
+                    SqlModelExperiment,
+                    SqlModelExperiment.id == SqlModelRun.experiment_id,
+                )
+                .join(
+                    SqlModelProject,
+                    SqlModelProject.id == SqlModelExperiment.project_id,
+                )
+                .filter(SqlModelProject.organization_id == organization_id)
+                .exists()
+            ).scalar()
 
     @staticmethod
     def map_sql_to_schema(run: SqlModelRun) -> Run:
