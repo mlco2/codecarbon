@@ -79,7 +79,7 @@ export default function OrgDashboardPage() {
                 : 0,
         },
         emissions: {
-            label: "Kg. Eq. CO2",
+            label: "kg eq CO2",
             value: organizationReport?.emissions
                 ? parseFloat(organizationReport.emissions.toFixed(2))
                 : 0,
