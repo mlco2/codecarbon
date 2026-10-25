@@ -17,6 +17,16 @@ export const UserSchema = z.object({
 export type User = z.infer<typeof UserSchema>;
 
 /*
+ * `GET /auth/check` returns the login token's claims, not a `User`: the user's
+ * id is `sub`, which is also their id in the database.
+ */
+export type AuthUser = {
+    sub: string;
+    email?: string;
+    fields?: { name?: string };
+};
+
+/*
  * `GET /organizations/{id}/users` returns the backend's `OrganizationUser`: a
  * user plus their membership of that organization. `is_admin` is the only place
  * the API exposes admin rights, and it is per-organization.

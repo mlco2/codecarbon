@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import useSWR from "swr";
 
-import { User } from "@/api/schemas";
+import { AuthUser } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
 import SettingsNavItem from "@/components/settings-nav-item";
 import { FormField } from "@/components/ui/form-field";
@@ -27,7 +27,7 @@ export default function SettingsPage() {
     // The signed-in user's real email, from the endpoint AuthGuard already uses.
     // Figma shows the field in its "Disabled" state with placeholder text; the
     // value here is the actual address rather than that placeholder.
-    const { data: auth, isLoading } = useSWR<{ user?: User }>(
+    const { data: auth, isLoading } = useSWR<{ user?: AuthUser }>(
         "/auth/check",
         fetcher,
         { revalidateOnFocus: false },

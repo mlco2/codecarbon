@@ -42,7 +42,7 @@ function mockMembers(members: unknown[], viewerId: string | null = null) {
     fetcherMock.mockImplementation((url: string) => {
         if (url.endsWith("/users")) return Promise.resolve(members);
         if (url === "/auth/check")
-            return Promise.resolve(viewerId ? { user: { id: viewerId } } : {});
+            return Promise.resolve(viewerId ? { user: { sub: viewerId } } : {});
         return mockOrganization(url) ?? Promise.resolve(null);
     });
 }

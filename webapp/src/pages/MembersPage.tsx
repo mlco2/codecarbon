@@ -23,7 +23,7 @@ import {
     addOrganizationUser,
     removeUserFromOrganization,
 } from "@/api/organizations";
-import { Organization, OrganizationUser, User } from "@/api/schemas";
+import { AuthUser, Organization, OrganizationUser } from "@/api/schemas";
 import { fetcher } from "@/api/swr";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
@@ -79,10 +79,10 @@ export default function MembersPage() {
      * administer this one. The API enforces the same rule; this only keeps the
      * control off screens where pressing it would be refused.
      */
-    const { data: auth } = useSWR<{ user?: User }>("/auth/check", fetcher, {
+    const { data: auth } = useSWR<{ user?: AuthUser }>("/auth/check", fetcher, {
         revalidateOnFocus: false,
     });
-    const currentUserId = auth?.user?.id;
+    const currentUserId = auth?.user?.sub;
     const isAdmin = Boolean(
         currentUserId &&
             members?.some((m) => m.id === currentUserId && m.is_admin),

@@ -21,7 +21,14 @@ const handlers: Handler[] = [
     // ─── Auth ──────────────────────────────────────────────────────────────
     ({ pathname, method }) => {
         if (method === "GET" && pathname === "/auth/check") {
-            return ok({ user: MOCK.user });
+            // Token claims, as the API returns them, not the database user.
+            return ok({
+                user: {
+                    sub: MOCK.user.id,
+                    email: MOCK.user.email,
+                    fields: { name: MOCK.user.name },
+                },
+            });
         }
         return undefined;
     },

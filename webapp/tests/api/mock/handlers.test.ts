@@ -7,12 +7,17 @@ function url(path: string): URL {
 }
 
 describe("resolveMock — auth", () => {
-    it("returns the mock admin user for /auth/check", () => {
+    it("returns the mock admin's token claims for /auth/check", () => {
         const r = resolveMock(url("/auth/check"), "GET");
         expect(r.status).toBe(200);
-        expect((r.body as { user: { email: string } }).user.email).toBe(
-            MOCK.user.email,
-        );
+        // Same shape as the real API: the id is `sub`, there is no `id`.
+        expect(r.body).toEqual({
+            user: {
+                sub: MOCK.user.id,
+                email: MOCK.user.email,
+                fields: { name: MOCK.user.name },
+            },
+        });
     });
 });
 
