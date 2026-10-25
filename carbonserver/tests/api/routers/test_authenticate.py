@@ -229,8 +229,8 @@ async def test_end_session_url_metadata_failure(oidc_provider, mock_oidc_client)
 
 
 def test_account_url_derives_from_issuer(monkeypatch):
-    """The account console is derived from the issuer, so there is no separate
-    setting to keep in sync."""
+    """Without OIDC_ACCOUNT_URL, the account console is Keycloak's, derived
+    from the issuer."""
     monkeypatch.setattr(
         "carbonserver.api.services.auth_providers.oidc_auth_provider.settings."
         "oidc_issuer_url",
@@ -242,6 +242,18 @@ def test_account_url_derives_from_issuer(monkeypatch):
         OIDCAuthProvider.get_account_url()
         == "https://authentication.codecarbon.io/realms/codecarbon/account/"
     )
+
+
+def test_account_url_can_be_set_for_other_providers(monkeypatch):
+    """Other providers (Auth0, Fief...) host the console elsewhere, so the URL
+    can be configured instead of returning a 404 from {issuer}/account/."""
+    module = "carbonserver.api.services.auth_providers.oidc_auth_provider.settings."
+    monkeypatch.setattr(module + "oidc_issuer_url", "https://tenant.auth0.com/")
+    monkeypatch.setattr(
+        module + "oidc_account_url", "https://tenant.example.com/profile"
+    )
+
+    assert OIDCAuthProvider.get_account_url() == "https://tenant.example.com/profile"
 
 
 @pytest.mark.asyncio

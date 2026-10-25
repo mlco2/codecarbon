@@ -137,8 +137,11 @@ class OIDCAuthProvider:
     @staticmethod
     def get_account_url() -> str:
         """The provider-hosted account console, where users manage their own
-        email and password. Derived from the issuer the same way the login URL
-        is, so there is nothing extra to configure."""
+        email and password. OIDC defines no such endpoint, so it is
+        OIDC_ACCOUNT_URL when set, else derived from the issuer the way Keycloak
+        lays it out."""
+        if settings.oidc_account_url:
+            return settings.oidc_account_url
         return f"{settings.oidc_issuer_url.rstrip('/')}/account/"
 
     @staticmethod

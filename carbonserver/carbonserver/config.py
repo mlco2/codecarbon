@@ -32,6 +32,11 @@ class Settings(BaseSettings):
         "",
         validation_alias=AliasChoices("OIDC_WELL_KNOWN_URL", "oidc_well_known_url"),
     )
+    # The provider's account console. Empty means Keycloak's, {issuer}/account/.
+    oidc_account_url: str = Field(
+        "",
+        validation_alias=AliasChoices("OIDC_ACCOUNT_URL", "oidc_account_url"),
+    )
     frontend_url: str = Field(
         "",
         validation_alias=AliasChoices("FRONTEND_URL", "frontend_url"),
@@ -41,7 +46,9 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("DEFAULT_REDIRECT_URL", "default_redirect_url"),
     )
     # Matomo analytics for server-side events. Off unless both are set.
-    matomo_url: str = Field("", validation_alias=AliasChoices("MATOMO_URL", "matomo_url"))
+    matomo_url: str = Field(
+        "", validation_alias=AliasChoices("MATOMO_URL", "matomo_url")
+    )
     matomo_site_id: str = Field(
         "", validation_alias=AliasChoices("MATOMO_SITE_ID", "matomo_site_id")
     )
