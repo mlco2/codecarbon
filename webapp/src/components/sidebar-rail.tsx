@@ -115,19 +115,12 @@ export default function SidebarRail({
         }
     });
 
+    // A remembered organization the user no longer belongs to (removed from it,
+    // or another account on this browser) falls back to their first one.
     useEffect(() => {
-        if (selectedOrg) return;
-        try {
-            const localOrg = localStorage.getItem("organizationId");
-            const found = orgs?.find((org) => org.id === localOrg);
-            if (localOrg && found) {
-                setSelectedOrg(localOrg);
-            } else if (orgs && orgs.length > 0) {
-                setSelectedOrg(orgs[0].id);
-            }
-        } catch (error) {
-            console.error("Error reading from localStorage:", error);
-        }
+        if (!orgs || orgs.length === 0) return;
+        if (selectedOrg && orgs.some((org) => org.id === selectedOrg)) return;
+        setSelectedOrg(orgs[0].id);
     }, [selectedOrg, orgs]);
 
     useEffect(() => {

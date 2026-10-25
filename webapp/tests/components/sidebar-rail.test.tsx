@@ -75,6 +75,16 @@ describe("SidebarRail", () => {
         expect(localStorage.getItem("organizationName")).toBe("Mozilla");
     });
 
+    it("drops a remembered organization the user is no longer in", async () => {
+        localStorage.setItem("organizationId", "gone");
+        locationMock.current = { pathname: "/" };
+        renderWithRouter(<SidebarRail orgs={orgs} />);
+
+        await userEvent.click(screen.getByRole("button", { name: "Projects" }));
+        expect(navigateMock).toHaveBeenCalledWith("/o1/projects");
+        expect(localStorage.getItem("organizationId")).toBe("o1");
+    });
+
     it("does not navigate before an organization is known", async () => {
         renderWithRouter(<SidebarRail orgs={[]} />);
         await userEvent.click(screen.getByRole("button", { name: "Projects" }));
