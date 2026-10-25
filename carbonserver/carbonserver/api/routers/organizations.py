@@ -13,6 +13,7 @@ from carbonserver.api.schemas import (
     OrganizationPatch,
     OrganizationReport,
     OrganizationUser,
+    OrganizationWithRole,
 )
 from carbonserver.api.services.auth_service import (
     MandatoryUserWithAuthDependency,
@@ -86,7 +87,7 @@ def read_organization(
     "/organizations",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
-    response_model=List[Organization],
+    response_model=List[OrganizationWithRole],
 )
 @inject
 def list_organizations(
@@ -94,7 +95,7 @@ def list_organizations(
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
-) -> List[Organization]:
+) -> List[OrganizationWithRole]:
     return organization_service.list_organizations(user=auth_user.db_user)
 
 

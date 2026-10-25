@@ -4,6 +4,8 @@ export const OrganizationSchema = z.object({
     id: z.string(),
     name: z.string(),
     description: z.string(),
+    // Only `GET /organizations` sets it: whether the signed-in user administers it.
+    is_admin: z.boolean().optional(),
 });
 export type Organization = z.infer<typeof OrganizationSchema>;
 
@@ -15,6 +17,30 @@ export const UserSchema = z.object({
     is_active: z.boolean(),
 });
 export type User = z.infer<typeof UserSchema>;
+
+/*
+ * `GET /auth/check` returns the login token's claims, not a `User`: the user's
+ * id is `sub`, which is also their id in the database.
+ */
+export type AuthUser = {
+    sub: string;
+    email?: string;
+    fields?: { name?: string };
+};
+
+/*
+ * `GET /organizations/{id}/users` returns the backend's `OrganizationUser`: a
+ * user plus their membership of that organization. `is_admin` is the only place
+ * the API exposes admin rights, and it is per-organization.
+ */
+export const OrganizationUserSchema = z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    organization_id: z.string(),
+    is_admin: z.boolean(),
+});
+export type OrganizationUser = z.infer<typeof OrganizationUserSchema>;
 
 // Backend returns snake_case keys (`organization_id`); the rest of the
 // codebase consumes camelCase (`organizationId`). Zod's `.transform` lets
@@ -190,7 +216,6 @@ export interface ProjectDashboardProps {
     selectedRunId: string;
     onExperimentClick: (experimentId: string) => void;
     onRunClick: (runId: string) => void;
-    onSettingsClick: () => void;
     onRefresh: () => void;
     isLoading?: boolean;
 }

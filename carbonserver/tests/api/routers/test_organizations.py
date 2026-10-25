@@ -14,7 +14,11 @@ from carbonserver.api.infra.repositories.repository_users import (
 )
 from carbonserver.api.routers import organizations
 from carbonserver.api.routers.authenticate import UserWithAuthDependency
-from carbonserver.api.schemas import Organization, OrganizationUser
+from carbonserver.api.schemas import (
+    Organization,
+    OrganizationUser,
+    OrganizationWithRole,
+)
 from carbonserver.api.services.auth_service import MandatoryUserWithAuthDependency
 from carbonserver.container import ServerContainer
 
@@ -108,12 +112,12 @@ def test_get_organization_by_id_returns_correct_org(client, custom_test_server):
 
 def test_list_organizations_returns_all_orgs(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_org_1 = ORG_1
-    expected_org_2 = ORG_2
+    expected_org_1 = {**ORG_1, "is_admin": True}
+    expected_org_2 = {**ORG_2, "is_admin": False}
     expected_org_list = [expected_org_1, expected_org_2]
     repository_mock.list_organizations.return_value = [
-        Organization(**expected_org_1),
-        Organization(**expected_org_2),
+        OrganizationWithRole(**expected_org_1),
+        OrganizationWithRole(**expected_org_2),
     ]
 
     with custom_test_server.container.organization_repository.override(repository_mock):
@@ -126,12 +130,12 @@ def test_list_organizations_returns_all_orgs(client, custom_test_server):
 
 def test_list_organizations_returns_all_orgs_for_user(client, custom_test_server):
     repository_mock = mock.Mock(spec=SqlAlchemyRepository)
-    expected_org_1 = ORG_1
-    expected_org_2 = ORG_2
+    expected_org_1 = {**ORG_1, "is_admin": True}
+    expected_org_2 = {**ORG_2, "is_admin": False}
     expected_org_list = [expected_org_1, expected_org_2]
     repository_mock.list_organizations.return_value = [
-        Organization(**expected_org_1),
-        Organization(**expected_org_2),
+        OrganizationWithRole(**expected_org_1),
+        OrganizationWithRole(**expected_org_2),
     ]
     custom_test_server.dependency_overrides[UserWithAuthDependency] = (
         FakeUserWithAuthDependency

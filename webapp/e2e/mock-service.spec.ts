@@ -38,8 +38,16 @@ test.describe("Mock service end-to-end", () => {
         await expect(
             page.getByRole("heading", { name: /^projects$/i }),
         ).toBeVisible();
-        await expect(page.getByText("ML Training Pipeline")).toBeVisible();
-        await expect(page.getByText("Inference Service")).toBeVisible();
+        // Each row is a link to the project, beside its "Actions for …" menu.
+        await expect(
+            page.getByRole("link", {
+                name: "ML Training Pipeline",
+                exact: true,
+            }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole("link", { name: "Inference Service", exact: true }),
+        ).toBeVisible();
         expect(errors).toEqual([]);
     });
 
@@ -54,14 +62,17 @@ test.describe("Mock service end-to-end", () => {
         // parsed the snake_case wire shape into the camelCase app shape.
         await expect(
             page.getByRole("heading", {
-                name: /^project ml training pipeline$/i,
+                level: 1,
+                name: "ML Training Pipeline",
             }),
         ).toBeVisible();
 
         // Chart card titles render (skeleton would not include them).
-        await expect(page.getByText(/project experiment runs/i)).toBeVisible();
         await expect(
-            page.getByText(/scatter chart - emissions by run id/i),
+            page.getByRole("heading", { name: "Project experiment runs" }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole("heading", { name: "Emissions by run" }),
         ).toBeVisible();
 
         // Experiments live in a Radix Select portal — open it to assert
@@ -85,12 +96,19 @@ test.describe("Mock service end-to-end", () => {
         expect(errors).toEqual([]);
     });
 
-    test("Project settings page shows the API tokens table", async ({
+    test("Project settings modal shows the API tokens table", async ({
         page,
     }) => {
         const errors = collectConsoleErrors(page);
         await logIn(page);
-        await page.goto(`/${ORG_ID}/projects/${PROJECT_ID}/settings`);
+        await page.goto(`/${ORG_ID}/projects/${PROJECT_ID}`);
+
+        // Settings moved from their own page into a modal on the dashboard.
+        await page.getByRole("button", { name: "Project settings" }).click();
+        await page
+            .getByRole("dialog", { name: "Project settings" })
+            .getByRole("tab", { name: "API Tokens" })
+            .click();
 
         // From MOCK.token.byProjectId:
         await expect(page.getByText("Local dev token")).toBeVisible();
@@ -108,8 +126,10 @@ test.describe("Mock service end-to-end", () => {
         // If either is missing from the mock, the page renders <ErrorMessage />.
         await expect(page.getByText(/an error occurred/i)).toHaveCount(0);
 
-        // The radial cards contain unit labels — at least one should be visible.
-        await expect(page.getByText("kg eq CO2").first()).toBeVisible();
+        // The gauges are labelled with their value and unit.
+        await expect(
+            page.getByRole("img", { name: /kg eq CO2$/ }),
+        ).toBeVisible();
         expect(errors).toEqual([]);
     });
 
@@ -122,8 +142,17 @@ test.describe("Mock service end-to-end", () => {
         // ErrorMessage fallback.
         await expect(page.getByText(/an error occurred/i)).toHaveCount(0);
 
-        await expect(page.getByText("Mock Admin")).toBeVisible();
-        await expect(page.getByText("Mock Member")).toBeVisible();
+        await expect(
+            page.getByText("Mock Admin", { exact: true }),
+        ).toBeVisible();
+        await expect(
+            page.getByText("Mock Member", { exact: true }),
+        ).toBeVisible();
+        // The mock user administers this organization, so the per-member
+        // actions are offered: /auth/check identifies them by `sub`.
+        await expect(
+            page.getByRole("button", { name: "Actions for Mock Member" }),
+        ).toBeVisible();
         expect(errors).toEqual([]);
     });
 });

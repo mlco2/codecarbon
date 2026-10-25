@@ -1,11 +1,4 @@
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import {
     ChartConfig,
     ChartContainer,
     ChartTooltip,
@@ -16,6 +9,8 @@ import * as React from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import { ExportCsvButton } from "@/components/export-csv-button";
+import ChartRow from "@/components/chart-row";
+import ChartSection from "@/components/chart-section";
 import ChartSkeleton from "@/components/chart-skeleton";
 import { getEmissionsTimeSeries } from "@/api/runs";
 import { exportEmissionsTimeSeriesCsv } from "@/utils/export";
@@ -104,171 +99,155 @@ export default function EmissionsTimeSeriesChart({
     const tickFmt = pickTimeFormat(spanMs);
 
     return (
-        <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Run Metadata</CardTitle>
-                    <CardDescription>
-                        Hardware and environment details
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                            <Cpu className="h-5 w-5" />
-                            <span className="font-medium">CPU:</span>
-                            <span>
-                                {emissionTimeSeries.metadata.cpu_model} (
-                                {emissionTimeSeries.metadata.cpu_count} cores)
-                            </span>
-                        </div>
-                        {emissionTimeSeries.metadata.gpu_model && (
-                            <div className="flex items-center space-x-2">
-                                <Server className="h-5 w-5" />
-                                <span className="font-medium">GPU:</span>
-                                <span>
-                                    {emissionTimeSeries.metadata.gpu_model} (
-                                    {emissionTimeSeries.metadata.gpu_count})
-                                </span>
-                            </div>
-                        )}
-                        <div className="flex items-center space-x-2">
-                            <HardDrive className="h-5 w-5" />
-                            <span className="font-medium">RAM:</span>
-                            <span>
-                                {emissionTimeSeries.metadata.ram_total_size} GB
-                            </span>
-                        </div>
-                        <div>
-                            <span className="font-medium">OS:</span>{" "}
-                            {emissionTimeSeries.metadata.os}
-                        </div>
-                        <div>
-                            <span className="font-medium">Python:</span>{" "}
-                            {emissionTimeSeries.metadata.python_version}
-                        </div>
-                        <div>
-                            <span className="font-medium">Region:</span>{" "}
-                            {emissionTimeSeries.metadata.region}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-                    <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-                        <div className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>Emissions Time Series</CardTitle>
-                                <CardDescription>
-                                    Showing emissions rate and energy consumed
-                                    over time
-                                </CardDescription>
-                            </div>
-                            {!isPublicView && (
-                                <ExportCsvButton
-                                    isDisabled={
-                                        !emissionTimeSeries ||
-                                        !emissionTimeSeries.emissions.length
-                                    }
-                                    onDownload={async () => {
-                                        if (!emissionTimeSeries) return;
-                                        exportEmissionsTimeSeriesCsv(
-                                            emissionTimeSeries,
-                                            projectName,
-                                            experimentName,
+        <ChartRow insetTop>
+            <ChartSection
+                title="Emissions time series"
+                description="Showing emissions rate and energy consumed over time"
+                action={
+                    !isPublicView && (
+                        <ExportCsvButton
+                            isDisabled={
+                                !emissionTimeSeries ||
+                                !emissionTimeSeries.emissions.length
+                            }
+                            onDownload={async () => {
+                                if (!emissionTimeSeries) return;
+                                exportEmissionsTimeSeriesCsv(
+                                    emissionTimeSeries,
+                                    projectName,
+                                    experimentName,
+                                );
+                            }}
+                            loadingMessage="Exporting time series..."
+                            successMessage="Time series exported successfully"
+                            errorMessage="Failed to export time series"
+                        />
+                    )
+                }
+            >
+                <div className="flex flex-wrap gap-2">
+                    {Object.keys(chartConfig).map((key) => {
+                        const chart = key as keyof typeof chartConfig;
+                        return (
+                            <button
+                                key={chart}
+                                type="button"
+                                data-active={activeChart === chart}
+                                className="type-mono-medium type-row-meta cursor-pointer rounded-field px-4 py-2 text-cc-gray outline-none transition-colors hover:text-cc-button-hover focus-visible:ring-2 focus-visible:ring-cc-lime data-[active=true]:bg-cc-darkest-gray data-[active=true]:text-cc-lime motion-reduce:transition-none"
+                                onClick={() => setActiveChart(chart)}
+                            >
+                                {chartConfig[chart].label}
+                            </button>
+                        );
+                    })}
+                </div>
+                <ChartContainer
+                    config={chartConfig}
+                    className="aspect-auto h-[250px] w-full"
+                >
+                    <LineChart
+                        data={points}
+                        margin={{
+                            left: 12,
+                            right: 12,
+                        }}
+                    >
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                            dataKey="ts"
+                            type="number"
+                            scale="time"
+                            domain={["dataMin", "dataMax"]}
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                            minTickGap={48}
+                            tickFormatter={(value) =>
+                                format(new Date(value), tickFmt)
+                            }
+                        />
+                        <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                        />
+                        <ChartTooltip
+                            content={
+                                <ChartTooltipContent
+                                    className="w-[180px]"
+                                    labelFormatter={(_, payload) => {
+                                        const tooltipPayload = payload as
+                                            | TimeSeriesTooltipPayload
+                                            | undefined;
+                                        const point =
+                                            tooltipPayload?.[0]?.payload;
+
+                                        if (!point) {
+                                            return "";
+                                        }
+
+                                        return format(
+                                            new Date(point.ts),
+                                            "MMM d, yyyy HH:mm:ss",
                                         );
                                     }}
-                                    loadingMessage="Exporting time series..."
-                                    successMessage="Time series exported successfully"
-                                    errorMessage="Failed to export time series"
                                 />
-                            )}
+                            }
+                        />
+                        <Line
+                            dataKey={activeChart}
+                            type="monotone"
+                            stroke={chartConfig[activeChart].color}
+                            strokeWidth={2}
+                            dot={false}
+                        />
+                    </LineChart>
+                </ChartContainer>
+            </ChartSection>
+            <ChartSection
+                title="Run metadata"
+                description="Hardware and environment details"
+            >
+                <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <Cpu className="h-5 w-5" />
+                        <span className="font-medium">CPU:</span>
+                        <span>
+                            {emissionTimeSeries.metadata.cpu_model} (
+                            {emissionTimeSeries.metadata.cpu_count} cores)
+                        </span>
+                    </div>
+                    {emissionTimeSeries.metadata.gpu_model && (
+                        <div className="flex items-center space-x-2">
+                            <Server className="h-5 w-5" />
+                            <span className="font-medium">GPU:</span>
+                            <span>
+                                {emissionTimeSeries.metadata.gpu_model} (
+                                {emissionTimeSeries.metadata.gpu_count})
+                            </span>
                         </div>
+                    )}
+                    <div className="flex items-center space-x-2">
+                        <HardDrive className="h-5 w-5" />
+                        <span className="font-medium">RAM:</span>
+                        <span>
+                            {emissionTimeSeries.metadata.ram_total_size} GB
+                        </span>
                     </div>
-                    <div className="flex">
-                        {Object.keys(chartConfig).map((key) => {
-                            const chart = key as keyof typeof chartConfig;
-                            return (
-                                <button
-                                    key={chart}
-                                    data-active={activeChart === chart}
-                                    className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
-                                    onClick={() => setActiveChart(chart)}
-                                >
-                                    <span className="text-xs text-muted-foreground">
-                                        {chartConfig[chart].label}
-                                    </span>
-                                </button>
-                            );
-                        })}
+                    <div>
+                        <span className="font-medium">OS:</span>{" "}
+                        {emissionTimeSeries.metadata.os}
                     </div>
-                </CardHeader>
-                <CardContent className="px-2 sm:p-6">
-                    <ChartContainer
-                        config={chartConfig}
-                        className="aspect-auto h-[250px] w-full"
-                    >
-                        <LineChart
-                            data={points}
-                            margin={{
-                                left: 12,
-                                right: 12,
-                            }}
-                        >
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="ts"
-                                type="number"
-                                scale="time"
-                                domain={["dataMin", "dataMax"]}
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                                minTickGap={48}
-                                tickFormatter={(value) =>
-                                    format(new Date(value), tickFmt)
-                                }
-                            />
-                            <YAxis
-                                tickLine={false}
-                                axisLine={false}
-                                tickMargin={8}
-                            />
-                            <ChartTooltip
-                                content={
-                                    <ChartTooltipContent
-                                        className="w-[180px]"
-                                        labelFormatter={(_, payload) => {
-                                            const tooltipPayload = payload as
-                                                | TimeSeriesTooltipPayload
-                                                | undefined;
-                                            const point =
-                                                tooltipPayload?.[0]?.payload;
-
-                                            if (!point) {
-                                                return "";
-                                            }
-
-                                            return format(
-                                                new Date(point.ts),
-                                                "MMM d, yyyy HH:mm:ss",
-                                            );
-                                        }}
-                                    />
-                                }
-                            />
-                            <Line
-                                dataKey={activeChart}
-                                type="monotone"
-                                stroke={chartConfig[activeChart].color}
-                                strokeWidth={2}
-                                dot={false}
-                            />
-                        </LineChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-        </div>
+                    <div>
+                        <span className="font-medium">Python:</span>{" "}
+                        {emissionTimeSeries.metadata.python_version}
+                    </div>
+                    <div>
+                        <span className="font-medium">Region:</span>{" "}
+                        {emissionTimeSeries.metadata.region}
+                    </div>
+                </div>
+            </ChartSection>
+        </ChartRow>
     );
 }

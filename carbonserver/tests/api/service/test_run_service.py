@@ -149,3 +149,48 @@ def test_run_service_retrieves_correct_last_run_for_project_id():
     actual_run = run_service.read_project_last_run(PROJECT_ID, START_DATE, END_DATE)
 
     assert actual_run.id == expected_run_id
+
+
+def test_run_service_tracks_only_the_first_run_of_an_organization():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    tracker_mock = mock.Mock(enabled=True)
+    run_service = RunService(
+        repository_mock, auth_context=FakeAuthContext(), matomo_tracker=tracker_mock
+    )
+    repository_mock.add_run.return_value = RUN_1
+    run_to_create = RunCreate(
+        id=RUN_ID,
+        timestamp="2021-04-04T08:43:00+02:00",
+        experiment_id=EXPERIMENT_ID,
+    )
+
+    repository_mock.organization_has_runs.return_value = False
+    run_service.add_run(run_to_create)
+    tracker_mock.track_event.assert_called_once_with("Activation", "first_run_received")
+    repository_mock.organization_has_runs.assert_called_once_with(EXPERIMENT_ID)
+
+    # A new experiment in the same organization is not a new activation.
+    tracker_mock.reset_mock()
+    repository_mock.organization_has_runs.return_value = True
+    run_service.add_run(run_to_create)
+    tracker_mock.track_event.assert_not_called()
+
+
+def test_run_service_skips_the_first_run_lookup_without_tracking():
+    repository_mock: SqlAlchemyRepository = mock.Mock(spec=SqlAlchemyRepository)
+    run_service = RunService(
+        repository_mock,
+        auth_context=FakeAuthContext(),
+        matomo_tracker=mock.Mock(enabled=False),
+    )
+    repository_mock.add_run.return_value = RUN_1
+
+    run_service.add_run(
+        RunCreate(
+            id=RUN_ID,
+            timestamp="2021-04-04T08:43:00+02:00",
+            experiment_id=EXPERIMENT_ID,
+        )
+    )
+
+    repository_mock.organization_has_runs.assert_not_called()
