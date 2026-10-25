@@ -36,7 +36,14 @@ const handlers: Handler[] = [
     // ─── Organizations ─────────────────────────────────────────────────────
     ({ pathname, method, searchParams, body }) => {
         if (method === "GET" && pathname === "/organizations") {
-            return ok(MOCK.organization.list);
+            return ok(
+                MOCK.organization.list.map((org) => ({
+                    ...org,
+                    is_admin: (
+                        MOCK.organization.usersByOrgId[org.id] ?? []
+                    ).some((m) => m.id === MOCK.user.id && m.is_admin),
+                })),
+            );
         }
         if (method === "POST" && pathname === "/organizations") {
             const input = (body ?? {}) as {

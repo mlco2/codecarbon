@@ -4,6 +4,8 @@ export const OrganizationSchema = z.object({
     id: z.string(),
     name: z.string(),
     description: z.string(),
+    // Only `GET /organizations` sets it: whether the signed-in user administers it.
+    is_admin: z.boolean().optional(),
 });
 export type Organization = z.infer<typeof OrganizationSchema>;
 

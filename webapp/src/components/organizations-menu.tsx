@@ -1,9 +1,7 @@
 import { useState } from "react";
-import useSWR from "swr";
 
 import { getOrganizations } from "@/api/organizations";
-import { Organization, OrganizationUser, User } from "@/api/schemas";
-import { fetcher } from "@/api/swr";
+import { Organization } from "@/api/schemas";
 import { useModal } from "@/hooks/useModal";
 import CreateOrganizationModal from "./create-organization-modal";
 import { OrganizationIcon } from "./icons/organization-icon";
@@ -23,54 +21,16 @@ export default function OrganizationsMenu({
     /** The rail's "Organizations" item, used as the trigger. */
     children: React.ReactNode;
 }>) {
-    const [open, setOpen] = useState(false);
-    // Keyed on instead of `open`, so closing the menu does not drop the admin
-    // lookup below and regroup the organizations as it animates out.
-    const [hasOpened, setHasOpened] = useState(false);
     const newOrgModal = useModal();
     const [organizationList, setOrganizationList] = useState<
         Organization[] | undefined
     >(undefined);
 
-    const { data: auth } = useSWR<{ user?: User }>("/auth/check", fetcher, {
-        revalidateOnFocus: false,
-    });
-
     const list = organizationList ?? orgs;
 
-    // Admin rights are exposed only per organization, on its member list, so
-    // this asks each in turn. Dashboards the user administers go below the rule.
-    const userId = auth?.user?.id;
-    const { data: adminOrgIds } = useSWR(
-        hasOpened && userId && list && list.length > 0
-            ? ["organization-admin", userId, list.map((o) => o.id).join(",")]
-            : null,
-        async () => {
-            const ids = await Promise.all(
-                (list ?? []).map(async (org) => {
-                    try {
-                        const members: OrganizationUser[] = await fetcher(
-                            `/organizations/${org.id}/users`,
-                        );
-                        return members.some(
-                            (m) => m.id === userId && m.is_admin,
-                        )
-                            ? org.id
-                            : null;
-                    } catch {
-                        // A membership that cannot be read counts as non-admin
-                        // rather than failing the whole menu.
-                        return null;
-                    }
-                }),
-            );
-            return new Set(ids.filter((id): id is string => id !== null));
-        },
-        { revalidateOnFocus: false },
-    );
-
-    const owned = list?.filter((org) => adminOrgIds?.has(org.id)) ?? [];
-    const invited = list?.filter((org) => !adminOrgIds?.has(org.id)) ?? [];
+    // Dashboards the user administers go below the rule.
+    const owned = list?.filter((org) => org.is_admin) ?? [];
+    const invited = list?.filter((org) => !org.is_admin) ?? [];
 
     const refreshOrgList = async () => {
         setOrganizationList(await getOrganizations());
@@ -78,13 +38,7 @@ export default function OrganizationsMenu({
 
     return (
         <>
-            <DropdownMenu
-                open={open}
-                onOpenChange={(next) => {
-                    setOpen(next);
-                    if (next) setHasOpened(true);
-                }}
-            >
+            <DropdownMenu>
                 <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
                 {/* Opens beside the rail, bottom edges level with the trigger. The offset
                 crosses the rail's 16px padding and 2px border, plus an 8px gap. */}

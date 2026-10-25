@@ -20,24 +20,14 @@ import { renderWithRouter } from "../test-utils";
 import { SWRConfig } from "swr";
 
 const orgs = [
-    { id: "o1", name: "Mozilla", description: "" },
-    { id: "o2", name: "Wecasa", description: "" },
+    { id: "o1", name: "Mozilla", description: "", is_admin: true },
+    { id: "o2", name: "Wecasa", description: "", is_admin: false },
 ];
 
-/*
- * `o1` is administered by the signed-in user and `o2` is not, which is the split
- * the menu draws: administered dashboards below the rule, invited ones above it.
- */
+/* `o1` is administered by the signed-in user and `o2` is not, which is the split
+   the menu draws: administered dashboards below the rule, invited ones above it. */
 function mockApi() {
-    fetcherMock.mockImplementation((key: string) => {
-        if (key === "/auth/check")
-            return Promise.resolve({ user: { id: "u1" } });
-        if (key === "/organizations/o1/users")
-            return Promise.resolve([{ id: "u1", is_admin: true }]);
-        if (key === "/organizations/o2/users")
-            return Promise.resolve([{ id: "u1", is_admin: false }]);
-        return Promise.resolve([]);
-    });
+    fetcherMock.mockImplementation(() => Promise.resolve([]));
 }
 
 function renderMenu() {
@@ -121,12 +111,22 @@ describe("OrganizationsMenu", () => {
         await userEvent.keyboard("{Escape}");
         await userEvent.click(trigger);
 
-        // Regression: keying the admin lookup on `open` dropped the result here,
+        // Regression: an admin lookup keyed on `open` dropped its result here,
         // and every dashboard fell back into the invited group.
         const items = screen
             .getAllByRole("menuitem")
             .map((item) => item.textContent);
         expect(items.indexOf("Wecasa")).toBeLessThan(items.indexOf("Mozilla"));
+    });
+
+    it("reads admin rights from the list, not one request per organization", async () => {
+        renderMenu();
+        await userEvent.click(
+            screen.getByRole("button", { name: "Organizations" }),
+        );
+        await screen.findByText(/dashboards you've been invited to/i);
+
+        expect(fetcherMock).not.toHaveBeenCalled();
     });
 
     it("switches dashboard when one is picked", async () => {
