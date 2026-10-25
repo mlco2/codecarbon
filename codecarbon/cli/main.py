@@ -33,6 +33,12 @@ def main():
     This function catches any exceptions raised during the execution of the CLI commands
     and prints an error message in red using Rich's print function.
     """
+    # Consoles with a legacy encoding (e.g. cp1252 on Windows) cannot encode
+    # the emojis we print, so replace them instead of crashing.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(errors="replace")
     try:
         codecarbon()
     except Exception as e:
