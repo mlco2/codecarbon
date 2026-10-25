@@ -118,8 +118,10 @@ export default function MembersPage() {
 
         try {
             await addOrganizationUser(organizationId!, parsed.data);
-            /* The design's success alert names the address it went to. */
-            toast.success(`Invite sent to ${parsed.data}`);
+            /* The design's success alert names the address. The API adds an
+               existing account straight away and sends no email, so the
+               message says so rather than promising an invitation. */
+            toast.success(`${parsed.data} added to the organization`);
             setEmail("");
             await mutate(membersKey);
         } catch (err) {
@@ -209,7 +211,7 @@ export default function MembersPage() {
                             {/* The design shows the spinner alone; the label it
                                 replaces still has to reach a screen reader. */}
                             <Loader2 className="size-5 animate-spin motion-reduce:animate-none" />
-                            <span className="sr-only">Sending invite…</span>
+                            <span className="sr-only">Adding member…</span>
                         </>
                     ) : (
                         "Invite"

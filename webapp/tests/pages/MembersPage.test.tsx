@@ -23,6 +23,9 @@ vi.mock("@/api/organizations", () => ({
     removeUserFromOrganization: removeUserFromOrganizationMock,
 }));
 
+const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("sonner", () => ({ toast: toastMock }));
+
 import MembersPage from "@/pages/MembersPage";
 import { renderWithRouter } from "../test-utils";
 import { SWRConfig } from "swr";
@@ -152,6 +155,12 @@ describe("MembersPage", () => {
         expect(addOrganizationUserMock).toHaveBeenCalledWith(
             "o1",
             "new@example.com",
+        );
+        // The API adds an existing account and sends no email.
+        await waitFor(() =>
+            expect(toastMock.success).toHaveBeenCalledWith(
+                "new@example.com added to the organization",
+            ),
         );
     });
 
