@@ -47,5 +47,7 @@ class MatomoTracker:
     def _send(self, params: dict) -> None:
         try:
             httpx.get(self._endpoint, params=params, timeout=3.0)
-        except httpx.HTTPError as error:
+        # Not only httpx.HTTPError: a malformed MATOMO_URL raises InvalidURL,
+        # which is not one, and would surface as an uncaught thread error.
+        except Exception as error:
             LOGGER.debug("Matomo event not sent: %s", error)

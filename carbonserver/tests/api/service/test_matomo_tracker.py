@@ -23,3 +23,10 @@ def test_tracker_sends_an_anonymous_event():
     assert params["idsite"] == "3"
     assert (params["e_c"], params["e_a"]) == ("Activation", "account_created")
     assert set(params) <= {"idsite", "rec", "apiv", "e_c", "e_a", "e_n", "_id", "rand"}
+
+
+def test_tracker_swallows_a_malformed_url():
+    """Best effort: a bad MATOMO_URL raises httpx.InvalidURL, which is not an
+    httpx.HTTPError, and must not escape the sending thread."""
+    tracker = MatomoTracker(url="http://[::1", site_id="3")
+    tracker._send({"idsite": "3"})
