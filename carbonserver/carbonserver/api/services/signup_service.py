@@ -13,13 +13,13 @@ from carbonserver.api.infra.repositories.repository_projects import (
 from carbonserver.api.infra.repositories.repository_users import (
     SqlAlchemyRepository as UserRepository,
 )
-from carbonserver.api.services.matomo_tracker import MatomoTracker
 from carbonserver.api.schemas import (
     OrganizationCreate,
     ProjectCreate,
     User,
     UserAutoCreate,
 )
+from carbonserver.api.services.matomo_tracker import MatomoTracker
 
 LOGGER = logging.getLogger(__name__)
 
