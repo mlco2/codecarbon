@@ -72,6 +72,7 @@ def _setup(settings: Settings):
         "FRONTEND_URL": f"http://{settings.hostname}",
         "FIEF_URL": f"http://{settings.fief_hostname}",
         "JWT_KEY": secrets.token_urlsafe(32),
+        "SESSION_SECRET_KEY": secrets.token_urlsafe(32),
     }
     if settings.run_fief:
         variables["FIEF_CLIENT_ID"] = secrets.token_urlsafe(32)

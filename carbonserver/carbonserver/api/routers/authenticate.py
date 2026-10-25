@@ -69,9 +69,6 @@ async def get_login(
             sign_up_service.check_jwt_user(id_token)
         else:
             sign_up_service.check_jwt_user(token["id_token"], create=True)
-        user = token.get("userinfo")
-        if user:
-            request.session["user"] = dict(user)
 
         base_url = request.base_url
         if settings.frontend_url != "":
