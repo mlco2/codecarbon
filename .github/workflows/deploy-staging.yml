@@ -1,0 +1,69 @@
+# Deploy a branch to staging on Clever Cloud
+# Helpful to see visually the changes in a PR before merging to main.
+name: Deploy to Clever Cloud (staging)
+
+# Manual trigger only: GitHub restricts workflow_dispatch to users with write access,
+# so only maintainers can deploy a branch to staging (Actions > Run workflow > pick branch).
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        type: choice
+        options: [both, api, ui]
+        default: both
+      pr:
+        description: "PR number to deploy, works for fork PRs (empty = selected branch)"
+        type: string
+        required: false
+
+# Staging is shared: never run two deploys at the same time.
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        # refs/pull/N/head exists in this repo even for fork PRs. Fork code is only
+        # pushed to Clever Cloud, never executed on the runner.
+        ref: ${{ inputs.pr && format('refs/pull/{0}/head', inputs.pr) || github.ref }}
+        fetch-depth: 0 # Same as git fetch --unshallow
+        clean: true    # Remove any untracked files or modifications
+
+    - name: Install Clever Tools CLI
+      run: |
+        CC_VERSION=latest
+        curl -s -O https://clever-tools.clever-cloud.com/releases/${CC_VERSION}/clever-tools-${CC_VERSION}_linux.tar.gz
+        tar -xvf clever-tools-${CC_VERSION}_linux.tar.gz
+        PATH=${PATH}:$(pwd)/clever-tools-${CC_VERSION}_linux
+
+    - name: Login to Clever Cloud
+      env:
+        CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+      run: ./clever-tools-latest_linux/clever login --token ${{ secrets.CLEVER_TOKEN }} --secret ${{ secrets.CLEVER_SECRET }}
+
+    - name: Deploy backend to Clever Cloud (STAGING)
+      if: inputs.target != 'ui'
+      env:
+        CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_STAGING }}
+        APP_NAME: cc_api_staging
+      run: |
+        ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
+        ./clever-tools-latest_linux/clever deploy -f
+
+    - name: Deploy frontend (static SPA) to Clever Cloud (STAGING)
+      if: inputs.target != 'api'
+      env:
+        CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_STAGING }}
+        CLEVER_APP_ALIAS: ${{ secrets.FE_CLEVER_APP_ALIAS_STAGING }}
+      run: |
+        ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
+        ./clever-tools-latest_linux/clever deploy -a $CLEVER_APP_ALIAS -f
