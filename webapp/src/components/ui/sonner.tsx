@@ -32,7 +32,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
                     */
                     toast:
                         "ml-auto flex w-fit items-center gap-2.5 rounded-menu border px-9 py-3.5 " +
-                        "font-mono text-[14px] shadow-menu border-border bg-background text-foreground",
+                        "font-mono type-toast shadow-menu border-border bg-background text-foreground",
                     /* Sonner puts a variant's classes on the same element as
                        the base ones above — and puts `default` there too, on
                        every toast — so an override competing at equal weight
