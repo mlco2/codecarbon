@@ -1,5 +1,6 @@
 """Tests for the CodeCarbon CLI main function."""
 
+import io
 import os
 import sys
 from types import SimpleNamespace
@@ -655,3 +656,21 @@ def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
     with pytest.raises(typer.Exit) as exc_info:
         cli_main.monitor(ctx=ctx, offline=False, api=True)
     assert exc_info.value.exit_code == 1
+
+
+def test_main_does_not_crash_on_non_utf8_console(monkeypatch):
+    buffer = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(buffer, encoding="cp1252"))
+    monkeypatch.setattr(
+        sys, "stderr", io.TextIOWrapper(io.BytesIO(), encoding="cp1252")
+    )
+
+    def fake_cli():
+        cli_main.print("🌱 CodeCarbon")
+
+    monkeypatch.setattr(cli_main, "codecarbon", fake_cli)
+
+    cli_main.main()
+
+    sys.stdout.flush()
+    assert buffer.getvalue().decode("cp1252").strip() == "? CodeCarbon"

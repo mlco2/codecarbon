@@ -13,6 +13,12 @@ import pytest
 from codecarbon.core.cpu import IntelRAPL, is_rapl_available
 from codecarbon.core.units import Time
 
+# RAPL is read from Linux sysfs, and the fake trees use names like
+# "intel-rapl:0" that are not valid paths on Windows.
+pytestmark = pytest.mark.skipif(
+    not sys.platform.lower().startswith("lin"), reason="requires Linux"
+)
+
 
 def _make_rapl_tree(tmp_path, domains):
     """Create a fake powercap tree with the given (name, energy_uj) domains."""
@@ -242,7 +248,6 @@ def test_rapl_inconclusive_candidate_stays_pending(tmp_path, monkeypatch):
     assert len(rapl._mirrored_candidates) == 0
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_multiple_rapl_providers_with_mixed_permissions(tmp_path):
     """
     Verify that multiple RAPL providers (intel-rapl and intel-rapl-mmio) are
@@ -315,7 +320,6 @@ def test_multiple_rapl_providers_with_mixed_permissions(tmp_path):
             pass
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_all_providers_unreadable_returns_false(tmp_path):
     """
     Verify that is_rapl_available returns False when all main/package domains
@@ -368,7 +372,6 @@ def test_all_providers_unreadable_returns_false(tmp_path):
             pass
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_rapl_deduplication_prefers_mmio(tmp_path):
     """
     Verify that when the same domain (e.g., package-0) appears in both
@@ -427,7 +430,6 @@ def test_rapl_deduplication_prefers_mmio(tmp_path):
     ), f"Expected MMIO path, got: {package_files[0].path}"
 
 
-@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_psys_not_preferred_when_package_available(tmp_path):
     """
     Verify that when both psys and package domains are available, CodeCarbon prefers
