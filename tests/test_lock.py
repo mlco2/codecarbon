@@ -237,6 +237,39 @@ class TestLockSignalHandlers(SignalSafeTestCase):
 
     @patch("codecarbon.lock.os.remove")
     @patch("codecarbon.lock.open", new_callable=mock_open)
+    def test_signal_during_restore_is_forwarded(self, mock_file, mock_remove):
+        # A signal can land while release() is putting the handlers back
+        # (typically SIGTERM during stop()): it must still reach the handler
+        # we replaced, not fall back to the default disposition.
+        received = []
+
+        def sentinel(signum, frame):
+            received.append(signum)
+
+        signal.signal(signal.SIGINT, sentinel)
+        signal.signal(signal.SIGTERM, sentinel)
+        lock = Lock()
+        lock.acquire()
+
+        real_signal = signal.signal
+        fired = []
+
+        def signal_lands_then_restore(sig, handler):
+            if not fired:
+                fired.append(sig)
+                lock._handle_exit(sig, None)
+            return real_signal(sig, handler)
+
+        with patch("codecarbon.lock.signal.signal", signal_lands_then_restore):
+            lock.release()
+
+        self.assertEqual(len(received), 1)
+        self.assertIs(signal.getsignal(signal.SIGINT), sentinel)
+        self.assertIs(signal.getsignal(signal.SIGTERM), sentinel)
+        self.assertFalse(lock._previous_handlers)
+
+    @patch("codecarbon.lock.os.remove")
+    @patch("codecarbon.lock.open", new_callable=mock_open)
     def test_handler_installed_from_c_is_restored_as_default(
         self, mock_file, mock_remove
     ):

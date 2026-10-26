@@ -101,8 +101,7 @@ class Lock:
         # handlers: a later signal still releases (a no-op) and forwards.
         if threading.current_thread() is not threading.main_thread():
             return
-        while self._previous_handlers:
-            sig, handler = self._previous_handlers.popitem()
+        for sig, handler in list(self._previous_handlers.items()):
             try:
                 # Only restore if nobody installed another handler after us.
                 if signal.getsignal(sig) == self._handle_exit:
@@ -110,3 +109,6 @@ class Lock:
                     signal.signal(sig, signal.SIG_DFL if handler is None else handler)
             except (ValueError, TypeError, OSError) as e:
                 logger.debug(f"Could not restore handler for signal {sig}: {e}")
+            # Forget it only now: a signal landing before the restore above
+            # must still find the handler to forward to.
+            self._previous_handlers.pop(sig, None)
