@@ -6,8 +6,7 @@ Welcome to the Code Carbon Project! This README will guide you through the proce
 
 Before you begin, ensure you have the following installed on your system:
 
--   Node.js (version 14 or later)
--   pnpm (better alternative to npm)
+-   Node.js 24 or later (npm ships with it)
 -   Git
 
 ## Getting Started
@@ -26,7 +25,7 @@ Follow these steps to get the project up and running on your local machine:
 2. **Install dependencies**
 
     ```bash
-    pnpm install
+    npm ci
     ```
 
 3. **Set up environment variables**
@@ -44,7 +43,7 @@ Follow these steps to get the project up and running on your local machine:
 4. **Run the development server**
 
     ```bash
-    pnpm dev
+    npm run dev
     ```
 
     The application should now be running on [http://localhost:3000](http://localhost:3000).
@@ -53,7 +52,12 @@ Follow these steps to get the project up and running on your local machine:
 
 In the project directory, you can run:
 
--   `pnpm dev`: Runs the app in development mode
--   `pnpm build`: Builds the app for production
--   `pnpm start`: Runs the built app in production mode
--   `pnpm lint`: Runs the linter to check for code style issues
+-   `npm run dev`: Runs the app in development mode
+-   `npm run build`: Builds the app for production
+-   `npm run preview`: Serves the production build locally
+-   `npm run lint`: Runs the linter to check for code style issues
+-   `npm run test:run`: Runs the unit tests once
+
+Production is built with `npm ci --include=dev && npm run build`, so after
+changing dependencies run `npm install` and commit the updated
+`package-lock.json`.

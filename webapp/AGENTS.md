@@ -34,8 +34,10 @@ than assuming either way.
 ## Stack
 
 React 19 + Vite + TypeScript, Tailwind v4, Radix primitives, SWR for fetching,
-Zod for response schemas, `sonner` for toasts, `react-router-dom` v7. `pnpm` is
-the package manager, Node 24 in CI. `@/` resolves to `src/`.
+Zod for response schemas, `sonner` for toasts, `react-router-dom` v7. `npm` is
+the package manager on Node 24: CI and the deployment install with
+`npm ci --include=dev`, so commit `package-lock.json` and never a
+`pnpm-lock.yaml`. `@/` resolves to `src/`.
 
 ## Layout
 
@@ -189,10 +191,12 @@ decision, not the syntax.
 ## Commands
 
 ```bash
-pnpm dev            # dev server on http://localhost:3000
-pnpm test:run       # unit tests once (pnpm test watches)
-pnpm test:e2e       # Playwright
-pnpm lint           # eslint
-pnpm format         # prettier --write (4-space indent, from .prettierrc)
-npx tsc --noEmit    # typecheck
+npm ci                 # install exactly what package-lock.json pins
+npm run dev            # dev server on http://localhost:3000
+npm run test:run       # unit tests once (npm test watches)
+npm run test:e2e       # Playwright
+npm run lint           # eslint
+npm run format         # prettier --write (4-space indent, from .prettierrc)
+npx tsc --noEmit       # typecheck
+npm run build          # what the deployment runs, after npm ci --include=dev
 ```

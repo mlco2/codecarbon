@@ -4,7 +4,7 @@ function trimTrailingSlash(value: string): string {
 
 /**
  * Build a URL on the auth endpoints. Returns `null` when `VITE_API_URL` is
- * not configured (typically a local `pnpm dev` session with no `.env`),
+ * not configured (typically a local `npm run dev` session with no `.env`),
  * so callers can render a disabled control instead of crashing the page.
  */
 function buildAuthUrl(path: string, action: string): string | null {

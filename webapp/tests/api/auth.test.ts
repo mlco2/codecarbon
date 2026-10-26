@@ -24,7 +24,7 @@ describe("buildLoginUrl", () => {
         expect(url.search).toBe("");
     });
 
-    it("returns null and warns when VITE_API_URL is missing (pnpm dev with no .env)", () => {
+    it("returns null and warns when VITE_API_URL is missing (npm run dev with no .env)", () => {
         vi.stubEnv("VITE_API_URL", "");
         const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
         expect(buildLoginUrl()).toBeNull();
