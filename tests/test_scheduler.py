@@ -1,7 +1,9 @@
 import threading
 import time
 import unittest
+from unittest import mock
 
+from codecarbon.external import scheduler as scheduler_module
 from codecarbon.external.scheduler import PeriodicScheduler
 
 INTERVAL = 0.05
@@ -170,6 +172,39 @@ class TestPeriodicScheduler(unittest.TestCase):
         scheduler.stop()
         self.assertGreater(len(threads), 1, "the restarted loop never ticked")
         self.assertEqual(in_flight["max"], 1, "two loops ran the callback at once")
+
+    def test_concurrent_starts_arm_a_single_loop(self):
+        """Two threads calling start() at once must not create two loops."""
+
+        class SlowEvent(threading.Event):
+            def __init__(self):
+                time.sleep(INTERVAL)  # widen the check-then-act window
+                super().__init__()
+
+        def concurrent_start_target():
+            pass
+
+        scheduler = PeriodicScheduler(INTERVAL, concurrent_start_target)
+        barrier = threading.Barrier(2)
+
+        def start():
+            barrier.wait()
+            scheduler.start()
+
+        with mock.patch.object(scheduler_module, "Event", SlowEvent):
+            starters = [threading.Thread(target=start) for _ in range(2)]
+            for starter in starters:
+                starter.start()
+            for starter in starters:
+                starter.join()
+        scheduler.stop()
+        time.sleep(INTERVAL * 2)
+        alive = [
+            t.name
+            for t in threading.enumerate()
+            if t.name == "codecarbon-concurrent_start_target"
+        ]
+        self.assertEqual(alive, [], "a loop survived stop(): two loops were armed")
 
     def test_exception_does_not_kill_the_loop(self):
         calls = []

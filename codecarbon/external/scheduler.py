@@ -1,6 +1,6 @@
 import math
 import time
-from threading import Event, Thread, current_thread
+from threading import Event, Lock, Thread, current_thread
 
 from codecarbon.external.logger import logger
 
@@ -25,6 +25,7 @@ class PeriodicScheduler:
         self.function = function
         self.args = args
         self.kwargs = kwargs
+        self._lock = Lock()
         self._thread = None
         self._stop_event = None
 
@@ -45,16 +46,17 @@ class PeriodicScheduler:
         stop()), the new loop waits for it before its first tick, so the
         function is never run concurrently and the restart is not lost.
         """
-        if self._thread is not None and not self._stopped:
-            return
-        self._stop_event = Event()
-        self._thread = Thread(
-            target=self._loop,
-            args=(self._stop_event, self._thread),
-            daemon=True,
-            name=f"codecarbon-{getattr(self.function, '__name__', 'scheduler')}",
-        )
-        self._thread.start()
+        with self._lock:
+            if self._thread is not None and not self._stopped:
+                return
+            self._stop_event = Event()
+            self._thread = Thread(
+                target=self._loop,
+                args=(self._stop_event, self._thread),
+                daemon=True,
+                name=f"codecarbon-{getattr(self.function, '__name__', 'scheduler')}",
+            )
+            self._thread.start()
 
     def _loop(self, stop_event, previous=None):
         if previous is not None:
@@ -78,9 +80,10 @@ class PeriodicScheduler:
         ::timeout:: seconds to wait for the running function, bounded by
         default so a wedged measurement cannot hang the caller for long.
         """
-        if self._stop_event is not None:
-            self._stop_event.set()
-        thread = self._thread
+        with self._lock:
+            if self._stop_event is not None:
+                self._stop_event.set()
+            thread = self._thread
         if thread is None or thread is current_thread():
             # Called from the callback itself: it is still running, so keep
             # the reference for the next start() to wait on.
@@ -93,4 +96,6 @@ class PeriodicScheduler:
                 " finish in the background"
             )
         else:
-            self._thread = None
+            with self._lock:
+                if self._thread is thread:
+                    self._thread = None
