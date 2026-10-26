@@ -15,13 +15,20 @@ on:
 
 jobs:
   python-test:
-    runs-on: ubuntu-24.04
+    name: python-test (${{ matrix.os }}, ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     env:
       CODECARBON_API_KEY: ${{ secrets.CODECARBON_API_TOKEN }}
       CODECARBON_EXPERIMENT_ID: ${{ secrets.CODECARBON_EXPERIMENT_ID_TEST_PACKAGE }}
     strategy:
+        fail-fast: false
         matrix:
+          os: [ubuntu-latest]
           python-version: ["3.12", "3.13", "3.14"]
+          # Just testing on one version on Windows to avoid too long CI build times
+          include:
+            - os: windows-latest
+              python-version: "3.13"
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     - name: Install uv
@@ -33,13 +40,23 @@ jobs:
     - name: Install dependencies
       run: uv sync --python ${{ matrix.python-version }}
     - name: Test package
+      if: runner.os != 'Windows'
       run: uv run --python ${{ matrix.python-version }} codecarbon monitor -- uv run --python ${{ matrix.python-version }} task test-coverage
+    # taskipy runs tasks through cmd.exe on Windows, which does not support the
+    # inline `VAR=value cmd` syntax used by the test-coverage task.
+    - name: Test package (Windows)
+      if: runner.os == 'Windows'
+      env:
+        CODECARBON_ALLOW_MULTIPLE_RUNS: "True"
+      run: uv run --python ${{ matrix.python-version }} codecarbon monitor -- uv run --python ${{ matrix.python-version }} pytest --cov --cov-report=xml --ignore=tests/test_viz_data.py -vv -m "not integ_test" tests/
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Install carbonboard dependencies
+      if: runner.os != 'Windows'
       run: uv pip install --python ${{ matrix.python-version }} dash 'dash_bootstrap_components>1.0.0' fire
     - name: Test carbonboard visualization
+      if: runner.os != 'Windows'
       run: uv run --python ${{ matrix.python-version }} pytest -vv tests/test_viz_data.py tests/test_viz_units.py

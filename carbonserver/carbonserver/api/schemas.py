@@ -431,6 +431,12 @@ class Organization(OrganizationBase):
     id: UUID
 
 
+class OrganizationWithRole(Organization):
+    """An organization as listed for a user, with whether they administer it."""
+
+    is_admin: bool = False
+
+
 class OrganizationReport(OrganizationBase):
     organization_id: UUID
     name: str

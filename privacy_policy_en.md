@@ -153,6 +153,10 @@ We use both Session and Persistent Cookies for the purposes set out below:
 
 
 
+#### Usage Analytics
+
+The web dashboard measures usage with a self-hosted Matomo instance: pages visited and a few actions (for example creating a project or applying a date range). Matomo runs in cookieless mode there, so it stores nothing on Your device, and these events carry no account identifier, email or IP-derived profile. Some events, such as account creation, are recorded by the API and are equally anonymous.
+
 For more information about the cookies we use and your choices regarding cookies, please visit our Cookies Policy or the Cookies section of our Privacy Policy. Cookies are not used for API/SDK authentication.
 
 
