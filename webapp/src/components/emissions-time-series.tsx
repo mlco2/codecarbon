@@ -36,7 +36,7 @@ const chartConfig = {
     },
 } satisfies ChartConfig;
 
-type TimeSeriesTooltipPayload = Array<{
+type TimeSeriesTooltipPayload = ReadonlyArray<{
     payload: {
         ts: number;
     };

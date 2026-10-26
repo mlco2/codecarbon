@@ -1,0 +1,18 @@
+# pnpm is used over npm for its supply-chain defaults. The two security
+# settings are stated even where they match pnpm 12's defaults, so a future
+# default change can't silently loosen them.
+
+# Dependencies may not run install scripts unless listed under `allowBuilds`
+# (none need one today); an unlisted script fails the install for review.
+strictDepBuilds: true
+
+# Skip versions published less than 7 days ago (in minutes): hijacked releases
+# are usually caught and pulled well within that window. For an urgent fix,
+# list the package under `minimumReleaseAgeExclude`.
+minimumReleaseAge: 10080
+
+# pnpm reads overrides from here, not from package.json's npm-style field.
+overrides:
+    "@types/react": 19.1.0
+    "@types/react-dom": 19.1.1
+    js-yaml: 5.2.2

@@ -41,3 +41,4 @@ next-env.d.ts
 
 # Enviroenment variables
 .env
+package-lock.json
