@@ -28,6 +28,18 @@ It can also be set in the config file as a comma-separated string, e.g.
 
 The package has an in-built logger that logs data into a CSV file named `emissions.csv` in the `output_dir`, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.
 
+By default that file is written once at the end of the run. To also append a row on the same live cadence as API/Prometheus (`api_call_interval × measure_power_secs`), set `csv_run_name`:
+
+```python-skip
+from codecarbon import EmissionsTracker
+
+tracker = EmissionsTracker(
+    csv_run_name="emissions_live.csv",  # or "auto" / "" → emissions_<run_id>.csv
+)
+```
+
+Use the same name as `output_file` to enable live rows on the primary CSV. Leave `csv_run_name` unset to keep the default final-only behavior.
+
 | Field | Description |
 |-------|-------------|
 | timestamp | Time of the experiment in `%Y-%m-%dT%H:%M:%S` format |
