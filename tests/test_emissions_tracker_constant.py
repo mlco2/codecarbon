@@ -1,5 +1,6 @@
 import os
 import tempfile
+import threading
 import time
 import unittest
 from unittest import mock
@@ -12,6 +13,8 @@ from codecarbon.emissions_tracker import (
     OfflineEmissionsTracker,
     track_emissions,
 )
+from codecarbon.external import scheduler as scheduler_module
+from tests.testutils import FakeClock
 
 
 def heavy_computation(run_time_secs: int = 3):
@@ -202,3 +205,55 @@ class TestCarbonTrackerConstant(unittest.TestCase):
 
         finally:
             tracker.stop()
+
+
+class TestFinalMeasurementWaitsForInFlightTick(unittest.TestCase):
+    @mock.patch.object(scheduler_module, "STOP_JOIN_TIMEOUT_SECONDS", 0.01)
+    def test_stop_does_not_overlap_a_slow_scheduled_measurement(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            measure_power_secs=1,
+            output_methods=[],
+            allow_multiple_runs=True,
+        )
+        clock = tracker._scheduler.clock = FakeClock()
+        tracker.start()
+        main = threading.current_thread()
+        do_measurements = tracker._do_measurements
+        in_flight = {"now": 0, "max": 0}
+        entered = threading.Event()
+        # Set once stop() reaches its final measurement, whether it waits for
+        # the lock (fixed) or measures right away (the overlap).
+        final_measurement_reached = threading.Event()
+
+        def slow_do_measurements():
+            in_flight["now"] += 1
+            in_flight["max"] = max(in_flight["max"], in_flight["now"])
+            if threading.current_thread() is main:
+                final_measurement_reached.set()
+            else:
+                entered.set()
+                final_measurement_reached.wait(5)
+            do_measurements()
+            in_flight["now"] -= 1
+
+        class LockSpy:
+            def __init__(self, lock):
+                self.lock = lock
+
+            def __enter__(self):
+                if threading.current_thread() is main:
+                    final_measurement_reached.set()
+                return self.lock.__enter__()
+
+            def __exit__(self, *exc):
+                return self.lock.__exit__(*exc)
+
+        tracker._do_measurements = slow_do_measurements
+        tracker._measurement_lock = LockSpy(tracker._measurement_lock)
+        clock.advance(1, settle=False)
+        self.assertTrue(entered.wait(5), "the scheduled measurement never ran")
+        # Make the last sample stale so stop() takes its final measurement.
+        tracker._last_measured_time -= 1
+        tracker.stop()  # the join times out while the tick is still running
+        self.assertEqual(in_flight["max"], 1, "final measurement overlapped a tick")
