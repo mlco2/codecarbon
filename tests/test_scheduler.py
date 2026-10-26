@@ -120,6 +120,38 @@ class TestPeriodicScheduler(unittest.TestCase):
         self.assertIn(second, threads, "the restarted loop never ticked")
         self.assertEqual(in_flight["max"], 1, "two loops ran the callback at once")
 
+    def test_stop_from_the_callback_then_start_does_not_overlap(self):
+        """stop() called by the callback itself must not let start() overlap it."""
+        release = threading.Event()
+        stopped_itself = threading.Event()
+        in_flight = {"now": 0, "max": 0}
+        threads = []
+
+        def stops_itself():
+            in_flight["now"] += 1
+            in_flight["max"] = max(in_flight["max"], in_flight["now"])
+            threads.append(threading.current_thread())
+            if not stopped_itself.is_set():
+                scheduler.stop()
+                stopped_itself.set()
+                release.wait(5)
+            in_flight["now"] -= 1
+
+        scheduler = PeriodicScheduler(INTERVAL, stops_itself)
+        scheduler.start()
+        first = scheduler._thread
+        self.assertTrue(stopped_itself.wait(2), "callback never ran")
+
+        scheduler.start()
+        time.sleep(INTERVAL * 3)
+        self.assertEqual(threads, [first], "the new loop ran during the old call")
+
+        release.set()
+        time.sleep(INTERVAL * 6)
+        scheduler.stop()
+        self.assertGreater(len(threads), 1, "the restarted loop never ticked")
+        self.assertEqual(in_flight["max"], 1, "two loops ran the callback at once")
+
     def test_exception_does_not_kill_the_loop(self):
         calls = []
 

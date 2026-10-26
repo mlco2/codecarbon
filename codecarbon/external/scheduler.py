@@ -77,7 +77,8 @@ class PeriodicScheduler:
             self._stop_event.set()
         thread = self._thread
         if thread is None or thread is current_thread():
-            self._thread = None
+            # Called from the callback itself: it is still running, so keep
+            # the reference for the next start() to wait on.
             return
         thread.join(self._join_timeout(timeout))
         if thread.is_alive():
