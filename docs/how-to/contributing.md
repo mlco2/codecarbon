@@ -653,7 +653,7 @@ Config on CleverCloud:
 APP_FOLDER="webapp"
 CC_NODE_VERSION="24"
 CC_NODE_BUILD_TOOL="pnpm"
-CC_BUILD_COMMAND="pnpm install --frozen-lockfile && pnpm run build"
+CC_BUILD_COMMAND="corepack pnpm install --frozen-lockfile && corepack pnpm run build"
 ```
 
 
