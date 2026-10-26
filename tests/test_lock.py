@@ -137,7 +137,35 @@ class TestLockSignalHandlers(SignalSafeTestCase):
         lock.acquire()
         signal.raise_signal(signal.SIGTERM)
         self.assertEqual(received, [signal.SIGTERM])
+        # The handler returned: the application keeps running (graceful
+        # shutdown), so the lock is kept until stop() / atexit releases it.
+        mock_remove.assert_not_called()
+        self.assertEqual(signal.getsignal(signal.SIGTERM), lock._handle_exit)
+        lock.release()
+        mock_remove.assert_called_once_with(LOCKFILE)
         self.assertFalse(lock._previous_handlers)
+
+    @unittest.skipIf(
+        not hasattr(signal, "raise_signal"), "requires signal.raise_signal (3.8+)"
+    )
+    @patch("codecarbon.lock.os.remove")
+    @patch("codecarbon.lock.open", new_callable=mock_open)
+    def test_previous_handler_that_exits_releases_the_lock(
+        self, mock_file, mock_remove
+    ):
+        def exit_handler(signum, frame):
+            raise SystemExit(3)
+
+        signal.signal(signal.SIGTERM, exit_handler)
+        lock = Lock()
+        lock.acquire()
+
+        with self.assertRaises(SystemExit) as ctx:
+            signal.raise_signal(signal.SIGTERM)
+
+        self.assertEqual(ctx.exception.code, 3)
+        mock_remove.assert_called_once_with(LOCKFILE)
+        self.assertIs(signal.getsignal(signal.SIGTERM), exit_handler)
 
     @unittest.skipIf(
         not hasattr(signal, "raise_signal"), "requires signal.raise_signal (3.8+)"

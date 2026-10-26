@@ -33,12 +33,19 @@ class Lock:
         self._previous_handlers = {}
 
     def _handle_exit(self, signum, frame):
-        """Releases the lock, then delegates to the handler we replaced."""
-        logger.debug(f"Signal {signum} received. Releasing lock.")
+        """Delegates to the handler we replaced, releasing the lock if the run ends."""
+        logger.debug(f"Signal {signum} received.")
         previous = self._previous_handlers.get(signum, signal.SIG_DFL)
-        self.release()  # also restores the previous handlers
         if callable(previous):
-            return previous(signum, frame)
+            try:
+                return previous(signum, frame)
+            except BaseException:
+                # The application is exiting (KeyboardInterrupt, sys.exit, ...).
+                # If the handler returned, it chose to keep running (graceful
+                # shutdown): keep the lock, stop() or atexit will release it.
+                self.release()
+                raise
+        self.release()  # also restores the previous handlers
         # Default disposition: raise instead of re-sending the signal, so that
         # `finally` / `__exit__` still run and the tracker writes its last row.
         if signum == signal.SIGINT:
