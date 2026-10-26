@@ -4,6 +4,10 @@ from threading import Event, Lock, Thread, current_thread
 
 from codecarbon.external.logger import logger
 
+# Longest stop() waits for the in-flight call, a guess at "a measurement should
+# never take longer than this", so a wedged one cannot hang the caller for long.
+STOP_JOIN_TIMEOUT_SECONDS = 5.0
+
 
 class PeriodicScheduler:
     """
@@ -32,12 +36,6 @@ class PeriodicScheduler:
     @property
     def _stopped(self):
         return self._stop_event is None or self._stop_event.is_set()
-
-    def _join_timeout(self, timeout):
-        # ponytail: 5s cap is a guess at "a measurement should never take
-        # longer than this"; make it configurable if a slow hardware
-        # backend ever needs more.
-        return min(self.interval, 5.0) if timeout is None else timeout
 
     def start(self):
         """
@@ -74,11 +72,10 @@ class PeriodicScheduler:
                 # and no back-to-back call either.
                 next_call += math.ceil(overrun / self.interval) * self.interval
 
-    def stop(self, timeout=None):
+    def stop(self):
         """
-        Stop the scheduler and wait for the in-flight call to return.
-        ::timeout:: seconds to wait for the running function, bounded by
-        default so a wedged measurement cannot hang the caller for long.
+        Stop the scheduler and wait for the in-flight call to return, at most
+        min(interval, STOP_JOIN_TIMEOUT_SECONDS) seconds.
         """
         with self._lock:
             if self._stop_event is not None:
@@ -88,7 +85,7 @@ class PeriodicScheduler:
             # Called from the callback itself: it is still running, so keep
             # the reference for the next start() to wait on.
             return
-        thread.join(self._join_timeout(timeout))
+        thread.join(min(self.interval, STOP_JOIN_TIMEOUT_SECONDS))
         if thread.is_alive():
             # Keep the reference so the next start() waits for it.
             logger.warning(
