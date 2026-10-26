@@ -21,30 +21,11 @@ jobs:
         fetch-depth: 0 # Same as git fetch --unshallow
         clean: true    # Remove any untracked files or modifications
 
-    - name: Install Clever Tools CLI
-      run: |
-        CC_VERSION=latest
-        curl -s -O https://clever-tools.clever-cloud.com/releases/${CC_VERSION}/clever-tools-${CC_VERSION}_linux.tar.gz
-        tar -xvf clever-tools-${CC_VERSION}_linux.tar.gz
-        PATH=${PATH}:$(pwd)/clever-tools-${CC_VERSION}_linux
-
-    - name: Login to Clever Cloud
-      env:
-        CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
-      run: ./clever-tools-latest_linux/clever login --token ${{ secrets.CLEVER_TOKEN }} --secret ${{ secrets.CLEVER_SECRET }}
-
-    - name: Deploy backend to Clever Cloud (PROD)
-      env:
-        CLEVER_APP_ID: ${{ secrets.BE_CLEVER_APP_ID_PROD }}
-        APP_NAME: cc_api_prod
-      run: |
-        ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -f
-
-    - name: Deploy frontend (static SPA) to Clever Cloud (PROD)
-      env:
-        CLEVER_APP_ID: ${{ secrets.FE_CLEVER_APP_ID_PROD }}
-        CLEVER_APP_ALIAS: ${{ secrets.FE_CLEVER_APP_ALIAS_PROD }}
-      run: |
-        ./clever-tools-latest_linux/clever link $CLEVER_APP_ID
-        ./clever-tools-latest_linux/clever deploy -a $CLEVER_APP_ALIAS -f
+    - name: Deploy to Clever Cloud (PROD)
+      uses: $/.github/actions/deploy-clever-cloud
+      with:
+        clever-token: ${{ secrets.CLEVER_TOKEN }}
+        clever-secret: ${{ secrets.CLEVER_SECRET }}
+        backend-app-id: ${{ secrets.BE_CLEVER_APP_ID_PROD }}
+        frontend-app-id: ${{ secrets.FE_CLEVER_APP_ID_PROD }}
+        frontend-app-alias: ${{ secrets.FE_CLEVER_APP_ALIAS_PROD }}
