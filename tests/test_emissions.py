@@ -119,8 +119,9 @@ class TestEmissions(unittest.TestCase):
         )
 
         # THEN
+        france = self._data_source.get_global_energy_mix_data()["FRA"]
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 56.04 / 1000, places=2)
+        self.assertAlmostEqual(emissions, france["carbon_intensity"] / 1000, places=6)
 
     def test_get_emissions_PRIVATE_INFRA_UNKNOWN(self):
         """
@@ -198,8 +199,11 @@ class TestEmissions(unittest.TestCase):
         )
 
         # THEN
+        canada = self._data_source.get_global_energy_mix_data()["CAN"]
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.5101, places=2)
+        self.assertAlmostEqual(
+            emissions, 3 * canada["carbon_intensity"] / 1000, places=6
+        )
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
         # WHEN
