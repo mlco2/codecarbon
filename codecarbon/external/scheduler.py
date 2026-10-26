@@ -1,3 +1,4 @@
+import math
 import time
 from threading import Event, Thread, current_thread
 
@@ -64,8 +65,12 @@ class PeriodicScheduler:
                 self.function(*self.args, **self.kwargs)
             except Exception:  # noqa: BLE001 - must not kill the only thread
                 logger.error("Scheduled measurement failed", exc_info=True)
-            # Absolute deadline, but never a burst of catch-up ticks.
-            next_call = max(next_call + self.interval, time.monotonic())
+            next_call += self.interval
+            overrun = time.monotonic() - next_call
+            if overrun > 0 and self.interval > 0:
+                # Skip the slots the call overran: no burst of catch-up ticks,
+                # and no back-to-back call either.
+                next_call += math.ceil(overrun / self.interval) * self.interval
 
     def stop(self, timeout=None):
         """

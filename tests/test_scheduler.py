@@ -39,6 +39,25 @@ class TestPeriodicScheduler(unittest.TestCase):
         self.assertGreater(state["calls"], 1)
         self.assertEqual(state["overlaps"], 0)
 
+    def test_overrunning_call_waits_for_the_next_slot(self):
+        """A call longer than the interval skips the missed slots, not the wait."""
+        interval = 0.1
+        spans = []
+
+        def slow():
+            start = time.monotonic()
+            time.sleep(interval * 2.5)
+            spans.append((start, time.monotonic()))
+
+        scheduler = PeriodicScheduler(interval, slow)
+        scheduler.start()
+        time.sleep(interval * 12)
+        scheduler.stop()
+        self.assertGreater(len(spans), 2)
+        gaps = [nxt[0] - prev[1] for prev, nxt in zip(spans, spans[1:])]
+        # The next slot is 0.5 interval after each call ends.
+        self.assertGreater(min(gaps), interval * 0.2, f"back-to-back calls: {gaps}")
+
     def test_stop_is_prompt_and_final(self):
         calls = []
         scheduler = PeriodicScheduler(10.0, lambda: calls.append(1))
