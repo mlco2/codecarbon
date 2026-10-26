@@ -640,6 +640,22 @@ CODECARBON_API_URL="https://api.codecarbon.io"
 PORT="8000"
 ```
 
+<!-- TOC --><a name="webapp"></a>
+#### Webapp
+
+The React webapp is deployed by `.github/workflows/deploy.yml`, as a Node.js
+application built from the `webapp/` folder with pnpm. The pnpm version comes
+from the `packageManager` field of `webapp/package.json`.
+
+Config on CleverCloud:
+
+```sh
+APP_FOLDER="webapp"
+CC_NODE_VERSION="24"
+CC_NODE_BUILD_TOOL="pnpm"
+CC_BUILD_COMMAND="pnpm install --frozen-lockfile && pnpm run build"
+```
+
 
 ## Questions or Need Help?
 

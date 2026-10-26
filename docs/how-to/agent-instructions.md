@@ -33,7 +33,7 @@ Here's what you need to know to navigate and contribute effectively.
 4. **🌐 webapp/** -  Web Dashboard
    - Modern React web application
    - Connects to the API backend
-   - Run with: `cd webapp && npm run dev`
+   - Run with: `cd webapp && pnpm dev`
    - **Before editing anything under `webapp/`, read `webapp/AGENTS.md` first** —
      it is binding for all webapp work (propose before editing, never commit).
      Claude Code loads `webapp/CLAUDE.md`, which only imports `webapp/AGENTS.md`.
@@ -50,7 +50,7 @@ Here's what you need to know to navigate and contribute effectively.
 ### Prerequisites
 - Python 3.7+ (preferably 3.11+)
 - uv (Python project manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- Node.js 24+ and npm (for webapp)
+- Node.js 24+ and pnpm (for webapp): `corepack enable` installs the pinned pnpm
 - Docker (for API development)
 
 ### Quick Start
@@ -87,8 +87,8 @@ Here's what you need to know to navigate and contribute effectively.
 
    # Js webapp
    cd webapp
-   npm ci
-   npm run dev
+   pnpm install
+   pnpm dev
    ```
 
 ## Testing Strategy

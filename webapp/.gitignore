@@ -41,4 +41,4 @@ next-env.d.ts
 
 # Enviroenment variables
 .env
-pnpm-lock.yaml
+package-lock.json
