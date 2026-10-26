@@ -50,7 +50,7 @@ Here's what you need to know to navigate and contribute effectively.
 ### Prerequisites
 - Python 3.7+ (preferably 3.11+)
 - uv (Python project manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- Node.js & pnpm (for webapp): `npm install -g pnpm` or `curl -fsSL https://get.pnpm.io/install.sh | sh -`
+- Node.js 24+ and pnpm (for webapp): `corepack enable` installs the pinned pnpm
 - Docker (for API development)
 
 ### Quick Start

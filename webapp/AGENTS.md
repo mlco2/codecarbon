@@ -35,7 +35,10 @@ than assuming either way.
 
 React 19 + Vite + TypeScript, Tailwind v4, Radix primitives, SWR for fetching,
 Zod for response schemas, `sonner` for toasts, `react-router-dom` v7. `pnpm` is
-the package manager, Node 24 in CI. `@/` resolves to `src/`.
+the package manager on Node 24, for the supply-chain settings in
+`pnpm-workspace.yaml`. CI and the deployment install with
+`pnpm install --frozen-lockfile`, so commit `pnpm-lock.yaml` and never a
+`package-lock.json`; never install with npm. `@/` resolves to `src/`.
 
 ## Layout
 
@@ -189,10 +192,12 @@ decision, not the syntax.
 ## Commands
 
 ```bash
+pnpm install        # install, updating pnpm-lock.yaml if package.json changed
 pnpm dev            # dev server on http://localhost:3000
 pnpm test:run       # unit tests once (pnpm test watches)
 pnpm test:e2e       # Playwright
 pnpm lint           # eslint
 pnpm format         # prettier --write (4-space indent, from .prettierrc)
-npx tsc --noEmit    # typecheck
+pnpm exec tsc --noEmit  # typecheck
+pnpm build          # what the deployment runs, after a frozen install
 ```

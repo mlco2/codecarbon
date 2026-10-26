@@ -202,7 +202,7 @@ export default function RunsScatterChart({
                             name="Emissions"
                             data={points}
                             fill="hsl(var(--primary))"
-                            onClick={(data) => onRunClick(data.runId)}
+                            onClick={(data) => onRunClick(data.payload.runId)}
                             cursor="pointer"
                         />
                     </ScatterChart>

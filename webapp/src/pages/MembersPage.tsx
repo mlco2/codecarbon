@@ -110,7 +110,7 @@ export default function MembersPage() {
 
         const parsed = emailSchema.safeParse(email.trim());
         if (!parsed.success) {
-            setError(parsed.error.errors[0].message);
+            setError(parsed.error.issues[0].message);
             return;
         }
         setError(null);

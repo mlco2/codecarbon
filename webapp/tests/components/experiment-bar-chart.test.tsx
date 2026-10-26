@@ -1,15 +1,18 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
 import { render, screen } from "@testing-library/react";
 import ExperimentsBarChart from "@/components/experiment-bar-chart";
 
-// Recharts uses ResizeObserver / canvas — silence them in jsdom.
-class NoopResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-}
-// @ts-expect-error -- jsdom doesn't have it
-globalThis.ResizeObserver = NoopResizeObserver;
+// Recharts 3 renders nothing inside a zero-sized ResponsiveContainer, and
+// jsdom measures every element as 0x0 — give the container a size.
+beforeAll(() => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+        width: 800,
+        height: 450,
+    } as DOMRect);
+});
+afterAll(() => {
+    vi.restoreAllMocks();
+});
 
 describe("ExperimentsBarChart", () => {
     it("renders 'No data available' when given an empty report list", () => {
