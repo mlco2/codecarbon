@@ -76,15 +76,17 @@ class TestPeriodicScheduler(unittest.TestCase):
         self.assertGreater(len(calls), stopped_at, "restart did not resume ticking")
         self.assertFalse(second.is_alive())
 
-    def test_start_after_a_timed_out_stop_never_runs_two_loops(self):
-        """A wedged callback blocks a restart until it returns."""
+    def test_start_after_a_timed_out_stop_resumes_without_overlap(self):
+        """A restart during a wedged callback waits for it, then ticks again."""
         release = threading.Event()
         in_flight = {"now": 0, "max": 0}
+        threads = []
         blocked_once = threading.Event()
 
         def wedged():
             in_flight["now"] += 1
             in_flight["max"] = max(in_flight["max"], in_flight["now"])
+            threads.append(threading.current_thread())
             if not blocked_once.is_set():
                 blocked_once.set()
                 release.wait(5)
@@ -100,19 +102,22 @@ class TestPeriodicScheduler(unittest.TestCase):
         self.assertTrue(first.is_alive())
         self.assertIs(scheduler._thread, first, "stop() dropped the wedged thread")
 
-        with self.assertLogs("codecarbon", level="WARNING"):
-            scheduler.start()  # refused: the old callback is still running
-        self.assertIs(scheduler._thread, first, "start() launched a second loop")
+        before = time.monotonic()
+        scheduler.start()  # must neither block nor be refused
+        self.assertLess(time.monotonic() - before, INTERVAL)
+        second = scheduler._thread
+        self.assertIsNot(second, first)
+        self.assertFalse(scheduler._stopped)
+
+        time.sleep(INTERVAL * 3)
+        self.assertEqual(threads, [first], "the new loop ran during the old call")
 
         release.set()
         first.join(2)
         self.assertFalse(first.is_alive(), "the wedged thread never exited")
-
-        scheduler.start()  # now the restart goes through
-        second = scheduler._thread
-        self.assertIsNot(second, first)
         time.sleep(INTERVAL * 6)
         scheduler.stop()
+        self.assertIn(second, threads, "the restarted loop never ticked")
         self.assertEqual(in_flight["max"], 1, "two loops ran the callback at once")
 
     def test_exception_does_not_kill_the_loop(self):

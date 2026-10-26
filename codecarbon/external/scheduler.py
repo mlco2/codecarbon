@@ -41,29 +41,23 @@ class PeriodicScheduler:
         """
         Start the scheduler. Calling it on a running scheduler is a no-op.
         If a previous run is still finishing its callback (a timed-out
-        stop()), wait for it; if it is still busy, refuse to start a second
-        loop so the function is never run concurrently.
+        stop()), the new loop waits for it before its first tick, so the
+        function is never run concurrently and the restart is not lost.
         """
-        if self._thread is not None:
-            if not self._stopped:
-                return
-            self._thread.join(self._join_timeout(None))
-            if self._thread.is_alive():
-                logger.warning(
-                    "Previous scheduled measurement is still running;"
-                    " not starting a second loop"
-                )
-                return
+        if self._thread is not None and not self._stopped:
+            return
         self._stop_event = Event()
         self._thread = Thread(
             target=self._loop,
-            args=(self._stop_event,),
+            args=(self._stop_event, self._thread),
             daemon=True,
             name=f"codecarbon-{getattr(self.function, '__name__', 'scheduler')}",
         )
         self._thread.start()
 
-    def _loop(self, stop_event):
+    def _loop(self, stop_event, previous=None):
+        if previous is not None:
+            previous.join()
         next_call = time.monotonic() + self.interval
         while not stop_event.wait(max(0.0, next_call - time.monotonic())):
             try:
@@ -87,10 +81,10 @@ class PeriodicScheduler:
             return
         thread.join(self._join_timeout(timeout))
         if thread.is_alive():
-            # Keep the reference so start() will not launch a second loop.
+            # Keep the reference so the next start() waits for it.
             logger.warning(
                 "Scheduled measurement still running after stop(); it will"
-                " finish in the background and may overlap the next one"
+                " finish in the background"
             )
         else:
             self._thread = None
