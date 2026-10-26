@@ -9,6 +9,16 @@ from codecarbon.external.logger import logger
 STOP_JOIN_TIMEOUT_SECONDS = 5.0
 
 
+class MonotonicClock:
+    """The real clock. Tests swap in a fake one to drive the loop."""
+
+    monotonic = staticmethod(time.monotonic)
+
+    @staticmethod
+    def wait(event, timeout):
+        return event.wait(timeout)
+
+
 class PeriodicScheduler:
     """
     Run ``function`` every ``interval`` seconds on a single daemon thread.
@@ -29,6 +39,8 @@ class PeriodicScheduler:
         self.function = function
         self.args = args
         self.kwargs = kwargs
+        # Replace before start() to control time, e.g. in tests.
+        self.clock = MonotonicClock()
         self._lock = Lock()
         self._thread = None
         self._stop_event = None
@@ -59,14 +71,15 @@ class PeriodicScheduler:
     def _loop(self, stop_event, previous=None):
         if previous is not None:
             previous.join()
-        next_call = time.monotonic() + self.interval
-        while not stop_event.wait(max(0.0, next_call - time.monotonic())):
+        clock = self.clock
+        next_call = clock.monotonic() + self.interval
+        while not clock.wait(stop_event, max(0.0, next_call - clock.monotonic())):
             try:
                 self.function(*self.args, **self.kwargs)
             except Exception:  # noqa: BLE001 - must not kill the only thread
                 logger.error("Scheduled measurement failed", exc_info=True)
             next_call += self.interval
-            overrun = time.monotonic() - next_call
+            overrun = clock.monotonic() - next_call
             if overrun > 0 and self.interval > 0:
                 # Skip the slots the call overran: no burst of catch-up ticks,
                 # and no back-to-back call either.
