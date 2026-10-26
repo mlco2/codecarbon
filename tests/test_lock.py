@@ -169,11 +169,14 @@ class TestLockSignalHandlers(SignalSafeTestCase):
         lock = Lock()
         lock.acquire()
 
-        # The host application asked to ignore SIGTERM: release the lock, but do
-        # not terminate on its behalf (no SystemExit).
+        # The host application asked to ignore SIGTERM: the run goes on, so the
+        # lock must be kept and the process must not terminate (no SystemExit).
+        self.assertIs(signal.getsignal(signal.SIGTERM), signal.SIG_IGN)
         signal.raise_signal(signal.SIGTERM)
 
-        self.assertTrue(mock_remove.called)
+        mock_remove.assert_not_called()
+        self.assertTrue(lock._has_created_lock)
+        lock.release()
         self.assertIs(signal.getsignal(signal.SIGTERM), signal.SIG_IGN)
 
     @patch("codecarbon.lock.os.remove")

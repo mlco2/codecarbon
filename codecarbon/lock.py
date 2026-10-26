@@ -39,8 +39,6 @@ class Lock:
         self.release()  # also restores the previous handlers
         if callable(previous):
             return previous(signum, frame)
-        if previous == signal.SIG_IGN:
-            return None
         # Default disposition: raise instead of re-sending the signal, so that
         # `finally` / `__exit__` still run and the tracker writes its last row.
         if signum == signal.SIGINT:
@@ -60,6 +58,11 @@ class Lock:
                 # release() is never reached on that path.
                 if threading.current_thread() is threading.main_thread():
                     for sig in (signal.SIGINT, signal.SIGTERM):
+                        # An ignored signal never ends the run (e.g. SIGINT for a
+                        # background job): catching it would only drop the lock
+                        # while the tracker keeps running.
+                        if signal.getsignal(sig) == signal.SIG_IGN:
+                            continue
                         self._previous_handlers[sig] = signal.signal(
                             sig, self._handle_exit
                         )
