@@ -283,6 +283,9 @@ class BaseEmissionsTracker(ABC):
         self._ram_used_history: List[float] = []
         # The monitor thread appends while the measurement thread clears/averages
         self._utilization_history_lock = threading.Lock()
+        # A scheduled measurement still running when stop() gave up joining it
+        # must not overlap the final one
+        self._measurement_lock = threading.RLock()
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -1357,8 +1360,9 @@ class BaseEmissionsTracker(ABC):
 
     def _measure_power_and_energy_if_stale(self, min_interval_s: float = 0.05) -> None:
         """Measure only if the last sample is older than ``min_interval_s``."""
-        if time.perf_counter() - self._last_measured_time >= min_interval_s:
-            self._measure_power_and_energy()
+        with self._measurement_lock:
+            if time.perf_counter() - self._last_measured_time >= min_interval_s:
+                self._measure_power_and_energy()
 
     def _measure_power_and_energy(self) -> None:
         """
@@ -1366,6 +1370,10 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
+        with self._measurement_lock:
+            self._measure_power_and_energy_locked()
+
+    def _measure_power_and_energy_locked(self) -> None:
         try:
             last_duration = time.perf_counter() - self._last_measured_time
         except AttributeError as e:

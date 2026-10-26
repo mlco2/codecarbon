@@ -1,5 +1,6 @@
 import os
 import tempfile
+import threading
 import time
 import unittest
 from unittest import mock
@@ -202,3 +203,34 @@ class TestCarbonTrackerConstant(unittest.TestCase):
 
         finally:
             tracker.stop()
+
+
+class TestFinalMeasurementWaitsForInFlightTick(unittest.TestCase):
+    def test_stop_does_not_overlap_a_slow_scheduled_measurement(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            measure_power_secs=1,
+            save_to_file=False,
+            allow_multiple_runs=True,
+        )
+        tracker.start()
+        do_measurements = tracker._do_measurements
+        in_flight = {"now": 0, "max": 0}
+        entered = threading.Event()
+        release = threading.Event()
+
+        def slow_do_measurements():
+            in_flight["now"] += 1
+            in_flight["max"] = max(in_flight["max"], in_flight["now"])
+            if threading.current_thread().name.startswith("codecarbon-_measure"):
+                entered.set()
+                # Outlasts stop()'s 1 s join of the scheduler thread.
+                release.wait(5)
+            do_measurements()
+            in_flight["now"] -= 1
+
+        tracker._do_measurements = slow_do_measurements
+        self.assertTrue(entered.wait(5), "the scheduled measurement never ran")
+        threading.Timer(1.5, release.set).start()
+        tracker.stop()
+        self.assertEqual(in_flight["max"], 1, "final measurement overlapped a tick")
