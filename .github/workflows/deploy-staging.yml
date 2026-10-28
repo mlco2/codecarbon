@@ -37,6 +37,7 @@ jobs:
         ref: ${{ inputs.pr && format('refs/pull/{0}/head', inputs.pr) || github.ref }}
         fetch-depth: 0 # Same as git fetch --unshallow
         clean: true    # Remove any untracked files or modifications
+        persist-credentials: false
 
     - name: Install Clever Tools CLI
       run: |
