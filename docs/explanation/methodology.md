@@ -34,6 +34,19 @@ or per country (
 [here](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json)
 ).
 
+The country values come from the [Our World in Data energy
+dataset](https://ourworldindata.org/grapher/carbon-intensity-electricity). The
+carbon intensity is [Ember](https://ember-energy.org/data/yearly-electricity-data/)'s
+lifecycle carbon intensity of electricity generation, in gCO₂eq/kWh, so it is
+higher than figures that count only the emissions of operating the power
+plants. The electricity mix combines the data of Ember and the Energy
+Institute. Each country uses its most recent year with data, given by the
+`year` field of the file. A lifecycle carbon intensity cannot be zero, so a
+zero in the dataset is stored as `null` and the carbon intensity is computed
+from the electricity mix instead (this is the case of the Central African
+Republic, whose electricity is all hydroelectricity). To refresh them, run
+`uv run python codecarbon/data/private_infra/update_global_energy_mix.py`.
+
 ### Regional data
 
 For some countries, CodeCarbon has sub-national carbon intensity data
@@ -60,7 +73,7 @@ CO₂ emission factors published by the Ministry of Ecology and
 Environment and the National Bureau of Statistics
 ([source](https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html)).
 They range from 133 gCO₂/kWh in Yunnan to 680 gCO₂/kWh in Tianjin,
-whereas the national value is 582 gCO₂eq/kWh. Note that these official
+whereas the national value is 525 gCO₂eq/kWh. Note that these official
 factors count CO₂ only (no other greenhouse gases, no lifecycle
 emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
 Kong, Macao and Taiwan are not in the official table and use the
