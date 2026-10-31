@@ -3,7 +3,7 @@
 Runnable scripts and notebooks showing how to track emissions in real workloads.
 
 This README is the canonical index of this directory. The documentation site
-mirrors it at [docs.codecarbon.io/latest/how-to/examples/](https://docs.codecarbon.io/latest/how-to/examples/).
+links to it from [docs.codecarbon.io/latest/how-to/examples/](https://docs.codecarbon.io/latest/how-to/examples/) rather than copying it.
 
 ## Setup
 
