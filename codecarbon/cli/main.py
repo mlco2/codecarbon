@@ -36,12 +36,10 @@ _SAVE_TO_KEYS = {
 }
 
 
-def _configured_output_methods() -> list:
+def _configured_output_methods(conf: dict) -> list:
     """Output methods resolved from configuration alone, like the tracker does."""
-    from codecarbon.core.config import get_hierarchical_config
     from codecarbon.output_methods.base_output import OutputMethod
 
-    conf = get_hierarchical_config()
     if conf.get("output_methods"):
         return [
             OutputMethod(method.strip())
@@ -513,7 +511,7 @@ def monitor(
         from codecarbon.output_methods.base_output import OutputMethod
 
         output_methods = [
-            m for m in _configured_output_methods() if m != OutputMethod.API
+            m for m in _configured_output_methods(external_conf) if m != OutputMethod.API
         ]
         if api:
             output_methods.append(OutputMethod.API)
