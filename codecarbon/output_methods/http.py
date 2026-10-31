@@ -57,14 +57,24 @@ class CodeCarbonAPIOutput(BaseOutput):
         )
         self.run_id = self.api.run_id
 
-    def _ensure_api_run(self) -> None:
+    def exit(self) -> None:
+        self.api.close()
+
+    def _ensure_api_run(self, final: bool = False) -> None:
         if self.api.run_id is None and self.api.experiment_id is not None:
-            self.api._create_run(self.api.experiment_id)
+            self.api._create_run(self.api.experiment_id, bypass_cooldown=final)
             self.run_id = self.api.run_id
 
-    def _emit(self, delta: EmissionsData) -> None:
+    def _emit(self, delta: EmissionsData, final: bool = False) -> None:
         try:
-            self._ensure_api_run()
+            self._ensure_api_run(final=final)
+            if self.api.run_id is None and self.api.experiment_id is not None:
+                # _create_run returned without raising: it is in its cooldown.
+                logger.debug(
+                    "CodeCarbonAPIOutput: run creation is in its cooldown,"
+                    " emission not sent."
+                )
+                return
             self.api.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)
@@ -73,4 +83,6 @@ class CodeCarbonAPIOutput(BaseOutput):
         self._emit(delta)
 
     def out(self, _, delta: EmissionsData):
-        self._emit(delta)
+        # out() only runs on an explicit flush() or stop(), so it bypasses
+        # the run-creation cooldown that throttles the periodic live_out().
+        self._emit(delta, final=True)
