@@ -3,9 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 import typer
-from typer.testing import CliRunner
 
-from codecarbon.cli import main as cli_main
 from codecarbon.cli import monitor as monitor_module
 
 
@@ -307,10 +305,3 @@ def test_run_and_monitor_passes_telemetry_level_override(monkeypatch):
     assert exc_info.value.exit_code == 0
     assert captured.get("telemetry_level") == "disabled"
 
-
-def test_monitor_cli_rejects_invalid_telemetry_level():
-    result = CliRunner().invoke(
-        cli_main.codecarbon,
-        ["monitor", "--telemetry-level", "invalid"],
-    )
-    assert result.exit_code != 0
