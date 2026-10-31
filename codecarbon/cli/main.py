@@ -429,7 +429,30 @@ def monitor(
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
 ):
-    """Monitor your machine's carbon emissions."""
+    """Monitor your machine's carbon emissions.
+
+    Run it without arguments to monitor the whole machine until you stop
+    it with Ctrl+C:
+
+        codecarbon monitor
+
+    Or add `--` followed by a command to track that command only, for
+    example a training script or a test suite:
+
+        codecarbon monitor -- python train_model.py
+        codecarbon monitor -- ./benchmark.sh
+
+    Do not put quotes around the command: `--` marks the end of the
+    CodeCarbon options and the beginning of the command to run, so
+    CodeCarbon options go before it:
+
+        codecarbon monitor --log-level debug -- python --version
+
+    In this mode only the command process (and its children) is tracked.
+    When the command finishes, a summary report is printed and the
+    emissions data is appended to emissions.csv in the current
+    directory.
+    """
 
     external_conf = _external_config()
 
