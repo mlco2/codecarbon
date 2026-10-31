@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 from uuid import UUID
 
@@ -10,6 +11,7 @@ from carbonserver.api.infra.repositories.repository_telemetry import (
     SqlAlchemyRepository as TelemetryRepository,
 )
 from carbonserver.api.routers import telemetry
+from carbonserver.api.schemas_telemetry import TelemetryCreate
 from carbonserver.container import ServerContainer
 
 TELEMETRY_ID = "f52fe339-164d-4c2b-a8c0-f562dfce066d"
@@ -164,3 +166,18 @@ def test_rate_limit_memory_is_bounded(monkeypatch):
         telemetry._rate_limited(host)
 
     assert list(telemetry._recent_requests) == ["3.3.3.3"]
+
+
+def test_timestamp_is_truncated_to_the_hour_and_made_utc():
+    payload = {**MINIMAL_TELEMETRY_TO_CREATE, "timestamp": "2026-05-03T12:34:56"}
+    created = TelemetryCreate(**payload)
+    assert created.timestamp == datetime(2026, 5, 3, 12, tzinfo=timezone.utc)
+
+
+def test_future_timestamp_is_clamped_to_now():
+    """A future timestamp would never reach the 3-year retention purge."""
+    future = datetime.now(timezone.utc) + timedelta(days=3650)
+    payload = {**MINIMAL_TELEMETRY_TO_CREATE, "timestamp": future.isoformat()}
+    created = TelemetryCreate(**payload)
+    assert created.timestamp <= datetime.now(timezone.utc)
+    assert (created.timestamp.minute, created.timestamp.second) == (0, 0)
