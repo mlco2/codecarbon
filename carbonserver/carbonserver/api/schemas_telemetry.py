@@ -1,10 +1,10 @@
 """Schemas for telemetry data submitted to the CarbonServer API."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 #: Every free-text field is capped so one request cannot store unbounded data.
 Str = Annotated[str, Field(max_length=256)]
@@ -61,6 +61,19 @@ class TelemetryBase(BaseModel):
     python_env_type: Optional[Str] = None
     codecarbon_version: Optional[Str] = None
     codecarbon_install_method: Optional[Str] = None
+
+    @field_validator("timestamp")
+    @classmethod
+    def clamp_timestamp(cls, value: datetime) -> datetime:
+        """Store at most the current hour (UTC), whatever the client clock says.
+
+        The retention trigger deletes rows by ``timestamp``, so a future value
+        would keep a row past the 3 years documented to users.
+        """
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        value = min(value, datetime.now(timezone.utc))
+        return value.replace(minute=0, second=0, microsecond=0)
 
     @model_validator(mode="after")
     def reject_disabled_level(self):
