@@ -55,9 +55,9 @@ authors:
 repository-code: "https://github.com/mlco2/codecarbon"
 url: "https://codecarbon.io"
 license: MIT
-version: 3.3.1
+version: 3.3.2
 doi: 10.5281/zenodo.4658424
-date-released: 2026-09-09
+date-released: 2026-10-23
 keywords:
   - carbon emissions
   - green AI

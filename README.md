@@ -163,7 +163,7 @@ If you find CodeCarbon useful for your research, use the **Cite this repository*
                   {The CodeCarbon contributors}},
   title        = {CodeCarbon: Estimate and track carbon emissions from computing},
   publisher    = {Zenodo},
-  version      = {3.3.1},
+  version      = {3.3.2},
   doi          = {10.5281/zenodo.4658424},
   url          = {https://doi.org/10.5281/zenodo.4658424}
 }
