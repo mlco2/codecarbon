@@ -275,3 +275,32 @@ def test_run_and_monitor_reports_no_path_without_file_output(monkeypatch, capsys
     out = _run_and_capture(monkeypatch, capsys, [SimpleNamespace()])
 
     assert "Savedto:" not in out
+
+
+def test_run_and_monitor_passes_telemetry_level_override(monkeypatch):
+    captured = {}
+
+    class CapturingTracker(FakeTracker):
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+            super().__init__()
+
+    class FakePopen:
+        def __init__(self, command, text=True):
+            pass
+
+        def wait(self):
+            return 0
+
+    _patch_trackers(monkeypatch, online_cls=CapturingTracker)
+    monkeypatch.setattr(monitor_module.subprocess, "Popen", FakePopen)
+    monkeypatch.setattr(monitor_module, "print", lambda *args, **kwargs: None)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        monitor_module.run_and_monitor(
+            SimpleNamespace(args=["echo", "ok"]),
+            telemetry_level="disabled",
+        )
+
+    assert exc_info.value.exit_code == 0
+    assert captured.get("telemetry_level") == "disabled"

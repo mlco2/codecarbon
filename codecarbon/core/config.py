@@ -113,6 +113,13 @@ def normalize_gpu_ids(
     return None
 
 
+def _config_file_paths() -> tuple[str, str]:
+    """Return resolved paths for global and local CodeCarbon config files."""
+    global_path = str((Path.home() / CONFIG_FILE_NAME).expanduser().resolve())
+    local_path = str((Path.cwd() / CONFIG_FILE_NAME).expanduser().resolve())
+    return global_path, local_path
+
+
 def read_config_file(path: str) -> dict:
     """
     Read the `[codecarbon]` section of a single configuration file.
@@ -167,13 +174,10 @@ def get_hierarchical_config_with_sources() -> Tuple[dict, Dict[str, str]]:
         maps a key to its value (**all values are strings**) and `sources` maps
         a key to the layer it was read from.
     """
-    global_path = str((Path.home() / CONFIG_FILE_NAME).expanduser().resolve())
-    local_path = str((Path.cwd() / CONFIG_FILE_NAME).expanduser().resolve())
-
     config = {}
     sources = {}
 
-    for path in (global_path, local_path):
+    for path in _config_file_paths():
         for key, value in read_config_file(path).items():
             config[key] = value
             sources[key] = path

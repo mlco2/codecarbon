@@ -30,12 +30,12 @@ class TestConfig(unittest.TestCase):
             "CODECARBON_EXPERIMENT_ID",
             "CODECARBON_API_ENDPOINT",
             "CODECARBON_TELEMETRY",
-            "CODECARBON_TELEMETRY_PROJECT_TOKEN",
+            "CODECARBON_TELEMETRY_LEVEL",
+            "CODECARBON_TELEMETRY_API_URL",
             "codecarbon_api_key",
             "codecarbon_experiment_id",
             "codecarbon_api_endpoint",
             "codecarbon_telemetry",
-            "codecarbon_telemetry_project_token",
         ]:
             os.environ.pop(key, None)
         os.environ.setdefault("CODECARBON_ALLOW_MULTIPLE_RUNS", "True")
