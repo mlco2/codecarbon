@@ -25,6 +25,8 @@ finally:
 
 Call `tracker.start()` at the beginning of your Notebook (or script), and call `tracker.stop()` at the end. You can also call `tracker.flush()` to write emissions to disk or the API without stopping the tracker entirely.
 
+A stopped tracker cannot be restarted: calling `start()` or `start_task()` after `stop()` logs an error and measures nothing. Create a new tracker for each run instead.
+
 **Advanced: Task-Level Monitoring**
 
 For fine-grained tracking of individual tasks within a single run, use the task manager:
