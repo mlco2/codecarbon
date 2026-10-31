@@ -120,20 +120,6 @@ def _config_file_paths() -> tuple[str, str]:
     return global_path, local_path
 
 
-def get_config_file_settings() -> dict[str, str]:
-    """Return the ``[codecarbon]`` section from config files without environment overlay.
-
-    Reads ``~/.codecarbon.config`` then ``./.codecarbon.config`` (local overrides global).
-
-    Returns:
-        Configuration dict from files only. Empty when no file or section exists.
-    """
-    conf: dict[str, str] = {}
-    for path in _config_file_paths():
-        conf.update(read_config_file(path))
-    return conf
-
-
 def read_config_file(path: str) -> dict:
     """
     Read the `[codecarbon]` section of a single configuration file.

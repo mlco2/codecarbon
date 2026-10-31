@@ -16,8 +16,8 @@ from codecarbon.cli.cli_utils import (
 )
 from codecarbon.core.config import (
     _config_file_paths,
-    get_config_file_settings,
     get_hierarchical_config,
+    read_config_file,
 )
 from codecarbon.core.telemetry.schemas import TelemetryLevel
 from codecarbon.core.telemetry.settings import (
@@ -56,33 +56,6 @@ def normalize_telemetry_level(level: str) -> str:
         return parse_telemetry_level(level).value
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
-
-
-def resolve_config_path(config: Optional[Path], *, create: bool = False) -> Path:
-    """Resolve which config file to read or write.
-
-    Args:
-        config: Explicit path from ``--config``, if any.
-        create: When True and no file exists, create ``./.codecarbon.config``.
-
-    Returns:
-        Resolved config file path.
-    """
-    if config is not None:
-        path = config.expanduser().resolve()
-        if create and not path.exists():
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text("[codecarbon]\n", encoding="utf-8")
-        return path
-    global_path, local_path = (Path(p) for p in _config_file_paths())
-    if local_path.exists():
-        return local_path
-    if global_path.exists():
-        return global_path
-    if create:
-        local_path.write_text("[codecarbon]\n", encoding="utf-8")
-        return local_path
-    return local_path
 
 
 def pick_config_path_interactive() -> Path:
@@ -141,7 +114,9 @@ def print_telemetry_status(config_path: Optional[Path] = None) -> None:
         external_conf = dict(file_settings)
         source_label = str(path)
     else:
-        file_settings = get_config_file_settings()
+        file_settings = {}
+        for file_path in _config_file_paths():
+            file_settings.update(read_config_file(file_path))
         external_conf = get_hierarchical_config()
         source_label = "merged ~/.codecarbon.config + ./.codecarbon.config"
 
@@ -197,11 +172,10 @@ def run_telemetry_interactive(config: Optional[Path] = None) -> None:
         "Separate from your dashboard experiment (codecarbon config). "
         "Controls optional, anonymous usage analytics.\n"
     )
-    path = resolve_config_path(config) if config else None
-    if path is None or (config is None and not path.exists()):
+    if config is None:
         path = pick_config_path_interactive()
     else:
-        path = resolve_config_path(config, create=True)
+        path = config.expanduser().resolve()
 
     choices = [
         questionary.Choice("disabled — " + TIER_DESCRIPTIONS["disabled"], "disabled"),
@@ -232,7 +206,7 @@ def telemetry_entry(
         Optional[Path],
         typer.Option(
             "--config",
-            help="Path to .codecarbon.config (default: local then global).",
+            help="Path to .codecarbon.config (default: choose interactively).",
         ),
     ] = None,
 ) -> None:
@@ -265,7 +239,7 @@ def set_level(
         Optional[Path],
         typer.Option(
             "--config",
-            help="Path to .codecarbon.config (creates ./.codecarbon.config if missing).",
+            help="Path to .codecarbon.config (default: ~/.codecarbon.config).",
         ),
     ] = None,
 ) -> None:
@@ -276,7 +250,7 @@ def set_level(
     opt-out must not depend on which local file happens to exist yet.
     """
     if config is not None:
-        path = resolve_config_path(config, create=True)
+        path = config.expanduser().resolve()
     else:
         path = Path(_config_file_paths()[0])
     normalized = normalize_telemetry_level(level)
