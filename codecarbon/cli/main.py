@@ -511,7 +511,9 @@ def monitor(
         from codecarbon.output_methods.base_output import OutputMethod
 
         output_methods = [
-            m for m in _configured_output_methods(external_conf) if m != OutputMethod.API
+            m
+            for m in _configured_output_methods(external_conf)
+            if m != OutputMethod.API
         ]
         if api:
             output_methods.append(OutputMethod.API)
