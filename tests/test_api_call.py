@@ -217,7 +217,7 @@ class TestApi(unittest.TestCase):
             create_run_automatically=False,
         )
 
-        api._create_run = lambda experiment_id, bypass_cooldown=False: None
+        api._create_run = lambda experiment_id: None
 
         self.assertFalse(
             api.add_emission(
@@ -382,9 +382,14 @@ class TestApi(unittest.TestCase):
                 api._create_run("experiment_id", bypass_cooldown=True), "run-1"
             )
 
-    def test_add_emission_logs_cooldown_skip_at_debug_not_error(self):
+    def test_add_emission_sends_once_run_is_created(self):
+        """If add_emission has to create the run itself and that succeeds,
+        the emission is sent instead of being dropped."""
         with requests_mock.Mocker() as m:
-            m.post("http://test.com/runs", text="down", status_code=503)
+            m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
+            emissions = m.post(
+                "http://test.com/emissions", json={"id": "em-1"}, status_code=201
+            )
             api = ApiClient(
                 endpoint_url="http://test.com",
                 experiment_id="exp-1",
@@ -392,9 +397,7 @@ class TestApi(unittest.TestCase):
                 conf=conf,
                 create_run_automatically=False,
             )
-            # First call: the run-creation attempt itself is a genuine
-            # failure (raises, same as today).
-            with self.assertRaises(requests.exceptions.HTTPError):
+            self.assertTrue(
                 api.add_emission(
                     {
                         "duration": 2,
@@ -409,66 +412,9 @@ class TestApi(unittest.TestCase):
                         "energy_consumed": 0.2,
                     }
                 )
-
-            with self.assertLogs("codecarbon", level="DEBUG") as cm2:
-                self.assertFalse(
-                    api.add_emission(
-                        {
-                            "duration": 2,
-                            "emissions": 1.0,
-                            "emissions_rate": 1.0,
-                            "cpu_power": 1.0,
-                            "gpu_power": 0.0,
-                            "ram_power": 0.5,
-                            "cpu_energy": 0.1,
-                            "gpu_energy": 0.0,
-                            "ram_energy": 0.1,
-                            "energy_consumed": 0.2,
-                        }
-                    )
-                )
-            # Second call: still within the cooldown, so no new attempt is
-            # made and the per-tick skip is only a DEBUG log, not ERROR.
-            second_errors = [r for r in cm2.records if r.levelname == "ERROR"]
-            self.assertFalse(second_errors)
-
-    def test_add_emission_final_bypasses_cooldown_and_sends(self):
-        with requests_mock.Mocker() as m:
-            m.post("http://test.com/runs", text="down", status_code=503)
-            api = ApiClient(
-                endpoint_url="http://test.com",
-                experiment_id="exp-1",
-                api_key="Toto",
-                conf=conf,
-                create_run_automatically=False,
             )
-            emission = {
-                "duration": 2,
-                "emissions": 1.0,
-                "emissions_rate": 1.0,
-                "cpu_power": 1.0,
-                "gpu_power": 0.0,
-                "ram_power": 0.5,
-                "cpu_energy": 0.1,
-                "gpu_energy": 0.0,
-                "ram_energy": 0.1,
-                "energy_consumed": 0.2,
-            }
-            # First tick: run creation fails (raises) and enters cooldown.
-            with self.assertRaises(requests.exceptions.HTTPError):
-                api.add_emission(emission)
-
-            # The server recovers, but we are still inside the cooldown window.
-            m.post("http://test.com/runs", json={"id": "run-1"}, status_code=201)
-            m.post("http://test.com/emissions", json={"id": "em-1"}, status_code=201)
-
-            # A normal (non-final) tick still respects the cooldown.
-            self.assertFalse(api.add_emission(emission))
-            self.assertIsNone(api.run_id)
-
-            # The final flush bypasses the cooldown and retries once.
-            self.assertTrue(api.add_emission(emission, final=True))
             self.assertEqual(api.run_id, "run-1")
+            self.assertEqual(emissions.call_count, 1)
 
     def test_create_run_raises_on_unexpected_2xx_status(self):
         with requests_mock.Mocker() as m:

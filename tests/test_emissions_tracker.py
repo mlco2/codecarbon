@@ -1399,7 +1399,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertLess(data3.emissions, 0.8)
 
     @responses.activate
-    def test_stop_does_not_retry_run_creation_twice_when_server_down(
+    def test_stop_attempts_run_creation_once_when_server_down(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1409,10 +1409,8 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        # GIVEN a server that always fails to create a run, and a tracker
-        # whose cooldown will have already expired by the time stop() runs
-        # (no prior attempt at all here, so the very first attempt happens
-        # during stop()'s persist step).
+        # GIVEN a server that always fails to create a run, and no earlier
+        # attempt, so the first one happens during stop()'s final flush.
         responses.add(
             responses.POST,
             "http://test-api.com/runs",
@@ -1433,8 +1431,6 @@ class TestCarbonTracker(unittest.TestCase):
         heavy_computation(run_time_secs=1)
         tracker.stop()
 
-        # THEN stop() should only attempt run creation once: the persist
-        # step's attempt already ran (and failed) this call, so the final
-        # bypass retry must be skipped instead of hitting the server again.
+        # THEN stop() attempts run creation exactly once.
         run_calls = [c for c in responses.calls if c.request.url.endswith("/runs")]
         self.assertEqual(1, len(run_calls))
