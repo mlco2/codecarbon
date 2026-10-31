@@ -912,12 +912,15 @@ class IntelRAPL:
     def get_dram_energy(self, duration: Time) -> Optional[Tuple[Power, Energy]]:
         """
         Power and energy of the DRAM domains since the previous call, or None
-        when no DRAM domain is read (rapl_include_dram=False or none found).
+        when no DRAM domain is read (rapl_include_dram=False or none found) or
+        a counter could not measure this interval (unreadable, uncorrectable wrap).
         """
         if not self._dram_files:
             return None
         for rapl_file in self._dram_files:
             rapl_file.delta(duration)
+        if any(rapl_file.sample_skipped for rapl_file in self._dram_files):
+            return None
         return (
             Power.from_watts(sum(rapl_file.power.W for rapl_file in self._dram_files)),
             Energy.from_energy(

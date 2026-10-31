@@ -9,7 +9,7 @@ import sys
 import pytest
 
 from codecarbon.core.cpu import IntelRAPL
-from codecarbon.core.units import Time
+from codecarbon.core.units import Energy, Time
 
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
@@ -616,6 +616,20 @@ def test_rapl_reads_nested_dram_zones_once_per_socket(tmp_path, monkeypatch, soc
 
     _, energy = rapl.get_dram_energy(Time.from_seconds(1))
     assert energy.kWh == pytest.approx(sockets * 25000 / (1000 * 3600 * 1e6))
+
+
+def test_rapl_dram_energy_is_none_when_a_sample_is_skipped(tmp_path, monkeypatch):
+    """An uncorrectable DRAM counter wrap gives no reading, not a 0 delta."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    dram_files = _make_nested_dram_tree(tmp_path, 2)
+    rapl = IntelRAPL(rapl_dir=str(tmp_path / "intel-rapl"), rapl_include_dram=True)
+    rapl.start()
+    dram_files[0].write_text(str(500000 + 25000))
+    # Backwards by more than max_energy_range_uj: cannot be corrected
+    rapl._dram_files[1].max_energy_reading = Energy(0)
+    dram_files[1].write_text("400000")
+
+    assert rapl.get_dram_energy(Time.from_seconds(1)) is None
 
 
 @pytest.mark.parametrize("prefer_psys", [True, False])
