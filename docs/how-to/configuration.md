@@ -229,6 +229,6 @@ documentation](https://requests.readthedocs.io/en/latest/user/advanced/#proxies)
 
 ## Product telemetry
 
-Optional library telemetry (`telemetry_level`: `disabled` or `minimal`) is configured separately from dashboard API settings. Set it in `.codecarbon.config`, via `CODECARBON_TELEMETRY_LEVEL`, or with `EmissionsTracker(telemetry_level=...)` (argument wins). `minimal` sends anonymous product telemetry once per process; see [Product telemetry](telemetry.md).
+Product telemetry (`telemetry_level`: `disabled` or `minimal`, on by default at `minimal`) is configured separately from dashboard API settings. Set it in `.codecarbon.config`, via `CODECARBON_TELEMETRY_LEVEL`, or with `EmissionsTracker(telemetry_level=...)` (argument wins). `minimal` sends anonymous product telemetry once per process; see [Product telemetry](telemetry.md).
 
 See [Product telemetry](telemetry.md) for what is collected and how to opt out.

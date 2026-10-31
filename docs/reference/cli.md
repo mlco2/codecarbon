@@ -105,7 +105,7 @@ codecarbon telemetry status       # resolved tier and whether it was set explici
 
 | Option | Description |
 |--------|-------------|
-| `--config PATH` | Use a specific `.codecarbon.config` (default: local then global) |
+| `--config PATH` | Use a specific `.codecarbon.config`. Without it, `set` writes `~/.codecarbon.config`, `status` reads the merged global and local files, and the wizard asks which file to use |
 
 See [Product telemetry](../how-to/telemetry.md) for what `minimal` collects and how to opt out.
 
