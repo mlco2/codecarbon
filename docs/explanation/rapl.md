@@ -213,7 +213,7 @@ systems showing the importance of avoiding double-counting.
     Their `psys` readings and the "use psys only" annotations inside the code
     blocks describe that non-default configuration. With the default
     `rapl_prefer_psys=False`, CodeCarbon uses the **package** domain(s) instead:
-    psys is detected and explicitly skipped (`codecarbon/core/cpu.py:694-731`).
+    psys is detected and explicitly skipped (`IntelRAPL._select_domains_to_use` in `codecarbon/core/cpu.py`).
     The package figure is given alongside psys in each block, so you can read
     the default behaviour off the same numbers.
 
