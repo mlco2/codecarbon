@@ -22,7 +22,8 @@ It can also be set in the config file as a comma-separated string, e.g.
     The individual `save_to_file`, `save_to_api`, `save_to_logger`,
     `save_to_prometheus` and `save_to_logfire` parameters are deprecated and will be
     removed in a future version. Use `output_methods` instead. When `output_methods`
-    is provided, the `save_to_*` flags are ignored.
+    is provided, the `save_to_*` flags are ignored. Passing any `save_to_*`
+    parameter emits a `FutureWarning` pointing at your `EmissionsTracker(...)` call.
 
 ## CSV
 
@@ -93,15 +94,15 @@ Deploy a local version of Prometheus + Prometheus Pushgateway:
 docker-compose up
 ```
 
-Run your EmissionsTracker as usual, with `save_to_prometheus=True`:
+Run your EmissionsTracker as usual, adding `OutputMethod.PROMETHEUS` to `output_methods`:
 
 ```python-skip
-from codecarbon import OfflineEmissionsTracker
+from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
-    save_to_prometheus=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.PROMETHEUS],
 )
 tracker.start()
 # Your code here
@@ -118,15 +119,15 @@ CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
 
 ### How to use it
 
-Run your EmissionsTracker as usual, with `save_to_logfire=True`:
+Run your EmissionsTracker as usual, adding `OutputMethod.LOGFIRE` to `output_methods`:
 
 ```python-skip
-from codecarbon import OfflineEmissionsTracker
+from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
-    save_to_logfire=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.LOGFIRE],
 )
 tracker.start()
 # Your code here
@@ -245,7 +246,7 @@ The HTTP Output allows calling a webhook with emission data when the tracker is 
 
 ## CodeCarbon API
 
-You can send all your data to the CodeCarbon API so you have your historical data in one place. By default, nothing is sent to the API. Use `save_to_api=True` and configure your API credentials.
+You can send all your data to the CodeCarbon API so you have your historical data in one place. By default, nothing is sent to the API. Add `OutputMethod.API` to `output_methods` and configure your API credentials.
 
 ## Logger Output
 
