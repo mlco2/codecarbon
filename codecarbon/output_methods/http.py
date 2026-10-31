@@ -76,16 +76,19 @@ class CodeCarbonAPIOutput(BaseOutput):
         try:
             if self.create_run_on_emit:
                 self._ensure_api_run(final=final)
-            elif self.api.run_id is None:
-                # The owner of this output already failed to create the run.
+            if self.api.run_id is None and self.api.experiment_id is not None:
+                # Run creation failed, is in its cooldown, or was left to the
+                # owner of this output (create_run_on_emit=False).
                 logger.debug("CodeCarbonAPIOutput: no API run, emission not sent.")
                 return
-            self.api.add_emission(dataclasses.asdict(delta), final=final)
+            self.api.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)
 
     def live_out(self, _, delta: EmissionsData):
         self._emit(delta)
 
-    def out(self, _, delta: EmissionsData, final: bool = False):
-        self._emit(delta, final=final)
+    def out(self, _, delta: EmissionsData):
+        # out() only runs on an explicit flush() or stop(), so it bypasses
+        # the run-creation cooldown that throttles the periodic live_out().
+        self._emit(delta, final=True)
