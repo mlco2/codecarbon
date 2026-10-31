@@ -154,6 +154,17 @@ def test_count_cpus_slurm_exception():
                 assert count_cpus() == 4
 
 
+def test_count_cpus_slurm_scontrol_missing():
+    """SLURM env vars can be set inside a container that lacks the scontrol binary."""
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
+        with mock.patch(
+            "codecarbon.core.util.subprocess.check_output",
+            side_effect=FileNotFoundError(2, "No such file or directory", "scontrol"),
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                assert count_cpus() == 4
+
+
 def test_count_cpus_slurm_malformed():
     with mock.patch("codecarbon.core.util.SLURM_JOB_ID", "12345"):
         with mock.patch(
