@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.testclient import TestClient
 
 from codecarbon.emissions_tracker import OfflineEmissionsTracker
@@ -244,3 +244,107 @@ def test_documented_lifespan_pattern():
     assert (energy.endpoint, status) == ("GET /work/{n}", 200)
     assert energy.energy_kwh is not None and energy.energy_kwh > 0
     assert kg is not None and kg > 0
+
+
+def test_failing_callback_does_not_break_settlement():
+    attributor = EnergyAttributor()
+    attributor.reset_window(0.0)
+    state = attributor.begin("GET /a")
+    state.on_resolved = lambda result: 1 / 0
+    attributor.end(state)
+    attributor.on_window(1.0)
+    assert attributor.report()["in_flight"] == 0
+    _invariant(attributor)
+
+
+def test_request_finished_before_window_gets_no_share():
+    attributor = EnergyAttributor()
+    attributor.reset_window(0.0)
+    state = attributor.begin("GET /a")
+    attributor.end(state)
+    attributor.reset_window(0.0)  # the window opens after the request ended
+    attributor.on_window(1.0)
+    assert state.windows == 0
+    assert attributor.unattributed_kwh == 1.0
+    _invariant(attributor)
+
+
+def test_intensity_failure_reports_energy_without_emissions():
+    tracker, seen = _FakeTracker(), []
+    tracker._carbon_intensity_kg_per_kwh = lambda: 1 / 0
+    with TestClient(_app(tracker, seen)) as client:
+        client.get("/work/1")
+        tracker.window(1.0)
+    energy, kg, _ = seen[0]
+    assert energy.energy_kwh == pytest.approx(1.0)
+    assert kg is None
+
+
+def test_default_and_disabled_on_request():
+    tracker = _FakeTracker()
+    app = FastAPI()
+    app.add_middleware(CodeCarbonMiddleware, tracker=tracker)
+    app.add_middleware(CodeCarbonMiddleware, tracker=tracker, on_request=None)
+
+    @app.get("/")
+    def root():
+        return {}
+
+    with TestClient(app) as client:
+        assert client.get("/").status_code == 200
+        tracker.window(1.0)  # the default callback only logs
+
+
+def test_websocket_passes_through():
+    tracker, seen = _FakeTracker(), []
+    app = _app(tracker, seen)
+
+    @app.websocket("/ws")
+    async def ws(websocket: WebSocket):
+        await websocket.accept()
+        await websocket.send_text("hi")
+        await websocket.close()
+
+    with TestClient(app) as client:
+        with client.websocket_connect("/ws") as websocket:
+            assert websocket.receive_text() == "hi"
+    assert seen == []
+    assert tracker.observers == []
+
+
+def test_tracker_window_observers():
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA", output_methods=[], allow_multiple_runs=True
+    )
+    seen = []
+
+    def failing(total_kwh):
+        raise RuntimeError("observer bug")
+
+    tracker.add_energy_window_observer(failing)
+    tracker.add_energy_window_observer(seen.append)
+    tracker._notify_energy_window_observers()  # a failing observer is isolated
+    assert seen == [0.0]
+
+    tracker.remove_energy_window_observer(seen.append)
+    tracker.remove_energy_window_observer(seen.append)  # unknown: no-op
+    tracker._notify_energy_window_observers()
+    assert seen == [0.0]
+
+
+def test_carbon_intensity_on_cloud(monkeypatch):
+    tracker = OfflineEmissionsTracker(
+        country_iso_code="FRA", output_methods=[], allow_multiple_runs=True
+    )
+    cloud = SimpleNamespace(is_on_private_infra=False)
+    monkeypatch.setattr(tracker, "_get_cloud_metadata", lambda: cloud)
+    tracker._ensure_emissions_engine()
+    calls = []
+
+    def get_cloud_emissions(energy, cloud_arg, geo):
+        calls.append((energy.kWh, cloud_arg))
+        return 0.1
+
+    monkeypatch.setattr(tracker._emissions, "get_cloud_emissions", get_cloud_emissions)
+    assert tracker._carbon_intensity_kg_per_kwh() == 0.1
+    assert calls == [(1, cloud)]
