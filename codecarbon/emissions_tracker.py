@@ -789,9 +789,9 @@ class BaseEmissionsTracker(ABC):
             try:
                 self._api_output._ensure_api_run()
                 self.run_id = self._api_output.run_id or self.run_id
-            except Exception as e:
+            except Exception:
                 logger.warning(
-                    f"Could not create the API run ({e}), using local run_id {self.run_id}"
+                    f"Could not create the API run, using local run_id {self.run_id}"
                 )
 
         self._last_measured_time = self._start_time = time.perf_counter()

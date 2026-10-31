@@ -612,7 +612,7 @@ class TestCarbonTracker(unittest.TestCase):
 
             with self.assertLogs("codecarbon", level="WARNING") as logs:
                 tracker.start()
-            self.assertTrue(any("API is down" in line for line in logs.output))
+            self.assertTrue(any("using local run_id" in line for line in logs.output))
             self.assertIsNotNone(tracker._start_time)
 
             heavy_computation(1)
