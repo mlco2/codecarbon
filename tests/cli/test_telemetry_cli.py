@@ -12,7 +12,6 @@ from codecarbon.cli import main as cli_main
 from codecarbon.cli.telemetry_cli import (
     normalize_telemetry_level,
     pick_config_path_interactive,
-    resolve_config_path,
     telemetry_app,
     write_telemetry_level,
 )
@@ -85,14 +84,33 @@ def test_telemetry_status_merged_matches_tracker_precedence():
         local_path = Path(tmp) / "local.config"
         global_path.write_text("[codecarbon]\ntelemetry_level = minimal\n")
         local_path.write_text("[codecarbon]\ntelemetry_level = disabled\n")
-        with patch(
-            "codecarbon.core.config._config_file_paths",
-            return_value=(str(global_path), str(local_path)),
+        paths = (str(global_path), str(local_path))
+        with (
+            patch("codecarbon.core.config._config_file_paths", return_value=paths),
+            patch(
+                "codecarbon.cli.telemetry_cli._config_file_paths", return_value=paths
+            ),
         ):
             result = runner.invoke(telemetry_app, ["status"])
         assert result.exit_code == 0
+        assert "telemetry_level in file(s): 'disabled'" in result.output
         assert "Resolved tier: disabled" in result.output
         assert "merged" in result.output
+
+
+def test_telemetry_status_env_level_is_not_reported_as_stored(tmp_path, monkeypatch):
+    local_path = tmp_path / "local.config"
+    local_path.write_text("[codecarbon]\ntelemetry_level = minimal\n")
+    monkeypatch.setenv("CODECARBON_TELEMETRY_LEVEL", "disabled")
+    paths = (str(tmp_path / "missing.config"), str(local_path))
+    with (
+        patch("codecarbon.core.config._config_file_paths", return_value=paths),
+        patch("codecarbon.cli.telemetry_cli._config_file_paths", return_value=paths),
+    ):
+        result = CliRunner().invoke(telemetry_app, ["status"])
+    assert result.exit_code == 0
+    assert "telemetry_level in file(s): 'minimal'" in result.output
+    assert "Resolved tier: disabled" in result.output
 
 
 def test_monitor_passes_telemetry_level_override(monkeypatch):
@@ -152,44 +170,21 @@ def test_telemetry_status_missing_config_file():
 
 def test_telemetry_status_shows_implicit_warning():
     runner = CliRunner()
-    with patch(
-        "codecarbon.cli.telemetry_cli.get_config_file_settings",
-        return_value={},
+    with (
+        patch("codecarbon.cli.telemetry_cli._config_file_paths", return_value=()),
+        patch(
+            "codecarbon.cli.telemetry_cli.get_hierarchical_config", return_value={}
+        ),
     ):
-        with patch(
-            "codecarbon.cli.telemetry_cli.get_hierarchical_config",
-            return_value={},
-        ):
-            result = runner.invoke(telemetry_app, ["status"])
+        result = runner.invoke(telemetry_app, ["status"])
     assert "Explicitly configured: False" in result.output
     assert "Sent once per process to" in result.output
 
 
-def test_resolve_config_path_creates_explicit_file():
-    with tempfile.TemporaryDirectory() as tmp:
-        config_path = Path(tmp) / "custom.config"
-        resolved = resolve_config_path(config_path, create=True)
-        assert resolved == config_path.resolve()
-        assert config_path.exists()
 
 
-def test_resolve_config_path_prefers_local_config(tmp_path, monkeypatch):
-    local_path = tmp_path / ".codecarbon.config"
-    local_path.write_text("[codecarbon]\n", encoding="utf-8")
-    monkeypatch.chdir(tmp_path)
-    assert resolve_config_path(None) == local_path.resolve()
 
 
-def test_resolve_config_path_uses_global_when_local_missing(tmp_path, monkeypatch):
-    home = tmp_path / "home"
-    home.mkdir()
-    global_path = home / ".codecarbon.config"
-    global_path.write_text("[codecarbon]\n", encoding="utf-8")
-    workdir = tmp_path / "work"
-    workdir.mkdir()
-    monkeypatch.chdir(workdir)
-    monkeypatch.setattr(Path, "home", lambda: home)
-    assert resolve_config_path(None) == global_path.resolve()
 
 
 def test_write_telemetry_level_creates_missing_file(tmp_path):
@@ -211,16 +206,6 @@ def test_pick_config_path_interactive_create_new():
     assert path == Path("/tmp/new.config")
 
 
-def test_resolve_config_path_creates_local_in_cwd(tmp_path, monkeypatch):
-    home = tmp_path / "home"
-    home.mkdir()
-    work = tmp_path / "work"
-    work.mkdir()
-    monkeypatch.chdir(work)
-    monkeypatch.setattr(Path, "home", lambda: home)
-    resolved = resolve_config_path(None, create=True)
-    assert resolved == (work / ".codecarbon.config").resolve()
-    assert resolved.exists()
 
 
 def test_pick_config_path_lists_existing_configs(tmp_path, monkeypatch):
@@ -339,12 +324,6 @@ def test_ask_telemetry_level_once_stores_answer_in_global_config(tmp_path):
     assert "telemetry_level = disabled" in global_path.read_text()
 
 
-def test_resolve_config_path_without_files_or_create(tmp_path, monkeypatch):
-    monkeypatch.setattr(Path, "home", lambda: tmp_path / "home")
-    monkeypatch.chdir(tmp_path)
-    resolved = resolve_config_path(None)
-    assert resolved == (tmp_path / ".codecarbon.config").resolve()
-    assert not resolved.exists()
 
 
 @pytest.mark.parametrize(
