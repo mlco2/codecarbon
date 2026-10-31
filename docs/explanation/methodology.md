@@ -54,9 +54,9 @@ instantiating the tracker. Energy is the integral of power over time:
 
 | Component | Best available source | Modelled fallback |
 |---|---|---|
-| CPU | Intel RAPL (Linux), Energy Meter Interface (Windows 11), `powermetrics` (macOS), Intel Power Gadget (legacy) | TDP × CPU load, or a flat constant |
+| CPU | Intel RAPL (Linux), Raspberry Pi 5 PMIC, Energy Meter Interface (Windows 11), `powermetrics` (macOS), Intel Power Gadget (legacy) | TDP × CPU load, or a flat constant |
 | GPU | NVML via `nvidia-ml-py` (Nvidia) or AMDSMI (AMD) — a direct device reading | none; without a supported GPU library, GPU is not counted |
-| RAM | none — there is no RAM power counter | always modelled from an estimated DIMM count |
+| RAM | the PMIC DRAM rails on a Raspberry Pi 5; otherwise none | modelled from an estimated DIMM count |
 
 CodeCarbon does not separately model disk I/O, network transfer, displays,
 cooling or other peripherals. Those are usually small for local, code-level
@@ -95,8 +95,8 @@ and is preferable on shared machines.
 ### Power Usage Effectiveness (PUE)
 
 If you set `pue`, it is applied inside the measurement loop to **each
-component's energy** before accumulation
-([`emissions_tracker.py:1194`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/emissions_tracker.py#L1194)):
+component's energy** before accumulation, in `_do_measurements`
+([`emissions_tracker.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/emissions_tracker.py)):
 
 ```python
 energy *= self._pue
@@ -111,28 +111,29 @@ consumption is derived from the post-PUE energy in the same loop.
 
 ### Which backend gets chosen
 
-This is the part of CodeCarbon most often misread. The selection logic is in
-[`resource_tracker.py:249-279`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L249),
+This is the part of CodeCarbon most often misread. The selection logic is
+`ResourceTracker.set_CPU_tracking` in
+[`core/resource_tracker.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py),
 and it is evaluated strictly in this order — the first row that applies wins.
 
-Rows 1–9 are decided in that selector. If none of them matches, it delegates to
-the `_setup_fallback_tracking` helper (`resource_tracker.py:159-219`), which is
-where rows 10 and 11 are decided — hence the different line citations on the
-last two rows.
+Rows 3–10 are the platform backends tried by `_try_platform_cpu_backend`. If
+none of them matches, `set_CPU_tracking` delegates to `_setup_fallback_tracking`,
+which is where rows 11 and 12 are decided.
 
 | # | Condition | Result | Source |
 |---|---|---|---|
-| 1 | `force_cpu_power` is set | **Every platform backend is skipped** — RAPL is not consulted even if it is available — and your value becomes the TDP handed to row 10 or row 11 below. It is not the reported power. | `resource_tracker.py:255-260`, guard at `:272`, `:169-174` |
-| 2 | `force_mode_cpu_load` is set, `psutil` present, and a TDP is known | `cpu_load` mode | `resource_tracker.py:263-270` |
-| 3 | Linux **and** RAPL files readable | `intel_rapl` — hardware energy counters | `resource_tracker.py:223-225` |
-| 4 | macOS **and** Apple Silicon **and** `psutil` present | `cpu_load` mode | `resource_tracker.py:228-230` |
-| 5 | macOS **and** Apple Silicon **and** no `psutil` **and** `powermetrics` usable | `powermetrics` | `resource_tracker.py:231-233` |
-| 6 | macOS **and** Intel **and** Intel Power Gadget installed | `intel_power_gadget` | `resource_tracker.py:234-236` |
-| 7 | macOS **and** Intel **and** `powermetrics` usable | `powermetrics` | `resource_tracker.py:237-239` |
-| 8 | Windows **and** EMI available | `windows_emi` — hardware energy counters | `resource_tracker.py:241-243` |
-| 9 | Windows **and** Intel Power Gadget installed | `intel_power_gadget` | `resource_tracker.py:244-246` |
-| 10 | none of the above, `psutil` present | `cpu_load` mode | `resource_tracker.py:179-190`, `:201-212` |
-| 11 | none of the above, no `psutil` | `constant` mode | `resource_tracker.py:191-198`, `:213-218` |
+| 1 | `force_cpu_power` is set | **Every platform backend is skipped** — RAPL is not consulted even if it is available — and your value becomes the TDP handed to row 11 or row 12 below. It is not the reported power. | `set_CPU_tracking` |
+| 2 | `force_mode_cpu_load` is set, `psutil` present, and a TDP is known (or `force_cpu_power` is set) | `cpu_load` mode | `set_CPU_tracking`, `_setup_cpu_load_mode` |
+| 3 | Linux **and** RAPL files readable | `intel_rapl` — hardware energy counters | `_try_platform_cpu_backend` |
+| 4 | Raspberry Pi 5 (`vcgencmd pmic_read_adc` answers) | `raspberry` — PMIC power readings | `_try_platform_cpu_backend`, `cpu.is_raspberry` |
+| 5 | macOS **and** Apple Silicon **and** `psutil` present | `cpu_load` mode | `_try_platform_cpu_backend`, `_setup_cpu_load_fast` |
+| 6 | macOS **and** Apple Silicon **and** no `psutil` **and** `powermetrics` usable | `powermetrics` | `_try_platform_cpu_backend` |
+| 7 | macOS **and** Intel **and** Intel Power Gadget installed | `intel_power_gadget` | `_try_platform_cpu_backend` |
+| 8 | macOS **and** Intel **and** `powermetrics` usable | `powermetrics` | `_try_platform_cpu_backend` |
+| 9 | Windows **and** EMI available | `windows_emi` — hardware energy counters | `_try_platform_cpu_backend` |
+| 10 | Windows **and** Intel Power Gadget installed | `intel_power_gadget` | `_try_platform_cpu_backend` |
+| 11 | none of the above, `psutil` present | `cpu_load` mode | `_setup_fallback_tracking` |
+| 12 | none of the above, no `psutil` | `constant` mode | `_setup_fallback_tracking` |
 
 Two consequences worth stating plainly, because they surprise people:
 
@@ -143,27 +144,28 @@ Two consequences worth stating plainly, because they surprise people:
   `force_cpu_power=65` reports `65 × (0.1 + 0.9 × load³)` watts, between 6.5 W
   and 65 W, not a flat 65 W. Only on an installation without `psutil` does it
   become a flat figure, and then it is half your value, not your value
-  (row 11 and `constant` mode below). Unlike a registry TDP, it is used as
+  (row 12 and `constant` mode below). Unlike a registry TDP, it is used as
   given: it is not multiplied by the CPU package count.
 - **On Apple Silicon, `powermetrics` is effectively unreachable.**
-  `psutil` is a hard dependency of CodeCarbon, so row 4 fires before row 5 in
+  `psutil` is a hard dependency of CodeCarbon, so row 5 fires before row 6 in
   every normal installation. The `sudo`-granting instructions that used to
   appear here describe a path the code no longer takes.
 
 ### The fallback constants
 
 When no hardware counter is available, CodeCarbon needs a power figure. It gets
-one from the following ladder, in
-[`core/cpu.py:1002-1032`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/cpu.py#L1002):
+one from the following ladder, in `TDP._main` in
+[`core/cpu.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/cpu.py):
 
 | Situation | TDP used | Constant | Source |
 |---|---|---|---|
-| CPU model detected and present in the TDP registry (2000+ Intel and AMD parts) | the registry value | — | `cpu.py:1005-1012` |
-| CPU model detected but **absent** from the registry, `psutil` present | `threads × 4 W` | `DEFAULT_POWER_PER_CORE = 4` | [`cpu.py:29`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/cpu.py#L29), used at `:1024` |
-| CPU model absent from the registry and no `psutil`, or the model could not be detected at all | `85 W` | `POWER_CONSTANT = 85` | [`hardware.py:23`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py#L23), applied at `:457` |
+| CPU model detected and present in the TDP registry (2000+ Intel and AMD parts) | the registry value | — | `TDP._get_cpu_power_from_registry` |
+| CPU model detected but **absent** from the registry, `psutil` present | `threads × 4 W` | `DEFAULT_POWER_PER_CORE = 4` | `core/cpu.py` |
+| CPU model absent from the registry and no `psutil`, or the model could not be detected at all | `85 W` | `POWER_CONSTANT = 85` | `external/hardware.py`, applied in `CPU.from_utils` |
 
-Whatever TDP results is multiplied by the physical CPU package count
-(`resource_tracker.py:267`, `:278`) to give the machine-level ceiling.
+A TDP found by this ladder is multiplied by the physical CPU package count
+(in `set_CPU_tracking`) to give the machine-level ceiling; the 85 W constant
+is not.
 
 That ceiling is then turned into an instantaneous power reading in one of two
 ways, and **the two ways are not the same**:
@@ -172,39 +174,39 @@ ways, and **the two ways are not the same**:
   models depending on `tracking_mode`.**
 
 - **`constant` mode** — reached only when `psutil` is unavailable — applies a
-  flat half of TDP
-  ([`hardware.py:363`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py#L363)):
+  flat half of TDP (`CPU._get_power_from_cpus` in
+  [`external/hardware.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py)):
 
     ```text
     power = TDP × CONSUMPTION_PERCENTAGE_CONSTANT   # CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
     ```
 
-    `CONSUMPTION_PERCENTAGE_CONSTANT = 0.5` is defined at
-    [`hardware.py:26`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py#L26).
+    `CONSUMPTION_PERCENTAGE_CONSTANT = 0.5` is defined at the top of
+    `external/hardware.py`.
 
 ### The two cpu_load models
 
 `cpu_load` mode does not have one power model. It has two, selected by
 `tracking_mode` inside
-[`_get_power_from_cpu_load`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py#L274)
-(`hardware.py:274-352`). They differ in shape, not only in scope, and the
+[`CPU._get_power_from_cpu_load`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py)
+in `external/hardware.py`. They differ in shape, not only in scope, and the
 difference is large at low load.
 
 | | `tracking_mode="machine"` | `tracking_mode="process"` |
 |---|---|---|
-| Load source | `psutil.cpu_percent()`, system-wide (`hardware.py:280-282`) | per-process CPU-time deltas over wall clock, summed across the process and its children (`hardware.py:294-330`) |
-| Normalisation | none — already a 0–100% figure | divided by core count (`hardware.py:345`) |
-| Curve | **cubic** (`hardware.py:287-288`) | **linear** (`hardware.py:346`) |
+| Load source | system-wide CPU busy time since the previous reading, from `psutil.cpu_times()` (`SystemCPULoadMeter`) | per-process CPU-time deltas over wall clock, summed across the process and its children |
+| Normalisation | none — already a 0–100% figure | divided by core count |
+| Curve | **cubic** | **linear** |
 | Idle floor | **10% of TDP** | **none** — 0% load gives 0 W |
 
 ```python
-# machine mode — hardware.py:287-288
+# machine mode
 load_factor = 0.1 + 0.9 * ((cpu_load / 100.0) ** 3)
 power = tdp * load_factor
 ```
 
 ```python
-# process mode — hardware.py:345-346
+# process mode
 cpu_load_normalized = cpu_load / self._cpu_count
 power = self._tdp * cpu_load_normalized / 100
 ```
@@ -277,7 +279,7 @@ Intel has since discontinued the tool; this is a known limitation,
 tracked in [issue #457](https://github.com/mlco2/codecarbon/issues/457).
 
 **macOS, Apple Silicon.** The Apple Silicon chip contains both CPU and GPU, and
-`powermetrics` can read both, but it requires `sudo` and — as row 4 of the table
+`powermetrics` can read both, but it requires `sudo` and — as row 5 of the table
 above shows — `cpu_load` mode is selected first whenever `psutil` is installed,
 which is the normal case. There is no known way to read Apple Silicon energy
 without administrative rights; if you know of one, please
@@ -328,10 +330,12 @@ separate `AppleSiliconChip` device.
 There is no hardware counter for RAM power on the platforms CodeCarbon
 supports, and reading the actual DIMM configuration needs root. So CodeCarbon
 runs a two-stage estimate in
-[`external/ram.py:82-193`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py#L82).
+[`external/ram.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py).
+The exception is the Raspberry Pi 5, where the PMIC measures the DRAM rails
+and that reading replaces the estimate.
 
 **Stage 1 — guess the DIMM count** from total RAM, using a hardcoded step
-function (`ram.py:82-139`):
+function (`RAM._estimate_dimm_count`):
 
 | Total RAM | Assumed DIMMs |
 |---|---|
@@ -342,22 +346,22 @@ function (`ram.py:82-139`):
 | > 128 GB | `ceil(total_GB / largest_fitting_DIMM_size)`, capped at 32 |
 
 **Stage 2 — assign power per DIMM** with a marginal-efficiency taper
-(`ram.py:141-193`):
+(`RAM._calculate_ram_power`):
 
-| Parameter | Value | Source |
-|---|---|---|
-| Base power per DIMM, x86 | `RAM_SLOT_POWER_X86 = 5` W | [`ram.py:14`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py#L14) |
-| Base power per DIMM, ARM | 1.5 W | `ram.py:158` |
-| DIMMs 1–4 | 100% of base each | `ram.py:168-170` |
-| DIMMs 5–8 | 90% of base each | `ram.py:171-175` |
-| DIMMs 9–16 | 80% of base each | `ram.py:176-182` |
-| DIMMs 17+ | 70% of base each | `ram.py:183-190` |
-| Minimum, x86 | 10 W (2 DIMMs × 5 W) | `ram.py:165`, applied `:193` |
-| Minimum, ARM | 3 W | `ram.py:160`, applied `:193` |
+| Parameter | Value |
+|---|---|
+| Base power per DIMM, x86 | `RAM_SLOT_POWER_X86 = 5` W |
+| Base power per DIMM, ARM | 1.5 W |
+| DIMMs 1–4 | 100% of base each |
+| DIMMs 5–8 | 90% of base each |
+| DIMMs 9–16 | 80% of base each |
+| DIMMs 17+ | 70% of base each |
+| Minimum, x86 | 10 W (2 DIMMs × 5 W) |
+| Minimum, ARM | 3 W |
 
 The only citation anywhere in the module is a pre-v3
 [Crucial FAQ](https://www.crucial.com/support/articles-faq-memory/how-much-power-does-memory-use)
-recording the *old* 3 W-per-8 GB rule (`ram.py:20-22`), which the current model
+recording the *old* 3 W-per-8 GB rule (in the `RAM` class docstring), which the current model
 replaced. **Neither the 5 W figure nor any of the 0.9/0.8/0.7 multipliers has a
 source in the code.** They are asserted values that appear reasonable, not
 measurements.
@@ -405,12 +409,12 @@ The first level that answers wins.
 
 | # | Level | Condition | Data | Source |
 |---|---|---|---|---|
-| 1 | Forced value | `force_carbon_intensity_g_co2e_kwh` is set | your number | `emissions.py:62-66`, `:156-160` |
-| 2 | Cloud region | running on a recognised cloud provider **and** the provider/region pair is in `impact.csv` | [`data/cloud/impact.csv`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv) | `emissions.py:68-75` |
-| 3 | Electricity Maps | an API token is configured | live grid intensity by lat/lon or country code | `emissions.py:162-177`, `core/electricitymaps_api.py` |
-| 4 | Regional | country is US, Canada, Sweden, Norway or Finland **and** a region/bidding zone is known | US state and Canadian province files; Nordic bidding-zone factors | `emissions.py:182-195`, `:234-290` |
-| 5 | Country | the country ISO code is in the energy-mix file | [`global_energy_mix.json`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json), from [Our World in Data](https://ourworldindata.org/grapher/carbon-intensity-electricity) | `emissions.py:292-326` |
-| 6 | World average | nothing above resolved | **475 gCO₂eq/kWh**, from the [IEA](https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions) | `carbon_intensity_per_source.json`, applied at `emissions.py:88-96` and `:307-315` |
+| 1 | Forced value | `force_carbon_intensity_g_co2e_kwh` is set | your number | `get_cloud_emissions`, `get_private_infra_emissions` |
+| 2 | Cloud region | running on a recognised cloud provider **and** the provider/region pair is in `impact.csv` | [`data/cloud/impact.csv`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/cloud/impact.csv) | `get_cloud_emissions` |
+| 3 | Electricity Maps | an API token is configured | live grid intensity by lat/lon or country code | `get_private_infra_emissions`, `core/electricitymaps_api.py` |
+| 4 | Regional | country is US, Canada, China, Sweden, Norway or Finland **and** a region/bidding zone is known | see [Regional data](#regional-data) below | `get_region_emissions` |
+| 5 | Country | the country ISO code is in the energy-mix file | [`global_energy_mix.json`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/global_energy_mix.json), from [Our World in Data](https://ourworldindata.org/grapher/carbon-intensity-electricity) | `get_country_emissions` |
+| 6 | World average | nothing above resolved | **475 gCO₂eq/kWh**, from the [IEA](https://www.iea.org/reports/global-energy-co2-status-report-2019/emissions) | `carbon_intensity_per_source.json`, applied in `get_cloud_emissions` and `get_country_emissions` |
 
 Some countries lack data for the most recent year, in which case the most
 recent available year is used.
@@ -420,9 +424,10 @@ recent available year is used.
     Every step down this ladder degrades quietly. If your cloud provider and
     region are not in `impact.csv` — and **AWS and Azure publish no
     per-region carbon intensity at all; only GCP does** — CodeCarbon logs a
-    warning and drops to the country value, or to the 475 g world average if no
-    country is known (`emissions.py:76-97`). Likewise an unknown country ISO
-    code drops straight to the world average (`emissions.py:303-315`).
+    warning and continues with levels 3 to 5 for the machine's location, or
+    uses the 475 g world average if no location is known
+    (`get_cloud_emissions`). Likewise an unknown country ISO code drops
+    straight to the world average (`get_country_emissions`).
 
     **Nothing in the CSV, the API payload or the emissions figure records which
     level answered.** A run resolved from a live Electricity Maps reading and a
