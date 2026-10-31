@@ -446,6 +446,7 @@ class TestRAM(unittest.TestCase):
         with mock.patch("os.getpid", return_value=12345):
             self.assertEqual(RAM(tracking_mode="process")._pid, 12345)
 
+
 def test_ram_reports_measured_dram_energy():
     """A working RAPL DRAM domain replaces the estimate (issue #1268)."""
     source = mock.Mock()
@@ -468,7 +469,11 @@ def test_ram_reports_measured_dram_energy():
 def _ram_with_dram_source(deltas_kwh):
     source = mock.Mock()
     source.get_dram_energy.side_effect = [
-        (Power.from_watts(kwh * 3.6e6), Energy.from_energy(kWh=kwh))
+        (
+            None
+            if kwh is None
+            else (Power.from_watts(kwh * 3.6e6), Energy.from_energy(kWh=kwh))
+        )
         for kwh in deltas_kwh
     ]
     ram = RAM(tracking_mode="machine")
@@ -485,14 +490,18 @@ def test_ram_live_dram_counter_reports_a_zero_delta_as_measured():
     assert energy.kWh == 0
 
 
-def test_ram_negative_dram_delta_falls_back_to_estimate():
-    """An uncorrected counter wrap must not be reported as negative energy."""
-    ram, _ = _ram_with_dram_source([1e-6, -5e-6])
+def test_ram_skipped_dram_interval_falls_back_to_estimate():
+    """An interval the counter could not measure (e.g. an uncorrectable wrap)
+    is estimated, and the live counter is still used afterwards."""
+    ram, _ = _ram_with_dram_source([1e-6, None, 2e-6])
     with mock.patch.object(RAM, "total_power", return_value=Power.from_watts(10)):
         ram.measure_power_and_energy(last_duration=1)
         power, energy = ram.measure_power_and_energy(last_duration=1)
-    assert power.W == 10
-    assert energy.kWh > 0
+        assert power.W == 10
+        assert energy.kWh > 0
+        _, energy = ram.measure_power_and_energy(last_duration=1)
+    assert energy.kWh == 2e-6
+    assert ram._dram_source is not None
 
 
 def test_ram_dead_dram_counter_is_dropped_once():

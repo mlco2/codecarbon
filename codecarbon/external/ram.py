@@ -357,9 +357,8 @@ class RAM(BaseHardware):
         """
         if self._dram_source is not None:
             measured = self._dram_source.get_dram_energy(Time(seconds=last_duration))
-            # A negative delta is a counter wrap we could not correct: estimate
-            # this interval instead of reporting negative energy.
-            if measured is not None and measured[1].kWh >= 0:
+            # None: no reading for this interval, estimate it instead
+            if measured is not None:
                 if self._dram_alive or measured[1].kWh > 0:
                     self._dram_alive = True
                     return measured
