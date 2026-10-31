@@ -331,6 +331,7 @@ def test_protected_endpoint_without_token_returns_401(protected_client):
     response = protected_client.post("/experiments", json=EXPERIMENT)
     assert response.status_code == 401
     assert response.json() == {"detail": "Missing or invalid access token"}
+    assert response.headers["WWW-Authenticate"] == "Bearer"
 
 
 def test_protected_endpoint_with_invalid_token_returns_401(protected_client):
