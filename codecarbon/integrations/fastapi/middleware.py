@@ -84,15 +84,16 @@ class CodeCarbonMiddleware:
         # Scheduler thread: refresh intensity no more often than the tracker
         # itself does (its `api_call_interval`), since an Electricity Maps
         # token turns this into an HTTP call.
-        interval = getattr(self._attached, "_api_call_interval", 1) or 1
-        if self._intensity is None or self._windows_since_refresh >= interval:
+        # An interval of -1 means the tracker never refreshes mid-run: keep the
+        # first value.
+        interval = getattr(self._attached, "_api_call_interval", 1)
+        if self._intensity is None or 0 < interval <= self._windows_since_refresh:
             try:
                 self._intensity = self._attached._carbon_intensity_kg_per_kwh()
             except Exception:
                 logger.debug("CodeCarbon: carbon intensity unavailable", exc_info=True)
             self._windows_since_refresh = 0
-        else:
-            self._windows_since_refresh += 1
+        self._windows_since_refresh += 1
         self.attributor.on_window(total_energy_kwh)
 
     def _running_tracker(self, scope: Scope) -> BaseEmissionsTracker | None:

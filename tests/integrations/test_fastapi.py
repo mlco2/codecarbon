@@ -177,9 +177,19 @@ def test_intensity_refreshed_once_per_api_call_interval():
     tracker, seen = _FakeTracker(api_call_interval=4), []
     with TestClient(_app(tracker, seen)) as client:
         client.get("/work/1")  # attaches the middleware to the tracker
-        for _ in range(12):
+        for _ in range(13):
             tracker.window(0.1)
-    assert tracker.intensity_calls == pytest.approx(3, abs=1)
+    # Windows 1, 5, 9 and 13.
+    assert tracker.intensity_calls == 4
+
+
+def test_intensity_fetched_once_when_api_call_interval_disabled():
+    tracker, seen = _FakeTracker(api_call_interval=-1), []
+    with TestClient(_app(tracker, seen)) as client:
+        client.get("/work/1")
+        for _ in range(5):
+            tracker.window(0.1)
+    assert tracker.intensity_calls == 1
 
 
 def test_app_raising_is_reported_as_500():
