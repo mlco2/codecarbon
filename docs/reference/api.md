@@ -14,7 +14,7 @@ Parameters can be set via `EmissionsTracker()`, `OfflineEmissionsTracker()`, the
 
 ## Product telemetry
 
-Optional library telemetry is controlled by **`telemetry_level`** on the tracker (same parameter on `OfflineEmissionsTracker` and `@track_emissions`):
+Product telemetry, on by default at `minimal`, is controlled by **`telemetry_level`** on the tracker and on `@track_emissions`. `OfflineEmissionsTracker` never sends telemetry, whatever this is set to:
 
 | Value | Behavior |
 |-------|----------|
