@@ -88,6 +88,8 @@ class FakeClock:
             self._cond.notify_all()
         if settle:
             assert self.wait_parked(), "the scheduler loop did not settle"
+
+
 def join_telemetry(tracker, timeout: float = 10.0) -> None:
     """Wait for the background telemetry send that ``stop()`` fired, if any."""
     thread = getattr(getattr(tracker, "_telemetry", None), "_thread", None)

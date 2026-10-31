@@ -172,19 +172,11 @@ def test_telemetry_status_shows_implicit_warning():
     runner = CliRunner()
     with (
         patch("codecarbon.cli.telemetry_cli._config_file_paths", return_value=()),
-        patch(
-            "codecarbon.cli.telemetry_cli.get_hierarchical_config", return_value={}
-        ),
+        patch("codecarbon.cli.telemetry_cli.get_hierarchical_config", return_value={}),
     ):
         result = runner.invoke(telemetry_app, ["status"])
     assert "Explicitly configured: False" in result.output
     assert "Sent once per process to" in result.output
-
-
-
-
-
-
 
 
 def test_write_telemetry_level_creates_missing_file(tmp_path):
@@ -204,8 +196,6 @@ def test_pick_config_path_interactive_create_new():
             path = pick_config_path_interactive()
     mock_create.assert_called_once()
     assert path == Path("/tmp/new.config")
-
-
 
 
 def test_pick_config_path_lists_existing_configs(tmp_path, monkeypatch):
@@ -322,8 +312,6 @@ def test_ask_telemetry_level_once_stores_answer_in_global_config(tmp_path):
         mock_select.return_value.ask.return_value = "disabled"
         ask_telemetry_level_once()
     assert "telemetry_level = disabled" in global_path.read_text()
-
-
 
 
 @pytest.mark.parametrize(

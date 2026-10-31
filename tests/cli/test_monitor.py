@@ -304,4 +304,3 @@ def test_run_and_monitor_passes_telemetry_level_override(monkeypatch):
 
     assert exc_info.value.exit_code == 0
     assert captured.get("telemetry_level") == "disabled"
-
