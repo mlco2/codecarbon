@@ -59,6 +59,11 @@ if TYPE_CHECKING:
 
 _sentinel = object()
 
+_RESTART_AFTER_STOP_ERROR = (
+    "This tracker was already stopped and cannot be restarted: "
+    "nothing will be measured. Create a new tracker instead."
+)
+
 
 class BaseEmissionsTracker(ABC):
     """
@@ -783,10 +788,7 @@ class BaseEmissionsTracker(ABC):
         if self._stopped:
             # `start()` is wrapped in @suppress(Exception), so raising here
             # would be swallowed: log instead of pretending it worked.
-            logger.error(
-                "This tracker was already stopped and cannot be restarted: "
-                "nothing will be measured. Create a new tracker instead."
-            )
+            logger.error(_RESTART_AFTER_STOP_ERROR)
             return
         if self._start_time is not None:
             logger.warning("Already started tracking")
@@ -823,10 +825,7 @@ class BaseEmissionsTracker(ABC):
             )
             return
         if self._stopped:
-            logger.error(
-                "This tracker was already stopped and cannot be restarted: "
-                "nothing will be measured. Create a new tracker instead."
-            )
+            logger.error(_RESTART_AFTER_STOP_ERROR)
             return
         try:
             self._ensure_emissions_engine()
