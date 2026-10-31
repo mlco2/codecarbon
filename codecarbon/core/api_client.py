@@ -75,6 +75,10 @@ class ApiClient:  # (AsyncClient)
             headers["Authorization"] = f"Bearer {self.access_token}"
         return headers
 
+    def _send(self, method, url, payload=None):
+        """Call the API and return the response, whatever its status code."""
+        return method(url=url, json=payload, timeout=2, headers=self._get_headers())
+
     def _request(self, method, url, payload=None, expected_status=200):
         """
         Call the API and return the response, raising on anything that is not
@@ -84,8 +88,7 @@ class ApiClient:  # (AsyncClient)
         :payload: the JSON body to send, if any
         :expected_status: the http code the API returns when the call succeeds
         """
-        headers = self._get_headers()
-        response = method(url=url, json=payload, timeout=2, headers=headers)
+        response = self._send(method, url, payload)
         if response.status_code != expected_status:
             self._raise_api_error(url, payload or {}, response)
         return response
@@ -216,9 +219,7 @@ class ApiClient:  # (AsyncClient)
         try:
             payload = dataclasses.asdict(emission)
             url = self.url + "/emissions"
-            response = requests.post(
-                url=url, json=payload, timeout=2, headers=self._get_headers()
-            )
+            response = self._send(requests.post, url, payload)
             duration = payload["duration"]
             if response.status_code == 422 and duration != round(duration):
                 # Servers older than the client declare duration as an int and
@@ -238,9 +239,7 @@ class ApiClient:  # (AsyncClient)
                     " older than this client. Retrying with the duration truncated to whole seconds."
                 )
                 payload["duration"] = int(duration)
-                response = requests.post(
-                    url=url, json=payload, timeout=2, headers=self._get_headers()
-                )
+                response = self._send(requests.post, url, payload)
             if response.status_code != 201:
                 self._raise_api_error(url, payload, response)
             logger.debug(f"ApiClient - Successful upload emission {payload} to {url}")
