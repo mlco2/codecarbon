@@ -115,6 +115,7 @@ def test_rapl_include_dram_true_explicit(tmp_path):
     assert "intel-rapl:1" in rapl._dram_files[0].path
 
 
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 @pytest.mark.parametrize("include_dram", [False, True])
 def test_rapl_cpu_energy_excludes_dram(tmp_path, monkeypatch, include_dram):
     """
@@ -600,6 +601,7 @@ def _make_nested_dram_tree(base, sockets):
     return dram_files
 
 
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 @pytest.mark.parametrize("sockets", [1, 2])
 def test_rapl_reads_nested_dram_zones_once_per_socket(tmp_path, monkeypatch, sockets):
     monkeypatch.setattr(sys, "platform", "linux")
@@ -618,6 +620,7 @@ def test_rapl_reads_nested_dram_zones_once_per_socket(tmp_path, monkeypatch, soc
     assert energy.kWh == pytest.approx(sockets * 25000 / (1000 * 3600 * 1e6))
 
 
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 def test_rapl_dram_energy_is_none_when_a_sample_is_skipped(tmp_path, monkeypatch):
     """An uncorrectable DRAM counter wrap gives no reading, not a 0 delta."""
     monkeypatch.setattr(sys, "platform", "linux")
@@ -632,6 +635,7 @@ def test_rapl_dram_energy_is_none_when_a_sample_is_skipped(tmp_path, monkeypatch
     assert rapl.get_dram_energy(Time.from_seconds(1)) is None
 
 
+@pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 @pytest.mark.parametrize("prefer_psys", [True, False])
 def test_rapl_psys_does_not_read_dram(tmp_path, monkeypatch, prefer_psys):
     """psys usually includes the DRAM already: it is never read apart."""
