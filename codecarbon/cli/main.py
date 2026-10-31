@@ -558,6 +558,10 @@ def questionary_prompt(prompt, list_options, default):
         list_options,
         default,
     ).ask()
+    if value is None:
+        # questionary returns None when the user cancels (Ctrl+C); stop the
+        # wizard cleanly instead of carrying on with no selection.
+        raise typer.Abort()
     return value
 
 
