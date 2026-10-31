@@ -37,6 +37,15 @@ def test_version_flag():
     assert str(cli_main.__version__) in result.output
 
 
+def test_monitor_help_explains_running_a_command():
+    """`monitor --help` documents how to wrap a command, not just the machine."""
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--help"])
+    assert result.exit_code == 0
+    assert "To track a single command instead" in result.output
+    assert "codecarbon monitor -- python train.py" in result.output
+
+
 def test_api_get_calls_api_and_prints(monkeypatch):
     runner = CliRunner()
     monkeypatch.setattr("codecarbon.core.api_client.ApiClient", FakeApiClient)
