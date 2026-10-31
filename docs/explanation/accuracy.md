@@ -31,11 +31,11 @@ counter is readable. The fallback order is documented in
 | Intel RAPL | Reads hardware energy counters under `/sys/class/powercap/` | On the four CPUs profiled in this repository, CodeCarbon's RAPL readings matched `stress-ng --rapl` on the same machine. RAPL is itself an on-die estimate and its own absolute error is not characterised here. | Linux, Intel and AMD (kernel ≥ 5.8), when the counters are readable |
 | NVML (NVIDIA) | Reads accumulated board energy from the driver (`nvmlDeviceGetTotalEnergyConsumption`) | Not yet measured against an external reference | Any NVIDIA GPU with a working driver |
 | amdsmi (AMD) | Reads the driver energy counter (`amdsmi_get_energy_count`) | Not yet measured against an external reference | AMD GPUs |
-| macOS `powermetrics` | System power reporting | Not yet measured against an external reference | macOS, Intel and Apple Silicon |
+| macOS `powermetrics` | System power reporting | Not yet measured against an external reference | Intel Macs without Intel Power Gadget; Apple Silicon only when `psutil` is missing |
 | Windows EMI | Energy Meter Interface | Not yet measured against an external reference | Windows 11, where the platform exposes it |
 | Intel Power Gadget | Vendor tool, deprecated upstream | Not yet measured | Legacy path |
 | CPU load × TDP | Estimates power from CPU utilisation against the TDP listed in `cpu_power.csv`. Two different curves, [selected by `tracking_mode`](methodology.md#the-two-cpu_load-models) | See the profiling results below: in **machine mode**, on the machines profiled, the estimate deviated from RAPL by roughly −60% to +190% depending on CPU and load point. Process mode is uncharacterised | Fallback when no CPU counter is available |
-| Default watts per thread | Estimates from thread count alone | Not characterised; this is the least accurate path | Last resort, when the CPU model is absent from `cpu_power.csv` |
+| Default TDP | The same CPU-load curve, with an assumed TDP: 4 W per thread, or a generic 85 W when the CPU model cannot be detected | Not characterised; this is the least accurate path | Last resort, when the CPU model is absent from `cpu_power.csv` or undetected |
 
 ### The CPU load × TDP fallback, measured
 
@@ -48,7 +48,7 @@ CodeCarbon would have produced. The raw sweeps live in
 !!! warning "These figures are machine mode only"
 
     The profiling script constructs its tracker with `force_mode_cpu_load=True`
-    and no `tracking_mode` argument (`compare_cpu_load_and_RAPL.py:289-292`), so
+    and no `tracking_mode` argument, so
     every number below was gathered under the default
     `tracking_mode="machine"`.
 
@@ -79,15 +79,15 @@ the gap is larger still.
 
 **The assumed load-to-power curve does not match the real one.** In machine
 mode CodeCarbon applies a cubic curve with a 10%-of-TDP floor
-(`hardware.py:287-288`); in process mode it interpolates linearly from zero
-(`hardware.py:346`). Neither shape is fitted to hardware. Real curves are convex
+(`CPU._get_power_from_cpu_load`); in process mode it interpolates linearly from
+zero. Neither shape is fitted to hardware. Real curves are convex
 on some parts
-(the E3-1240 v2 stays under 10 W up to 40% load, so the linear estimate
+(the E3-1240 v2 stays under 10 W up to 40% load, so the estimate
 overshoots it by well over 100%) and saturate early on others (the Threadripper
 reaches its power ceiling around 65% load, so the estimate *undershoots* at mid
 load).
 
-The practical reading: the fallback gets the order of magnitude right and can be
+The practical reading: the fallback gets the order of magnitude right, but can
 land at half the real power, or nearly three times it, on a specific machine and workload.
 It is not a substitute for RAPL. If your numbers need to be defensible,
 [enable RAPL](../how-to/enable-rapl.md).
@@ -140,7 +140,7 @@ In rough order of impact:
 3. **Set `pue`** if you run in a datacenter whose overhead you know.
 4. **Contribute your CPU model** to
    `codecarbon/data/hardware/cpu_power.csv` if CodeCarbon logs that it does not
-   know your CPU. That moves you off the default-watts-per-thread path.
+   know your CPU. That moves you off the default-TDP path.
 5. **Measure longer runs.** Short runs are dominated by sampling noise and
    tracker startup.
 6. **Compare within one machine, not across machines.** Relative comparisons
@@ -159,8 +159,9 @@ In rough order of impact:
   others).
 - `examples/test_rapl_calculus.sh` — a shell check of the RAPL energy
   calculation.
-- `examples/print_hardware.py` — shows which backend CodeCarbon selected on your
-  machine, which tells you which row of the table above applies to you.
+- `examples/print_hardware.py` (or `codecarbon detect`) — prints the detected
+  hardware; its startup log names the `CPU Tracking Method` CodeCarbon
+  selected, which tells you which row of the table above applies to you.
 
 If you run the sweep on a CPU that is not yet profiled, a pull request adding
 the CSV to `codecarbon/data/hardware/cpu_load_profiling/` is a directly useful
