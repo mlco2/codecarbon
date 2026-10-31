@@ -44,14 +44,14 @@ or configuration.
 | duration | Duration of the compute, in seconds | Measured (wall clock) |
 | emissions | Emissions as CO₂-equivalents (CO₂eq), in kg | Computed: `energy × carbon intensity`, see the carbon intensity note |
 | emissions_rate | Emissions divided per duration, in Kg/s | Computed: `emissions / duration` |
-| cpu_power | Mean CPU power (W) | Varies by backend, see the CPU backends note. Mean of the per-interval samples, not PUE-scaled |
-| gpu_power | Mean GPU power (W) | Derived from the GPU energy-counter delta over each interval (`core/gpu_device.py:52`), then averaged. Not PUE-scaled |
-| ram_power | Mean RAM power (W) | Always modelled, never measured, see the RAM note |
+| cpu_power | Mean CPU power (W) | Varies by backend, see the CPU backends note. Mean of the per-interval samples, PUE-scaled |
+| gpu_power | Mean GPU power (W) | Derived from the GPU energy-counter delta over each interval, then averaged. PUE-scaled |
+| ram_power | Mean RAM power (W) | Modelled except on a Raspberry Pi 5, see the RAM note. PUE-scaled |
 | cpu_energy | Energy used per CPU (kWh) | Same backend as `cpu_power`, PUE-inflated |
-| gpu_energy | Energy used per GPU (kWh) | Accumulated board-energy counter: NVML `nvmlDeviceGetTotalEnergyConsumption` (`core/gpu_nvidia.py:49`) or AMD `amdsmi_get_energy_count` (`core/gpu_amd.py:112`). PUE-inflated |
+| gpu_energy | Energy used per GPU (kWh) | Accumulated board-energy counter: NVML `nvmlDeviceGetTotalEnergyConsumption` (`core/gpu_nvidia.py`) or AMD `amdsmi_get_energy_count` (`core/gpu_amd.py`); while the counter cannot be read, the power sampled every second × time. PUE-inflated |
 | ram_energy | Energy used per RAM (kWh) | Modelled RAM power × interval, PUE-inflated |
 | energy_consumed | Sum of cpu_energy, gpu_energy and ram_energy (kWh) | Sum of the three columns above; every term already PUE-inflated |
-| water_consumed | Water footprint of the run, in litres | Computed: `wue × energy_consumed` (`emissions_tracker.py:1195`). `0` unless you set `wue` |
+| water_consumed | Water footprint of the run, in litres | Computed: `wue × energy_consumed`. `0` unless you set `wue` |
 | country_name | Name of the country where the infrastructure is hosted | IP geolocation (geojs, ipinfo.io fallback), or config in offline mode |
 | country_iso_code | 3-letter alphabet ISO Code of the respective country | As `country_name` |
 | region | Province/State/City where the compute infrastructure is hosted | As `country_name`; on cloud, from the cloud region lookup |
@@ -60,7 +60,7 @@ or configuration.
 | os | Operating system (e.g., Windows-10-10.0.19044-SP0) | |
 | python_version | Python version (e.g., 3.8.10) | |
 | codecarbon_version | Version of codecarbon used | |
-| cpu_count | Number of CPUs | `psutil.cpu_count()`: logical threads, not physical cores. Under SLURM, the CPUs allocated to the job (`core/util.py:149`) |
+| cpu_count | Number of CPUs | `psutil.cpu_count()`: logical threads, not physical cores. Under SLURM, the CPUs allocated to the job (`count_cpus` in `core/util.py`) |
 | cpu_model | Example: Intel(R) Core(TM) i7-1065G7 CPU @ 1.30GHz | CPU model string detected at startup |
 | gpu_count | Number of GPUs | NVML / AMDSMI device enumeration |
 | gpu_model | Example: 1 x NVIDIA GeForce GTX 1080 Ti | NVML / AMDSMI device name |
@@ -87,10 +87,11 @@ decreasing order of trustworthiness:
 | Backend | Nature | Where |
 |---|---|---|
 | Intel RAPL (Linux) | Measured, hardware energy counter | `core/rapl.py` |
+| Raspberry Pi 5 | Measured, PMIC voltage and current readings | `Raspberry` in `external/hardware.py` |
 | Windows EMI | Measured, hardware energy counter | `core/windows_emi.py` |
-| `powermetrics` (macOS, needs sudo) | Measured, OS-reported power. Effectively unreachable on Apple Silicon: `psutil` is a hard dependency, so the `cpu_load` path is selected first (`core/resource_tracker.py:228-233`) | `core/powermetrics.py` |
-| `cpu_load` mode | Modelled: cubic in load with a 10 % TDP floor in `machine` mode, linear `TDP × load/cpu_count` in `process` mode | `external/hardware.py:287-288`, `:345-346` |
-| `constant` mode | Modelled: `TDP × 0.5`, a flat 50 % of TDP | `external/hardware.py:362-364` |
+| `powermetrics` (macOS, needs sudo) | Measured, OS-reported power. Effectively unreachable on Apple Silicon: `psutil` is a hard dependency, so the `cpu_load` path is selected first (`_try_platform_cpu_backend` in `core/resource_tracker.py`) | `core/powermetrics.py` |
+| `cpu_load` mode | Modelled: cubic in load with a 10 % TDP floor in `machine` mode, linear `TDP × load/cpu_count` in `process` mode | `CPU._get_power_from_cpu_load` in `external/hardware.py` |
+| `constant` mode | Modelled: `TDP × 0.5`, a flat 50 % of TDP | `CPU._get_power_from_cpus` in `external/hardware.py` |
 
 The last two are estimates, and on a lightly loaded or unusual machine they can be far
 from the truth. The selection order, including which options override which, is on the
@@ -99,10 +100,11 @@ from the truth. The selection order, including which options override which, is 
 
 #### RAM
 
-`ram_power` and `ram_energy` are never measured. Commodity hardware exposes no RAM energy
-counter. CodeCarbon estimates a DIMM count from the total RAM size, then applies 5 W per
+`ram_power` and `ram_energy` are measured only on a Raspberry Pi 5, whose PMIC reports the
+DRAM rails. Elsewhere, commodity hardware exposes no RAM energy counter, so CodeCarbon
+estimates a DIMM count from the total RAM size, then applies 5 W per
 DIMM on x86 (1.5 W on ARM), with decreasing marginal power above four DIMMs and a floor of
-two DIMMs' worth (`external/ram.py:82-193`). Treat these columns as an order-of-magnitude
+two DIMMs' worth (`RAM._calculate_ram_power` in `external/ram.py`). Treat these columns as an order-of-magnitude
 heuristic. If you can measure your own RAM power, override it with `force_ram_power`.
 
 #### Carbon intensity
@@ -113,18 +115,18 @@ records which level answered: check the run's log output if you need to know.
 
 #### PUE
 
-PUE multiplies the per-component energy columns, not just the total. At
-`emissions_tracker.py:1194` the PUE is applied to each hardware measurement before it is
-accumulated. With `pue=1.5`, the `cpu_energy` column is therefore 1.5x the energy the CPU
-actually drew: it is datacenter energy attributed to the CPU, not raw CPU energy. The
-power columns are not scaled by PUE, so `cpu_energy` will not equal `cpu_power × duration`
-when `pue != 1`. `water_consumed` is computed from the already-inflated energy.
+PUE multiplies the per-component energy and power columns, not just the total. In
+`_do_measurements` (`emissions_tracker.py`) the PUE is applied to each hardware measurement
+before it is accumulated. With `pue=1.5`, the `cpu_energy` column is therefore 1.5x the
+energy the CPU actually drew: it is datacenter energy attributed to the CPU, not raw CPU
+energy. The power columns are scaled the same way, see the note below.
+`water_consumed` is computed from the already-inflated energy.
 
 #### Coordinates
 
 `latitude` and `longitude` are written at full precision in the CSV. Rounding to one
 decimal (~11 km) is applied only when data is sent to the CodeCarbon API
-(`core/api_client.py:245-246`). If the CSV leaves your machine, treat the coordinates as
+(`core/api_client.py`). If the CSV leaves your machine, treat the coordinates as
 precise.
 
 !!! note "PUE and the power columns"
