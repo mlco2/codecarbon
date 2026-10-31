@@ -92,7 +92,7 @@ Your CPU model was detected, but it is not listed in
 falls back to a default power figure per thread, which is an estimate, not a
 measurement.
 
-This warning literally asks you to contact the project, so please do — adding a
+This warning asks you to help add your CPU, so please do — adding a
 line to that CSV is a one-line contribution that improves accuracy for everyone
 with the same chip. See the
 [Contribution Guidelines](contributing.md), and include the exact CPU name from
@@ -121,8 +121,9 @@ validation](../explanation/accuracy.md) for how the backends compare.
 ### "We were unable to detect your CPU using the `cpuinfo` package."
 
 CodeCarbon could not identify the CPU at all, so it cannot even look up a TDP.
-The same per-thread default is used. This happens most often in containers and
-virtual machines that hide CPU model information, and on some ARM platforms.
+It falls back to a generic 85 W TDP (`POWER_CONSTANT`), scaled by CPU load, for
+the whole machine. This happens most often in containers and virtual machines
+that hide CPU model information, and on some ARM platforms.
 
 If you know your hardware, the accurate route is to stop relying on detection:
 enable RAPL on Linux, or supply your own power figures. If detection fails on a
@@ -202,7 +203,8 @@ measurement.
 On Apple Silicon, CodeCarbon does not use `powermetrics`. `psutil` is a hard
 dependency of the package, and the backend selector picks CPU-load estimation
 as soon as `psutil` is importable, before `powermetrics` is ever tried
-([`resource_tracker.py:228-233`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py#L228)).
+(`_try_platform_cpu_backend` in
+[`core/resource_tracker.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py)).
 Granting passwordless `sudo` for `powermetrics` will not change which backend is
 used. See
 [Which backend gets chosen](../explanation/methodology.md#which-backend-gets-chosen).
