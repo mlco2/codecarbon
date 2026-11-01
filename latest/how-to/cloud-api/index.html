@@ -2472,10 +2472,10 @@
 </ol>
 <p>The login command will create a default project and save your credentials to <code>.codecarbon.config</code>.</p>
 <h2 id="send-emissions-from-your-code">Send Emissions from Your Code<a class="headerlink" href="#send-emissions-from-your-code" title="Permanent link">&para;</a></h2>
-<p>With your account set up, you're ready to start sending emissions data. Use the <code>save_to_api=True</code> parameter to upload tracking data:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">codecarbon</span><span class="w"> </span><span class="kn">import</span> <span class="n">track_emissions</span>
+<p>With your account set up, you're ready to start sending emissions data. Add <code>OutputMethod.API</code> to <code>output_methods</code> to upload tracking data:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">codecarbon</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutputMethod</span><span class="p">,</span> <span class="n">track_emissions</span>
 
-<span class="nd">@track_emissions</span><span class="p">(</span><span class="n">save_to_api</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@track_emissions</span><span class="p">(</span><span class="n">output_methods</span><span class="o">=</span><span class="p">[</span><span class="n">OutputMethod</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span> <span class="n">OutputMethod</span><span class="o">.</span><span class="n">API</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">train_model</span><span class="p">():</span>
     <span class="c1"># GPU intensive training code  goes here</span>
 
@@ -2486,11 +2486,11 @@
 <h2 id="create-projects-experiments">Create Projects &amp; Experiments<a class="headerlink" href="#create-projects-experiments" title="Permanent link">&para;</a></h2>
 <p>By default, <code>codecarbon login</code> creates a default experiment in your first project. If you want to organize runs by experiment, you can specify an <code>experiment_id</code> explicitly. Set the experiment ID in two ways:</p>
 <p><strong>Option 1: In your code</strong></p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">codecarbon</span><span class="w"> </span><span class="kn">import</span> <span class="n">track_emissions</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">codecarbon</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutputMethod</span><span class="p">,</span> <span class="n">track_emissions</span>
 
 <span class="nd">@track_emissions</span><span class="p">(</span>
     <span class="n">experiment_id</span><span class="o">=</span><span class="s2">"your experiment id"</span><span class="p">,</span>
-    <span class="n">save_to_api</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">output_methods</span><span class="o">=</span><span class="p">[</span><span class="n">OutputMethod</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span> <span class="n">OutputMethod</span><span class="o">.</span><span class="n">API</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">train_model</span><span class="p">():</span>
     <span class="o">...</span>

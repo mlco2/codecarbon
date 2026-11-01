@@ -2636,7 +2636,10 @@
 <p>For Google Cloud Logging setup, refer to <a href="https://cloud.google.com/logging/docs/reference/libraries#setting_up_authentication">Google Cloud documentation</a> for authentication configuration.</p>
 <h3 id="step-2-create-an-emissionstracker">Step 2: Create an EmissionsTracker<a class="headerlink" href="#step-2-create-an-emissionstracker" title="Permanent link">&para;</a></h3>
 <p>Create an EmissionsTracker that sends output to your logger. Other save options can be used simultaneously:</p>
-<div class="highlight"><pre><span></span><code><span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">save_to_logger</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">logging_logger</span><span class="o">=</span><span class="n">my_logger</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">(</span>
+    <span class="n">output_methods</span><span class="o">=</span><span class="p">[</span><span class="n">OutputMethod</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span> <span class="n">OutputMethod</span><span class="o">.</span><span class="n">LOGGER</span><span class="p">],</span>
+    <span class="n">logging_logger</span><span class="o">=</span><span class="n">my_logger</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">tracker</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 <span class="c1"># Your code here</span>
 <span class="n">emissions</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>

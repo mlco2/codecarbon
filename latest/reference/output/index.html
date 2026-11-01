@@ -2842,8 +2842,9 @@ It can also be set in the config file as a comma-separated string, e.g.
 <p>The individual <code>save_to_file</code>, <code>save_to_api</code>, <code>save_to_logger</code>,
 <code>save_to_prometheus</code> and <code>save_to_logfire</code> parameters are deprecated and will be
 removed in a future version. Use <code>output_methods</code> instead. When <code>output_methods</code>
-is provided, the <code>save_to_*</code> flags are ignored. See the
-<a href="https://docs.codecarbon.io/latest/reference/deprecations/">deprecations list</a>.</p>
+is provided, the <code>save_to_*</code> flags are ignored. Passing any <code>save_to_*</code>
+parameter emits a <code>FutureWarning</code> pointing at your <code>EmissionsTracker(...)</code> call.
+See the <a href="https://docs.codecarbon.io/latest/reference/deprecations/">deprecations list</a>.</p>
 </div>
 <h2 id="csv">CSV<a class="headerlink" href="#csv" title="Permanent link">&para;</a></h2>
 <p>The package has an in-built logger that logs data into a CSV file named <code>emissions.csv</code> in the <code>output_dir</code>, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.</p>
@@ -3147,13 +3148,13 @@ power drawn at the facility level, not at the socket.</p>
 <p>Deploy a local version of Prometheus + Prometheus Pushgateway:</p>
 <div class="highlight"><pre><span></span><code>docker-compose<span class="w"> </span>up
 </code></pre></div>
-<p>Run your EmissionsTracker as usual, with <code>save_to_prometheus=True</code>:</p>
-<div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker
+<p>Run your EmissionsTracker as usual, adding <code>OutputMethod.PROMETHEUS</code> to <code>output_methods</code>:</p>
+<div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
-    save_to_prometheus=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.PROMETHEUS],
 )
 tracker.start()
 # Your code here
@@ -3164,13 +3165,13 @@ tracker.stop()
 <p><a href="https://docs.pydantic.dev/logfire/">Logfire</a> is an observability platform.</p>
 <p>CodeCarbon exposes all its metrics with the suffix <code>codecarbon_</code>.</p>
 <h3 id="how-to-use-it">How to use it<a class="headerlink" href="#how-to-use-it" title="Permanent link">&para;</a></h3>
-<p>Run your EmissionsTracker as usual, with <code>save_to_logfire=True</code>:</p>
-<div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker
+<p>Run your EmissionsTracker as usual, adding <code>OutputMethod.LOGFIRE</code> to <code>output_methods</code>:</p>
+<div class="highlight"><pre><span></span><code>from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
-    save_to_logfire=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.LOGFIRE],
 )
 tracker.start()
 # Your code here
@@ -3271,7 +3272,7 @@ the full dict is interpreted as BoAmps metadata.</p>
 <h2 id="http-output">HTTP Output<a class="headerlink" href="#http-output" title="Permanent link">&para;</a></h2>
 <p>The HTTP Output allows calling a webhook with emission data when the tracker is stopped. Use the <code>emissions_endpoint</code> parameter to specify your endpoint.</p>
 <h2 id="codecarbon-api">CodeCarbon API<a class="headerlink" href="#codecarbon-api" title="Permanent link">&para;</a></h2>
-<p>You can send all your data to the CodeCarbon API so you have your historical data in one place. By default, nothing is sent to the API. Use <code>save_to_api=True</code> and configure your API credentials.</p>
+<p>You can send all your data to the CodeCarbon API so you have your historical data in one place. By default, nothing is sent to the API. Add <code>OutputMethod.API</code> to <code>output_methods</code> and configure your API credentials.</p>
 <h2 id="logger-output">Logger Output<a class="headerlink" href="#logger-output" title="Permanent link">&para;</a></h2>
 <p>See <a href="../../how-to/logging/">Collecting emissions to a logger</a>.</p>
 <h2 id="sci">SCI<a class="headerlink" href="#sci" title="Permanent link">&para;</a></h2>
