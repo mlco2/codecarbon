@@ -812,7 +812,6 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[],
-            save_to_file=False,
             csv_run_name="interval_only.csv",
             allow_multiple_runs=True,
         )
