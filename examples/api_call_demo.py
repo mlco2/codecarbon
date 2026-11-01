@@ -1,13 +1,13 @@
 import time
 
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 
 
 @track_emissions(
     # api_endpoint="http://your api if you want",
     # experiment_id="3a202149-8be2-408c-a3d8-baeae2de2987",
     api_key="",
-    save_to_api=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
 )
 def train_model():
     """

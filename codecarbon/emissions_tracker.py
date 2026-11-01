@@ -5,11 +5,13 @@ OfflineEmissionsTracker, context manager and decorator @track_emissions
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import json
 import os
 import platform
 import re
+import sys
 import threading
 import time
 import uuid
@@ -54,6 +56,30 @@ if TYPE_CHECKING:
 #
 # To fix this, a complex move would be to have default values set to the sentinel:
 # _sentinel = object()
+
+_PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__)) + os.sep
+# The `@suppress(...)` decorator adds a `contextlib` frame to the stack.
+_CONTEXTLIB_FILE = os.path.abspath(contextlib.__file__)
+
+
+def _caller_stacklevel() -> int:
+    """
+    ``stacklevel`` of the first frame outside the codecarbon package, so a warning
+    raised deep inside tracker initialization points at the user's code whatever
+    the entry point (``EmissionsTracker``, ``OfflineEmissionsTracker``,
+    ``@track_emissions``, ...).
+    """
+    frame = sys._getframe(1)  # the function calling warnings.warn()
+    level = 1
+    while frame is not None:
+        filename = os.path.abspath(frame.f_code.co_filename)
+        if not filename.startswith(_PACKAGE_DIR) and filename != _CONTEXTLIB_FILE:
+            return level
+        frame = frame.f_back
+        level += 1
+    return 2
+
+
 # see: https://stackoverflow.com/questions/67202314/
 #      python-distinguish-default-argument-and-argument-provided-with-default-value
 
@@ -227,8 +253,11 @@ class BaseEmissionsTracker(ABC):
             warnings.warn(
                 "The save_to_* parameters are deprecated and will be removed in a "
                 "future version. Use output_methods=[OutputMethod.CSV, ...] instead.",
-                DeprecationWarning,
-                stacklevel=2,
+                # FutureWarning, not DeprecationWarning: this one is aimed at
+                # end users, and the default filter hides DeprecationWarning
+                # unless it comes from __main__.
+                FutureWarning,
+                stacklevel=_caller_stacklevel(),
             )
 
         self._set_from_conf(output_methods, "output_methods")
@@ -283,6 +312,9 @@ class BaseEmissionsTracker(ABC):
         self._ram_used_history: List[float] = []
         # The monitor thread appends while the measurement thread clears/averages
         self._utilization_history_lock = threading.Lock()
+        # A scheduled measurement still running when stop() gave up joining it
+        # must not overlap the final one
+        self._measurement_lock = threading.RLock()
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -455,7 +487,7 @@ class BaseEmissionsTracker(ABC):
                                    EmissionsTracker(output_methods=[OutputMethod.CSV, OutputMethod.API])
 
                                Available values: ``CSV``, ``API``, ``LOGGER``,
-                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``.
+                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``, ``SCI``.
                                When provided, the individual ``save_to_*`` flags are
                                ignored. Defaults to ``[OutputMethod.CSV]``.
                                Can also be set in config as a comma-separated string:
@@ -696,20 +728,17 @@ class BaseEmissionsTracker(ABC):
         if OutputMethod.BOAMPS in methods:
             self._output_handlers.append(self._build_boamps_output())
 
+        if OutputMethod.SCI in methods:
+            self._output_handlers.append(self._build_sci_output())
+
         self._init_interval_csv_output(csv_file_handler)
 
-    def _build_boamps_output(self) -> BoAmpsOutput:
+    def _resolve_metadata(self) -> Optional[dict]:
         """
-        Build a BoAmpsOutput, enriched with user-provided metadata when available.
-
-        The generic ``metadata`` (a dict or a path to a JSON file) is resolved to a
-        dict, then the BoAmps section is read from its ``boamps`` key. For backward
-        compatibility, if there is no ``boamps`` key the whole dict is used as the
-        BoAmps context. Falls back to a bare BoAmpsOutput when no metadata is provided.
+        Resolve the generic ``metadata`` (a dict or a path to a JSON file) to a
+        dict, or None when it is absent or unreadable.
         """
         metadata = getattr(self, "_metadata", None)
-
-        from codecarbon.output_methods.boamps import BoAmpsOutput
 
         if isinstance(metadata, str) and metadata:
             try:
@@ -721,6 +750,40 @@ class BaseEmissionsTracker(ABC):
             except json.JSONDecodeError as e:
                 logger.error(f"Invalid JSON in metadata file '{metadata}': {e}")
                 metadata = None
+
+        return metadata if isinstance(metadata, dict) else None
+
+    def _build_sci_output(self):
+        """
+        Build a SCIOutput, enriched with the ``sci`` section of the generic
+        ``metadata`` when available.
+        """
+        from codecarbon.output_methods.sci import SCIOutput
+
+        metadata = self._resolve_metadata()
+        sci_context = metadata.get("sci") if metadata else None
+        if sci_context:
+            try:
+                return SCIOutput.from_dict(sci_context, output_dir=self._output_dir)
+            except (TypeError, ValueError) as e:
+                logger.error(
+                    f"Invalid 'sci' section in metadata: {e}. "
+                    "Writing an SCI report without the declarations."
+                )
+        return SCIOutput(output_dir=self._output_dir)
+
+    def _build_boamps_output(self) -> BoAmpsOutput:
+        """
+        Build a BoAmpsOutput, enriched with user-provided metadata when available.
+
+        The generic ``metadata`` (a dict or a path to a JSON file) is resolved to a
+        dict, then the BoAmps section is read from its ``boamps`` key. For backward
+        compatibility, if there is no ``boamps`` key the whole dict is used as the
+        BoAmps context. Falls back to a bare BoAmpsOutput when no metadata is provided.
+        """
+        metadata = self._resolve_metadata()
+
+        from codecarbon.output_methods.boamps import BoAmpsOutput
 
         if isinstance(metadata, dict):
             boamps_context = metadata.get("boamps", metadata)
@@ -1412,8 +1475,9 @@ class BaseEmissionsTracker(ABC):
 
     def _measure_power_and_energy_if_stale(self, min_interval_s: float = 0.05) -> None:
         """Measure only if the last sample is older than ``min_interval_s``."""
-        if time.perf_counter() - self._last_measured_time >= min_interval_s:
-            self._measure_power_and_energy()
+        with self._measurement_lock:
+            if time.perf_counter() - self._last_measured_time >= min_interval_s:
+                self._measure_power_and_energy()
 
     def _measure_power_and_energy(self) -> None:
         """
@@ -1421,6 +1485,10 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
+        with self._measurement_lock:
+            self._measure_power_and_energy_locked()
+
+    def _measure_power_and_energy_locked(self) -> None:
         try:
             last_duration = time.perf_counter() - self._last_measured_time
         except AttributeError as e:

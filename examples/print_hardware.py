@@ -1,7 +1,7 @@
 from codecarbon.emissions_tracker import EmissionsTracker
 
 if __name__ == "__main__":
-    tracker = EmissionsTracker(measure_power_secs=0, save_to_file=False)
+    tracker = EmissionsTracker(measure_power_secs=0, output_methods=[])
 
     print("Detected Hardware:")
     hardware_info = tracker.get_detected_hardware()
