@@ -139,27 +139,18 @@ If you find CodeCarbon useful for your research, use the **Cite this repository*
 ```tex
 @software{codecarbon,
   author       = {Benoit Courty and
-                  Victor Schmidt and
+                  Amine Saboni and
+                  Iñigo Imaz Chacón and
                   Sasha Luccioni and
+                  Victor Schmidt and
                   Boris Feld and
+                  David Berenstein and
                   Jérémy Lecourt and
                   Mathilde Léval and
                   Luis Blanche and
-                  Alexis Cruveiller and
-                  Amine Saboni and
-                  Franklin Zhao and
-                  Aditya Joshi and
+                  Marion Coutarel and
                   Alexis Bogroff and
-                  Hugues de Lavoreille and
-                  Niko Laskaris and
-                  Edoardo Abati and
-                  Douglas Blank and
-                  Ziyao Wang and
-                  Armin Catovic and
-                  Marc Alencon and
-                  Michał Stęchły and
-                  Christian Bauer and
-                  Lucas Otávio N. de Araújo and
+                  Patrick Lloret and
                   {The CodeCarbon contributors}},
   title        = {CodeCarbon: Estimate and track carbon emissions from computing},
   publisher    = {Zenodo},

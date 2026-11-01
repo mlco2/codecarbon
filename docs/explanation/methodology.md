@@ -56,7 +56,7 @@ instantiating the tracker. Energy is the integral of power over time:
 |---|---|---|
 | CPU | Intel RAPL (Linux), Raspberry Pi 5 PMIC, Energy Meter Interface (Windows 11), `powermetrics` (macOS), Intel Power Gadget (legacy) | TDP × CPU load, or a flat constant |
 | GPU | NVML via `nvidia-ml-py` (Nvidia) or AMDSMI (AMD) — a direct device reading | none; without a supported GPU library, GPU is not counted |
-| RAM | the PMIC DRAM rails on a Raspberry Pi 5; otherwise none | modelled from an estimated DIMM count |
+| RAM | the PMIC DRAM rails on a Raspberry Pi 5; RAPL only on specific hardware | modelled from an estimated DIMM count |
 
 CodeCarbon does not separately model disk I/O, network transfer, displays,
 cooling or other peripherals. Those are usually small for local, code-level
@@ -333,6 +333,7 @@ runs a two-stage estimate in
 [`external/ram.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py).
 The exception is the Raspberry Pi 5, where the PMIC measures the DRAM rails
 and that reading replaces the estimate.
+And some RAPL interface could expose RAM energy but they are rare.
 
 **Stage 1 — guess the DIMM count** from total RAM, using a hardcoded step
 function (`RAM._estimate_dimm_count`):
@@ -391,6 +392,8 @@ sudo lshw -C memory -short | grep DIMM
 
 Four slots, so pass `force_ram_power=20` (4 × 5 W) — or better, a wattage you
 have measured — to the tracker. `force_ram_power` bypasses the whole heuristic.
+
+Old machine could use 2 Mb memory stick, where modern servers will use 512 Mb memory stick, making our heuristic innacurate.
 
 ## Carbon intensity
 
