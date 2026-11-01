@@ -1,12 +1,12 @@
 import time
 
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 
 
 @track_emissions(
     measure_power_secs=5,
     api_call_interval=1,
-    save_to_logfire=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.LOGFIRE],
 )
 def train_model():
     """

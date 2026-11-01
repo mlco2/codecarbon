@@ -5,6 +5,7 @@ import sys
 import tempfile
 import time
 import unittest
+import warnings
 from pathlib import Path
 from unittest import mock
 
@@ -17,6 +18,7 @@ from codecarbon.core.units import Energy, Power
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
+    _caller_stacklevel,
     track_emissions,
     track_task_emissions,
 )
@@ -563,7 +565,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        with self.assertWarns(DeprecationWarning):
+        with self.assertWarns(FutureWarning):
             tracker = EmissionsTracker(
                 output_dir=self.temp_path,
                 output_handlers=[],
@@ -588,7 +590,7 @@ class TestCarbonTracker(unittest.TestCase):
         mocked_is_gpu_details_available,
         mocked_is_nvidia_system,
     ):
-        with self.assertWarns(DeprecationWarning):
+        with self.assertWarns(FutureWarning):
             tracker = EmissionsTracker(
                 output_dir=self.temp_path,
                 output_handlers=[],
@@ -1397,3 +1399,28 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+
+def test_deprecation_warning_survives_the_default_filter():
+    """The save_to_* deprecation is aimed at end users, so it must not be a
+    DeprecationWarning: the default filter would silently drop it."""
+    for tracker_cls, extra in (
+        (EmissionsTracker, {}),
+        (OfflineEmissionsTracker, {"country_iso_code": "FRA"}),
+    ):
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("default")
+            # What Python installs by default, and what hid this warning before.
+            warnings.simplefilter("ignore", DeprecationWarning)
+            tracker_cls(save_to_file=False, **extra)
+
+        future = [w for w in recorded if issubclass(w.category, FutureWarning)]
+        assert future, f"no FutureWarning raised by {tracker_cls.__name__}"
+        # THEN the warning points at the caller, not at codecarbon internals.
+        assert future[0].filename == __file__
+
+
+def test_caller_stacklevel_falls_back_when_no_frame_is_outside_codecarbon():
+    # Every frame looks like codecarbon code, so no caller can be found.
+    with mock.patch("codecarbon.emissions_tracker._PACKAGE_DIR", ""):
+        assert _caller_stacklevel() == 2
