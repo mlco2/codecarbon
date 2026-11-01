@@ -186,6 +186,31 @@ class SCIOutput(BaseOutput):
             raise ValueError(
                 f"SCI context file {context_file_path} must hold a JSON object"
             )
+        return cls.from_dict(context, output_dir=output_dir)
+
+    @classmethod
+    def from_dict(cls, context: dict, output_dir: str = ".") -> "SCIOutput":
+        """
+        Build a SCIOutput from a dictionary of user-declared SCI terms.
+
+        This is the ``sci`` section of the tracker's generic ``metadata``; the
+        keys are the same as in the file read by :meth:`from_file`.
+
+        Args:
+            context: A dictionary with any of ``functionalUnit``, ``embodied``,
+                ``reporter`` and ``boundary``.
+            output_dir: Directory to write output reports to.
+
+        Returns:
+            A configured SCIOutput instance.
+
+        Raises:
+            TypeError: If ``context`` is not a dict.
+        """
+        if not isinstance(context, dict):
+            raise TypeError(
+                f"SCI metadata must be a dict, got {type(context).__name__}."
+            )
 
         embodied = dict(context.get("embodied") or {})
         if "gCO2e" in embodied:

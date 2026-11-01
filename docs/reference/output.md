@@ -330,31 +330,49 @@ CodeCarbon measures `E` (energy consumed, kWh) and applies `I` (carbon intensity
 
 ### How to use it
 
-Enable the output method and point it at a JSON context file holding the declarations:
+Enable the output method and put the declarations under the `sci` key of the generic `metadata` parameter, next to any other output's section (for example `boamps`):
+
+```python
+tracker = EmissionsTracker(
+    output_methods=["csv", "sci"],
+    metadata={
+        "sci": {
+            "functionalUnit": {"name": "inference request", "count": 10000},
+            "embodied": {"gCO2e": 42.5, "source": "manufacturer LCA, 4y amortization"},
+            "reporter": {"organization": "Acme", "contact": "green@acme.example"},
+            "boundary": "Application only; excludes client devices and network.",
+        }
+    },
+)
+```
+
+`metadata` can also be a path to a JSON file, which is how to set it from `.codecarbon.config`:
 
 ```ini
 [codecarbon]
 output_methods = csv,sci
-sci_context_file = ./sci_context.json
+metadata = ./metadata.json
 ```
 
-A relative `sci_context_file` is resolved against the current working directory, not the config file's location.
-
-The context file holds what CodeCarbon cannot know:
+A relative `metadata` path is resolved against the current working directory, not the config file's location. The file holds the same `sci` section:
 
 ```json
 {
-  "functionalUnit": {"name": "inference request", "count": 10000},
-  "embodied": {"gCO2e": 42.5, "source": "manufacturer LCA, 4y amortization"},
-  "reporter": {"organization": "Acme", "contact": "green@acme.example"},
-  "boundary": "Application only; excludes client devices and network."
+  "sci": {
+    "functionalUnit": {"name": "inference request", "count": 10000},
+    "embodied": {"gCO2e": 42.5, "source": "manufacturer LCA, 4y amortization"},
+    "reporter": {"organization": "Acme", "contact": "green@acme.example"},
+    "boundary": "Application only; excludes client devices and network."
+  }
 }
 ```
+
+If `metadata` has no `sci` section, or it cannot be read, the report is still written without the declarations. To load a file holding only the SCI declarations (no `sci` wrapper) when you build the handler yourself, use `SCIOutput.from_file(path)`; `SCIOutput.from_dict(section)` does the same from a dict.
 
 Both `gCO2e` and `gco2e` are accepted for the embodied figure.
 
 !!! warning "The configuration-only path needs a count in the context file"
-    `set_functional_unit_count()` needs a reference to the handler, and the handler created by `output_methods = csv,sci` is owned by the tracker. So with configuration alone, `sci` is `null` in every report unless `functionalUnit.count` is hardcoded in `sci_context_file`. If the count is only known at the end of the run, construct `SCIOutput` yourself and pass it via `output_handlers=[...]`.
+    `set_functional_unit_count()` needs a reference to the handler, and the handler created by `output_methods = csv,sci` is owned by the tracker. So with configuration alone, `sci` is `null` in every report unless `functionalUnit.count` is hardcoded in the `sci` section of `metadata`. If the count is only known at the end of the run, construct `SCIOutput` yourself and pass it via `output_handlers=[...]`.
 
 CodeCarbon writes a final report named `sci_report_<run_id>.json` in `output_dir`, plus `sci_report_tasks_<run_id>.json` when tasks are used. A report written by `tracker.flush()` is interim: it applies the full declared `M` to the energy measured so far, so its `sci` is higher than the final one, and it is overwritten by the report written at `stop()`. In the task report, `M` is apportioned across tasks by their share of the tasks' summed duration: the declared `M` is the embodied carbon of the device for the whole run, so giving each task the full figure would count it once per task. If the tasks do not cover the whole run, the full `M` is still spread over the tasks alone. Task reports show `"pue": null` because task data does not carry the PUE. `R` is not apportioned, because CodeCarbon cannot know how many functional units fell inside a task, so each task reports `sciShare`, its share of the run-level SCI, instead of `sci`. `I` is derived as `emissions * 1000 / energy_consumed` rather than recomputed, so the report is consistent with the CSV by construction; the PUE that was applied is recorded separately in the provenance block.
 

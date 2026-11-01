@@ -427,10 +427,14 @@ class TestContextFile(unittest.TestCase):
 class _TrackerStub:
     """Minimal stand-in exercising ``_init_output_methods`` without hardware."""
 
-    def __init__(self, output_dir: str, external_conf: dict):
+    _resolve_metadata = BaseEmissionsTracker._resolve_metadata
+    _build_sci_output = BaseEmissionsTracker._build_sci_output
+    _build_boamps_output = BaseEmissionsTracker._build_boamps_output
+
+    def __init__(self, output_dir: str, metadata=None):
         self._output_methods = [OutputMethod.SCI]
         self._emissions_endpoint = None
-        self._external_conf = external_conf
+        self._metadata = metadata
         self._output_dir = output_dir
         self._output_handlers = []
 
@@ -455,41 +459,38 @@ class TestTrackerRegistration(unittest.TestCase):
         self.assertIsNone(sci_handlers[0]._functional_unit)
         self.assertEqual(sci_handlers[0]._output_dir, self.temp_dir)
 
-    def test_sci_context_file_from_config_is_loaded(self):
-        context_path = os.path.join(self.temp_dir, "sci_context.json")
-        with open(context_path, "w") as f:
-            json.dump(
-                {
+    def test_sci_metadata_section_is_loaded(self):
+        handlers = _TrackerStub(
+            self.temp_dir,
+            {
+                "boamps": {"header": {"licensing": "x"}},
+                "sci": {
                     "functionalUnit": {"name": "request", "count": 250},
                     "embodied": {"gCO2e": 12.0, "source": "vendor LCA"},
                 },
-                f,
-            )
-        handlers = _TrackerStub(
-            self.temp_dir, {"sci_context_file": context_path}
+            },
         ).init()
         handler = next(h for h in handlers if isinstance(h, SCIOutput))
         self.assertEqual(handler._functional_unit, FunctionalUnit("request", 250))
         self.assertEqual(handler._embodied, EmbodiedDeclaration(12.0, "vendor LCA"))
 
-    def test_sci_context_file_missing_degrades(self):
-        with self.assertLogs("codecarbon", level="ERROR") as logs:
-            handlers = _TrackerStub(
-                self.temp_dir,
-                {"sci_context_file": os.path.join(self.temp_dir, "nope.json")},
-            ).init()
-        self.assertTrue(any("sci_context_file" in m for m in logs.output))
+    def test_sci_metadata_section_from_json_file(self):
+        path = os.path.join(self.temp_dir, "metadata.json")
+        with open(path, "w") as f:
+            json.dump({"sci": {"functionalUnit": {"name": "run", "count": 3}}}, f)
+        handlers = _TrackerStub(self.temp_dir, path).init()
+        handler = next(h for h in handlers if isinstance(h, SCIOutput))
+        self.assertEqual(handler._functional_unit, FunctionalUnit("run", 3))
+
+    def test_metadata_without_sci_section_gives_bare_handler(self):
+        handlers = _TrackerStub(self.temp_dir, {"boamps": {}}).init()
         handler = next(h for h in handlers if isinstance(h, SCIOutput))
         self.assertIsNone(handler._functional_unit)
 
-    def test_sci_context_file_not_an_object_degrades(self):
-        context_path = os.path.join(self.temp_dir, "sci_context.json")
-        with open(context_path, "w") as f:
-            f.write("[1]")
-        with self.assertLogs("codecarbon", level="ERROR"):
-            handlers = _TrackerStub(
-                self.temp_dir, {"sci_context_file": context_path}
-            ).init()
+    def test_sci_metadata_section_not_an_object_degrades(self):
+        with self.assertLogs("codecarbon", level="ERROR") as logs:
+            handlers = _TrackerStub(self.temp_dir, {"sci": [1]}).init()
+        self.assertTrue(any("'sci'" in m for m in logs.output))
         handler = next(h for h in handlers if isinstance(h, SCIOutput))
         self.assertIsNone(handler._functional_unit)
 

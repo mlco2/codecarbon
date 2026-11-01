@@ -644,7 +644,6 @@ class BaseEmissionsTracker(ABC):
         from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
         from codecarbon.output_methods.metrics.logfire import LogfireOutput
         from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
-        from codecarbon.output_methods.sci import SCIOutput
 
         methods = set(self._output_methods) if self._output_methods else set()
 
@@ -694,34 +693,14 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(self._build_boamps_output())
 
         if OutputMethod.SCI in methods:
-            context_file = self._external_conf.get("sci_context_file")
-            handler = None
-            if context_file:
-                try:
-                    handler = SCIOutput.from_file(
-                        context_file, output_dir=self._output_dir
-                    )
-                except (OSError, TypeError, ValueError) as e:
-                    logger.error(
-                        f"Could not read sci_context_file {context_file}: {e}. "
-                        "Writing an SCI report without the declarations."
-                    )
-            self._output_handlers.append(
-                handler or SCIOutput(output_dir=self._output_dir)
-            )
+            self._output_handlers.append(self._build_sci_output())
 
-    def _build_boamps_output(self) -> BoAmpsOutput:
+    def _resolve_metadata(self) -> Optional[dict]:
         """
-        Build a BoAmpsOutput, enriched with user-provided metadata when available.
-
-        The generic ``metadata`` (a dict or a path to a JSON file) is resolved to a
-        dict, then the BoAmps section is read from its ``boamps`` key. For backward
-        compatibility, if there is no ``boamps`` key the whole dict is used as the
-        BoAmps context. Falls back to a bare BoAmpsOutput when no metadata is provided.
+        Resolve the generic ``metadata`` (a dict or a path to a JSON file) to a
+        dict, or None when it is absent or unreadable.
         """
         metadata = getattr(self, "_metadata", None)
-
-        from codecarbon.output_methods.boamps import BoAmpsOutput
 
         if isinstance(metadata, str) and metadata:
             try:
@@ -733,6 +712,40 @@ class BaseEmissionsTracker(ABC):
             except json.JSONDecodeError as e:
                 logger.error(f"Invalid JSON in metadata file '{metadata}': {e}")
                 metadata = None
+
+        return metadata if isinstance(metadata, dict) else None
+
+    def _build_sci_output(self):
+        """
+        Build a SCIOutput, enriched with the ``sci`` section of the generic
+        ``metadata`` when available.
+        """
+        from codecarbon.output_methods.sci import SCIOutput
+
+        metadata = self._resolve_metadata()
+        sci_context = metadata.get("sci") if metadata else None
+        if sci_context:
+            try:
+                return SCIOutput.from_dict(sci_context, output_dir=self._output_dir)
+            except (TypeError, ValueError) as e:
+                logger.error(
+                    f"Invalid 'sci' section in metadata: {e}. "
+                    "Writing an SCI report without the declarations."
+                )
+        return SCIOutput(output_dir=self._output_dir)
+
+    def _build_boamps_output(self) -> BoAmpsOutput:
+        """
+        Build a BoAmpsOutput, enriched with user-provided metadata when available.
+
+        The generic ``metadata`` (a dict or a path to a JSON file) is resolved to a
+        dict, then the BoAmps section is read from its ``boamps`` key. For backward
+        compatibility, if there is no ``boamps`` key the whole dict is used as the
+        BoAmps context. Falls back to a bare BoAmpsOutput when no metadata is provided.
+        """
+        metadata = self._resolve_metadata()
+
+        from codecarbon.output_methods.boamps import BoAmpsOutput
 
         if isinstance(metadata, dict):
             boamps_context = metadata.get("boamps", metadata)
