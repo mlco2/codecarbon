@@ -429,7 +429,13 @@ def monitor(
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
 ):
-    """Monitor your machine's carbon emissions."""
+    """Monitor your machine's carbon emissions.
+
+    To track a single command instead, pass it after a -- separator:
+    codecarbon monitor -- python train.py
+    Emissions are appended to the same emissions.csv report. See
+    https://docs.codecarbon.io/latest/tutorials/cli/#track-any-command
+    """
 
     external_conf = _external_config()
 
@@ -552,6 +558,10 @@ def questionary_prompt(prompt, list_options, default):
         list_options,
         default,
     ).ask()
+    if value is None:
+        # questionary returns None when the user cancels (Ctrl+C); stop the
+        # wizard cleanly instead of carrying on with no selection.
+        raise typer.Abort()
     return value
 
 

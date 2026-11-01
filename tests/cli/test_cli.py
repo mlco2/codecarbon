@@ -196,6 +196,17 @@ class TestQuestionaryPrompt(unittest.TestCase):
         self.assertEqual(result, "selected")
         mock_select.assert_called_once_with("Pick one", ["a", "b"], "a")
 
+    @patch("questionary.select")
+    def test_questionary_prompt_aborts_when_cancelled(self, mock_select):
+        import typer
+
+        from codecarbon.cli.main import questionary_prompt
+
+        # questionary returns None when the user presses Ctrl+C
+        mock_select.return_value.ask.return_value = None
+        with self.assertRaises(typer.Abort):
+            questionary_prompt("Pick one", ["a", "b"], "a")
+
 
 if __name__ == "__main__":
     unittest.main()
