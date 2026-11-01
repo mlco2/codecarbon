@@ -68,6 +68,7 @@ The public API used throughout is `EmissionsTracker`, `OfflineEmissionsTracker`,
 | [`logfire_metrics.py`](logfire_metrics.py) | Logfire metrics output |
 | [`prometheus_call.py`](prometheus_call.py) | Exporting metrics to Prometheus |
 | [`boamps_output.py`](boamps_output.py) | Writing output in [BoAmps](https://github.com/Boavizta/BoAmps) format |
+| [`sci_output.py`](sci_output.py) | Writing a [Software Carbon Intensity](https://sci.greensoftware.foundation/) (ISO/IEC 21031) report |
 | [`mnist-comet.py`](mnist-comet.py) | Pairing tracking with [Comet](https://www.comet.com) experiment tracking |
 | [`api_call_demo.py`](api_call_demo.py) | Minimal example sending data to the CodeCarbon API |
 | [`api_call_debug.py`](api_call_debug.py) | Same, with debug logging and a 4-second API call interval, for troubleshooting |
