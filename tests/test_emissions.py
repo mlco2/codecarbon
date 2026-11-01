@@ -280,6 +280,32 @@ class TestEmissions(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, emission_factor_g / 1000, places=6)
 
+    def test_nordic_zones_count_no_factored_type_as_uncovered(self):
+        """
+        A zone's 'coverage' lists the production types that were counted at 0
+        because carbon_intensity_per_source.json had no factor for them. Once
+        the table gains a factor for one of those types, the zone has to be
+        recomputed, or it keeps understating the zone.
+        """
+        # GIVEN
+        factors = self._data_source.get_carbon_intensity_per_source_data()
+        nordic_data = self._data_source.get_nordic_country_energy_mix_data()
+
+        # WHEN
+        stale = []
+        for zone, entry in nordic_data["data"].items():
+            coverage = entry.get("coverage", "")
+            if "uncovered: " not in coverage:
+                continue
+            listed = coverage.split("uncovered: ", 1)[1].rstrip(")").split(", ")
+            for item in listed:
+                production_type = item.rsplit(" ", 1)[0]
+                if production_type.lower().replace(" ", "_") in factors:
+                    stale.append(f"{zone}: {production_type}")
+
+        # THEN
+        self.assertEqual(stale, [])
+
     def test_get_emissions_PRIVATE_INFRA_NORDIC_FINLAND(self):
         # WHEN
         # Test Nordic region (Finland)
