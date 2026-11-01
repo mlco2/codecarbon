@@ -4,6 +4,12 @@
         <loc>https://docs.codecarbon.io/</loc>
       </url>
       <url>
+        <loc>https://docs.codecarbon.io/explanation/accuracy/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/explanation/alternatives/</loc>
+      </url>
+      <url>
         <loc>https://docs.codecarbon.io/explanation/faq/</loc>
       </url>
       <url>
@@ -52,6 +58,9 @@
         <loc>https://docs.codecarbon.io/how-to/contributing/</loc>
       </url>
       <url>
+        <loc>https://docs.codecarbon.io/how-to/development/</loc>
+      </url>
+      <url>
         <loc>https://docs.codecarbon.io/how-to/diffusers/</loc>
       </url>
       <url>
@@ -85,16 +94,25 @@
         <loc>https://docs.codecarbon.io/how-to/transformers/</loc>
       </url>
       <url>
+        <loc>https://docs.codecarbon.io/how-to/troubleshooting/</loc>
+      </url>
+      <url>
         <loc>https://docs.codecarbon.io/how-to/visualize/</loc>
       </url>
       <url>
         <loc>https://docs.codecarbon.io/how-to/working_with_agent/</loc>
       </url>
       <url>
+        <loc>https://docs.codecarbon.io/maintaining/</loc>
+      </url>
+      <url>
         <loc>https://docs.codecarbon.io/reference/api/</loc>
       </url>
       <url>
         <loc>https://docs.codecarbon.io/reference/cli/</loc>
+      </url>
+      <url>
+        <loc>https://docs.codecarbon.io/reference/deprecations/</loc>
       </url>
       <url>
         <loc>https://docs.codecarbon.io/reference/output/</loc>
