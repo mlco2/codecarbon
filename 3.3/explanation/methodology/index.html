@@ -3528,6 +3528,18 @@ run resolved from the world average produce output of identical shape. If
 the provenance matters to you, check the startup logs at <code>WARNING</code> level or
 set <code>force_carbon_intensity_g_co2e_kwh</code> explicitly so there is no ambiguity.</p>
 </div>
+<p>The country values come from the <a href="https://ourworldindata.org/grapher/carbon-intensity-electricity">Our World in Data energy
+dataset</a>. The
+carbon intensity is <a href="https://ember-energy.org/data/yearly-electricity-data/">Ember</a>'s
+lifecycle carbon intensity of electricity generation, in gCO₂eq/kWh, so it is
+higher than figures that count only the emissions of operating the power
+plants. The electricity mix combines the data of Ember and the Energy
+Institute. Each country uses its most recent year with data, given by the
+<code>year</code> field of the file. A lifecycle carbon intensity cannot be zero, so a
+zero in the dataset is stored as <code>null</code> and the carbon intensity is computed
+from the electricity mix instead (this is the case of the Central African
+Republic, whose electricity is all hydroelectricity). To refresh them, run
+<code>uv run python codecarbon/data/private_infra/update_global_energy_mix.py</code>.</p>
 <h3 id="regional-data">Regional data<a class="headerlink" href="#regional-data" title="Permanent link">&para;</a></h3>
 <p>For some countries, CodeCarbon has sub-national carbon intensity data
 and uses it when the geolocation service (or the <code>region</code> parameter)
@@ -3575,7 +3587,7 @@ CO₂ emission factors published by the Ministry of Ecology and
 Environment and the National Bureau of Statistics
 (<a href="https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html">source</a>).
 They range from 133 gCO₂/kWh in Yunnan to 680 gCO₂/kWh in Tianjin,
-whereas the national value is 582 gCO₂eq/kWh. Note that these official
+whereas the national value is 525 gCO₂eq/kWh. Note that these official
 factors count CO₂ only (no other greenhouse gases, no lifecycle
 emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
 Kong, Macao and Taiwan are not in the official table and use the
