@@ -23,7 +23,7 @@ own consoles.
 
 Use **ML CO2 Impact** or **carbontracker**. This is not what CodeCarbon does.
 
-ML CO2 Impact is a web form: you pick a GPU, a region and a number of hours, and
+ML CO2 Impact, created by the same team before CodeCarbon, is a web form: you pick a GPU, a region and a number of hours, and
 it gives you an estimate plus a LaTeX snippet for your paper. Nothing to install,
 nothing to instrument.
 
