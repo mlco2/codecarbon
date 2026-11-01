@@ -18,6 +18,7 @@ from codecarbon.core.units import Energy, Power
 from codecarbon.emissions_tracker import (
     EmissionsTracker,
     OfflineEmissionsTracker,
+    _caller_stacklevel,
     track_emissions,
     track_task_emissions,
 )
@@ -1417,3 +1418,9 @@ def test_deprecation_warning_survives_the_default_filter():
         assert future, f"no FutureWarning raised by {tracker_cls.__name__}"
         # THEN the warning points at the caller, not at codecarbon internals.
         assert future[0].filename == __file__
+
+
+def test_caller_stacklevel_falls_back_when_no_frame_is_outside_codecarbon():
+    # Every frame looks like codecarbon code, so no caller can be found.
+    with mock.patch("codecarbon.emissions_tracker._PACKAGE_DIR", ""):
+        assert _caller_stacklevel() == 2
