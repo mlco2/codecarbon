@@ -431,6 +431,7 @@ class BaseEmissionsTracker(ABC):
         wue: Optional[float] = _sentinel,
         force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
+        force_mode_constant: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
@@ -542,6 +543,10 @@ class BaseEmissionsTracker(ABC):
                          algorithms, dataset) that cannot be auto-detected by CodeCarbon.
                          Can also be set in config as a path to a JSON file:
                          ``metadata=metadata.json``.
+        :param force_mode_constant: Estimate CPU power as a constant fraction of the CPU TDP
+                                    (or of `force_cpu_power`), skipping RAPL, Power Gadget,
+                                    powermetrics and CPU load tracking. Takes precedence over
+                                    `force_mode_cpu_load`. Defaults to False.
         """
 
         # logger.info("base tracker init")
@@ -612,6 +617,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
         self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
         self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
+        self._set_from_conf(force_mode_constant, "force_mode_constant", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
