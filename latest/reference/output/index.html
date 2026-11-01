@@ -2301,6 +2301,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sci" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SCI
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SCI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to use it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2681,6 +2709,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sci" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SCI
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SCI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-use-it_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        How to use it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2777,7 +2833,7 @@ tracker = EmissionsTracker(
     output_methods=[OutputMethod.CSV, OutputMethod.API],
 )
 </code></pre></div>
-<p>Available values: <code>CSV</code>, <code>API</code>, <code>LOGGER</code>, <code>PROMETHEUS</code>, <code>LOGFIRE</code>, <code>BOAMPS</code>.
+<p>Available values: <code>CSV</code>, <code>API</code>, <code>LOGGER</code>, <code>PROMETHEUS</code>, <code>LOGFIRE</code>, <code>BOAMPS</code>, <code>SCI</code>.
 It can also be set in the config file as a comma-separated string, e.g.
 <code>output_methods=csv,api</code>. HTTP output is enabled separately via the
 <code>emissions_endpoint</code> parameter.</p>
@@ -3218,6 +3274,78 @@ the full dict is interpreted as BoAmps metadata.</p>
 <p>You can send all your data to the CodeCarbon API so you have your historical data in one place. By default, nothing is sent to the API. Use <code>save_to_api=True</code> and configure your API credentials.</p>
 <h2 id="logger-output">Logger Output<a class="headerlink" href="#logger-output" title="Permanent link">&para;</a></h2>
 <p>See <a href="../../how-to/logging/">Collecting emissions to a logger</a>.</p>
+<h2 id="sci">SCI<a class="headerlink" href="#sci" title="Permanent link">&para;</a></h2>
+<p>The <a href="https://sci.greensoftware.foundation/">Software Carbon Intensity</a> specification, standardised as ISO/IEC 21031:2024, expresses a workload's footprint as a rate:</p>
+<div class="highlight"><pre><span></span><code>SCI = (E * I + M) / R
+</code></pre></div>
+<p>CodeCarbon measures <code>E</code> (energy consumed, kWh) and applies <code>I</code> (carbon intensity, gCO2eq/kWh). <code>R</code> and <code>M</code> are declarations:</p>
+<ul>
+<li><code>R</code>, the functional unit: one request, one training run, 1k tokens. There is no default, so if you do not declare one the report is still written, with <code>sci: null</code> and a <code>status</code> field saying why.</li>
+<li><code>M</code>, the embodied emissions attributable to the run. When you do not declare a figure the report says <code>"M_source": "not declared"</code>, so a reader can see the report is a partial one.</li>
+</ul>
+<h3 id="how-to-use-it_2">How to use it<a class="headerlink" href="#how-to-use-it_2" title="Permanent link">&para;</a></h3>
+<p>Enable the output method and put the declarations under the <code>sci</code> key of the generic <code>metadata</code> parameter, next to any other output's section (for example <code>boamps</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="n">tracker</span> <span class="o">=</span> <span class="n">EmissionsTracker</span><span class="p">(</span>
+    <span class="n">output_methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"csv"</span><span class="p">,</span> <span class="s2">"sci"</span><span class="p">],</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">"sci"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"functionalUnit"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"inference request"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">:</span> <span class="mi">10000</span><span class="p">},</span>
+            <span class="s2">"embodied"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"gCO2e"</span><span class="p">:</span> <span class="mf">42.5</span><span class="p">,</span> <span class="s2">"source"</span><span class="p">:</span> <span class="s2">"manufacturer LCA, 4y amortization"</span><span class="p">},</span>
+            <span class="s2">"reporter"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"organization"</span><span class="p">:</span> <span class="s2">"Acme"</span><span class="p">,</span> <span class="s2">"contact"</span><span class="p">:</span> <span class="s2">"green@acme.example"</span><span class="p">},</span>
+            <span class="s2">"boundary"</span><span class="p">:</span> <span class="s2">"Application only; excludes client devices and network."</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</code></pre></div>
+<p><code>metadata</code> can also be a path to a JSON file, which is how to set it from <code>.codecarbon.config</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[codecarbon]</span>
+<span class="na">output_methods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">csv,sci</span>
+<span class="na">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">./metadata.json</span>
+</code></pre></div>
+<p>A relative <code>metadata</code> path is resolved against the current working directory, not the config file's location. The file holds the same <code>sci</code> section:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"sci"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"functionalUnit"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inference request"</span><span class="p">,</span><span class="w"> </span><span class="nt">"count"</span><span class="p">:</span><span class="w"> </span><span class="mi">10000</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"embodied"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"gCO2e"</span><span class="p">:</span><span class="w"> </span><span class="mf">42.5</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"manufacturer LCA, 4y amortization"</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"reporter"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"organization"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Acme"</span><span class="p">,</span><span class="w"> </span><span class="nt">"contact"</span><span class="p">:</span><span class="w"> </span><span class="s2">"green@acme.example"</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"boundary"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Application only; excludes client devices and network."</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>If <code>metadata</code> has no <code>sci</code> section, or it cannot be read, the report is still written without the declarations. To load a file holding only the SCI declarations (no <code>sci</code> wrapper) when you build the handler yourself, use <code>SCIOutput.from_file(path)</code>; <code>SCIOutput.from_dict(section)</code> does the same from a dict.</p>
+<p>Both <code>gCO2e</code> and <code>gco2e</code> are accepted for the embodied figure.</p>
+<div class="admonition warning">
+<p class="admonition-title">The configuration-only path needs a count in the context file</p>
+<p><code>set_functional_unit_count()</code> needs a reference to the handler, and the handler created by <code>output_methods = csv,sci</code> is owned by the tracker. So with configuration alone, <code>sci</code> is <code>null</code> in every report unless <code>functionalUnit.count</code> is hardcoded in the <code>sci</code> section of <code>metadata</code>. If the count is only known at the end of the run, construct <code>SCIOutput</code> yourself and pass it via <code>output_handlers=[...]</code>.</p>
+</div>
+<p>CodeCarbon writes a final report named <code>sci_report_&lt;run_id&gt;.json</code> in <code>output_dir</code>, plus <code>sci_report_tasks_&lt;run_id&gt;.json</code> when tasks are used. A report written by <code>tracker.flush()</code> is interim: it applies the full declared <code>M</code> to the energy measured so far, so its <code>sci</code> is higher than the final one, and it is overwritten by the report written at <code>stop()</code>. In the task report, <code>M</code> is apportioned across tasks by their share of the tasks' summed duration: the declared <code>M</code> is the embodied carbon of the device for the whole run, so giving each task the full figure would count it once per task. If the tasks do not cover the whole run, the full <code>M</code> is still spread over the tasks alone. Task reports show <code>"pue": null</code> because task data does not carry the PUE. <code>R</code> is not apportioned, because CodeCarbon cannot know how many functional units fell inside a task, so each task reports <code>sciShare</code>, its share of the run-level SCI, instead of <code>sci</code>. <code>I</code> is derived as <code>emissions * 1000 / energy_consumed</code> rather than recomputed, so the report is consistent with the CSV by construction; the PUE that was applied is recorded separately in the provenance block.</p>
+<p>Sample output:
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"specVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ISO/IEC 21031:2024"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"generatedBy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"codecarbon 3.2.6"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"runId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"79e4408f-ec31-476f-a2c5-8ca7f53e6cc7"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"projectName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my_project"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-01-15T10:30:00"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"sci"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.00845</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"unit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gCO2eq per inference request"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"terms"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"E_kWh"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1007</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"I_gCO2e_per_kWh"</span><span class="p">:</span><span class="w"> </span><span class="mf">417.08</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"M_gCO2e"</span><span class="p">:</span><span class="w"> </span><span class="mf">42.5</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"R"</span><span class="p">:</span><span class="w"> </span><span class="mi">10000</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"R_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"inference request"</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"provenance"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"I_source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"codecarbon regional intensity, country_iso_code=FRA"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"M_source"</span><span class="p">:</span><span class="w"> </span><span class="s2">"manufacturer LCA, 4y amortization"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"measurementBoundary"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Application only; excludes client devices and network."</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"durationSeconds"</span><span class="p">:</span><span class="w"> </span><span class="mf">3600.0</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"hardware"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"cpu"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Intel Xeon"</span><span class="p">,</span><span class="w"> </span><span class="nt">"gpu"</span><span class="p">:</span><span class="w"> </span><span class="s2">"NVIDIA A100"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ramTotalGB"</span><span class="p">:</span><span class="w"> </span><span class="mf">64.0</span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"pue"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p>See <a href="https://github.com/mlco2/codecarbon/blob/master/examples/sci_output.py">examples/sci_output.py</a> for a runnable example, including the context file format and how to declare the functional unit count from Python.</p>
 
 
 
