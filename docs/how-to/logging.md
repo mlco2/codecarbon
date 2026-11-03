@@ -63,7 +63,10 @@ For Google Cloud Logging setup, refer to [Google Cloud documentation](https://cl
 Create an EmissionsTracker that sends output to your logger. Other save options can be used simultaneously:
 
 ``` python
-tracker = EmissionsTracker(save_to_logger=True, logging_logger=my_logger)
+tracker = EmissionsTracker(
+    output_methods=[OutputMethod.CSV, OutputMethod.LOGGER],
+    logging_logger=my_logger,
+)
 tracker.start()
 # Your code here
 emissions: float = tracker.stop()

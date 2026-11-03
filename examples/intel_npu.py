@@ -37,7 +37,7 @@ NUMBER_OF_IMAGES = 30
 
 @track_emissions(
     measure_power_secs=5,
-    save_to_file=False,
+    output_methods=[],
     log_level="debug",
 )
 def openvino_npu_task():

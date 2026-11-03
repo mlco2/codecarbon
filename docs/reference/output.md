@@ -13,7 +13,7 @@ tracker = EmissionsTracker(
 )
 ```
 
-Available values: `CSV`, `API`, `LOGGER`, `PROMETHEUS`, `LOGFIRE`, `BOAMPS`.
+Available values: `CSV`, `API`, `LOGGER`, `PROMETHEUS`, `LOGFIRE`, `BOAMPS`, `SCI`.
 It can also be set in the config file as a comma-separated string, e.g.
 `output_methods=csv,api`. HTTP output is enabled separately via the
 `emissions_endpoint` parameter.
@@ -22,8 +22,9 @@ It can also be set in the config file as a comma-separated string, e.g.
     The individual `save_to_file`, `save_to_api`, `save_to_logger`,
     `save_to_prometheus` and `save_to_logfire` parameters are deprecated and will be
     removed in a future version. Use `output_methods` instead. When `output_methods`
-    is provided, the `save_to_*` flags are ignored. See the
-    [deprecations list](https://docs.codecarbon.io/latest/reference/deprecations/).
+    is provided, the `save_to_*` flags are ignored. Passing any `save_to_*`
+    parameter emits a `FutureWarning` pointing at your `EmissionsTracker(...)` call.
+    See the [deprecations list](https://docs.codecarbon.io/latest/reference/deprecations/).
 
 ## CSV
 
@@ -157,15 +158,15 @@ Deploy a local version of Prometheus + Prometheus Pushgateway:
 docker-compose up
 ```
 
-Run your EmissionsTracker as usual, with `save_to_prometheus=True`:
+Run your EmissionsTracker as usual, adding `OutputMethod.PROMETHEUS` to `output_methods`:
 
 ```python-skip
-from codecarbon import OfflineEmissionsTracker
+from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
-    save_to_prometheus=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.PROMETHEUS],
 )
 tracker.start()
 # Your code here
@@ -182,15 +183,15 @@ CodeCarbon exposes all its metrics with the suffix `codecarbon_`.
 
 ### How to use it
 
-Run your EmissionsTracker as usual, with `save_to_logfire=True`:
+Run your EmissionsTracker as usual, adding `OutputMethod.LOGFIRE` to `output_methods`:
 
 ```python-skip
-from codecarbon import OfflineEmissionsTracker
+from codecarbon import OfflineEmissionsTracker, OutputMethod
 
 tracker = OfflineEmissionsTracker(
     project_name="my_project",
     country_iso_code="USA",
-    save_to_logfire=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.LOGFIRE],
 )
 tracker.start()
 # Your code here
@@ -309,8 +310,99 @@ The HTTP Output allows calling a webhook with emission data when the tracker is 
 
 ## CodeCarbon API
 
-You can send all your data to the CodeCarbon API so you have your historical data in one place. By default, nothing is sent to the API. Use `save_to_api=True` and configure your API credentials.
+You can send all your data to the CodeCarbon API so you have your historical data in one place. By default, nothing is sent to the API. Add `OutputMethod.API` to `output_methods` and configure your API credentials.
 
 ## Logger Output
 
 See [Collecting emissions to a logger](../how-to/logging.md).
+
+## SCI
+
+The [Software Carbon Intensity](https://sci.greensoftware.foundation/) specification, standardised as ISO/IEC 21031:2024, expresses a workload's footprint as a rate:
+
+```
+SCI = (E * I + M) / R
+```
+
+CodeCarbon measures `E` (energy consumed, kWh) and applies `I` (carbon intensity, gCO2eq/kWh). `R` and `M` are declarations:
+
+- `R`, the functional unit: one request, one training run, 1k tokens. There is no default, so if you do not declare one the report is still written, with `sci: null` and a `status` field saying why.
+- `M`, the embodied emissions attributable to the run. When you do not declare a figure the report says `"M_source": "not declared"`, so a reader can see the report is a partial one.
+
+### How to use it
+
+Enable the output method and put the declarations under the `sci` key of the generic `metadata` parameter, next to any other output's section (for example `boamps`):
+
+```python
+tracker = EmissionsTracker(
+    output_methods=["csv", "sci"],
+    metadata={
+        "sci": {
+            "functionalUnit": {"name": "inference request", "count": 10000},
+            "embodied": {"gCO2e": 42.5, "source": "manufacturer LCA, 4y amortization"},
+            "reporter": {"organization": "Acme", "contact": "green@acme.example"},
+            "boundary": "Application only; excludes client devices and network.",
+        }
+    },
+)
+```
+
+`metadata` can also be a path to a JSON file, which is how to set it from `.codecarbon.config`:
+
+```ini
+[codecarbon]
+output_methods = csv,sci
+metadata = ./metadata.json
+```
+
+A relative `metadata` path is resolved against the current working directory, not the config file's location. The file holds the same `sci` section:
+
+```json
+{
+  "sci": {
+    "functionalUnit": {"name": "inference request", "count": 10000},
+    "embodied": {"gCO2e": 42.5, "source": "manufacturer LCA, 4y amortization"},
+    "reporter": {"organization": "Acme", "contact": "green@acme.example"},
+    "boundary": "Application only; excludes client devices and network."
+  }
+}
+```
+
+If `metadata` has no `sci` section, or it cannot be read, the report is still written without the declarations. To load a file holding only the SCI declarations (no `sci` wrapper) when you build the handler yourself, use `SCIOutput.from_file(path)`; `SCIOutput.from_dict(section)` does the same from a dict.
+
+Both `gCO2e` and `gco2e` are accepted for the embodied figure.
+
+!!! warning "The configuration-only path needs a count in the context file"
+    `set_functional_unit_count()` needs a reference to the handler, and the handler created by `output_methods = csv,sci` is owned by the tracker. So with configuration alone, `sci` is `null` in every report unless `functionalUnit.count` is hardcoded in the `sci` section of `metadata`. If the count is only known at the end of the run, construct `SCIOutput` yourself and pass it via `output_handlers=[...]`.
+
+CodeCarbon writes a final report named `sci_report_<run_id>.json` in `output_dir`, plus `sci_report_tasks_<run_id>.json` when tasks are used. A report written by `tracker.flush()` is interim: it applies the full declared `M` to the energy measured so far, so its `sci` is higher than the final one, and it is overwritten by the report written at `stop()`. In the task report, `M` is apportioned across tasks by their share of the tasks' summed duration: the declared `M` is the embodied carbon of the device for the whole run, so giving each task the full figure would count it once per task. If the tasks do not cover the whole run, the full `M` is still spread over the tasks alone. Task reports show `"pue": null` because task data does not carry the PUE. `R` is not apportioned, because CodeCarbon cannot know how many functional units fell inside a task, so each task reports `sciShare`, its share of the run-level SCI, instead of `sci`. `I` is derived as `emissions * 1000 / energy_consumed` rather than recomputed, so the report is consistent with the CSV by construction; the PUE that was applied is recorded separately in the provenance block.
+
+Sample output:
+```json
+{
+  "specVersion": "ISO/IEC 21031:2024",
+  "generatedBy": "codecarbon 3.2.6",
+  "runId": "79e4408f-ec31-476f-a2c5-8ca7f53e6cc7",
+  "projectName": "my_project",
+  "timestamp": "2025-01-15T10:30:00",
+  "sci": 0.00845,
+  "unit": "gCO2eq per inference request",
+  "terms": {
+    "E_kWh": 0.1007,
+    "I_gCO2e_per_kWh": 417.08,
+    "M_gCO2e": 42.5,
+    "R": 10000,
+    "R_name": "inference request"
+  },
+  "provenance": {
+    "I_source": "codecarbon regional intensity, country_iso_code=FRA",
+    "M_source": "manufacturer LCA, 4y amortization",
+    "measurementBoundary": "Application only; excludes client devices and network.",
+    "durationSeconds": 3600.0,
+    "hardware": {"cpu": "Intel Xeon", "gpu": "NVIDIA A100", "ramTotalGB": 64.0},
+    "pue": 1
+  }
+}
+```
+
+See [examples/sci_output.py](https://github.com/mlco2/codecarbon/blob/master/examples/sci_output.py) for a runnable example, including the context file format and how to declare the functional unit count from Python.

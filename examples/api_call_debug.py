@@ -1,7 +1,7 @@
 import logging
 import time
 
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 from codecarbon.external.logger import logger
 
 
@@ -9,7 +9,7 @@ from codecarbon.external.logger import logger
     measure_power_secs=2,
     api_call_interval=2,
     api_key="",
-    save_to_api=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
 )
 def train_model():
     """

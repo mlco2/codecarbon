@@ -19,9 +19,9 @@ anyio==4.14.2 \
     #   httpx
     #   starlette
     #   watchfiles
-authlib==1.7.2 \
-    --hash=sha256:2cea25fefcd4e7173bdf1372c0afc265c8034b23a8cd5dcb6a9164b826c64231 \
-    --hash=sha256:3e1faedc9d87e7d56a164eca3ccb6ace0d61b94abe83e92242f8dc8bba9b4a9f
+authlib==1.9.1 \
+    --hash=sha256:5c7d9848f47cac340f060f76ae0bc09b59f5c8e89cc1bb032d4370a0c55b5974 \
+    --hash=sha256:8b9be8b1e5174dcbf5520e984f1a22dc2edae5b6e40a61d4cedbf86b97e9e69b
     # via carbonserver (carbonserver/pyproject.toml)
 bcrypt==4.3.0 \
     --hash=sha256:0042b2e342e9ae3d2ed22727c1262f76cc4f345683b5c1715f0250cf4277294f \
@@ -76,9 +76,9 @@ bcrypt==4.3.0 \
     --hash=sha256:f6746e6fec103fcd509b96bacdfdaa2fbde9a553245dbada284435173a6f1aef \
     --hash=sha256:f81b0ed2639568bf14749112298f9e4e2b28853dab50a8b357e31798686a036d
     # via carbonserver (carbonserver/pyproject.toml)
-certifi==2026.10.19 \
-    --hash=sha256:035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae \
-    --hash=sha256:42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b
+certifi==2026.10.23 \
+    --hash=sha256:a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd \
+    --hash=sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1
     # via
     #   httpcore
     #   httpx
@@ -370,9 +370,9 @@ dependency-injector==4.48.2 \
     --hash=sha256:f026957ba99997a9566cb846804ec712c67428a8041d93bf2e2966ed4a4d7dfc \
     --hash=sha256:f2e3df258cb3ca59f40fffb9c88677cc9dde3f3cdd0f8fc706cf88dad2ac2736
     # via carbonserver (carbonserver/pyproject.toml)
-dnspython==2.8.0 \
-    --hash=sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af \
-    --hash=sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f
+dnspython==2.9.0 \
+    --hash=sha256:9a4aedb833c3c1b49214d04d44d3032ab7a9135f7c1d29a549b4ff78fd82fda9 \
+    --hash=sha256:b44dc6b18f07a8b1c56676a19fbfdb5209415b046a9cece286baafa87ff3f7f1
     # via email-validator
 email-validator==2.3.0 \
     --hash=sha256:80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4 \
@@ -540,9 +540,9 @@ itsdangerous==2.2.0 \
     --hash=sha256:c6242fc49e35958c8b15141343aa660db5fc54d4f13a1db01a3f5891b98700ef \
     --hash=sha256:e0050c0b7da1eea53ffaf149c0cfbb5c6e2e2b69c4bef22c81fa6eb73e5f6173
     # via carbonserver (carbonserver/pyproject.toml)
-joserfc==1.7.0 \
-    --hash=sha256:17e5d7a5a35e65442b05efc435a3d5d46696ffa2c8a2ed0eea6f63fc268e3224 \
-    --hash=sha256:4aced6ab0c47846f0a531402aec2419a874b91e918df9c4c9da8a82fb559d6c4
+joserfc==1.7.6 \
+    --hash=sha256:e2d72e3fa937ed8ddd42ad8c1cc337a43e7ffd02efa572a2aa15e2764a05b506 \
+    --hash=sha256:fb1cf6d2977318bef976c2ed2ef2167cc5f8ade8fc96f034e38f7abd656907c4
     # via
     #   carbonserver (carbonserver/pyproject.toml)
     #   authlib

@@ -47,6 +47,24 @@ class TestEmissions(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, 0.0010, places=2)
 
+    def test_get_cloud_geo_region_returns_state(self):
+        # WHEN
+        region = self._emissions.get_cloud_geo_region(
+            CloudMetadata(provider="gcp", region="us-central1")
+        )
+
+        # THEN
+        self.assertEqual(region, "Iowa")
+
+    def test_get_cloud_geo_region_falls_back_to_city_without_state(self):
+        # WHEN
+        region = self._emissions.get_cloud_geo_region(
+            CloudMetadata(provider="gcp", region="asia-east1")
+        )
+
+        # THEN
+        self.assertEqual(region, "Changhua County")
+
     def test_get_carbon_intensity_per_source_data(self):
         # pytest tests/test_emissions.py::TestEmissions::test_get_carbon_intensity_per_source_data
         carbon_intensity = DataSource().get_carbon_intensity_per_source_data()
@@ -119,8 +137,9 @@ class TestEmissions(unittest.TestCase):
         )
 
         # THEN
+        france = self._data_source.get_global_energy_mix_data()["FRA"]
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 56.04 / 1000, places=2)
+        self.assertAlmostEqual(emissions, france["carbon_intensity"] / 1000, places=6)
 
     def test_get_emissions_PRIVATE_INFRA_UNKNOWN(self):
         """
@@ -198,8 +217,11 @@ class TestEmissions(unittest.TestCase):
         )
 
         # THEN
+        canada = self._data_source.get_global_energy_mix_data()["CAN"]
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, 0.5101, places=2)
+        self.assertAlmostEqual(
+            emissions, 3 * canada["carbon_intensity"] / 1000, places=6
+        )
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
         # WHEN

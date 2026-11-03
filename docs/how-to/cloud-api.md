@@ -19,12 +19,12 @@ The login command will create a default project and save your credentials to `.c
 
 ## Send Emissions from Your Code
 
-With your account set up, you're ready to start sending emissions data. Use the `save_to_api=True` parameter to upload tracking data:
+With your account set up, you're ready to start sending emissions data. Add `OutputMethod.API` to `output_methods` to upload tracking data:
 
 ``` python
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 
-@track_emissions(save_to_api=True)
+@track_emissions(output_methods=[OutputMethod.CSV, OutputMethod.API])
 def train_model():
     # GPU intensive training code  goes here
 
@@ -41,11 +41,11 @@ By default, `codecarbon login` creates a default experiment in your first projec
 **Option 1: In your code**
 
 ``` python
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 
 @track_emissions(
     experiment_id="your experiment id",
-    save_to_api=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
 )
 def train_model():
     ...
