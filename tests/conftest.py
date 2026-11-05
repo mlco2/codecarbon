@@ -23,6 +23,12 @@ def _reset_process_hardware_cache():
 
 
 @pytest.fixture(autouse=True)
+def _no_host_amd_apu(monkeypatch):
+    """Keep CPU tracking independent of the host: an AMD iGPU switches it to APU mode."""
+    monkeypatch.setattr("codecarbon.core.amd_apu.is_apu_power_available", lambda: False)
+
+
+@pytest.fixture(autouse=True)
 def _no_real_browser(monkeypatch):
     """Keep tests headless: never let code under test open a browser tab."""
     monkeypatch.setattr("webbrowser.open", lambda *args, **kwargs: True)

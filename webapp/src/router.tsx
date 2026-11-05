@@ -13,6 +13,7 @@ const ProjectsPage = lazy(() => import("./pages/ProjectsPage"));
 const ProjectDashboardPage = lazy(() => import("./pages/ProjectDashboardPage"));
 const ProjectSettingsPage = lazy(() => import("./pages/ProjectSettingsPage"));
 const MembersPage = lazy(() => import("./pages/MembersPage"));
+const BenchmarksPage = lazy(() => import("./pages/BenchmarksPage"));
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
     return <Suspense fallback={<Loader />}>{children}</Suspense>;
@@ -32,6 +33,14 @@ export const router = createBrowserRouter([
         element: (
             <SuspenseWrapper>
                 <PrivacyPage />
+            </SuspenseWrapper>
+        ),
+    },
+    {
+        path: "/benchmarks",
+        element: (
+            <SuspenseWrapper>
+                <BenchmarksPage />
             </SuspenseWrapper>
         ),
     },

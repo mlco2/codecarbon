@@ -240,6 +240,7 @@ def clear_cache() -> None:
     for mod_name, clear_fn in (
         ("codecarbon.core.gpu_nvidia", "clear_nvidia_system_cache"),
         ("codecarbon.core.gpu_amd", "clear_rocm_system_cache"),
+        ("codecarbon.core.amd_apu", "clear_apu_cache"),
         ("codecarbon.core.cpu", "clear_powergadget_cache"),
         ("codecarbon.core.powermetrics", "clear_powermetrics_cache"),
         ("codecarbon.core.windows_emi", "clear_emi_cache"),

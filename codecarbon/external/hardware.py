@@ -12,6 +12,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import psutil
 
+from codecarbon.core import amd_apu
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
 from codecarbon.core.powermetrics import ApplePowermetrics
@@ -29,6 +30,8 @@ CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 B_TO_GB = 1024 * 1024 * 1024
 
 MODE_CPU_LOAD = "cpu_load"
+# Whole-APU package power (CPU + iGPU + SoC) from amdgpu hwmon
+MODE_AMD_APU = "amdgpu_ppt"
 
 
 class SystemCPULoadMeter:
@@ -271,6 +274,8 @@ class CPU(BaseHardware):
             self._intel_interface = WindowsEMI(
                 emi_include_dram=rapl_include_dram,
             )
+        elif self._mode == MODE_AMD_APU:
+            self._apu_power_file = amd_apu.find_apu_power_file()
 
     def __repr__(self) -> str:
         if self._mode != "constant":
@@ -398,6 +403,11 @@ class CPU(BaseHardware):
         elif self._mode == "constant":
             power = self._tdp * CONSUMPTION_PERCENTAGE_CONSTANT
             return Power.from_watts(power)
+        elif self._mode == MODE_AMD_APU:
+            # Package power is machine-wide, whatever the tracking mode
+            if self._apu_power_file is None:
+                return Power.from_watts(0)
+            return Power.from_watts(amd_apu.read_apu_power_watts(self._apu_power_file))
         if self._mode in ("intel_rapl", "windows_emi"):
             # Don't call get_cpu_details to avoid computing energy twice and losing data.
             all_cpu_details: Dict = self._intel_interface.get_static_cpu_details()

@@ -2,7 +2,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union
 
-from codecarbon.core import cpu, gpu, powermetrics, windows_emi
+from codecarbon.core import amd_apu, cpu, gpu, powermetrics, windows_emi
 from codecarbon.core.config import normalize_gpu_ids
 from codecarbon.core.hardware_cache import get_cached_tdp, get_or_run_setup
 from codecarbon.core.util import (
@@ -12,7 +12,13 @@ from codecarbon.core.util import (
     is_mac_os,
     is_windows_os,
 )
-from codecarbon.external.hardware import CPU, GPU, MODE_CPU_LOAD, AppleSiliconChip
+from codecarbon.external.hardware import (
+    CPU,
+    GPU,
+    MODE_AMD_APU,
+    MODE_CPU_LOAD,
+    AppleSiliconChip,
+)
 from codecarbon.external.logger import logger
 from codecarbon.external.ram import RAM
 
@@ -97,6 +103,40 @@ class ResourceTracker:
             tracking_mode=self.tracker._tracking_mode,
             rapl_include_dram=self.tracker._rapl_include_dram,
             rapl_prefer_psys=self.tracker._rapl_prefer_psys,
+        )
+        self.tracker._hardware.append(hardware_cpu)
+        self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
+        return True
+
+    def _use_amd_apu(self) -> bool:
+        """
+        Whether package power of an AMD APU replaces CPU tracking. Decided the
+        same way for CPU and GPU setup, which run concurrently: the iGPU is
+        inside that package power and must then not be tracked a second time.
+
+        Only without an NVIDIA GPU: alongside one, the iGPU is idle and RAPL
+        keeps measuring the CPU as before. Without one, the iGPU is the
+        accelerator and only package power covers it.
+        """
+        if not (is_linux_os() and amd_apu.is_apu_power_available()):
+            return False
+        if getattr(self.tracker, "_force_cpu_power", None) is not None:
+            return False
+        if self.tracker._conf.get("force_mode_cpu_load", False):
+            return False
+        return not gpu.is_nvidia_system()
+
+    def _setup_amd_apu(self):
+        """Set up CPU tracking from AMD APU package power (CPU + iGPU + SoC)."""
+        logger.info(
+            "Tracking AMD APU via amdgpu package power (PPT): CPU, integrated GPU "
+            "and SoC are measured together"
+        )
+        self.cpu_tracker = "AMD APU package power"
+        hardware_cpu = CPU.from_utils(
+            output_dir=self.tracker._output_dir,
+            mode=MODE_AMD_APU,
+            tracking_mode=self.tracker._tracking_mode,
         )
         self.tracker._hardware.append(hardware_cpu)
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
@@ -269,6 +309,10 @@ class ResourceTracker:
                 if self._setup_cpu_load_mode(tdp, max_power):
                     return
 
+        if self._use_amd_apu():
+            self._setup_amd_apu()
+            return
+
         if self.tracker._force_cpu_power is None and self._try_platform_cpu_backend():
             return
 
@@ -287,6 +331,12 @@ class ResourceTracker:
 
         is_nvidia = gpu.is_nvidia_system()
         is_rocm = gpu.is_rocm_system()
+        if is_rocm and self._use_amd_apu():
+            logger.info(
+                "AMD APU: the integrated GPU is included in package power, "
+                "not tracked separately"
+            )
+            is_rocm = False
         if is_nvidia or is_rocm:
             if is_nvidia:
                 logger.info("Tracking Nvidia GPUs via PyNVML")
