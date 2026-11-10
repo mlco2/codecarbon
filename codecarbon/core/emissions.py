@@ -432,9 +432,19 @@ class Emissions:
             "petroleum": EmissionsPerKWh.from_kgs_per_kWh(0.8166885263),
             "naturalGas": EmissionsPerKWh.from_kgs_per_kWh(0.7438415916),
         }
+        # If an authoritative carbon intensity is provided for the region,
+        # use it directly instead of estimating from a simplified mix model.
+        if energy_mix.get("carbon_intensity") is not None:
+            return EmissionsPerKWh.from_g_per_kWh(energy_mix.get("carbon_intensity"))
+
         emissions_percentage: Dict[str, float] = {}
         for energy_type in energy_mix.keys():
-            if energy_type not in ["total", "isoCode", "country_name"]:
+            if energy_type not in [
+                "total",
+                "isoCode",
+                "country_name",
+                "carbon_intensity",
+            ]:
                 emissions_percentage[energy_type] = (
                     energy_mix[energy_type] / energy_mix["total"]
                 )

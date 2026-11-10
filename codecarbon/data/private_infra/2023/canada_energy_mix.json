@@ -78,6 +78,7 @@
         "hydro": 10.9
     },
     "quebec": {
+        "carbon_intensity": 2.6,
         "naturalGas": 0.2,
         "nuclear": 0.0,
         "petroleum": 0.3,

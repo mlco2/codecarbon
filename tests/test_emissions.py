@@ -239,6 +239,26 @@ class TestEmissions(unittest.TestCase):
         assert isinstance(emissions, float)
         self.assertAlmostEqual(emissions, manually_computed_emissions, places=2)
 
+    def test_get_emissions_PRIVATE_INFRA_CANADA_QUEBEC_USES_OFFICIAL_INTENSITY(self):
+        """
+        Quebec's mix is ~99% hydro/wind/solar. The simplified fossil-only model
+        overestimates because it ignores how small the fossil share is. Use the
+        official ECCC consumption intensity instead.
+        """
+        # WHEN
+        emissions = self._emissions.get_private_infra_emissions(
+            Energy.from_energy(kWh=3),
+            GeoMetadata(
+                country_iso_code="CAN", country_name="Canada", region="quebec"
+            ),
+        )
+
+        # THEN
+        # ECCC NIR 2026 Table A7-6: Quebec 2024 consumption intensity = 2.6 g/kWh
+        # Official source: https://data-donnees.az.ec.gc.ca/data/substances/monitor/canada-s-official-greenhouse-gas-inventory/C-Tables-Electricity-Canada-Provinces-Territories
+        assert isinstance(emissions, float)
+        self.assertAlmostEqual(emissions, 3 * 2.6 / 1000, places=6)
+
     def test_get_emissions_PRIVATE_INFRA_unknown_country(self):
         """
         If we do not know the country we fallback to a default value.
