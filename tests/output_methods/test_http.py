@@ -175,14 +175,14 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
             )
             api_output.api.run_id = None
 
-            def create_run(experiment_id):
+            def create_run(experiment_id, bypass_cooldown=False):
                 api_output.api.run_id = "run-created"
                 return "run-created"
 
             mock_create_run.side_effect = create_run
             api_output.live_out(None, self.emissions_data)
 
-        mock_create_run.assert_called_once_with("exp-1")
+        mock_create_run.assert_called_once_with("exp-1", bypass_cooldown=False)
         self.assertEqual(api_output.api.run_id, "run-created")
         self.assertEqual(api_output.run_id, "run-created")
 
@@ -208,6 +208,65 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
 
         api_output.out(None, self.emissions_data)
         self.mock_add_emission.assert_called_once()
+
+    def test_codecarbon_api_out_bypasses_cooldown(self):
+        """out() runs on flush()/stop(), so it bypasses the run-creation
+        cooldown instead of dropping the last emission."""
+        with patch(
+            "codecarbon.output_methods.http.ApiClient._create_run"
+        ) as mock_create_run:
+            api_output = CodeCarbonAPIOutput(
+                endpoint_url=self.url,
+                experiment_id="exp-1",
+                api_key=self.api_key,
+                conf=None,
+            )
+            api_output.api.run_id = None
+
+            def create_run(experiment_id, bypass_cooldown=False):
+                api_output.api.run_id = "run-created"
+
+            mock_create_run.side_effect = create_run
+            api_output.out(None, self.emissions_data)
+
+        mock_create_run.assert_called_once_with("exp-1", bypass_cooldown=True)
+        self.mock_add_emission.assert_called_once()
+
+    @patch("codecarbon.output_methods.http.logger.error")
+    @patch("codecarbon.output_methods.http.logger.debug")
+    def test_codecarbon_api_live_out_skips_during_cooldown(
+        self, mock_debug, mock_error
+    ):
+        """While run creation is in its cooldown (_create_run returns None
+        without raising), live_out skips the emission and logs at debug."""
+        with patch(
+            "codecarbon.output_methods.http.ApiClient._create_run",
+            return_value=None,
+        ) as mock_create_run:
+            api_output = CodeCarbonAPIOutput(
+                endpoint_url=self.url,
+                experiment_id="exp-1",
+                api_key=self.api_key,
+                conf=None,
+            )
+            api_output.api.run_id = None
+            api_output.live_out(None, self.emissions_data)
+
+        mock_create_run.assert_called_once_with("exp-1", bypass_cooldown=False)
+        self.mock_add_emission.assert_not_called()
+        mock_debug.assert_called_once()
+        mock_error.assert_not_called()
+
+    def test_codecarbon_api_exit_closes_session(self):
+        api_output = CodeCarbonAPIOutput(
+            endpoint_url=self.url,
+            experiment_id=self.experiment_id,
+            api_key=self.api_key,
+            conf=None,
+        )
+        with patch.object(api_output.api, "close") as mock_close:
+            api_output.exit()
+        mock_close.assert_called_once()
 
     @patch("codecarbon.output_methods.http.logger.error")
     def test_codecarbon_out_api_call_failure(self, mock_logger):
