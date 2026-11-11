@@ -3,10 +3,14 @@ from typing import Callable, List
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy import select
 
 from carbonserver.api.domain.users import Users
 from carbonserver.api.infra.database.sql_models import Experiment as SqlModelExperiment
 from carbonserver.api.infra.database.sql_models import Membership as SqlModelMembership
+from carbonserver.api.infra.database.sql_models import (
+    Organization as SqlModelOrganization,
+)
 from carbonserver.api.infra.database.sql_models import Project as SqlModelProject
 from carbonserver.api.infra.database.sql_models import User as SqlModelUser
 from carbonserver.api.schemas import User, UserAutoCreate
@@ -115,6 +119,49 @@ class SqlAlchemyRepository(Users):
                 )
             session.delete(db_membership)
             session.commit()
+
+    def delete_user(self, user_id: UUID) -> List[UUID]:
+        """Erase a user and the data only they can reach, in one transaction.
+
+        Organizations where the user is the only member are deleted with their
+        projects; the database cascades each project to its experiments, runs,
+        emissions and API tokens. Organizations shared with other members are
+        kept, and only the user's membership is removed from them.
+
+        :user_id: The id of the user to delete.
+        :returns: The ids of the organizations that were deleted.
+        """
+        with self.session_factory() as session:
+            orgs_with_other_members = select(SqlModelMembership.organization_id).where(
+                SqlModelMembership.user_id != user_id
+            )
+            solo_org_ids = [
+                org_id
+                for (org_id,) in session.query(SqlModelMembership.organization_id)
+                .filter(SqlModelMembership.user_id == user_id)
+                .filter(
+                    SqlModelMembership.organization_id.not_in(orgs_with_other_members)
+                )
+                .all()
+            ]
+            # projects.organization_id has no ON DELETE CASCADE, so projects go
+            # before their organizations.
+            if solo_org_ids:
+                session.query(SqlModelProject).filter(
+                    SqlModelProject.organization_id.in_(solo_org_ids)
+                ).delete(synchronize_session=False)
+            session.query(SqlModelMembership).filter(
+                SqlModelMembership.user_id == user_id
+            ).delete(synchronize_session=False)
+            if solo_org_ids:
+                session.query(SqlModelOrganization).filter(
+                    SqlModelOrganization.id.in_(solo_org_ids)
+                ).delete(synchronize_session=False)
+            session.query(SqlModelUser).filter(SqlModelUser.id == user_id).delete(
+                synchronize_session=False
+            )
+            session.commit()
+            return solo_org_ids
 
     def is_user_in_organization(
         self, organization_id: UUID, user: User, *, is_admin: bool | None = None
