@@ -231,13 +231,13 @@ class TestEmissions(unittest.TestCase):
                 country_iso_code="CAN", country_name="Canada", region="ontario"
             ),
         )
-        manually_computed_emissions = (
-            3 * (0.995725971 * 0.0 + 0.8166885263 * 0.1 + 0.7438415916 * 8.6) / 100.1
-        )
+        # Ontario now uses the ECCC NIR 2026 consumption intensity override.
+        # ECCC Table A7-6: Ontario 2024 consumption intensity = 73 g CO2e/kWh.
+        manually_computed_emissions = 3 * 73 / 1000
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, manually_computed_emissions, places=2)
+        self.assertAlmostEqual(emissions, manually_computed_emissions, places=6)
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_QUEBEC_USES_OFFICIAL_INTENSITY(self):
         """

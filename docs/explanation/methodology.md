@@ -483,6 +483,17 @@ emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
 Kong, Macao and Taiwan are not in the official table and use the
 country value.
 
+For Canada, the provincial and territorial values are 2024
+**consumption** intensities in g CO₂e/kWh from Environment and Climate
+Change Canada's *National Inventory Report 1990–2024* (2026), Annex 7,
+Table A7-6 — the `.xlsx` file published at the
+[ECCC data portal](https://data-donnees.az.ec.gc.ca/data/substances/monitor/canada-s-official-greenhouse-gas-inventory/C-Tables-Electricity-Canada-Provinces-Territories).
+These consumption intensities include grid losses and other relevant
+emissions. When a province or territory entry has a `carbon_intensity`
+field, CodeCarbon uses it directly instead of estimating from the
+simplified fossil-only mix model, mirroring the behaviour of the global
+energy mix file.
+
 When a region is not found in the regional data, CodeCarbon falls back
 to the country value.
 
