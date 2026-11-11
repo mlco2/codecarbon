@@ -2483,6 +2483,7 @@
     <span class="n">train_model</span><span class="p">()</span>
 </code></pre></div>
 <p>The decorator will automatically send your emissions data to the dashboard. You can also specify additional options in <code>@track_emissions()</code> or in <code>.codecarbon.config</code>.</p>
+<p><code>start()</code> (or <code>start_task()</code>, when you track tasks without <code>start()</code>) registers the run on the API with a blocking HTTP call, and <code>tracker.run_id</code> then switches from a locally generated id to the API run id, so every output shares it. If the API is unreachable, tracking continues with the local id, and the tracker retries each time it writes a record. From the first record written after the API comes back, <code>run_id</code> is the API run id. Records written before keep the local id, so with <code>on_csv_write="update"</code> the CSV file gets one row per id.</p>
 <h2 id="create-projects-experiments">Create Projects &amp; Experiments<a class="headerlink" href="#create-projects-experiments" title="Permanent link">&para;</a></h2>
 <p>By default, <code>codecarbon login</code> creates a default experiment in your first project. If you want to organize runs by experiment, you can specify an <code>experiment_id</code> explicitly. Set the experiment ID in two ways:</p>
 <p><strong>Option 1: In your code</strong></p>
