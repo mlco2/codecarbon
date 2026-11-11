@@ -842,17 +842,7 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._ensure_hardware_ready()
-
-        if self._api_output is not None:
-            # Create the run now (blocking HTTP call), so every record carries
-            # the API run id. The API client already logs the failure itself.
-            try:
-                self._api_output._ensure_api_run()
-                self.run_id = self._api_output.run_id or self.run_id
-            except Exception:
-                logger.warning(
-                    f"Could not create the API run, using local run_id {self.run_id}"
-                )
+        self._adopt_api_run()
 
         self._last_measured_time = self._start_time = time.perf_counter()
 
@@ -890,6 +880,10 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._ensure_hardware_ready()
+        # start_task() can be used without start(): create the API run here too.
+        # A previous start() or start_task() already wrote records, so a switch
+        # of run_id is late.
+        self._adopt_api_run(late=self._start_time is not None)
 
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
@@ -1140,6 +1134,33 @@ class BaseEmissionsTracker(ABC):
                 )
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
+
+    def _adopt_api_run(self, late: bool = False) -> None:
+        """
+        Create the API run if it does not exist yet (blocking HTTP call), then
+        use its id as run_id, so every output shares it.
+        :param late: records may already carry the local run_id, so warn when
+            it switches, and stay quiet on failure to avoid repeating the error.
+        """
+        if self._api_output is None:
+            return
+        try:
+            self._api_output._ensure_api_run()
+        except Exception:
+            # The API client already logs the failure itself.
+            if not late:
+                logger.warning(
+                    f"Could not create the API run, using local run_id {self.run_id}"
+                )
+            return
+        api_run_id = self._api_output.run_id
+        if api_run_id and api_run_id != self.run_id:
+            if late:
+                logger.warning(
+                    f"API run created late: switching run_id from {self.run_id} to"
+                    f" {api_run_id}. Earlier local records used {self.run_id}."
+                )
+            self.run_id = api_run_id
 
     def _sync_api_run_id(self) -> None:
         """

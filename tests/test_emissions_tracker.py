@@ -670,6 +670,47 @@ class TestCarbonTracker(unittest.TestCase):
         emissions_df = pd.read_csv(self.emissions_file_path)
         self.assertEqual(emissions_df["run_id"].iloc[-1], "run-created")
 
+    def test_run_id_uses_api_run_in_task_mode(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # start_task()/stop_task() without start(): the task records and the
+        # task file must carry the API run id, not a local one.
+        with (
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient._create_run"
+            ) as mock_create_run,
+            mock.patch("codecarbon.output_methods.http.ApiClient.add_emission"),
+        ):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.CSV, OutputMethod.API],
+                experiment_id="test-experiment-id",
+                api_key="test-api-key",
+            )
+            api_output = tracker._api_output
+
+            def create_run(experiment_id):
+                api_output.api.run_id = "run-created"
+                return "run-created"
+
+            mock_create_run.side_effect = create_run
+            tracker.start_task("task-1")
+            heavy_computation(1)
+            task_data = tracker.stop_task()
+            tracker.stop()
+
+        self.assertEqual(task_data.run_id, "run-created")
+        self.assertEqual(tracker.run_id, "run-created")
+        self.assertTrue(Path(self.temp_path, "emissions_base_run-created.csv").exists())
+
     def test_default_output_methods_is_csv(
         self,
         mock_cli_setup,
