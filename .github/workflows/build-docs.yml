@@ -36,7 +36,7 @@ jobs:
       - name: Build docs
         run: |
           set -euo pipefail
-          uv run zensical build -f mkdocs.yml --clean 2>&1 | tee docs_build.log
+          uv run zensical build -f mkdocs.yml --clean --strict 2>&1 | tee docs_build.log
           if grep -Ei "\b(error|failed|traceback|exception)\b" docs_build.log >/dev/null; then
             echo "Documentation build produced errors; failing workflow."
             exit 1
