@@ -46,8 +46,15 @@ class CodeCarbonAPIOutput(BaseOutput):
         experiment_id: str,
         api_key: str,
         conf,
+        create_run_on_emit: bool = True,
     ):
+        """
+        :param create_run_on_emit: create the API run when emitting, if it is
+            missing. The tracker sets it to False because it tries itself before
+            building each record, so a down API costs one attempt per record.
+        """
         self.endpoint_url: str = endpoint_url
+        self.create_run_on_emit = create_run_on_emit
         self.api = ApiClient(
             endpoint_url=endpoint_url,
             experiment_id=experiment_id,
@@ -64,7 +71,12 @@ class CodeCarbonAPIOutput(BaseOutput):
 
     def _emit(self, delta: EmissionsData) -> None:
         try:
-            self._ensure_api_run()
+            if self.create_run_on_emit:
+                self._ensure_api_run()
+            elif self.api.run_id is None:
+                # The owner of this output already failed to create the run.
+                logger.debug("CodeCarbonAPIOutput: no API run, emission not sent.")
+                return
             self.api.add_emission(dataclasses.asdict(delta))
         except Exception as e:
             logger.error(e, exc_info=True)

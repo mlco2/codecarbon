@@ -790,6 +790,42 @@ class TestCarbonTracker(unittest.TestCase):
             tracker.stop_task()
             self.assertEqual(mock_create_run.call_count, 1)
 
+    def test_api_down_costs_one_run_creation_attempt_per_record(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # The tracker tries before building the record, so the API output must
+        # not try again when it emits that record.
+        with (
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient._create_run",
+                side_effect=Exception("API is down"),
+            ) as mock_create_run,
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient.add_emission"
+            ) as mock_add_emission,
+        ):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.CSV, OutputMethod.API],
+                experiment_id="test-experiment-id",
+                api_key="test-api-key",
+            )
+            tracker.start()
+            self.assertEqual(mock_create_run.call_count, 1)
+            tracker.flush()
+            self.assertEqual(mock_create_run.call_count, 2)
+            tracker.stop()
+            self.assertEqual(mock_create_run.call_count, 3)
+        mock_add_emission.assert_not_called()
+
     def test_default_output_methods_is_csv(
         self,
         mock_cli_setup,

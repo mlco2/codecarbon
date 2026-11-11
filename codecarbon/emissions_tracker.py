@@ -698,6 +698,8 @@ class BaseEmissionsTracker(ABC):
                 experiment_id=self._experiment_id,
                 api_key=api_key,
                 conf=self._conf,
+                # _adopt_api_run() creates the run before each record.
+                create_run_on_emit=False,
             )
             self._api_output = cc_api__out
             self._output_handlers.append(cc_api__out)
