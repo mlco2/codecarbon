@@ -421,6 +421,17 @@ def _external_config() -> dict:
         return {}
 
 
+def _telemetry_tracker_args(telemetry_level: Optional[str], offline: bool) -> dict:
+    """Ask for the telemetry level once, or forward this run's override."""
+    if telemetry_level is None:
+        if not offline:
+            ask_telemetry_level_once()
+        return {}
+    from codecarbon.cli.telemetry_cli import normalize_telemetry_level
+
+    return {"telemetry_level": normalize_telemetry_level(telemetry_level)}
+
+
 @codecarbon.command(
     "monitor",
     short_help="Monitor your machine's carbon emissions.",
@@ -471,8 +482,7 @@ def monitor(
     Emissions are appended to the same emissions.csv report. See
     https://docs.codecarbon.io/latest/tutorials/cli/#track-any-command
     """
-    if telemetry_level is None and not offline:
-        ask_telemetry_level_once()
+    telemetry_args = _telemetry_tracker_args(telemetry_level, offline)
 
     external_conf = _external_config()
 
@@ -493,10 +503,7 @@ def monitor(
             # Nothing configures it: keep the defaults advertised by `--help`
             # (and an unattended monitor quiet) instead of the tracker's own.
             tracker_args[name] = value
-    if telemetry_level is not None:
-        from codecarbon.cli.telemetry_cli import normalize_telemetry_level
-
-        tracker_args["telemetry_level"] = normalize_telemetry_level(telemetry_level)
+    tracker_args.update(telemetry_args)
 
     # Set up the tracker arguments based on mode (offline vs online) and validate required args for each mode
     if offline:
