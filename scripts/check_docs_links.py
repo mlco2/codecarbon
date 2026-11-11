@@ -175,6 +175,9 @@ def collect_checks(site_root: Path) -> list[tuple[Path, str, str, str]]:
     for html_path in sorted(site_root.rglob("*.html")):
         if "assets" in html_path.parts and "javascripts" in html_path.parts:
             continue
+        # Its links are absolute under site_url's /latest/ path; GitHub Pages never serves it.
+        if html_path == site_root / "404.html":
+            continue
         soup = BeautifulSoup(
             html_path.read_text(encoding="utf-8", errors="replace"), "html.parser"
         )
