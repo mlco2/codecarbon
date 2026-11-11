@@ -880,10 +880,6 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._ensure_hardware_ready()
-        # start_task() can be used without start(): create the API run here too.
-        # A previous start() or start_task() already wrote records, so a switch
-        # of run_id is late.
-        self._adopt_api_run(late=self._start_time is not None)
 
         # Stop scheduler as we do not want it to interfere with the task measurement
         if self._scheduler:
@@ -906,6 +902,10 @@ class BaseEmissionsTracker(ABC):
             task_name = uuid.uuid4().__str__()
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
+        # start_task() can be used without start(): create the API run here too.
+        # A previous start() or start_task() already wrote records, so a switch
+        # of run_id is late.
+        self._adopt_api_run(late=self._start_time is not None)
         self._last_measured_time = self._start_time = time.perf_counter()
 
         self._clear_utilization_history()
@@ -913,7 +913,8 @@ class BaseEmissionsTracker(ABC):
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
-        prepared_data_for_task_start = self._prepare_emissions_data()
+        # The API run was just tried above: do not try again.
+        prepared_data_for_task_start = self._prepare_emissions_data(adopt_api_run=False)
         self._active_task_emissions_at_start = dataclasses.replace(
             prepared_data_for_task_start
         )
@@ -960,8 +961,10 @@ class BaseEmissionsTracker(ABC):
             self._resume_scheduler_if_paused_by_task()
             return None
         self._measure_power_and_energy()
-        emissions_data = (
-            self._prepare_emissions_data()
+        # No API run creation here: this record is not sent anywhere, and a
+        # blocking HTTP call would be counted in the task duration.
+        emissions_data = self._prepare_emissions_data(
+            adopt_api_run=False
         )  # This is emissions_data_at_stop
 
         if self._active_task_emissions_at_start is None:
@@ -1162,14 +1165,16 @@ class BaseEmissionsTracker(ABC):
                 )
             self.run_id = api_run_id
 
-    def _prepare_emissions_data(self) -> EmissionsData:
+    def _prepare_emissions_data(self, adopt_api_run: bool = True) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
+        :param adopt_api_run: try to create the API run first, if it is missing.
         :return: EmissionsData object with the total emissions data.
         """
-        # Before building the record, so the record written when the API comes
-        # back already carries the API run id.
-        self._adopt_api_run(late=True)
+        if adopt_api_run:
+            # Before building the record, so the record written when the API
+            # comes back already carries the API run id.
+            self._adopt_api_run(late=True)
         self._update_emissions()
         self._ensure_cloud_conf()
         cloud = self._get_cloud_metadata()
