@@ -86,6 +86,16 @@ billing-account granularity with monthly latency. The two are complementary: the
 provider console for reporting obligations, CodeCarbon for attributing a number
 to a specific experiment.
 
+### "I want the footprint of my organisation's AI assistants, not of code I run"
+
+CodeCarbon meters hardware you run and EcoLogits instruments API calls in your
+own code. Neither sees staff using seat-based assistants such as ChatGPT
+Enterprise, Microsoft Copilot or Claude, where there is no code to instrument.
+For that case, [SAEF](https://doi.org/10.5281/zenodo.20443585) is an open
+CC BY 4.0 set of carbon and water factors by model class and cloud region,
+published by SOMA AI with a free calculator at
+[somaai.earth](https://somaai.earth/ai-footprint/calculator).
+
 ### "I need something I can cite"
 
 carbontracker, eco2AI and experiment-impact-tracker each have an accompanying
