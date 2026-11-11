@@ -32,7 +32,7 @@ if __name__ =="__main__":
     train_model()
 ```
 
-The decorator will automatically send your emissions data to the dashboard. You can also specify additional options in `@track_emissions()` or in `.codecarbon.config`.
+The decorator will automatically send your emissions data to the dashboard. The API stores durations with sub-second precision, so runs shorter than one second are kept. Only a zero or negative duration is skipped. You can also specify additional options in `@track_emissions()` or in `.codecarbon.config`.
 
 ## Create Projects & Experiments
 

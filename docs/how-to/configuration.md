@@ -23,7 +23,7 @@ CodeCarbon is structured so that you can configure it in a hierarchical manner:
         ``` bash
         [codecarbon]
         measure_power_secs=10
-        save_to_file=local-overwrite
+        output_methods=csv
         emissions_endpoint=localhost:7777
         ```
 
@@ -32,7 +32,7 @@ CodeCarbon is structured so that you can configure it in a hierarchical manner:
 
         ``` bash
         [codecarbon]
-        save_to_file = true
+        output_methods = csv,logger
         output_dir = /Users/victor/emissions
         electricitymaps_api_token=script-overwrite
         experiment_id = 235b1da5-aaaa-aaaa-aaaa-893681599d2c
@@ -54,7 +54,6 @@ CodeCarbon is structured so that you can configure it in a hierarchical manner:
         ``` python
         EmissionsTracker(
            api_call_interval=4,
-           save_to_api=True,
            electricitymaps_api_token="some-token")
         ```
 
@@ -63,9 +62,8 @@ Yields attributes:
 ``` python
 {
     "measure_power_secs": 10,  # from ~/.codecarbon.config
-    "save_to_file": True,   # from ./.codecarbon.config (override ~/.codecarbon.config)
+    "output_methods": "csv,logger",   # from ./.codecarbon.config (override ~/.codecarbon.config)
     "api_call_interval": 4, # from script
-    "save_to_api": True,   # from script
     "experiment_id": "235b1da5-aaaa-aaaa-aaaa-893681599d2c", # from ./.codecarbon.config
     "log_level": "WARNING", # from environment variable (override ./.codecarbon.config)
     "tracking_mode": "process", # from ./.codecarbon.config
@@ -96,6 +94,55 @@ Yields attributes:
     [`ConfigParser`](https://docs.python.org/3/library/configparser.html#module-configparser)
     which relies on the [INI
     syntax](https://docs.python.org/3/library/configparser.html#supported-ini-file-structure).
+
+## Configuration keys
+
+These are all the keys that the tracker reads from the configuration files, the environment and the constructor. Each key can also be set as the environment variable `CODECARBON_<KEY>`, where `<KEY>` is the key in upper case. For example, `CODECARBON_LOG_LEVEL` sets `log_level`.
+
+| Key | Default |
+|-----|---------|
+| `allow_multiple_runs` | `True` |
+| `electricitymaps_api_token` | none |
+| `output_methods` | none |
+| `save_to_api` | `False` |
+| `save_to_file` | `True` |
+| `save_to_logger` | `False` |
+| `save_to_prometheus` | `False` |
+| `save_to_logfire` | `False` |
+| `force_carbon_intensity_g_co2e_kwh` | none |
+| `api_call_interval` | `8` |
+| `api_endpoint` | `https://api.codecarbon.io` |
+| `api_key` | `api_key` |
+| `emissions_endpoint` | none |
+| `experiment_name` | `base` |
+| `gpu_ids` | none |
+| `log_level` | `info` |
+| `measure_power_secs` | `15` |
+| `output_dir` | `.` |
+| `output_file` | `emissions.csv` |
+| `project_name` | `codecarbon` |
+| `logging_logger` | none (constructor only: a Python object) |
+| `prometheus_url` | `localhost:9091` |
+| `output_handlers` | `[]` (constructor only: Python objects) |
+| `tracking_mode` | `machine` |
+| `on_csv_write` | `append` |
+| `metadata` | none |
+| `logger_preamble` | empty string |
+| `force_cpu_power` | none |
+| `force_ram_power` | none |
+| `pue` | `1.0` |
+| `wue` | `0` |
+| `force_mode_cpu_load` | `False` |
+| `rapl_include_dram` | `False` |
+| `rapl_prefer_psys` | `False` |
+| `experiment_id` | `5b0fa12a-3dd7-45bb-9766-cc326314d9f1` |
+| `cloud_provider` | none |
+| `cloud_region` | none |
+| `country_2letter_iso_code` | none |
+| `country_iso_code` | none |
+| `region` | none |
+
+A default of "none" means the key is unset unless you provide a value. `save_to_*` keys are deprecated and are ignored when `output_methods` is set. The `cloud_*`, `country_*` and `region` keys are read by `OfflineEmissionsTracker`.
 
 ## Electricity Maps API Token
 
