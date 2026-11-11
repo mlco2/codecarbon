@@ -668,7 +668,51 @@ class TestCarbonTracker(unittest.TestCase):
 
         self.assertEqual(tracker.run_id, "run-created")
         emissions_df = pd.read_csv(self.emissions_file_path)
-        self.assertEqual(emissions_df["run_id"].iloc[-1], "run-created")
+        # The flush() row that triggered the run creation carries it too.
+        self.assertEqual(list(emissions_df["run_id"]), ["run-created"] * 2)
+
+    def test_run_id_syncs_when_api_recovers_at_stop(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with (
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient._create_run"
+            ) as mock_create_run,
+            mock.patch("codecarbon.output_methods.http.ApiClient.add_emission"),
+        ):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.CSV, OutputMethod.API],
+                experiment_id="test-experiment-id",
+                api_key="test-api-key",
+            )
+            api_output = tracker._api_output
+
+            # API down at start(), back up only when stop() writes the record.
+            def create_run(experiment_id):
+                if mock_create_run.call_count == 1:
+                    raise Exception("API is down")
+                api_output.api.run_id = "run-created"
+                return "run-created"
+
+            mock_create_run.side_effect = create_run
+            tracker.start()
+            heavy_computation(1)
+            with self.assertLogs("codecarbon", level="WARNING") as logs:
+                tracker.stop()
+
+        self.assertTrue(any("API run created late" in line for line in logs.output))
+        self.assertEqual(tracker.run_id, "run-created")
+        emissions_df = pd.read_csv(self.emissions_file_path)
+        self.assertEqual(list(emissions_df["run_id"]), ["run-created"])
 
     def test_run_id_uses_api_run_in_task_mode(
         self,

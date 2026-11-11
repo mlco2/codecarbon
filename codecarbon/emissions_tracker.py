@@ -1162,25 +1162,14 @@ class BaseEmissionsTracker(ABC):
                 )
             self.run_id = api_run_id
 
-    def _sync_api_run_id(self) -> None:
-        """
-        Adopt the API run id once the run exists, e.g. when the API was down
-        at start() and the run got created later by a successful emission.
-        """
-        api_run_id = self._api_output.run_id if self._api_output else None
-        if api_run_id and api_run_id != self.run_id:
-            logger.warning(
-                f"API run created late: switching run_id from {self.run_id} to"
-                f" {api_run_id}. Earlier local records used {self.run_id}."
-            )
-            self.run_id = api_run_id
-
     def _prepare_emissions_data(self) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
         :return: EmissionsData object with the total emissions data.
         """
-        self._sync_api_run_id()
+        # Before building the record, so the record written when the API comes
+        # back already carries the API run id.
+        self._adopt_api_run(late=True)
         self._update_emissions()
         self._ensure_cloud_conf()
         cloud = self._get_cloud_metadata()
