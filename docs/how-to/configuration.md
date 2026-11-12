@@ -197,8 +197,14 @@ Or in code:
 EmissionsTracker(force_mode_constant=True, force_cpu_power=100)
 ```
 
-It takes precedence over `force_mode_cpu_load`. If your CPU is not in the TDP
-database and `force_cpu_power` is not set, a global default constant is used.
+It takes precedence over `force_mode_cpu_load`. Without `force_cpu_power`, the
+TDP comes from the same ladder as the other estimates (see
+[fallback constants](../explanation/methodology.md#the-fallback-constants)): the
+TDP database, else 4 W per thread for an unknown model, else 85 W when the CPU
+model cannot be detected.
+
+The constant does not follow the load, and in `tracking_mode="process"` it is
+still the power of the whole CPU, not your process's share.
 
 ## Including DRAM in the CPU Measurement
 
