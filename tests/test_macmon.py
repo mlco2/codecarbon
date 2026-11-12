@@ -160,3 +160,39 @@ def test_macmon_on_real_hardware():
         pytest.skip("macmon is not available on this machine")
     details = MacMon(n_points=2, interval=100).get_details()
     assert details["CPU Power"] >= 0
+
+
+def test_kill_process_tolerates_failure_and_closes_streams():
+    process = mock.Mock()
+    process.kill.side_effect = OSError("not permitted")
+    macmon_module._kill_process(process)
+    process.stdout.close.assert_called_once_with()
+    process.stderr.close.assert_called_once_with()
+
+
+def test_start_is_a_no_op():
+    assert _make_macmon().start() is None
+
+
+@pytest.mark.parametrize(
+    "backend, interface",
+    [("macmon", "MacMon"), ("powermetrics", "ApplePowermetrics")],
+)
+def test_apple_silicon_chip_backend_selects_interface(backend, interface):
+    from codecarbon.external import hardware
+
+    with mock.patch.object(hardware, interface) as mock_interface:
+        chip = hardware.AppleSiliconChip.from_utils(
+            "out", model="Apple M2", chip_part="GPU", backend=backend
+        )
+    mock_interface.assert_called_once()
+    assert chip.backend == backend
+    assert chip.chip_part == "GPU"
+    assert chip._interface is mock_interface.return_value
+
+
+def test_apple_silicon_chip_rejects_unknown_backend():
+    from codecarbon.external.hardware import AppleSiliconChip
+
+    with pytest.raises(ValueError, match="Unknown Apple Silicon backend"):
+        AppleSiliconChip(output_dir="out", model="Apple M2", backend="nope")
