@@ -1,8 +1,8 @@
-from typing import List
+from typing import List, Optional, Union
 
 from carbonserver.api.errors import NotAllowedError, NotAllowedErrorEnum, UserException
 from carbonserver.api.infra.repositories.repository_runs import SqlAlchemyRepository
-from carbonserver.api.schemas import RunReport
+from carbonserver.api.schemas import RunBucketReport, RunReport
 from carbonserver.api.services.auth_context import AuthContext
 
 
@@ -14,8 +14,13 @@ class ExperimentSumsByRunUsecase:
         self._auth_context = auth_context
 
     def compute_detailed_sum(
-        self, experiment_id: str, start_date, end_date, user=None
-    ) -> List[RunReport]:
+        self,
+        experiment_id: str,
+        start_date,
+        end_date,
+        max_points: Optional[int] = None,
+        user=None,
+    ) -> List[Union[RunReport, RunBucketReport]]:
         if not self._auth_context.can_read_experiment(experiment_id, user):
             raise UserException(
                 NotAllowedError(
@@ -23,6 +28,14 @@ class ExperimentSumsByRunUsecase:
                     message="Operation not authorized",
                 )
             )
+        if max_points:
+            return self._run_repository.get_experiment_bucketed_sums_by_run(
+                experiment_id,
+                start_date,
+                end_date,
+                max_points,
+            )
+
         sums = self._run_repository.get_experiment_detailed_sums_by_run(
             experiment_id,
             start_date,
