@@ -269,7 +269,7 @@ twice, so CodeCarbon keeps the package channels only. On multi-die CPUs
 where every die mirrors the same socket-wide counter, the duplicates are
 detected and dropped as well. The `DRAM` channels are excluded too, unless
 the
-[`rapl_include_dram`](../how-to/configuration.md#including-dram-in-the-cpu-measurement)
+[`rapl_include_dram`](../how-to/configuration.md#measuring-ram-with-the-dram-energy-counter)
 option is enabled.
 
 **macOS, Intel.** Tracks Intel processors energy consumption using the
@@ -333,7 +333,12 @@ runs a two-stage estimate in
 [`external/ram.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/ram.py).
 The exception is the Raspberry Pi 5, where the PMIC measures the DRAM rails
 and that reading replaces the estimate.
-And some RAPL interface could expose RAM energy but they are rare.
+
+On Linux, with
+[`rapl_include_dram`](../how-to/configuration.md#measuring-ram-with-the-dram-energy-counter)
+enabled, the RAM energy is measured by the RAPL `dram` domain when it
+exists and its counter increases. Otherwise, it is estimated as described
+below.
 
 **Stage 1 — guess the DIMM count** from total RAM, using a hardcoded step
 function (`RAM._estimate_dimm_count`):
