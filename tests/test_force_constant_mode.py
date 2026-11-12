@@ -4,6 +4,7 @@ import time
 import unittest
 
 import pandas as pd
+import pytest
 
 from codecarbon.emissions_tracker import OfflineEmissionsTracker
 
@@ -56,6 +57,34 @@ class TestForceConstantMode(unittest.TestCase):
     def test_force_constant_mode_takes_precedence_over_cpu_load(self):
         df = self._run_tracker(force_cpu_power=200, force_mode_cpu_load=True)
         self.assertEqual(df["cpu_power"].iloc[0], 100)
+
+
+def _cpu_mode(tracker) -> str:
+    tracker._ensure_hardware_ready()
+    return next(hw._mode for hw in tracker._hardware if type(hw).__name__ == "CPU")
+
+
+@pytest.mark.parametrize("first_constant", [False, True])
+def test_force_mode_constant_is_not_overridden_by_cached_hardware_setup(
+    first_constant, tmp_path
+):
+    """Hardware setup is cached per process; the flag must be part of the key."""
+
+    def make(constant: bool):
+        return OfflineEmissionsTracker(
+            country_iso_code="USA",
+            output_dir=str(tmp_path),
+            force_cpu_power=200,
+            force_mode_constant=constant,
+            allow_multiple_runs=True,
+        )
+
+    first = make(first_constant)
+    second = make(not first_constant)
+
+    expected = {True: "constant", False: "cpu_load"}
+    assert _cpu_mode(first) == expected[first_constant]
+    assert _cpu_mode(second) == expected[not first_constant]
 
 
 if __name__ == "__main__":

@@ -50,6 +50,7 @@ class _HardwareCacheKey:
     force_cpu_power: Any
     force_ram_power: Any
     force_mode_cpu_load: bool
+    force_mode_constant: bool
     gpu_ids: Any
     rapl_include_dram: bool
     rapl_prefer_psys: bool
@@ -84,6 +85,7 @@ def make_key(tracker) -> _HardwareCacheKey:
         force_cpu_power=tracker._force_cpu_power,
         force_ram_power=tracker._force_ram_power,
         force_mode_cpu_load=bool(tracker._conf.get("force_mode_cpu_load", False)),
+        force_mode_constant=bool(tracker._conf.get("force_mode_constant", False)),
         gpu_ids=_canonical_gpu_ids(tracker._gpu_ids),
         rapl_include_dram=bool(tracker._rapl_include_dram),
         rapl_prefer_psys=bool(tracker._rapl_prefer_psys),
