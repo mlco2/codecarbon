@@ -105,3 +105,22 @@ def test_create_new_config_file_expands_home(monkeypatch, tmp_path):
 
     assert created_path == target
     assert target.exists()
+
+
+def test_get_config_returns_empty_dict_without_codecarbon_section(tmp_path):
+    config_path = tmp_path / ".codecarbon.config"
+    config_path.write_text("[other]\nkey=value\n")
+
+    assert cli_utils.get_config(config_path) == {}
+
+
+def test_get_api_endpoint_writes_default_under_codecarbon_section(tmp_path):
+    config_path = tmp_path / ".codecarbon.config"
+    config_path.write_text("[codecarbon]\nproject_id=abc\n\n[other]\nkey=value\n")
+
+    cli_utils.get_api_endpoint(config_path)
+
+    parser = configparser.ConfigParser()
+    parser.read(config_path)
+    assert parser["codecarbon"]["api_endpoint"] == "https://api.codecarbon.io"
+    assert "api_endpoint" not in parser["other"]
