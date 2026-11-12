@@ -1,3 +1,4 @@
+import logging
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -286,13 +287,14 @@ def test_set_cpu_tracking_force_mode_constant_uses_user_power_without_recomputin
     assert tracker._hardware == [fake_cpu]
 
 
-def test_set_cpu_tracking_force_mode_constant_without_tdp_uses_global_constant():
+def test_set_cpu_tracking_force_mode_constant_without_tdp_uses_global_constant(caplog):
     tracker = make_tracker(_conf={"cpu_physical_count": 4, "force_mode_constant": True})
     resource_tracker = ResourceTracker(tracker)
     fake_tdp = SimpleNamespace(tdp=None, model="Unknown CPU")
     fake_cpu = MagicMock()
 
     with (
+        caplog.at_level(logging.WARNING, logger="codecarbon"),
         patch("codecarbon.core.resource_tracker.get_cached_tdp", return_value=fake_tdp),
         patch(
             "codecarbon.core.resource_tracker.CPU.from_utils", return_value=fake_cpu
@@ -303,6 +305,10 @@ def test_set_cpu_tracking_force_mode_constant_without_tdp_uses_global_constant()
     mock_from_utils.assert_called_once_with("out", "constant", "Unknown CPU", None)
     assert resource_tracker.cpu_tracker == "global constant"
     assert tracker._hardware == [fake_cpu]
+    # The generic default power is a rough guess: the user must be told, at the
+    # default log level, how to give the real figure.
+    warnings = [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING]
+    assert any("Unknown CPU" in m and "force_cpu_power" in m for m in warnings)
 
 
 def test_set_cpu_tracking_windows_prefers_emi():

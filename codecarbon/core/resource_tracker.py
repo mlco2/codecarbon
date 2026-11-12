@@ -292,6 +292,11 @@ class ResourceTracker:
                 self.cpu_tracker = "TDP constant"
             elif max_power is None:
                 self.cpu_tracker = "global constant"
+                logger.warning(
+                    f"Force constant mode: no TDP found for CPU {tdp.model}, using "
+                    "a generic default power. Set force_cpu_power to your CPU TDP "
+                    "for a better estimate."
+                )
             logger.info(
                 "Force constant mode: skipping dynamic CPU power backends, "
                 f"using {self.cpu_tracker} for {tdp.model}"
