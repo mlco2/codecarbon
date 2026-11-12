@@ -2567,9 +2567,13 @@ cooldown that starts at 30 seconds and doubles on each consecutive failure,
 up to 1 hour, per location and token; it resets after a successful request.
 Meanwhile CodeCarbon falls back to its own country data.</p>
 </div>
-<p>The Electricity Maps API offers a free tier. You can sign up and get a token at
-<a href="https://app.electricitymaps.com/sign-up">electricitymaps.com</a>.</p>
-<p>Set it in your config file:</p>
+<p>Direct access to the Electricity Maps API requires a paid plan or a
+<a href="https://help.electricitymaps.com/en/articles/13335550-how-can-i-access-the-electricity-maps-api-and-are-there-any-restrictions">14-day free trial</a>.
+Electricity Maps also offers a free
+<a href="https://help.electricitymaps.com/en/articles/13160873-how-to-get-an-electricity-maps-api-key-for-home-assistant">Home Assistant license</a>,
+but that key is restricted to a single zone and to the Home Assistant
+integration; it will not work with CodeCarbon's direct API calls.</p>
+<p>If you have a paid plan or trial token, set it in your config file:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[codecarbon]</span>
 <span class="na">electricitymaps_api_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">your-token-here</span>
 </code></pre></div>
