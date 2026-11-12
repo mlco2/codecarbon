@@ -1712,3 +1712,44 @@ def test_caller_stacklevel_falls_back_when_no_frame_is_outside_codecarbon():
     # Every frame looks like codecarbon code, so no caller can be found.
     with mock.patch("codecarbon.emissions_tracker._PACKAGE_DIR", ""):
         assert _caller_stacklevel() == 2
+
+
+class TestConstructorFailureReleasesLock(unittest.TestCase):
+    """A constructor failure with allow_multiple_runs=False must release the
+    lock it acquired, so a subsequent tracker can still start."""
+
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.lockfile_path = Path(self.temp_dir.name) / ".codecarbon.lock"
+        patcher_lock = mock.patch("codecarbon.lock.LOCKFILE", str(self.lockfile_path))
+        patcher_lock.start()
+        self.addCleanup(patcher_lock.stop)
+
+        patcher_conf = mock.patch(
+            "builtins.open", new_callable=get_custom_mock_open(empty_conf, empty_conf)
+        )
+        patcher_conf.start()
+        self.addCleanup(patcher_conf.stop)
+
+    def test_constructor_failure_releases_lock(self):
+        # A bogus tracking_mode makes __init__ raise after the lock is
+        # acquired in _configure_multiple_runs().
+        with self.assertRaises(AssertionError):
+            EmissionsTracker(
+                tracking_mode="not-a-real-mode",
+                allow_multiple_runs=False,
+                save_to_file=False,
+            )
+
+        self.assertFalse(
+            self.lockfile_path.exists(),
+            "constructor failure must release the lock file",
+        )
+
+        # A second tracker can now start without hitting the lock.
+        tracker = EmissionsTracker(
+            allow_multiple_runs=False,
+            save_to_file=False,
+        )
+        self.assertTrue(self.lockfile_path.exists())
+        tracker._lock.release()
