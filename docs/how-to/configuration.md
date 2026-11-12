@@ -125,10 +125,14 @@ and also periodically during long runs (every
     up to 1 hour, per location and token; it resets after a successful request.
     Meanwhile CodeCarbon falls back to its own country data.
 
-The Electricity Maps API offers a free tier. You can sign up and get a token at
-[electricitymaps.com](https://app.electricitymaps.com/sign-up).
+Direct access to the Electricity Maps API requires a paid plan or a
+[14-day free trial](https://help.electricitymaps.com/en/articles/13335550-how-can-i-access-the-electricity-maps-api-and-are-there-any-restrictions).
+Electricity Maps also offers a free
+[Home Assistant license](https://help.electricitymaps.com/en/articles/13160873-how-to-get-an-electricity-maps-api-key-for-home-assistant),
+but that key is restricted to a single zone and to the Home Assistant
+integration; it will not work with CodeCarbon's direct API calls.
 
-Set it in your config file:
+If you have a paid plan or trial token, set it in your config file:
 
 ``` ini
 [codecarbon]
