@@ -430,6 +430,8 @@ class _TrackerStub:
     _resolve_metadata = BaseEmissionsTracker._resolve_metadata
     _build_sci_output = BaseEmissionsTracker._build_sci_output
     _build_boamps_output = BaseEmissionsTracker._build_boamps_output
+    _init_interval_csv_output = BaseEmissionsTracker._init_interval_csv_output
+    _resolve_csv_run_filename = BaseEmissionsTracker._resolve_csv_run_filename
 
     def __init__(self, output_dir: str, metadata=None):
         self._output_methods = [OutputMethod.SCI]
@@ -437,6 +439,7 @@ class _TrackerStub:
         self._metadata = metadata
         self._output_dir = output_dir
         self._output_handlers = []
+        self._csv_run_name = None
 
     def init(self):
         BaseEmissionsTracker._init_output_methods(self, api_key=None)

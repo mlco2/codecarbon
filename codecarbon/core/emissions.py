@@ -146,7 +146,7 @@ class Emissions:
             )
 
         state = selected["state"].item()
-        if state is not None:
+        if isinstance(state, str):
             return state
         city = selected["city"].item()
         return city
