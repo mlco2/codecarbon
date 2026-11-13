@@ -679,6 +679,27 @@ class TestEmissions(unittest.TestCase):
 
     @patch("codecarbon.core.emissions.logger")
     @patch("codecarbon.core.national_grid_eso_api.get_emissions")
+    def test_national_grid_eso_error_falls_back_to_country_data(
+        self, mocked_get_emissions, mocked_logger
+    ):
+        mocked_get_emissions.side_effect = (
+            national_grid_eso_api.NationalGridESOAPIError("status 503")
+        )
+        emissions_calculator = Emissions(
+            self._data_source, use_national_grid_eso_api=True
+        )
+        geo = GeoMetadata(country_iso_code="GBR", country_name="United Kingdom")
+        energy = Energy.from_energy(kWh=1)
+
+        emissions = emissions_calculator.get_private_infra_emissions(energy, geo)
+
+        self.assertAlmostEqual(
+            emissions, emissions_calculator.get_country_emissions(energy, geo)
+        )
+        mocked_logger.error.assert_called_once()
+
+    @patch("codecarbon.core.emissions.logger")
+    @patch("codecarbon.core.national_grid_eso_api.get_emissions")
     def test_national_grid_eso_cooldown_falls_back_without_logging_error(
         self, mocked_get_emissions, mocked_logger
     ):
