@@ -1,5 +1,6 @@
 import csv
 import os
+import threading
 from typing import List, Optional
 
 import pandas as pd
@@ -53,6 +54,9 @@ class FileOutput(BaseOutput):
         self.output_dir: str = output_dir
         self.on_csv_write: str = on_csv_write
         self.enable_live_out: bool = enable_live_out
+        # live_out runs on the scheduler thread, flush() and stop() call out()
+        # on the caller's thread: one write at a time.
+        self._write_lock = threading.RLock()
         self.save_file_path = os.path.join(self.output_dir, self.output_file_name)
         logger.info(
             f"Emissions data (if any) will be saved to file {os.path.abspath(self.save_file_path)}"
@@ -115,6 +119,10 @@ class FileOutput(BaseOutput):
 
 
         """
+        with self._write_lock:
+            self._write_row(total)
+
+    def _write_row(self, total: EmissionsData):
         file_exists: bool = os.path.isfile(self.save_file_path)
         if file_exists and os.path.getsize(self.save_file_path) == 0:
             logger.warning(
@@ -207,7 +215,10 @@ class IntervalFileOutput(FileOutput):
         return f"emissions_{run_id}.csv"
 
     def out(self, total: EmissionsData, delta: EmissionsData):
-        if self.name_after_run_id:
-            self.output_file_name = self.run_file_name(total.run_id)
-            self.save_file_path = os.path.join(self.output_dir, self.output_file_name)
-        super().out(total, delta)
+        with self._write_lock:
+            if self.name_after_run_id:
+                self.output_file_name = self.run_file_name(total.run_id)
+                self.save_file_path = os.path.join(
+                    self.output_dir, self.output_file_name
+                )
+            super().out(total, delta)
