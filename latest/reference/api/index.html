@@ -3451,6 +3451,30 @@ Can also be set in config as a path to a JSON file:
                   <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>use_national_grid_eso_api</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Opt-in: when True and the detected location is
+Great Britain, fetch live carbon intensity from the UK
+National Grid ESO Carbon Intensity API
+(https://carbonintensity.org.uk/, Open Government Licence
+v3.0) instead of CodeCarbon's static country-average data.
+This makes a network call (4 s timeout, value cached
+for 5 minutes per process, back-off after a failure)
+and reports a Great-Britain-wide figure, not a
+regional one. Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -4778,6 +4802,26 @@ When True, measures CPU package + DRAM.</p>
               <div class="doc-md-description">
                 <p>Prefer psys over package domains for RAPL on Linux
 (default: False). When True, uses total platform power.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>use_national_grid_eso_api</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Opt-in: when True and the detected location
+is Great Britain, fetch live carbon intensity from the
+UK National Grid ESO Carbon Intensity API instead of
+CodeCarbon's static country-average data. Defaults to
+False.</p>
               </div>
             </td>
             <td>

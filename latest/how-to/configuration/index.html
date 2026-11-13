@@ -966,6 +966,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#national-grid-eso-api-great-britain" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        National Grid ESO API (Great Britain)
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tracking-mode" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2337,6 +2348,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#national-grid-eso-api-great-britain" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        National Grid ESO API (Great Britain)
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tracking-mode" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2587,6 +2609,35 @@ compatibility but is deprecated and will be removed in a future version.
 Use <code>electricitymaps_api_token</code> instead. See the
 <a href="https://docs.codecarbon.io/latest/reference/deprecations/">deprecations list</a>.</p>
 </div>
+<h2 id="national-grid-eso-api-great-britain">National Grid ESO API (Great Britain)<a class="headerlink" href="#national-grid-eso-api-great-britain" title="Permanent link">&para;</a></h2>
+<p>For runs detected as being in Great Britain, CodeCarbon can optionally use
+live carbon intensity data from the
+<a href="https://carbonintensity.org.uk/">National Grid ESO Carbon Intensity API</a>
+instead of the static country-average data, by setting
+<code>use_national_grid_eso_api=True</code>. This is <strong>opt-in and off by default</strong>,
+the same way the Electricity Maps integration above is off until you provide
+a token — it is not used automatically.</p>
+<div class="highlight"><pre><span></span><code><span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">use_national_grid_eso_api</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>Or in your config file:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[codecarbon]</span>
+<span class="na">use_national_grid_eso_api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span>
+</code></pre></div>
+<p>The value is fetched with a 4-second timeout and cached for 5 minutes, shared
+by all trackers in the same Python process. If a request fails, CodeCarbon
+uses its static data and waits 30 seconds before retrying, doubling the wait
+on each consecutive failure up to one hour.</p>
+<p><strong>Attribution and terms of use:</strong> data is published by National Grid ESO
+under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>.
+See <a href="https://carbonintensity.org.uk/">carbonintensity.org.uk</a> for full terms.</p>
+<p><strong>Scope:</strong> the API reports a single <strong>Great-Britain-wide (national)</strong> carbon
+intensity figure. It does not provide regional or sub-national data, so this
+is not a substitute for CodeCarbon's USA/Canada/Nordic regional emissions
+support. It covers the GB grid (England, Scotland, Wales) only: runs located
+in Northern Ireland, which is on the all-island Irish grid, keep CodeCarbon's
+static data.</p>
+<p>If <code>electricitymaps_api_token</code> is also set, Electricity Maps takes priority
+and this source is only used as a fallback if that call fails.</p>
 <h2 id="tracking-mode">Tracking Mode<a class="headerlink" href="#tracking-mode" title="Permanent link">&para;</a></h2>
 <p>The <code>tracking_mode</code> parameter controls how CodeCarbon measures power consumption. It accepts two values:</p>
 <ul>
