@@ -895,7 +895,7 @@ class TestCarbonTracker(unittest.TestCase):
             )
         )
 
-    def test_csv_run_name_enables_interval_file_output(
+    def test_live_output_file_enables_interval_file_output(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -912,7 +912,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[OutputMethod.CSV],
-            csv_run_name="interval_emissions.csv",
+            live_output_file="interval_emissions.csv",
             api_call_interval=1,
             measure_power_secs=1,
             allow_multiple_runs=True,
@@ -974,7 +974,7 @@ class TestCarbonTracker(unittest.TestCase):
         # Default emissions.csv stays final-only (live_out is a no-op).
         self.assertFalse(self.emissions_file_path.exists())
 
-    def test_csv_run_name_auto_uses_run_id(
+    def test_live_output_file_auto_uses_run_id(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -990,7 +990,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[OutputMethod.CSV],
-            csv_run_name="auto",
+            live_output_file="auto",
             allow_multiple_runs=True,
         )
 
@@ -1003,7 +1003,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(live_handlers), 1)
         self.assertEqual(live_handlers[0].output_file_name, expected)
 
-    def test_csv_run_name_same_as_output_file_enables_live_on_primary(
+    def test_live_output_file_same_as_output_file_enables_live_on_primary(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1020,7 +1020,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_handlers=[],
             output_methods=[OutputMethod.CSV],
             output_file="emissions.csv",
-            csv_run_name="emissions.csv",
+            live_output_file="emissions.csv",
             allow_multiple_runs=True,
         )
 
@@ -1030,7 +1030,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(file_handlers), 1)
         self.assertTrue(file_handlers[0].enable_live_out)
 
-    def test_csv_run_name_empty_string_uses_run_id(
+    def test_live_output_file_empty_string_uses_run_id(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1046,7 +1046,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[OutputMethod.CSV],
-            csv_run_name="",
+            live_output_file="",
             allow_multiple_runs=True,
         )
 
@@ -1059,7 +1059,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(live_handlers), 1)
         self.assertEqual(live_handlers[0].output_file_name, expected)
 
-    def test_csv_run_name_default_keeps_csv_final_only(
+    def test_live_output_file_default_keeps_csv_final_only(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1084,7 +1084,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(file_handlers), 1)
         self.assertFalse(file_handlers[0].enable_live_out)
 
-    def test_csv_run_name_without_csv_method_still_enables_interval_file(
+    def test_live_output_file_without_csv_method_still_enables_interval_file(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1100,7 +1100,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[],
-            csv_run_name="interval_only.csv",
+            live_output_file="interval_only.csv",
             allow_multiple_runs=True,
         )
 
@@ -1112,7 +1112,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(live_handlers), 1)
         self.assertEqual(live_handlers[0].output_file_name, "interval_only.csv")
 
-    def test_csv_run_name_auto_file_is_named_after_the_api_run_id(
+    def test_live_output_file_auto_file_is_named_after_the_api_run_id(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1136,7 +1136,7 @@ class TestCarbonTracker(unittest.TestCase):
                 output_methods=[OutputMethod.API],
                 experiment_id="test-experiment-id",
                 api_key="test-api-key",
-                csv_run_name="auto",
+                live_output_file="auto",
                 allow_multiple_runs=True,
             )
             local_run_id = tracker.run_id
@@ -1157,7 +1157,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(df), 2)
         self.assertEqual(set(df["run_id"]), {"api-run-id"})
 
-    def test_csv_run_name_failed_write_does_not_stop_other_live_outputs(
+    def test_live_output_file_failed_write_does_not_stop_other_live_outputs(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1174,7 +1174,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[OutputMethod.CSV],
-            csv_run_name="emissions.csv",
+            live_output_file="emissions.csv",
             api_call_interval=1,
             allow_multiple_runs=True,
         )
@@ -1194,7 +1194,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(tracker._measure_occurrence, 0)
         self.assertIn("file locked", "\n".join(logs.output))
 
-    def test_csv_run_name_same_file_spelled_differently_is_one_handler(
+    def test_live_output_file_same_file_spelled_differently_is_one_handler(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1210,7 +1210,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[OutputMethod.CSV],
-            csv_run_name="./emissions.csv",
+            live_output_file="./emissions.csv",
             allow_multiple_runs=True,
         )
 
@@ -1220,7 +1220,7 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(file_handlers), 1)
         self.assertTrue(file_handlers[0].enable_live_out)
 
-    def test_csv_run_name_interval_file_does_not_write_task_files(
+    def test_live_output_file_interval_file_does_not_write_task_files(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1234,7 +1234,7 @@ class TestCarbonTracker(unittest.TestCase):
             output_dir=self.temp_path,
             output_handlers=[],
             output_methods=[],
-            csv_run_name="interval.csv",
+            live_output_file="interval.csv",
             allow_multiple_runs=True,
         )
         tracker.start_task("my_task")
@@ -1245,7 +1245,7 @@ class TestCarbonTracker(unittest.TestCase):
             sorted(p.name for p in self.temp_path.iterdir()), ["interval.csv"]
         )
 
-    def test_csv_run_name_warns_when_live_outputs_are_disabled(
+    def test_live_output_file_warns_when_live_outputs_are_disabled(
         self,
         mock_cli_setup,
         mock_log_values,
@@ -1260,7 +1260,7 @@ class TestCarbonTracker(unittest.TestCase):
                 output_dir=self.temp_path,
                 output_handlers=[],
                 output_methods=[],
-                csv_run_name="interval.csv",
+                live_output_file="interval.csv",
                 api_call_interval=-1,
                 allow_multiple_runs=True,
             )

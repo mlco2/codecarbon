@@ -455,7 +455,7 @@ class BaseEmissionsTracker(ABC):
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
-        csv_run_name: Optional[str] = _sentinel,
+        live_output_file: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
         force_cpu_power: Optional[int] = _sentinel,
         force_ram_power: Optional[int] = _sentinel,
@@ -535,7 +535,7 @@ class BaseEmissionsTracker(ABC):
         :param on_csv_write: When calling tracker.flush() manually: "update" to overwrite
                              the existing run_id row, or "append" to add a new row to the
                              CSV file. Defaults to "append".
-        :param csv_run_name: Optional CSV filename for interval measurement export.
+        :param live_output_file: Optional CSV filename for interval measurement export.
                              When set, CodeCarbon appends a row on the same cadence as
                              API/Prometheus (``api_call_interval * measure_power_secs``).
                              Use ``"auto"`` (or an empty string) to name the file
@@ -640,7 +640,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
-        self._set_from_conf(csv_run_name, "csv_run_name", None)
+        self._set_from_conf(live_output_file, "live_output_file", None)
         self._set_from_conf(metadata, "metadata")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
@@ -674,7 +674,11 @@ class BaseEmissionsTracker(ABC):
         """
         methods = set(self._output_methods) if self._output_methods else set()
 
-        if not methods and not self._emissions_endpoint and self._csv_run_name is None:
+        if (
+            not methods
+            and not self._emissions_endpoint
+            and self._live_output_file is None
+        ):
             return
 
         from codecarbon.output_methods.file import FileOutput
@@ -795,19 +799,23 @@ class BaseEmissionsTracker(ABC):
 
         return BoAmpsOutput(output_dir=self._output_dir)
 
-    def _resolve_csv_run_filename(self) -> Optional[str]:
+    def _resolve_live_output_file(self) -> Optional[str]:
         """Return the interval CSV filename, or None when interval export is disabled."""
         from codecarbon.output_methods.file import IntervalFileOutput
 
-        if self._csv_run_name is None:
+        if self._live_output_file is None:
             return None
-        if self._csv_run_name_is_auto():
+        if self._live_output_file_is_auto():
             return IntervalFileOutput.run_file_name(self.run_id)
-        return self._csv_run_name.strip()
+        return self._live_output_file.strip()
 
-    def _csv_run_name_is_auto(self) -> bool:
+    def _live_output_file_is_auto(self) -> bool:
         """``"auto"`` or ``""``: name the interval CSV after the run_id."""
-        name = self._csv_run_name.strip() if isinstance(self._csv_run_name, str) else ""
+        name = (
+            self._live_output_file.strip()
+            if isinstance(self._live_output_file, str)
+            else ""
+        )
         return name in ("", "auto")
 
     def _init_interval_csv_output(self, csv_file_handler) -> None:
@@ -817,12 +825,12 @@ class BaseEmissionsTracker(ABC):
         """
         from codecarbon.output_methods.file import IntervalFileOutput
 
-        interval_file_name = self._resolve_csv_run_filename()
+        interval_file_name = self._resolve_live_output_file()
         if interval_file_name is None:
             return
         if self._api_call_interval == -1:
             logger.warning(
-                "csv_run_name is set but api_call_interval=-1 disables live"
+                "live_output_file is set but api_call_interval=-1 disables live"
                 " outputs: %s will only get a row at flush() and stop().",
                 interval_file_name,
             )
@@ -843,7 +851,7 @@ class BaseEmissionsTracker(ABC):
             IntervalFileOutput(
                 interval_file_name,
                 self._output_dir,
-                name_after_run_id=self._csv_run_name_is_auto(),
+                name_after_run_id=self._live_output_file_is_auto(),
             )
         )
         logger.info(
@@ -1787,7 +1795,7 @@ def track_emissions(
     tracking_mode: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
-    csv_run_name: Optional[str] = _sentinel,
+    live_output_file: Optional[str] = _sentinel,
     logger_preamble: Optional[str] = _sentinel,
     offline: Optional[bool] = _sentinel,
     country_iso_code: Optional[str] = _sentinel,
@@ -1848,7 +1856,7 @@ def track_emissions(
                       Defaults to "info".
     :param on_csv_write: When calling tracker.flush() manually: "update" to overwrite the
                          existing run_id row, or "append" to add a new row. Defaults to "append".
-    :param csv_run_name: Optional CSV filename for interval measurement export. See
+    :param live_output_file: Optional CSV filename for interval measurement export. See
                          EmissionsTracker. Defaults to None (disabled).
     :param logger_preamble: String to systematically include in the logger.
                             messages. Defaults to "".
@@ -1931,7 +1939,7 @@ def track_emissions(
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
-                    csv_run_name=csv_run_name,
+                    live_output_file=live_output_file,
                     logger_preamble=logger_preamble,
                     country_iso_code=country_iso_code,
                     region=region,
@@ -1973,7 +1981,7 @@ def track_emissions(
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
-                    csv_run_name=csv_run_name,
+                    live_output_file=live_output_file,
                     logger_preamble=logger_preamble,
                     force_cpu_power=force_cpu_power,
                     force_ram_power=force_ram_power,

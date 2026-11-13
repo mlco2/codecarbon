@@ -190,7 +190,7 @@ class FileOutput(BaseOutput):
 
 class IntervalFileOutput(FileOutput):
     """
-    Separate CSV of the interval export (``csv_run_name``): a row is appended on
+    Separate CSV of the interval export (``live_output_file``): a row is appended on
     every live interval, and at each flush() and stop().
     """
 
@@ -226,5 +226,5 @@ class IntervalFileOutput(FileOutput):
     def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
         """
         Task CSVs belong to the primary CSV output: writing them here would
-        create them when only csv_run_name was set, or write them twice.
+        create them when only live_output_file was set, or write them twice.
         """
