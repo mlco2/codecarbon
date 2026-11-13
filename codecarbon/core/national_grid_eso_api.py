@@ -34,14 +34,15 @@ def _fetch_carbon_intensity_g_per_kWh() -> float:
 
     try:
         intensity = resp.json()["data"][0]["intensity"]
-    except (KeyError, IndexError, TypeError) as e:
+        # Prefer actual; fall back to forecast when actual is not published yet.
+        actual = intensity.get("actual")
+        carbon_intensity_g_per_kWh = (
+            actual if actual is not None else intensity.get("forecast")
+        )
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError) as e:
+        # ValueError: body is not JSON (e.g. a captive portal's HTML page).
+        # AttributeError: "intensity" is null or not an object.
         raise NationalGridESOAPIError(f"Unexpected response structure: {e}") from e
-
-    # Prefer actual; fall back to forecast when actual has not been published yet.
-    actual = intensity.get("actual")
-    carbon_intensity_g_per_kWh = (
-        actual if actual is not None else intensity.get("forecast")
-    )
 
     if carbon_intensity_g_per_kWh is None:
         raise NationalGridESOAPIError(

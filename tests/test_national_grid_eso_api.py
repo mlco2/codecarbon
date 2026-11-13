@@ -158,6 +158,29 @@ class TestNationalGridESOAPI(unittest.TestCase):
         with self.assertRaises(NationalGridESOAPIError):
             national_grid_eso_api.get_emissions(self._energy, self._geo)
 
+    @responses.activate
+    def test_get_emissions_raises_api_error_on_non_json_body(self):
+        # A captive portal or proxy can answer 200 with an HTML page.
+        responses.add(
+            responses.GET,
+            national_grid_eso_api.URL,
+            body="<html>Sign in to the Wi-Fi</html>",
+            status=200,
+        )
+        with self.assertRaises(NationalGridESOAPIError):
+            national_grid_eso_api.get_emissions(self._energy, self._geo)
+
+    @responses.activate
+    def test_get_emissions_raises_api_error_on_null_intensity(self):
+        responses.add(
+            responses.GET,
+            national_grid_eso_api.URL,
+            json={"data": [{"intensity": None}]},
+            status=200,
+        )
+        with self.assertRaises(NationalGridESOAPIError):
+            national_grid_eso_api.get_emissions(self._energy, self._geo)
+
     @pytest.mark.integ_test
     @unittest.skip("Skip real API call in regular test runs")
     def test_get_emissions_real_api(self):
