@@ -125,10 +125,14 @@ and also periodically during long runs (every
     up to 1 hour, per location and token; it resets after a successful request.
     Meanwhile CodeCarbon falls back to its own country data.
 
-The Electricity Maps API offers a free tier. You can sign up and get a token at
-[electricitymaps.com](https://app.electricitymaps.com/sign-up).
+Direct access to the Electricity Maps API requires a paid plan or a
+[14-day free trial](https://help.electricitymaps.com/en/articles/13335550-how-can-i-access-the-electricity-maps-api-and-are-there-any-restrictions).
+Electricity Maps also offers a free
+[Home Assistant license](https://help.electricitymaps.com/en/articles/13160873-how-to-get-an-electricity-maps-api-key-for-home-assistant),
+but that key is restricted to a single zone and to the Home Assistant
+integration; it will not work with CodeCarbon's direct API calls.
 
-Set it in your config file:
+If you have a paid plan or trial token, set it in your config file:
 
 ``` ini
 [codecarbon]
@@ -147,6 +151,46 @@ EmissionsTracker(electricitymaps_api_token="your-token-here")
     compatibility but is deprecated and will be removed in a future version.
     Use `electricitymaps_api_token` instead. See the
     [deprecations list](https://docs.codecarbon.io/latest/reference/deprecations/).
+
+## National Grid ESO API (Great Britain)
+
+For runs detected as being in Great Britain, CodeCarbon can optionally use
+live carbon intensity data from the
+[National Grid ESO Carbon Intensity API](https://carbonintensity.org.uk/)
+instead of the static country-average data, by setting
+`use_national_grid_eso_api=True`. This is **opt-in and off by default**,
+the same way the Electricity Maps integration above is off until you provide
+a token — it is not used automatically.
+
+``` python
+EmissionsTracker(use_national_grid_eso_api=True)
+```
+
+Or in your config file:
+
+``` ini
+[codecarbon]
+use_national_grid_eso_api = true
+```
+
+The value is fetched with a 4-second timeout and cached for 5 minutes, shared
+by all trackers in the same Python process. If a request fails, CodeCarbon
+uses its static data and waits 30 seconds before retrying, doubling the wait
+on each consecutive failure up to one hour.
+
+**Attribution and terms of use:** data is published by National Grid ESO
+under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+See [carbonintensity.org.uk](https://carbonintensity.org.uk/) for full terms.
+
+**Scope:** the API reports a single **Great-Britain-wide (national)** carbon
+intensity figure. It does not provide regional or sub-national data, so this
+is not a substitute for CodeCarbon's USA/Canada/Nordic regional emissions
+support. It covers the GB grid (England, Scotland, Wales) only: runs located
+in Northern Ireland, which is on the all-island Irish grid, keep CodeCarbon's
+static data.
+
+If `electricitymaps_api_token` is also set, Electricity Maps takes priority
+and this source is only used as a fallback if that call fails.
 
 ## Tracking Mode
 

@@ -304,6 +304,44 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(tracker.force_carbon_intensity_g_co2e_kwh, 456.7)
         self.assertEqual(tracker._conf["force_carbon_intensity_g_co2e_kwh"], 456.7)
 
+    def _tracker_with_conf(self, global_conf, **kwargs):
+        with patch("builtins.open", new_callable=get_custom_mock_open(global_conf, "")):
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    save_to_file=False, allow_multiple_runs=True, **kwargs
+                )
+        tracker._ensure_emissions_engine()
+        return tracker
+
+    def test_use_national_grid_eso_api_defaults_to_false(self):
+        tracker = self._tracker_with_conf("")
+        self.assertFalse(tracker._emissions._use_national_grid_eso_api)
+
+    def test_use_national_grid_eso_api_from_config_file(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            use_national_grid_eso_api=true
+            """)
+        tracker = self._tracker_with_conf(global_conf)
+        self.assertIs(tracker._emissions._use_national_grid_eso_api, True)
+
+    @mock.patch.dict(os.environ, {"CODECARBON_USE_NATIONAL_GRID_ESO_API": "false"})
+    def test_use_national_grid_eso_api_false_string_from_env(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            use_national_grid_eso_api=true
+            """)
+        tracker = self._tracker_with_conf(global_conf)
+        self.assertIs(tracker._emissions._use_national_grid_eso_api, False)
+
+    def test_use_national_grid_eso_api_constructor_overrides_config(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            use_national_grid_eso_api=false
+            """)
+        tracker = self._tracker_with_conf(global_conf, use_national_grid_eso_api=True)
+        self.assertIs(tracker._emissions._use_national_grid_eso_api, True)
+
     def test_offline_tracker_accepts_force_carbon_intensity_parameter(self):
         with patch("builtins.open", new_callable=get_custom_mock_open("", "")):
             with patch("os.path.exists", return_value=True):
