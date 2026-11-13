@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-<!-- Open Graph / Twitter Card metadata. Zensical has no social-card plugin,
-     so one static card image is used site-wide. -->
+<!-- Open Graph / Twitter Card metadata. Kept instead of the social plugin:
+     the docs live under /latest/, which site_url does not include. -->
 {% block extrahead %}
   {% set title = config.site_name %}
   {% if page.meta and page.meta.title %}
