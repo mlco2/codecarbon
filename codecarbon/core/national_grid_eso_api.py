@@ -1,3 +1,4 @@
+import threading
 import time
 
 import requests
@@ -22,6 +23,10 @@ NATIONAL_GRID_ESO_API_TIMEOUT: int = 4
 # describes Great Britain as a whole; re-fetched once the entry expires.
 _CACHE_TTL_SECONDS: int = 300
 _cache: tuple[float, float] | None = None  # (carbon_intensity_g_per_kWh, fetched_at)
+# The measurement thread and stop() both compute emissions. The lock is held
+# across the request so that concurrent callers with an expired cache make a
+# single request instead of one each.
+_lock = threading.Lock()
 
 
 def _fetch_carbon_intensity_g_per_kWh() -> float:
@@ -55,21 +60,22 @@ def _fetch_carbon_intensity_g_per_kWh() -> float:
 def _get_cached_carbon_intensity_g_per_kWh() -> float:
     """Return the cached intensity if still fresh, otherwise fetch and cache it."""
     global _cache
-    now = time.monotonic()
-    if _cache is not None:
-        cached_value, fetched_at = _cache
-        if (now - fetched_at) < _CACHE_TTL_SECONDS:
-            return cached_value
+    with _lock:
+        if _cache is not None:
+            cached_value, fetched_at = _cache
+            if (time.monotonic() - fetched_at) < _CACHE_TTL_SECONDS:
+                return cached_value
 
-    value = _fetch_carbon_intensity_g_per_kWh()
-    _cache = (value, now)
-    return value
+        value = _fetch_carbon_intensity_g_per_kWh()
+        _cache = (value, time.monotonic())
+        return value
 
 
 def clear_cache() -> None:
     """Reset the cached carbon intensity value (mainly useful for tests)."""
     global _cache
-    _cache = None
+    with _lock:
+        _cache = None
 
 
 def get_emissions(energy: Energy, geo: GeoMetadata) -> float:

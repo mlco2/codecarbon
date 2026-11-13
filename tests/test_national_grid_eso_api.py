@@ -1,4 +1,7 @@
+import threading
+import time
 import unittest
+from unittest.mock import patch
 
 import pytest
 import responses
@@ -249,3 +252,29 @@ class TestNationalGridESOAPI(unittest.TestCase):
         )
         national_grid_eso_api.get_emissions(self._energy, self._geo)
         assert len(responses.calls) == 2
+
+    def test_concurrent_callers_with_expired_cache_make_one_request(self):
+        calls = []
+        barrier = threading.Barrier(2)
+
+        def slow_fetch():
+            calls.append(1)
+            time.sleep(0.2)
+            return 263
+
+        def measure():
+            barrier.wait()
+            national_grid_eso_api.get_emissions(self._energy, self._geo)
+
+        with patch.object(
+            national_grid_eso_api,
+            "_fetch_carbon_intensity_g_per_kWh",
+            side_effect=slow_fetch,
+        ):
+            threads = [threading.Thread(target=measure) for _ in range(2)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+
+        assert len(calls) == 1
