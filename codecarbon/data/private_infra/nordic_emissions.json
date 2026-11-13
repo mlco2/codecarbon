@@ -33,27 +33,27 @@
       "note": "Lower bound: 14.95% of generation is ENTSO-E 'Other' (mostly biomass/waste CHP), which has no factor in carbon_intensity_per_source.json and is counted at 0."
     },
     "NO1": {
-      "emission_factor": 26.0,
+      "emission_factor": 27.0,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 1 (Oslo)",
       "year": 2025,
-      "coverage": "99.58% (uncovered: Waste 0.42%, Biomass 0.0004%)",
+      "coverage": "100.00%",
       "note": "Hydro-dominated."
     },
     "NO2": {
-      "emission_factor": 27.0,
+      "emission_factor": 27.3,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 2 (Southern Norway)",
       "year": 2025,
-      "coverage": "99.89% (uncovered: Waste 0.11%)",
+      "coverage": "100.00%",
       "note": "Hydro-dominated, with pumped storage and a small offshore wind share."
     },
     "NO3": {
-      "emission_factor": 25.8,
+      "emission_factor": 26.0,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 3 (Central Norway)",
       "year": 2025,
-      "coverage": "99.32% (uncovered: Other renewable 0.60%, Waste 0.09%)",
+      "coverage": "99.40% (uncovered: Other renewable 0.60%)",
       "note": "Hydro-dominated."
     },
     "NO4": {
@@ -65,11 +65,11 @@
       "note": "Fossil gas (3.63% of 2025 generation at 743 gCO2eq/kWh) contributes about half of this value. The gas share varies between years (near 0 in 2021, 6.23% in 2024, 3.63% in 2025), so the value is period-dependent."
     },
     "NO5": {
-      "emission_factor": 26.6,
+      "emission_factor": 27.4,
       "unit": "gCO2eq/kWh",
       "description": "Norway Bidding Zone 5 (Western Norway)",
       "year": 2025,
-      "coverage": "99.67% (uncovered: Waste 0.33%)",
+      "coverage": "100.00%",
       "note": "Near-pure hydro."
     },
     "FI": {
@@ -81,9 +81,9 @@
   },
   "metadata": {
     "source": "SE1-SE4, NO1-NO5: ENTSO-E Transparency, Actual Generation per Production Type (A75), per bidding zone, full year 2025. FI: prior value, unchanged.",
-    "method": "Production-based generation mix: energy-weighted average over the year of each production type's share multiplied by its factor from CodeCarbon's carbon_intensity_per_source.json. Production types with no entry in that table (ENTSO-E 'Other', 'Other renewable', 'Waste', 'Biomass') stay in the denominator with factor 0, so each value is a complete gCO2eq/kWh factor over all zone generation; the per-zone 'coverage' field gives the share that has a factor. Where coverage is well below 100% the value is a lower bound. Not consumption-based: the Electricity Maps API path remains the consumption-based source when a token is configured.",
+    "method": "Production-based generation mix: energy-weighted average over the year of each production type's share multiplied by its factor from CodeCarbon's carbon_intensity_per_source.json; ENTSO-E 'Biomass' and 'Waste' use its 'biomass' and 'waste' entries. Production types with no entry in that table (ENTSO-E 'Other', 'Other renewable') stay in the denominator with factor 0, so each value is a complete gCO2eq/kWh factor over all zone generation; the per-zone 'coverage' field gives the share that has a factor. Where coverage is well below 100% the value is a lower bound. Not consumption-based: the Electricity Maps API path remains the consumption-based source when a token is configured.",
     "provenance": "Derived reproducibly by Khepri v1.3 (avalyset/khepri), archived at https://doi.org/10.5281/zenodo.22285397. Method described in https://arxiv.org/abs/2608.29717. Note that the archived record and the paper also publish these zones on an IPCC AR5 factor basis; those figures are not the ones shipped here.",
-    "last_updated": "2026-09-09",
-    "notes": "SE1-SE4 and NO1-NO5 replace the previous uniform 18.0 gCO2eq/kWh placeholder, which was below the lowest factor in carbon_intensity_per_source.json (26 for hydro and wind) and therefore unreachable for any generation mix. The Swedish zones cluster at 24.7-27.0 because hydro and wind share the same factor; the Norwegian spread (25.8-51.7) is driven by NO4's fossil-gas share."
+    "last_updated": "2026-10-23",
+    "notes": "SE1-SE4 and NO1-NO5 replace the previous uniform 18.0 gCO2eq/kWh placeholder, which was below the lowest factor in carbon_intensity_per_source.json (26 for hydro and wind) and therefore unreachable for any generation mix. The Swedish zones cluster at 24.7-27.0 because hydro and wind share the same factor; the Norwegian spread (26.0-51.7) is driven by NO4's fossil-gas share. NO1, NO2, NO3 and NO5 were recomputed when biomass and waste factors were added to carbon_intensity_per_source.json; before that, their Waste and Biomass generation was counted at 0."
   }
 }
