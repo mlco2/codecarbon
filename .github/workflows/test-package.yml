@@ -22,6 +22,8 @@ jobs:
       CODECARBON_EXPERIMENT_ID: ${{ secrets.CODECARBON_EXPERIMENT_ID_TEST_PACKAGE }}
     strategy:
         fail-fast: false
+        # Each job uploads coverage: update after_n_builds in codecov.yml
+        # when the number of jobs changes.
         matrix:
           os: [ubuntu-latest]
           python-version: ["3.12", "3.13", "3.14"]

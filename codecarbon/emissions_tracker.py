@@ -303,6 +303,8 @@ class BaseEmissionsTracker(ABC):
             self._output_methods.append(OutputMethod.LOGFIRE)
 
     def _initialize_runtime_state(self) -> None:
+        self._api_output = None
+        self.run_id = uuid.uuid4()
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
@@ -415,6 +417,7 @@ class BaseEmissionsTracker(ABC):
             self._data_source,
             self._electricitymaps_api_token,
             force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
+            use_national_grid_eso_api=self._use_national_grid_eso_api,
         )
 
     def _ensure_geo_metadata(self) -> None:
@@ -468,6 +471,7 @@ class BaseEmissionsTracker(ABC):
         rapl_prefer_psys: Optional[bool] = _sentinel,
         metadata: Optional[Union[dict, str]] = _sentinel,
         telemetry_level: Optional[str] = _sentinel,
+        use_national_grid_eso_api: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -578,6 +582,15 @@ class BaseEmissionsTracker(ABC):
         :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
                                 Overrides config file and ``CODECARBON_TELEMETRY_LEVEL`` when set.
                                 Defaults to ``minimal``.
+        :param use_national_grid_eso_api: Opt-in: when True and the detected location is
+                                 Great Britain, fetch live carbon intensity from the UK
+                                 National Grid ESO Carbon Intensity API
+                                 (https://carbonintensity.org.uk/, Open Government Licence
+                                 v3.0) instead of CodeCarbon's static country-average data.
+                                 This makes a network call (4 s timeout, value cached
+                                 for 5 minutes per process, back-off after a failure)
+                                 and reports a Great-Britain-wide figure, not a
+                                 regional one. Defaults to False.
         """
 
         self._external_conf = get_hierarchical_config()
@@ -656,6 +669,9 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
+        self._set_from_conf(
+            use_national_grid_eso_api, "use_national_grid_eso_api", False, bool
+        )
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(wue, "wue", 0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
@@ -691,7 +707,6 @@ class BaseEmissionsTracker(ABC):
         methods = set(self._output_methods) if self._output_methods else set()
 
         if not methods and not self._emissions_endpoint:
-            self.run_id = uuid.uuid4()
             return
 
         from codecarbon.output_methods.file import FileOutput
@@ -722,11 +737,11 @@ class BaseEmissionsTracker(ABC):
                 experiment_id=self._experiment_id,
                 api_key=api_key,
                 conf=self._conf,
+                # _adopt_api_run() creates the run before each record.
+                create_run_on_emit=False,
             )
-            self.run_id = cc_api__out.run_id
+            self._api_output = cc_api__out
             self._output_handlers.append(cc_api__out)
-        else:
-            self.run_id = uuid.uuid4()
 
         if OutputMethod.PROMETHEUS in methods:
             self._output_handlers.append(
@@ -868,6 +883,8 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._ensure_hardware_ready()
+        self._adopt_api_run()
+
         self._last_measured_time = self._start_time = time.perf_counter()
 
         self._clear_utilization_history()
@@ -926,6 +943,10 @@ class BaseEmissionsTracker(ABC):
             task_name = uuid.uuid4().__str__()
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
+        # start_task() can be used without start(): create the API run here too.
+        # A previous start() or start_task() already wrote records, so a switch
+        # of run_id is late.
+        self._adopt_api_run(late=self._start_time is not None)
         self._last_measured_time = self._start_time = time.perf_counter()
 
         self._clear_utilization_history()
@@ -933,7 +954,8 @@ class BaseEmissionsTracker(ABC):
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
-        prepared_data_for_task_start = self._prepare_emissions_data()
+        # The API run was just tried above: do not try again.
+        prepared_data_for_task_start = self._prepare_emissions_data(adopt_api_run=False)
         self._active_task_emissions_at_start = dataclasses.replace(
             prepared_data_for_task_start
         )
@@ -980,8 +1002,10 @@ class BaseEmissionsTracker(ABC):
             self._resume_scheduler_if_paused_by_task()
             return None
         self._measure_power_and_energy()
-        emissions_data = (
-            self._prepare_emissions_data()
+        # No API run creation here: this record is not sent anywhere, and a
+        # blocking HTTP call would be counted in the task duration.
+        emissions_data = self._prepare_emissions_data(
+            adopt_api_run=False
         )  # This is emissions_data_at_stop
 
         if self._active_task_emissions_at_start is None:
@@ -1156,11 +1180,43 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
-    def _prepare_emissions_data(self) -> EmissionsData:
+    def _adopt_api_run(self, late: bool = False) -> None:
+        """
+        Create the API run if it does not exist yet (blocking HTTP call), then
+        use its id as run_id, so every output shares it.
+        :param late: records may already carry the local run_id, so warn when
+            it switches, and stay quiet on failure to avoid repeating the error.
+        """
+        if self._api_output is None:
+            return
+        try:
+            self._api_output._ensure_api_run()
+        except Exception:
+            # The API client already logs the failure itself.
+            if not late:
+                logger.warning(
+                    f"Could not create the API run, using local run_id {self.run_id}"
+                )
+            return
+        api_run_id = self._api_output.run_id
+        if api_run_id and api_run_id != self.run_id:
+            if late:
+                logger.warning(
+                    f"API run created late: switching run_id from {self.run_id} to"
+                    f" {api_run_id}. Earlier local records used {self.run_id}."
+                )
+            self.run_id = api_run_id
+
+    def _prepare_emissions_data(self, adopt_api_run: bool = True) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
+        :param adopt_api_run: try to create the API run first, if it is missing.
         :return: EmissionsData object with the total emissions data.
         """
+        if adopt_api_run:
+            # Before building the record, so the record written when the API
+            # comes back already carries the API run id.
+            self._adopt_api_run(late=True)
         self._update_emissions()
         self._ensure_cloud_conf()
         cloud = self._get_cloud_metadata()
@@ -1721,6 +1777,7 @@ def track_emissions(
     rapl_include_dram: Optional[bool] = _sentinel,
     rapl_prefer_psys: Optional[bool] = _sentinel,
     telemetry_level: Optional[str] = _sentinel,
+    use_national_grid_eso_api: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1806,6 +1863,11 @@ def track_emissions(
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
     :param telemetry_level: Telemetry tier (``disabled`` or ``minimal``).
+    :param use_national_grid_eso_api: Opt-in: when True and the detected location
+                             is Great Britain, fetch live carbon intensity from the
+                             UK National Grid ESO Carbon Intensity API instead of
+                             CodeCarbon's static country-average data. Defaults to
+                             False.
 
     :return: The decorated function
     """
@@ -1863,6 +1925,7 @@ def track_emissions(
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
                     telemetry_level=telemetry_level,
+                    use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1900,6 +1963,7 @@ def track_emissions(
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
                     telemetry_level=telemetry_level,
+                    use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             tracker.start()
             try:
