@@ -41,6 +41,29 @@ IGNORE_EXTERNAL_GLOBS: tuple[str, ...] = (
 
 SKIP_LOCAL_HREFS: frozenset[str] = frozenset({".", "..", "./", "../"})
 
+MKDOCS_CONFIG = Path(__file__).resolve().parents[1] / "mkdocs.yml"
+SITE_URL_RE = re.compile(r"^site_url:\s*['\"]?([^'\"\s#]+)", re.MULTILINE)
+
+
+def site_url_path(mkdocs_config: Path = MKDOCS_CONFIG) -> str:
+    """Path part of ``site_url`` with slashes on both ends, such as ``/latest/``.
+
+    The built pages link to each other with absolute paths under this prefix,
+    while the files sit at the root of the site directory.
+    """
+    match = None
+    if mkdocs_config.is_file():
+        match = SITE_URL_RE.search(mkdocs_config.read_text(encoding="utf-8"))
+    return _normalize_base_path(
+        urllib.parse.urlsplit(match.group(1)).path if match else ""
+    )
+
+
+def _normalize_base_path(path: str) -> str:
+    """``latest`` or ``/latest`` -> ``/latest/``; empty -> ``/``."""
+    path = path.strip("/")
+    return f"/{path}/" if path else "/"
+
 
 def _is_github_host(url: str) -> bool:
     """True if URL host is github.com or a subdomain (not e.g. evilgithub.com)."""
@@ -71,11 +94,17 @@ def _local_href_skip_ok(raw_href: str) -> tuple[bool, str] | None:
 
 
 def _resolved_candidate_under_site(
-    site_root: Path, source_html: Path, path_part: str
+    site_root: Path, source_html: Path, path_part: str, base_path: str = "/"
 ) -> tuple[Path | None, str]:
-    """Resolve path to absolute Path under site_root, or (None, error)."""
+    """Resolve path to absolute Path under site_root, or (None, error).
+
+    An absolute path must start with ``base_path``, the path where the site is
+    served; the rest of it is looked up in ``site_root``.
+    """
     if path_part.startswith("/"):
-        candidate = (site_root / path_part.lstrip("/")).resolve()
+        if not (path_part + "/").startswith(base_path):
+            return None, f"outside the site path {base_path}"
+        candidate = (site_root / path_part[len(base_path) :]).resolve()
     else:
         candidate = (source_html.parent / path_part).resolve()
     try:
@@ -123,7 +152,7 @@ def _match_local_file(
 
 
 def _local_target_exists(
-    site_root: Path, source_html: Path, raw_href: str
+    site_root: Path, source_html: Path, raw_href: str, base_path: str = "/"
 ) -> tuple[bool, str]:
     """Return (ok, detail) for a same-origin path or relative URL."""
     skip = _local_href_skip_ok(raw_href)
@@ -131,7 +160,9 @@ def _local_target_exists(
         return skip
     parsed = urllib.parse.urlsplit(raw_href)
     path_part = parsed.path or "."
-    candidate, err = _resolved_candidate_under_site(site_root, source_html, path_part)
+    candidate, err = _resolved_candidate_under_site(
+        site_root, source_html, path_part, base_path
+    )
     if candidate is None:
         return False, err
     return _match_local_file(site_root, candidate, parsed.fragment)
@@ -221,7 +252,16 @@ def main() -> int:
         action="store_true",
         help="Also validate http(s) URLs (slow; optional CI / manual audit).",
     )
+    parser.add_argument(
+        "--base-path",
+        default=None,
+        help="Path the site is served under (default: from site_url in mkdocs.yml).",
+    )
     args = parser.parse_args()
+    if args.base_path is None:
+        base_path = site_url_path()
+    else:
+        base_path = _normalize_base_path(args.base_path)
     site_root = args.site_dir.resolve()
     if not site_root.is_dir():
         print(f"error: site directory not found: {site_root}", file=sys.stderr)
@@ -232,7 +272,7 @@ def main() -> int:
 
     for src_html, attr, url, kind in rows:
         if kind == "local":
-            ok, detail = _local_target_exists(site_root, src_html, url)
+            ok, detail = _local_target_exists(site_root, src_html, url, base_path)
             if not ok:
                 rel = src_html.relative_to(site_root)
                 failures.append(f"{rel}: {attr}={url!r} -> {detail}")
