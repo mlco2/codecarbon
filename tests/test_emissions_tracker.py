@@ -1194,6 +1194,32 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(tracker._measure_occurrence, 0)
         self.assertIn("file locked", "\n".join(logs.output))
 
+    def test_csv_run_name_same_file_spelled_differently_is_one_handler(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        from codecarbon.output_methods.file import FileOutput
+
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.CSV],
+            csv_run_name="./emissions.csv",
+            allow_multiple_runs=True,
+        )
+
+        file_handlers = [
+            h for h in tracker._output_handlers if isinstance(h, FileOutput)
+        ]
+        self.assertEqual(len(file_handlers), 1)
+        self.assertTrue(file_handlers[0].enable_live_out)
+
     def test_output_methods_parsed_from_config_string(
         self,
         mock_cli_setup,

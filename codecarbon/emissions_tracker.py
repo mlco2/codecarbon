@@ -821,10 +821,10 @@ class BaseEmissionsTracker(ABC):
         if interval_file_name is None:
             return
 
-        if (
-            csv_file_handler is not None
-            and csv_file_handler.output_file_name == interval_file_name
-        ):
+        # Compare paths, not spellings: "./emissions.csv" is the primary file too.
+        if csv_file_handler is not None and os.path.abspath(
+            csv_file_handler.save_file_path
+        ) == os.path.abspath(os.path.join(self._output_dir, interval_file_name)):
             csv_file_handler.enable_live_out = True
             logger.info(
                 "Interval CSV export enabled on %s "
