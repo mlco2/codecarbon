@@ -173,6 +173,11 @@ Or in your config file:
 use_national_grid_eso_api = true
 ```
 
+The value is fetched with a 4-second timeout and cached for 5 minutes, shared
+by all trackers in the same Python process. If a request fails, CodeCarbon
+uses its static data and waits 30 seconds before retrying, doubling the wait
+on each consecutive failure up to one hour.
+
 **Attribution and terms of use:** data is published by National Grid ESO
 under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
 See [carbonintensity.org.uk](https://carbonintensity.org.uk/) for full terms.

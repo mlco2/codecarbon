@@ -580,9 +580,10 @@ class BaseEmissionsTracker(ABC):
                                  National Grid ESO Carbon Intensity API
                                  (https://carbonintensity.org.uk/, Open Government Licence
                                  v3.0) instead of CodeCarbon's static country-average data.
-                                 This makes a network call (short timeout, cached for the
-                                 duration of the run) and reports a Great-Britain-wide
-                                 figure, not a regional one. Defaults to False.
+                                 This makes a network call (4 s timeout, value cached
+                                 for 5 minutes per process, back-off after a failure)
+                                 and reports a Great-Britain-wide figure, not a
+                                 regional one. Defaults to False.
         """
 
         # logger.info("base tracker init")

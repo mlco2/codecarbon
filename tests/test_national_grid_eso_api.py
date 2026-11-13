@@ -225,7 +225,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
         national_grid_eso_api.get_emissions(self._energy, self._geo)
         national_grid_eso_api.get_emissions(self._energy, self._geo)
         # Only the first call should have hit the network; the rest are
-        # served from the per-run cache.
+        # served from the cache until its TTL expires.
         assert len(responses.calls) == 1
 
     @responses.activate
