@@ -222,3 +222,9 @@ class IntervalFileOutput(FileOutput):
                     self.output_dir, self.output_file_name
                 )
             super().out(total, delta)
+
+    def task_out(self, data: List[TaskEmissionsData], experiment_name: str):
+        """
+        Task CSVs belong to the primary CSV output: writing them here would
+        create them when only csv_run_name was set, or write them twice.
+        """
