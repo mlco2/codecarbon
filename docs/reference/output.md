@@ -42,6 +42,11 @@ tracker = EmissionsTracker(
 
 Use the same name as `output_file` to enable live rows on the primary CSV. Leave `csv_run_name` unset to keep the default final-only behavior.
 
+- Every row holds the **running totals** of the run so far (`emissions`, `energy_consumed`, `duration`...), not the amount for the interval. Take the last row of a `run_id` for its total, and do not sum rows of the same run.
+- A row is also appended at each `flush()` and at `stop()`. With `api_call_interval=-1` there are no live rows, only those, and CodeCarbon logs a warning.
+- With `"auto"`, the file is named after the `run_id` written in it. When the API output is on, that is the API run id.
+- Task CSV files (`start_task()`/`stop_task()`) are written only by the CSV output method, not by the interval file.
+
 The columns are written in the field order of the `EmissionsData` dataclass
 (`codecarbon/output_methods/emissions_data.py`).
 

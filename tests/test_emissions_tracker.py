@@ -1245,6 +1245,30 @@ class TestCarbonTracker(unittest.TestCase):
             sorted(p.name for p in self.temp_path.iterdir()), ["interval.csv"]
         )
 
+    def test_csv_run_name_warns_when_live_outputs_are_disabled(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        with self.assertLogs("codecarbon", level="WARNING") as logs:
+            EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[],
+                csv_run_name="interval.csv",
+                api_call_interval=-1,
+                allow_multiple_runs=True,
+            )
+
+        self.assertTrue(
+            any("api_call_interval" in line for line in logs.output), logs.output
+        )
+
     def test_output_methods_parsed_from_config_string(
         self,
         mock_cli_setup,

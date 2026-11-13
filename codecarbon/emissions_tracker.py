@@ -820,6 +820,12 @@ class BaseEmissionsTracker(ABC):
         interval_file_name = self._resolve_csv_run_filename()
         if interval_file_name is None:
             return
+        if self._api_call_interval == -1:
+            logger.warning(
+                "csv_run_name is set but api_call_interval=-1 disables live"
+                " outputs: %s will only get a row at flush() and stop().",
+                interval_file_name,
+            )
 
         # Compare paths, not spellings: "./emissions.csv" is the primary file too.
         if csv_file_handler is not None and os.path.abspath(
