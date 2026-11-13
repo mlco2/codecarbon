@@ -21,6 +21,9 @@ class UserService:
     def get_user_by_email(self, email: str) -> User:
         return self._repository.get_user_by_email(email)
 
+    def delete_user(self, user_id: UUID) -> List[UUID]:
+        return self._repository.delete_user(user_id)
+
     def list_users(self) -> List[User]:
         return self._repository.list_users()
 
