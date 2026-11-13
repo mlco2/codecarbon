@@ -180,7 +180,9 @@ See [carbonintensity.org.uk](https://carbonintensity.org.uk/) for full terms.
 **Scope:** the API reports a single **Great-Britain-wide (national)** carbon
 intensity figure. It does not provide regional or sub-national data, so this
 is not a substitute for CodeCarbon's USA/Canada/Nordic regional emissions
-support.
+support. It covers the GB grid (England, Scotland, Wales) only: runs located
+in Northern Ireland, which is on the all-island Irish grid, keep CodeCarbon's
+static data.
 
 If `electricitymaps_api_token` is also set, Electricity Maps takes priority
 and this source is only used as a fallback if that call fails.

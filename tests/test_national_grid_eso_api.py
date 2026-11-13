@@ -44,6 +44,21 @@ class TestNationalGridESOAPI(unittest.TestCase):
         )
         assert national_grid_eso_api.is_supported(geo) is False
 
+    def test_is_supported_gb_region(self):
+        geo = GeoMetadata(
+            country_iso_code="GBR", country_name="United Kingdom", region="Scotland"
+        )
+        assert national_grid_eso_api.is_supported(geo) is True
+
+    def test_is_not_supported_in_northern_ireland(self):
+        # Northern Ireland is on the all-island grid, not covered by the API.
+        geo = GeoMetadata(
+            country_iso_code="GBR",
+            country_name="United Kingdom",
+            region="Northern Ireland",
+        )
+        assert national_grid_eso_api.is_supported(geo) is False
+
     # ------------------------------------------------------------------
     # get_emissions – happy paths
     # ------------------------------------------------------------------

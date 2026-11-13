@@ -131,8 +131,16 @@ def get_emissions(energy: Energy, geo: GeoMetadata) -> float:
 
 
 def is_supported(geo: GeoMetadata) -> bool:
-    """Return True when the geo location is within Great Britain (GBR)."""
-    return geo.country_iso_code == "GBR"
+    """
+    Return True when the location is in Great Britain.
+
+    The API covers the GB grid (England, Scotland, Wales) only. Northern Ireland
+    shares the ISO code GBR but is on the all-island Irish grid, so it keeps
+    CodeCarbon's static data.
+    """
+    if geo.country_iso_code != "GBR":
+        return False
+    return (geo.region or "").strip() != "northern ireland"
 
 
 class NationalGridESOAPIError(Exception):
