@@ -1157,6 +1157,43 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(df), 2)
         self.assertEqual(set(df["run_id"]), {"api-run-id"})
 
+    def test_csv_run_name_failed_write_does_not_stop_other_live_outputs(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        from codecarbon.output_methods.file import FileOutput
+
+        other_handler = mock.MagicMock()
+        tracker = EmissionsTracker(
+            output_dir=self.temp_path,
+            output_handlers=[],
+            output_methods=[OutputMethod.CSV],
+            csv_run_name="emissions.csv",
+            api_call_interval=1,
+            allow_multiple_runs=True,
+        )
+        # The CSV handler comes first, as with output_methods=[CSV, API].
+        tracker._output_handlers.append(other_handler)
+        tracker.start()
+        other_handler.live_out.reset_mock()
+        with mock.patch.object(
+            FileOutput, "out", side_effect=PermissionError("file locked")
+        ):
+            with self.assertLogs("codecarbon", level="ERROR") as logs:
+                tracker._measure_power_and_energy()
+        tracker._scheduler.stop()
+        tracker._scheduler_monitor_power.stop()
+
+        other_handler.live_out.assert_called_once()
+        self.assertEqual(tracker._measure_occurrence, 0)
+        self.assertIn("file locked", "\n".join(logs.output))
+
     def test_output_methods_parsed_from_config_string(
         self,
         mock_cli_setup,

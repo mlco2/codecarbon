@@ -85,9 +85,20 @@ class FileOutput(BaseOutput):
             return next(csv.reader(csv_file), None)
 
     def live_out(self, total: EmissionsData, delta: EmissionsData):
-        """Write a measurement row on the live interval when enabled."""
-        if self.enable_live_out:
+        """
+        Write a measurement row on the live interval when enabled.
+
+        A failed write (file locked, disk full...) is logged, not raised: the
+        tracker calls every handler's live_out in turn, and an exception here
+        would skip the API and Prometheus outputs after this one. The next
+        interval tries again.
+        """
+        if not self.enable_live_out:
+            return
+        try:
             self.out(total, delta)
+        except Exception as e:
+            logger.error(f"Could not write interval CSV {self.save_file_path}: {e}")
 
     def out(self, total: EmissionsData, _):
         """
