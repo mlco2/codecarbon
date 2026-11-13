@@ -1112,6 +1112,51 @@ class TestCarbonTracker(unittest.TestCase):
         self.assertEqual(len(live_handlers), 1)
         self.assertEqual(live_handlers[0].output_file_name, "interval_only.csv")
 
+    def test_csv_run_name_auto_file_is_named_after_the_api_run_id(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # start() replaces the local run_id by the API run id, after the
+        # output handlers were built: the "auto" file must follow it.
+        with (
+            mock.patch(
+                "codecarbon.output_methods.http.ApiClient._create_run"
+            ) as mock_create_run,
+            mock.patch("codecarbon.output_methods.http.ApiClient.add_emission"),
+        ):
+            tracker = EmissionsTracker(
+                output_dir=self.temp_path,
+                output_handlers=[],
+                output_methods=[OutputMethod.API],
+                experiment_id="test-experiment-id",
+                api_key="test-api-key",
+                csv_run_name="auto",
+                allow_multiple_runs=True,
+            )
+            local_run_id = tracker.run_id
+            api_output = tracker._api_output
+
+            def create_run(experiment_id):
+                api_output.api.run_id = "api-run-id"
+                return "api-run-id"
+
+            mock_create_run.side_effect = create_run
+
+            tracker.start()
+            tracker.flush()
+            tracker.stop()
+
+        self.assertFalse((self.temp_path / f"emissions_{local_run_id}.csv").exists())
+        df = pd.read_csv(self.temp_path / "emissions_api-run-id.csv")
+        self.assertEqual(len(df), 2)
+        self.assertEqual(set(df["run_id"]), {"api-run-id"})
+
     def test_output_methods_parsed_from_config_string(
         self,
         mock_cli_setup,

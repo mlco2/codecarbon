@@ -167,3 +167,36 @@ class FileOutput(BaseOutput):
         new_df = new_df.dropna(axis=1, how="all")
         df = new_df
         df.to_csv(save_task_file_path, index=False)
+
+
+class IntervalFileOutput(FileOutput):
+    """
+    Separate CSV of the interval export (``csv_run_name``): a row is appended on
+    every live interval, and at each flush() and stop().
+    """
+
+    def __init__(
+        self, output_file_name: str, output_dir: str, name_after_run_id: bool = False
+    ):
+        """
+        Args:
+            output_file_name: name of file to write to.
+            output_dir: path to directory to write to.
+            name_after_run_id: write to ``emissions_<run_id>.csv``, with the
+                run_id of each row. start() can replace the local run_id by the
+                API run id after this output is built, and the file follows it.
+        """
+        super().__init__(
+            output_file_name, output_dir, on_csv_write="append", enable_live_out=True
+        )
+        self.name_after_run_id = name_after_run_id
+
+    @staticmethod
+    def run_file_name(run_id) -> str:
+        return f"emissions_{run_id}.csv"
+
+    def out(self, total: EmissionsData, delta: EmissionsData):
+        if self.name_after_run_id:
+            self.output_file_name = self.run_file_name(total.run_id)
+            self.save_file_path = os.path.join(self.output_dir, self.output_file_name)
+        super().out(total, delta)

@@ -797,19 +797,25 @@ class BaseEmissionsTracker(ABC):
 
     def _resolve_csv_run_filename(self) -> Optional[str]:
         """Return the interval CSV filename, or None when interval export is disabled."""
+        from codecarbon.output_methods.file import IntervalFileOutput
+
         if self._csv_run_name is None:
             return None
+        if self._csv_run_name_is_auto():
+            return IntervalFileOutput.run_file_name(self.run_id)
+        return self._csv_run_name.strip()
+
+    def _csv_run_name_is_auto(self) -> bool:
+        """``"auto"`` or ``""``: name the interval CSV after the run_id."""
         name = self._csv_run_name.strip() if isinstance(self._csv_run_name, str) else ""
-        if name in ("", "auto"):
-            return f"emissions_{self.run_id}.csv"
-        return name
+        return name in ("", "auto")
 
     def _init_interval_csv_output(self, csv_file_handler) -> None:
         """
         Opt-in interval CSV export (#467): write measurement rows on the same
         cadence as API/Prometheus live outputs.
         """
-        from codecarbon.output_methods.file import FileOutput
+        from codecarbon.output_methods.file import IntervalFileOutput
 
         interval_file_name = self._resolve_csv_run_filename()
         if interval_file_name is None:
@@ -828,11 +834,10 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._output_handlers.append(
-            FileOutput(
+            IntervalFileOutput(
                 interval_file_name,
                 self._output_dir,
-                on_csv_write="append",
-                enable_live_out=True,
+                name_after_run_id=self._csv_run_name_is_auto(),
             )
         )
         logger.info(
