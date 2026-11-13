@@ -23,6 +23,13 @@ NATIONAL_GRID_ESO_API_TIMEOUT: int = 4
 # describes Great Britain as a whole; re-fetched once the entry expires.
 _CACHE_TTL_SECONDS: int = 300
 _cache: tuple[float, float] | None = None  # (carbon_intensity_g_per_kWh, fetched_at)
+# After a failure (machine offline, API down), wait before retrying instead of
+# blocking every measurement on a doomed request. The wait doubles on each
+# consecutive failure, up to the maximum, and resets on success.
+NATIONAL_GRID_ESO_COOLDOWN: int = 30
+NATIONAL_GRID_ESO_MAX_COOLDOWN: int = 3600
+_cooldown_until: float = 0.0  # monotonic time until which requests are skipped
+_cooldown_length: float = 0.0
 # The measurement thread and stop() both compute emissions. The lock is held
 # across the request so that concurrent callers with an expired cache make a
 # single request instead of one each.
@@ -59,23 +66,41 @@ def _fetch_carbon_intensity_g_per_kWh() -> float:
 
 def _get_cached_carbon_intensity_g_per_kWh() -> float:
     """Return the cached intensity if still fresh, otherwise fetch and cache it."""
-    global _cache
+    global _cache, _cooldown_until, _cooldown_length
     with _lock:
         if _cache is not None:
             cached_value, fetched_at = _cache
             if (time.monotonic() - fetched_at) < _CACHE_TTL_SECONDS:
                 return cached_value
 
-        value = _fetch_carbon_intensity_g_per_kWh()
+        remaining = _cooldown_until - time.monotonic()
+        if remaining > 0:
+            raise NationalGridESOAPICooldownError(
+                "National Grid ESO API is in cooldown after a previous failure, "
+                f"retrying in {remaining:.0f} seconds"
+            )
+
+        try:
+            value = _fetch_carbon_intensity_g_per_kWh()
+        except Exception:
+            _cooldown_length = min(
+                max(_cooldown_length * 2, NATIONAL_GRID_ESO_COOLDOWN),
+                NATIONAL_GRID_ESO_MAX_COOLDOWN,
+            )
+            _cooldown_until = time.monotonic() + _cooldown_length
+            raise
+
         _cache = (value, time.monotonic())
+        _cooldown_until = _cooldown_length = 0.0
         return value
 
 
 def clear_cache() -> None:
-    """Reset the cached carbon intensity value (mainly useful for tests)."""
-    global _cache
+    """Reset the cached carbon intensity and any pending failure cooldown."""
+    global _cache, _cooldown_until, _cooldown_length
     with _lock:
         _cache = None
+        _cooldown_until = _cooldown_length = 0.0
 
 
 def get_emissions(energy: Energy, geo: GeoMetadata) -> float:
@@ -94,7 +119,8 @@ def get_emissions(energy: Energy, geo: GeoMetadata) -> float:
         CO2 emissions in kilograms.
 
     Raises:
-        NationalGridESOAPIError: If the API request fails or returns unusable data.
+        NationalGridESOAPIError: If the API request fails or returns unusable data,
+            or was skipped because a previous one failed (``...CooldownError``).
     """
     carbon_intensity_g_per_kWh = _get_cached_carbon_intensity_g_per_kWh()
 
@@ -111,3 +137,7 @@ def is_supported(geo: GeoMetadata) -> bool:
 
 class NationalGridESOAPIError(Exception):
     pass
+
+
+class NationalGridESOAPICooldownError(NationalGridESOAPIError):
+    """The request was skipped because a recent one failed."""

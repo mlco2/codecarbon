@@ -201,6 +201,13 @@ class Emissions:
                     + f"Retrieved emissions for {geo.country_name} using National Grid ESO API: {emissions * 1000} g CO2eq"
                 )
                 return emissions
+            except national_grid_eso_api.NationalGridESOAPICooldownError as e:
+                # The failure that started the cooldown was already logged.
+                logger.debug(
+                    "national_grid_eso_api.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
             except Exception as e:
                 logger.error(
                     "national_grid_eso_api.get_emissions: "

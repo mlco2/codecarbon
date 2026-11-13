@@ -278,3 +278,51 @@ class TestNationalGridESOAPI(unittest.TestCase):
                 thread.join()
 
         assert len(calls) == 1
+
+    # ------------------------------------------------------------------
+    # failure cooldown
+    # ------------------------------------------------------------------
+
+    def _expire_cooldown(self):
+        national_grid_eso_api._cooldown_until = 0.0
+
+    @responses.activate
+    def test_failure_skips_requests_during_cooldown(self):
+        responses.add(responses.GET, national_grid_eso_api.URL, status=503)
+        with self.assertRaises(NationalGridESOAPIError):
+            national_grid_eso_api.get_emissions(self._energy, self._geo)
+
+        with self.assertRaises(national_grid_eso_api.NationalGridESOAPICooldownError):
+            national_grid_eso_api.get_emissions(self._energy, self._geo)
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_cooldown_doubles_on_consecutive_failures_and_resets_on_success(self):
+        responses.add(responses.GET, national_grid_eso_api.URL, status=503)
+        for expected in (30, 60, 120):
+            with self.assertRaises(NationalGridESOAPIError):
+                national_grid_eso_api.get_emissions(self._energy, self._geo)
+            assert national_grid_eso_api._cooldown_length == expected
+            self._expire_cooldown()
+
+        responses.replace(
+            responses.GET,
+            national_grid_eso_api.URL,
+            json={"data": [{"intensity": {"forecast": 266, "actual": 263}}]},
+            status=200,
+        )
+        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        assert national_grid_eso_api._cooldown_length == 0.0
+
+    @responses.activate
+    def test_cooldown_is_capped(self):
+        responses.add(responses.GET, national_grid_eso_api.URL, status=503)
+        national_grid_eso_api._cooldown_length = (
+            national_grid_eso_api.NATIONAL_GRID_ESO_MAX_COOLDOWN
+        )
+        with self.assertRaises(NationalGridESOAPIError):
+            national_grid_eso_api.get_emissions(self._energy, self._geo)
+        assert (
+            national_grid_eso_api._cooldown_length
+            == national_grid_eso_api.NATIONAL_GRID_ESO_MAX_COOLDOWN
+        )
