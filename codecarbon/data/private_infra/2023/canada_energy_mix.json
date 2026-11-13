@@ -1,5 +1,6 @@
 {
     "british columbia": {
+        "carbon_intensity": 18,
         "naturalGas": 2.8,
         "nuclear": 0.0,
         "petroleum": 0.1,
@@ -13,6 +14,7 @@
         "hydro": 86.8
     },
     "newfoundland and labrador": {
+        "carbon_intensity": 17,
         "naturalGas": 0.2,
         "nuclear": 0.0,
         "petroleum": 0.4,
@@ -26,6 +28,7 @@
         "hydro": 99.0
     },
     "saskatchewan": {
+        "carbon_intensity": 581,
         "naturalGas": 50.7,
         "nuclear": 0.0,
         "petroleum": 0.0,
@@ -39,6 +42,7 @@
         "hydro": 16.6
     },
     "prince edward island": {
+        "carbon_intensity": 265,
         "naturalGas": 0.0,
         "nuclear": 0.0,
         "petroleum": 2.2,
@@ -52,6 +56,7 @@
         "hydro": 0.0
     },
     "ontario": {
+        "carbon_intensity": 73,
         "naturalGas": 8.6,
         "nuclear": 50.1,
         "petroleum": 0.1,
@@ -65,6 +70,7 @@
         "hydro": 23.4
     },
     "nova scotia": {
+        "carbon_intensity": 628,
         "naturalGas": 13.9,
         "nuclear": 0.0,
         "petroleum": 0.0,
@@ -78,6 +84,7 @@
         "hydro": 10.9
     },
     "quebec": {
+        "carbon_intensity": 2.6,
         "naturalGas": 0.2,
         "nuclear": 0.0,
         "petroleum": 0.3,
@@ -91,6 +98,7 @@
         "hydro": 92.1
     },
     "alberta": {
+        "carbon_intensity": 346,
         "naturalGas": 73.5,
         "nuclear": 0.0,
         "petroleum": 0.02,
@@ -104,6 +112,7 @@
         "hydro": 1.8
     },
     "manitoba": {
+        "carbon_intensity": 3.0,
         "naturalGas": 0.6,
         "nuclear": 0.0,
         "petroleum": 0.1,
@@ -117,6 +126,7 @@
         "hydro": 97.4
     },
     "northwest territories": {
+        "carbon_intensity": 490,
         "naturalGas": 7.3,
         "nuclear": 0.0,
         "petroleum": 10.5,
@@ -130,6 +140,7 @@
         "hydro": 74.2
     },
     "new brunswick": {
+        "carbon_intensity": 375,
         "naturalGas": 16.6,
         "nuclear": 39.9,
         "petroleum": 0.3,
@@ -143,6 +154,7 @@
         "hydro": 21.0
     },
     "nunavut": {
+        "carbon_intensity": 760,
         "naturalGas": 0.0,
         "nuclear": 0.0,
         "petroleum": 99.8,
@@ -156,6 +168,7 @@
         "hydro": 0.0
     },
     "yukon": {
+        "carbon_intensity": 134,
         "naturalGas": 20.2,
         "nuclear": 0.0,
         "petroleum": 15.0,
