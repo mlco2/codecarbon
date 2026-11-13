@@ -147,6 +147,7 @@ def _spec_from_hardware(hw) -> Dict[str, Any]:
             "kind": kind.value,
             "model": hw._model,
             "chip_part": hw.chip_part,
+            "backend": getattr(hw, "backend", "powermetrics"),
         }
     if kind == HardwareKind.GPU:
         gpu_ids = _canonical_gpu_ids(hw.gpu_ids)
@@ -190,6 +191,7 @@ def _hardware_from_spec(spec: Dict[str, Any], output_dir: str):
             output_dir=output_dir,
             model=spec["model"],
             chip_part=spec["chip_part"],
+            backend=spec.get("backend", "powermetrics"),
         )
     if kind == HardwareKind.GPU:
         gpu_ids = _canonical_gpu_ids(spec.get("gpu_ids"))
@@ -257,6 +259,7 @@ def clear_cache() -> None:
         ("codecarbon.core.gpu_amd", "clear_rocm_system_cache"),
         ("codecarbon.core.cpu", "clear_powergadget_cache"),
         ("codecarbon.core.powermetrics", "clear_powermetrics_cache"),
+        ("codecarbon.core.macmon", "clear_macmon_cache"),
         ("codecarbon.core.windows_emi", "clear_emi_cache"),
     ):
         mod = sys.modules.get(mod_name)

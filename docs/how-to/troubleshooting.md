@@ -200,14 +200,30 @@ measurement.
 
 ## macOS
 
-On Apple Silicon, CodeCarbon does not use `powermetrics`. `psutil` is a hard
+On Apple Silicon, install [`macmon`](https://github.com/vladkens/macmon) to
+measure CPU and GPU power. It needs no `sudo`:
+
+```bash
+brew install macmon
+```
+
+CodeCarbon picks it up as soon as `macmon` is on `PATH`, and logs
+*"Tracking Apple CPU and GPU via macmon"*. Without it, CodeCarbon falls back to
+CPU-load estimation. It does not use `powermetrics` there: `psutil` is a hard
 dependency of the package, and the backend selector picks CPU-load estimation
-as soon as `psutil` is importable, before `powermetrics` is ever tried
-(`_try_platform_cpu_backend` in
-[`core/resource_tracker.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py)).
-Granting passwordless `sudo` for `powermetrics` will not change which backend is
-used. See
+before `powermetrics` is ever tried (`_try_platform_cpu_backend` in
+[`core/resource_tracker.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py)),
+so granting passwordless `sudo` for `powermetrics` will not change which backend
+is used. See
 [Which backend gets chosen](../explanation/methodology.md#which-backend-gets-chosen).
+
+Inside a macOS virtual machine, `macmon` reports 0 W, since the guest has no
+access to the power sensors.
+
+### "Returncode while logging power values using macmon"
+
+`macmon` started but exited with a non-zero status. Run `macmon pipe -s 1` by
+hand to see the real error, and update it with `brew upgrade macmon`.
 
 On Intel Macs, CodeCarbon uses Intel Power Gadget when it is installed, and
 `powermetrics` when it is not. `powermetrics` requires root: CodeCarbon runs it

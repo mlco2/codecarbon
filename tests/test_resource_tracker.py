@@ -26,7 +26,7 @@ def make_tracker(**overrides):
 @pytest.mark.parametrize(
     "is_mac, is_windows, is_linux, cpu_model, expected_fragment",
     [
-        (True, False, False, "Apple M4", "PowerMetrics sudo"),
+        (True, False, False, "Apple M4", "brew install macmon"),
         (True, False, False, "Intel Core i7", "Intel Power Gadget"),
         (True, False, False, None, "Intel Power Gadget"),
         (False, True, False, "Intel Core i7", "Energy Meter Interface"),
@@ -128,12 +128,109 @@ def test_setup_powermetrics_tracks_cpu_and_gpu():
     ) as mock_from_utils:
         assert resource_tracker._setup_powermetrics() is True
 
-    assert mock_from_utils.call_args_list[0].kwargs == {"chip_part": "CPU"}
-    assert mock_from_utils.call_args_list[1].kwargs == {"chip_part": "GPU"}
+    assert mock_from_utils.call_args_list[0].kwargs == {
+        "chip_part": "CPU",
+        "backend": "powermetrics",
+    }
+    assert mock_from_utils.call_args_list[1].kwargs == {
+        "chip_part": "GPU",
+        "backend": "powermetrics",
+    }
+    assert resource_tracker.cpu_tracker == "PowerMetrics"
     assert tracker._hardware == [cpu_chip, gpu_chip]
     assert tracker._conf["cpu_model"] == "Apple CPU"
     assert tracker._conf["gpu_model"] == "Apple GPU"
     assert tracker._conf["gpu_count"] == 1
+
+
+def test_setup_macmon_tracks_cpu_and_gpu():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+    cpu_chip = MagicMock()
+    cpu_chip.get_model.return_value = "Apple M2"
+    gpu_chip = MagicMock()
+    gpu_chip.get_model.return_value = "Apple M2"
+
+    with patch(
+        "codecarbon.core.resource_tracker.AppleSiliconChip.from_utils",
+        side_effect=[cpu_chip, gpu_chip],
+    ) as mock_from_utils:
+        assert resource_tracker._setup_macmon() is True
+
+    assert [c.kwargs["backend"] for c in mock_from_utils.call_args_list] == [
+        "macmon",
+        "macmon",
+    ]
+    assert resource_tracker.cpu_tracker == "macmon"
+    assert resource_tracker.gpu_tracker == "macmon"
+    assert tracker._hardware == [cpu_chip, gpu_chip]
+    assert tracker._conf["gpu_count"] == 1
+
+
+def _mac_arm_patches(resource_tracker, macmon_available):
+    return (
+        patch("codecarbon.core.resource_tracker.is_mac_os", return_value=True),
+        patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
+        patch("codecarbon.core.resource_tracker.is_windows_os", return_value=False),
+        patch(
+            "codecarbon.core.resource_tracker.detect_cpu_model",
+            return_value="Apple M2 Pro",
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.macmon.is_macmon_available",
+            return_value=macmon_available,
+        ),
+        patch(
+            "codecarbon.core.resource_tracker.powermetrics.is_powermetrics_available",
+            return_value=True,
+        ),
+    )
+
+
+def test_set_cpu_tracking_mac_arm_prefers_macmon_over_cpu_load():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+    p1, p2, p3, p4, p5, p6 = _mac_arm_patches(resource_tracker, True)
+
+    with (
+        p1,
+        p2,
+        p3,
+        p4,
+        p5,
+        p6,
+        patch.object(resource_tracker, "_setup_macmon") as mock_macmon,
+        patch.object(resource_tracker, "_setup_cpu_load_fast") as mock_cpu_load,
+        patch.object(resource_tracker, "_setup_powermetrics") as mock_powermetrics,
+    ):
+        resource_tracker.set_CPU_tracking()
+
+    mock_macmon.assert_called_once_with()
+    mock_cpu_load.assert_not_called()
+    mock_powermetrics.assert_not_called()
+
+
+def test_set_cpu_tracking_mac_arm_without_macmon_uses_cpu_load():
+    tracker = make_tracker()
+    resource_tracker = ResourceTracker(tracker)
+    p1, p2, p3, p4, p5, p6 = _mac_arm_patches(resource_tracker, False)
+
+    with (
+        p1,
+        p2,
+        p3,
+        p4,
+        p5,
+        p6,
+        patch.object(resource_tracker, "_setup_macmon") as mock_macmon,
+        patch.object(
+            resource_tracker, "_setup_cpu_load_fast", return_value=True
+        ) as mock_cpu_load,
+    ):
+        resource_tracker.set_CPU_tracking()
+
+    mock_macmon.assert_not_called()
+    mock_cpu_load.assert_called_once_with("Apple M2 Pro")
 
 
 def test_setup_fallback_tracking_uses_cpu_load_when_tdp_matches():
@@ -274,6 +371,10 @@ def test_set_cpu_tracking_mac_arm_prefers_cpu_load_over_powermetrics():
     resource_tracker = ResourceTracker(tracker)
 
     with (
+        patch(
+            "codecarbon.core.resource_tracker.macmon.is_macmon_available",
+            return_value=False,
+        ),
         patch("codecarbon.core.resource_tracker.is_mac_os", return_value=True),
         patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
         patch("codecarbon.core.resource_tracker.is_windows_os", return_value=False),
@@ -370,6 +471,10 @@ def test_set_cpu_tracking_mac_arm_falls_back_to_powermetrics_when_cpu_load_unava
     resource_tracker = ResourceTracker(tracker)
 
     with (
+        patch(
+            "codecarbon.core.resource_tracker.macmon.is_macmon_available",
+            return_value=False,
+        ),
         patch("codecarbon.core.resource_tracker.is_mac_os", return_value=True),
         patch("codecarbon.core.resource_tracker.is_linux_os", return_value=False),
         patch("codecarbon.core.resource_tracker.is_windows_os", return_value=False),
