@@ -3249,6 +3249,26 @@ CSV file. Defaults to "append".</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>live_output_file</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional CSV filename for interval measurement export.
+When set, CodeCarbon appends a row on the same cadence as
+API/Prometheus (<code>api_call_interval * measure_power_secs</code>).
+Use <code>"auto"</code> (or an empty string) to name the file
+<code>emissions_&lt;run_id&gt;.csv</code>. Defaults to None (disabled).</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>logger_preamble</code>
             </td>
             <td>
@@ -4538,6 +4558,23 @@ Defaults to "info".</p>
               <div class="doc-md-description">
                 <p>When calling tracker.flush() manually: "update" to overwrite the
 existing run_id row, or "append" to add a new row. Defaults to "append".</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>live_output_file</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional CSV filename for interval measurement export. See
+EmissionsTracker. Defaults to None (disabled).</p>
               </div>
             </td>
             <td>

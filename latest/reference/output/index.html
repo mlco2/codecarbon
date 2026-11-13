@@ -2848,6 +2848,20 @@ See the <a href="https://docs.codecarbon.io/latest/reference/deprecations/">depr
 </div>
 <h2 id="csv">CSV<a class="headerlink" href="#csv" title="Permanent link">&para;</a></h2>
 <p>The package has an in-built logger that logs data into a CSV file named <code>emissions.csv</code> in the <code>output_dir</code>, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.</p>
+<p>By default that file is written once at the end of the run. To also append a row on the same live cadence as API/Prometheus (<code>api_call_interval × measure_power_secs</code>), set <code>live_output_file</code>:</p>
+<div class="highlight"><pre><span></span><code>from codecarbon import EmissionsTracker
+
+tracker = EmissionsTracker(
+    live_output_file="emissions_live.csv",  # or "auto" / "" → emissions_&lt;run_id&gt;.csv
+)
+</code></pre></div>
+<p>Use the same name as <code>output_file</code> to enable live rows on the primary CSV. Leave <code>live_output_file</code> unset to keep the default final-only behavior.</p>
+<ul>
+<li>Every row holds the <strong>running totals</strong> of the run so far (<code>emissions</code>, <code>energy_consumed</code>, <code>duration</code>...), not the amount for the interval. Take the last row of a <code>run_id</code> for its total, and do not sum rows of the same run.</li>
+<li>A row is also appended at each <code>flush()</code> and at <code>stop()</code>. With <code>api_call_interval=-1</code> there are no live rows, only those, and CodeCarbon logs a warning.</li>
+<li>With <code>"auto"</code>, the file is named after the <code>run_id</code> written in it. When the API output is on, that is the API run id.</li>
+<li>Task CSV files (<code>start_task()</code>/<code>stop_task()</code>) are written only by the CSV output method, not by the interval file.</li>
+</ul>
 <p>The columns are written in the field order of the <code>EmissionsData</code> dataclass
 (<code>codecarbon/output_methods/emissions_data.py</code>).</p>
 <p>The <strong>Provenance</strong> column says where each number comes from: a hardware counter, a model,
