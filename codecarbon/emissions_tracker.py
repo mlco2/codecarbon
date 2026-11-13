@@ -1759,7 +1759,10 @@ def track_emissions(
                          default name is "codecarbon".
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15.
-    :param api_call_interval: Number of measure to make before calling the Code Carbon API.
+    :param api_call_interval: Number of measurements between API calls (default: 8).
+                              -1: call API only on flush() and at the end.
+                              1: at every measure.
+                              2: every 2 measures, and so on.
     :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
                          emissions data.
     :param api_key: API key for Code Carbon API (mandatory!).
@@ -1804,7 +1807,7 @@ def track_emissions(
     :param country_iso_code: 3-letter ISO code of the country where the experiment is
                              being run. Required if offline=True. See global_energy_mix.json.
     :param region: Optional Province/State/City where the infrastructure is hosted.
-                   Supported for US States (e.g. California, New York).
+                   Supported for US States and Canada (e.g. California, New York).
     :param cloud_provider: The cloud provider specified for estimating emissions
                            intensity, defaults to None.
                            See https://github.com/mlco2/codecarbon/
