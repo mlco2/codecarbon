@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from unittest import mock
@@ -5,6 +6,7 @@ from unittest import mock
 import pytest
 
 from codecarbon.core.util import (
+    _cgroup_cpu_limit,
     backup,
     count_cpus,
     detect_cpu_model,
@@ -98,8 +100,92 @@ def test_is_mac_arm(cpu_model, expected):
 
 def test_count_cpus_no_slurm():
     with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
-        with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
-            assert count_cpus() == 4
+        with mock.patch(
+            "codecarbon.core.util.os.sched_getaffinity",
+            return_value={0, 1, 2, 3},
+            create=True,
+        ):
+            with mock.patch(
+                "codecarbon.core.util._cgroup_cpu_limit", return_value=None
+            ):
+                assert count_cpus() == 4
+
+
+def test_count_cpus_respects_affinity():
+    # A process pinned to a subset of the machine's cores (taskset,
+    # docker --cpuset-cpus, a cpuset) must not be told there are more cores
+    # than it may run on, or the CPU power estimate is inflated.
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
+        with mock.patch(
+            "codecarbon.core.util.os.sched_getaffinity",
+            return_value={0, 1},
+            create=True,
+        ):
+            with mock.patch(
+                "codecarbon.core.util._cgroup_cpu_limit", return_value=None
+            ):
+                assert count_cpus() == 2
+
+
+def test_count_cpus_respects_cgroup_quota():
+    # A cgroup CPU quota (docker --cpus, a Kubernetes CPU limit) caps CPU time
+    # without restricting the affinity mask, so it must be honoured separately
+    # and rounded up.
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
+        with mock.patch(
+            "codecarbon.core.util.os.sched_getaffinity",
+            return_value=set(range(8)),
+            create=True,
+        ):
+            with mock.patch("codecarbon.core.util._cgroup_cpu_limit", return_value=2.0):
+                assert count_cpus() == 2
+
+
+def test_count_cpus_affinity_unavailable_falls_back():
+    # Where the affinity mask cannot be read (non-Linux, or the call fails),
+    # fall back to the machine's CPU count.
+    with mock.patch("codecarbon.core.util.SLURM_JOB_ID", None):
+        with mock.patch(
+            "codecarbon.core.util.os.sched_getaffinity",
+            side_effect=OSError,
+            create=True,
+        ):
+            with mock.patch("codecarbon.core.util.psutil.cpu_count", return_value=4):
+                with mock.patch(
+                    "codecarbon.core.util._cgroup_cpu_limit", return_value=None
+                ):
+                    assert count_cpus() == 4
+
+
+def test_cgroup_cpu_limit_parsing():
+    # Parsing is exercised against fixture files so the test needs no root and
+    # no real cgroup.
+    with tempfile.TemporaryDirectory() as rootdir:
+        proc = os.path.join(rootdir, "proc_cgroup")
+        # cgroup v2: "<quota> <period>" in a leaf cpu.max == 1.5 CPUs
+        with open(proc, "w") as f:
+            f.write("0::/mygroup\n")
+        leaf = os.path.join(rootdir, "mygroup")
+        os.makedirs(leaf)
+        with open(os.path.join(leaf, "cpu.max"), "w") as f:
+            f.write("150000 100000\n")
+        assert _cgroup_cpu_limit(proc, rootdir) == pytest.approx(1.5)
+        # "max" means no quota -> None
+        with open(os.path.join(leaf, "cpu.max"), "w") as f:
+            f.write("max 100000\n")
+        assert _cgroup_cpu_limit(proc, rootdir) is None
+    with tempfile.TemporaryDirectory() as rootdir:
+        # cgroup v1: cpu.cfs_quota_us / cpu.cfs_period_us == 2.0 CPUs
+        proc = os.path.join(rootdir, "proc_cgroup")
+        with open(proc, "w") as f:
+            f.write("5:cpu,cpuacct:/mygroup\n")
+        leaf = os.path.join(rootdir, "cpu,cpuacct", "mygroup")
+        os.makedirs(leaf)
+        with open(os.path.join(leaf, "cpu.cfs_quota_us"), "w") as f:
+            f.write("200000\n")
+        with open(os.path.join(leaf, "cpu.cfs_period_us"), "w") as f:
+            f.write("100000\n")
+        assert _cgroup_cpu_limit(proc, rootdir) == pytest.approx(2.0)
 
 
 def test_count_cpus_slurm():
