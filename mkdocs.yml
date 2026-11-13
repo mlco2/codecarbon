@@ -162,6 +162,7 @@ nav:
     - Troubleshooting: how-to/troubleshooting.md
     - Examples: how-to/examples.md
     - Configure CodeCarbon: how-to/configuration.md
+    - Product telemetry: how-to/telemetry.md
     - Get accurate CPU measurements (Linux/RAPL): how-to/enable-rapl.md
     - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
     - Dashboard & Visualization:

@@ -66,7 +66,10 @@ class GeoMetadata:
         latitude: Optional[float] = None,
         longitude: Optional[float] = None,
         country_2letter_iso_code: Optional[str] = None,
+        is_default: bool = False,
     ):
+        #: True when both geolocation APIs failed and this is the Canada fallback.
+        self.is_default = is_default
         self.country_iso_code = (
             None if country_iso_code is None else country_iso_code.upper()
         )
@@ -150,4 +153,5 @@ class GeoMetadata:
                 latitude=46.8,
                 longitude=-71.2,
                 country_2letter_iso_code="CA",
+                is_default=True,
             )
