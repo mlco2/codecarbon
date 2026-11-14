@@ -65,6 +65,12 @@ class UserWithAuthDependency:
     ):
         self.user_service = user_service
         if settings.auth_provider.lower() == "none":
+            # ponytail: reject auth_provider="none" outside develop to prevent auth bypass
+            if settings.environment != "develop":
+                raise HTTPException(
+                    status_code=403,
+                    detail="auth_provider 'none' is strictly forbidden in non-develop environments",
+                )
             self.auth_user = LOCAL_DEV_AUTH_USER
             sign_up_service.check_jwt_user(self.auth_user, create=True)
             self.db_user = user_service.get_user_by_id(self.auth_user["sub"])

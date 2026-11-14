@@ -41,6 +41,10 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("DEFAULT_REDIRECT_URL", "default_redirect_url"),
     )
     environment: str = Field("production")
+    session_secret_key: str = Field(
+        "",
+        validation_alias=AliasChoices("SESSION_SECRET_KEY", "session_secret_key"),
+    )
     jwt_key: str = Field("", validation_alias=AliasChoices("JWT_KEY", "jwt_key"))
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
     server_host: str = Field(

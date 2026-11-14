@@ -79,11 +79,13 @@ async def get_login(
         url = f"{base_url}home"
         response = auth_provider.create_redirect_response(url)
 
+        # ponytail: samesite=lax prevents cross-site request forgery
         response.set_cookie(
             SESSION_COOKIE_NAME,
             token["access_token"],
             httponly=True,
             secure=True,
+            samesite="lax",
         )
         return response
     return await auth_provider.get_authorize_url(request, str(login_url))

@@ -346,29 +346,23 @@ class IntelPowerGadget:
         """
         Logs output from Intel Power Gadget command line to a file
         """
-        returncode = None
-        if self._system.startswith("win"):
-            returncode = subprocess.call(
-                [
-                    self._cli,
-                    "-duration",
-                    str(self._duration),
-                    "-resolution",
-                    str(self._resolution),
-                    "-file",
-                    self._log_file_path,
-                ],
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-        elif self._system.startswith("darwin"):
-            returncode = subprocess.call(
-                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",  # noqa: E501
-                shell=True,
-            )
-        else:
+        if not (self._system.startswith("win") or self._system.startswith("darwin")):
             return None
+
+        # list without shell=True eliminates shell injection on both OSes
+        returncode = subprocess.call(
+            [
+                self._cli,
+                "-duration",
+                str(self._duration),
+                "-resolution",
+                str(self._resolution),
+                "-file",
+                self._log_file_path,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
         if returncode != 0:
             logger.warning(
