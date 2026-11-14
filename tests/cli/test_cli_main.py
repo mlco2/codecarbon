@@ -695,7 +695,10 @@ def test_monitor_omits_unspecified_optional_tracker_options(monkeypatch):
     assert "output_methods" not in captured["kwargs"]
 
 
-def test_monitor_explicit_experiment_id_satisfies_online_validation(monkeypatch):
+def test_monitor_explicit_experiment_id_satisfies_online_validation(
+    monkeypatch, tmp_path
+):
+    _isolate_from_user_config(monkeypatch, tmp_path)
     captured = {}
 
     def fake_run_and_monitor(ctx, offline=False, **kwargs):
@@ -893,4 +896,35 @@ def test_monitor_api_flag_adds_to_configured_output_methods(
 
     cli_main.monitor(ctx=SimpleNamespace(args=["python", "train.py"]), api=api)
 
+    assert captured["kwargs"]["output_methods"] == [OutputMethod(m) for m in expected]
+
+
+@pytest.mark.parametrize(
+    "cli_args, expected",
+    [
+        (["--output-methods", "csv,logger"], ["csv", "logger", "api"]),
+        (["--output-methods", "csv,logger", "--no-api"], ["csv", "logger"]),
+        (["--output-methods", "logger,api", "--no-api"], ["logger"]),
+        (["--save-to-logger"], ["csv", "logger", "api"]),
+        (["--no-save-to-file", "--save-to-prometheus"], ["prometheus", "api"]),
+    ],
+)
+def test_monitor_online_honours_cli_output_options(
+    monkeypatch, tmp_path, cli_args, expected
+):
+    """Online mode builds `output_methods` itself: it must start from the CLI's."""
+    _isolate_from_user_config(monkeypatch, tmp_path)
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "exp-1")
+
+    result = CliRunner().invoke(
+        cli_main.codecarbon, ["monitor", *cli_args, "--", "python", "train.py"]
+    )
+
+    assert result.exit_code == 0, result.output
     assert captured["kwargs"]["output_methods"] == [OutputMethod(m) for m in expected]

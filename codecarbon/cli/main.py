@@ -624,18 +624,24 @@ def monitor(
             )
             raise typer.Exit(1)
 
-        # output_methods replaces the configured outputs, so start from them and
-        # only add or remove the API, as save_to_api=api used to.
+        # output_methods replaces the configured outputs, so start from them,
+        # overridden by --output-methods and --save-to-*, and only add or remove
+        # the API, as save_to_api=api used to.
         from codecarbon.output_methods.base_output import OutputMethod
 
-        output_methods = [
+        cli_outputs = {
+            name: str(value)
+            for name, value in tracker_args.items()
+            if name == "output_methods" or name in _SAVE_TO_KEYS
+        }
+        resolved_output_methods = [
             m
-            for m in _configured_output_methods(external_conf)
+            for m in _configured_output_methods({**external_conf, **cli_outputs})
             if m != OutputMethod.API
         ]
         if api:
-            output_methods.append(OutputMethod.API)
-        tracker_args = {**tracker_args, "output_methods": output_methods}
+            resolved_output_methods.append(OutputMethod.API)
+        tracker_args = {**tracker_args, "output_methods": resolved_output_methods}
 
     from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
 
