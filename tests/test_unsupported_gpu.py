@@ -23,7 +23,7 @@ class TestUnsupportedGPU(unittest.TestCase):
     # and we end up with non-zero values for GPU energy and power because
     # we use the non-NVML code-path in hardware.AppleSiliconChip().
     @unittest.skipIf(sys.platform == "darwin", "NVML not available on macOS")
-    @patch("codecarbon.core.gpu.pynvml")
+    @patch("codecarbon.core.gpu_nvidia.pynvml")
     def test_emissions_tracker_unsupported_gpu(self, mock_pynvml):
         mock_pynvml.NVMLError_NotSupported = self.NVMLError_NotSupported
         mock_pynvml.NVMLError = (
