@@ -928,3 +928,26 @@ def test_monitor_online_honours_cli_output_options(
 
     assert result.exit_code == 0, result.output
     assert captured["kwargs"]["output_methods"] == [OutputMethod(m) for m in expected]
+
+
+def test_monitor_accepts_fractional_forced_power(monkeypatch, tmp_path):
+    """The tracker reads forced powers as floats: the CLI must not reject 7.5 W."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    result = CliRunner().invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--offline",
+            "--country-iso-code",
+            "FRA",
+            "--force-cpu-power",
+            "42.5",
+            "--force-ram-power",
+            "7.5",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls["kwargs"]["force_cpu_power"] == 42.5
+    assert calls["kwargs"]["force_ram_power"] == 7.5

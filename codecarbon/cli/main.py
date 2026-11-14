@@ -510,10 +510,10 @@ def monitor(
         str | None, typer.Option(help="Text prefixed to tracker log messages")
     ] = None,
     force_cpu_power: Annotated[
-        int | None, typer.Option(help="Override CPU power in watts")
+        float | None, typer.Option(help="Override CPU power in watts")
     ] = None,
     force_ram_power: Annotated[
-        int | None, typer.Option(help="Override RAM power in watts")
+        float | None, typer.Option(help="Override RAM power in watts")
     ] = None,
     pue: Annotated[float | None, typer.Option(help="Power Usage Effectiveness")] = None,
     wue: Annotated[
