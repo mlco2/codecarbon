@@ -393,6 +393,12 @@ class TestTDP(unittest.TestCase):
         model = "Intel(R) Core(TM) Ultra 9 285K"
         self.assertEqual(tdp._get_cpu_power_from_registry(model), 125)
 
+    def test_get_cpu_power_from_registry_i9_14900_desktop(self):
+        tdp = TDP()
+        for suffix, power in (("F", 65), ("K", 125), ("KF", 125), ("KS", 150)):
+            model = f"Intel(R) Core(TM) i9-14900{suffix} CPU @ 3.20GHz"
+            self.assertEqual(tdp._get_cpu_power_from_registry(model), power, model)
+
     def test_get_cpu_power_from_registry_returns_none_without_match(self):
         tdp = TDP.__new__(TDP)
         with (
