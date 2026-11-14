@@ -15,6 +15,7 @@ import psutil
 
 from codecarbon.core.cpu import IntelPowerGadget, IntelRAPL
 from codecarbon.core.gpu import AllGPUDevices
+from codecarbon.core.macmon import MacMon
 from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
@@ -547,10 +548,17 @@ class AppleSiliconChip(BaseHardware):
         output_dir: str,
         model: str,
         chip_part: str = "CPU",
+        backend: str = "powermetrics",
     ):
         self._output_dir = output_dir
         self._model = model
-        self._interface = ApplePowermetrics(self._output_dir)
+        self.backend = backend
+        if backend == "macmon":
+            self._interface = MacMon()
+        elif backend == "powermetrics":
+            self._interface = ApplePowermetrics(self._output_dir)
+        else:
+            raise ValueError(f"Unknown Apple Silicon backend: {backend!r}")
         self.chip_part = chip_part
 
     def __repr__(self) -> str:
@@ -602,14 +610,20 @@ class AppleSiliconChip(BaseHardware):
 
     @classmethod
     def from_utils(
-        cls, output_dir: str, model: Optional[str] = None, chip_part: str = "Processor"
+        cls,
+        output_dir: str,
+        model: Optional[str] = None,
+        chip_part: str = "Processor",
+        backend: str = "powermetrics",
     ) -> "AppleSiliconChip":
         if model is None:
             model = detect_cpu_model()
             if model is None:
                 logger.warning("Could not read AppleSiliconChip model.")
 
-        return cls(output_dir=output_dir, model=model, chip_part=chip_part)
+        return cls(
+            output_dir=output_dir, model=model, chip_part=chip_part, backend=backend
+        )
 
 
 # One `vcgencmd pmic_read_adc` line, e.g. "VDD_CORE_A current(7)=3.00000000A"

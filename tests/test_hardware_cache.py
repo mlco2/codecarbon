@@ -95,7 +95,17 @@ def test_spec_from_hardware_apple_chip():
         "kind": "apple_chip",
         "model": "Apple M1",
         "chip_part": "CPU",
+        "backend": "powermetrics",
     }
+
+
+def test_spec_from_hardware_apple_chip_keeps_macmon_backend():
+    apple_hw = type(
+        "AppleSiliconChip",
+        (),
+        {"_model": "Apple M2", "chip_part": "GPU", "backend": "macmon"},
+    )()
+    assert hardware_cache._spec_from_hardware(apple_hw)["backend"] == "macmon"
 
 
 def test_hardware_from_spec_rebuilds_gpu():
@@ -198,12 +208,26 @@ def test_spec_and_rebuild_roundtrip_for_apple_chip():
         return_value=fake_chip,
     ) as mock_chip_cls:
         rebuilt = hardware_cache._hardware_from_spec(spec, "out")
+    # Specs cached before the backend existed rebuild as powermetrics
     mock_chip_cls.assert_called_once_with(
         output_dir="out",
         model="Apple M1",
         chip_part="CPU",
+        backend="powermetrics",
     )
     assert rebuilt._model == "Apple M1"
+
+
+def test_rebuild_apple_chip_with_macmon_backend():
+    spec = {
+        "kind": "apple_chip",
+        "model": "Apple M2",
+        "chip_part": "CPU",
+        "backend": "macmon",
+    }
+    with patch("codecarbon.external.hardware.AppleSiliconChip") as mock_chip_cls:
+        hardware_cache._hardware_from_spec(spec, "out")
+    assert mock_chip_cls.call_args.kwargs["backend"] == "macmon"
 
 
 def test_capture_and_apply_restore_hardware_plan():

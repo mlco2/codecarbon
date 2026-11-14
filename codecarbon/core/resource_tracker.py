@@ -2,7 +2,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union
 
-from codecarbon.core import cpu, gpu, powermetrics, windows_emi
+from codecarbon.core import cpu, gpu, macmon, powermetrics, windows_emi
 from codecarbon.core.config import normalize_gpu_ids
 from codecarbon.core.hardware_cache import get_cached_tdp, get_or_run_setup
 from codecarbon.core.util import (
@@ -126,18 +126,25 @@ class ResourceTracker:
 
     def _setup_powermetrics(self):
         """Set up CPU and GPU tracking using PowerMetrics (Apple Silicon)."""
-        logger.info("Tracking Apple CPU and GPU via PowerMetrics")
-        self.gpu_tracker = "PowerMetrics"
-        self.cpu_tracker = "PowerMetrics"
+        return self._setup_apple_silicon("powermetrics", "PowerMetrics")
+
+    def _setup_macmon(self):
+        """Set up CPU and GPU tracking using macmon (Apple Silicon, no sudo)."""
+        return self._setup_apple_silicon("macmon", "macmon")
+
+    def _setup_apple_silicon(self, backend: str, tracker_name: str):
+        logger.info(f"Tracking Apple CPU and GPU via {tracker_name}")
+        self.gpu_tracker = tracker_name
+        self.cpu_tracker = tracker_name
 
         hardware_cpu = AppleSiliconChip.from_utils(
-            self.tracker._output_dir, chip_part="CPU"
+            self.tracker._output_dir, chip_part="CPU", backend=backend
         )
         self.tracker._hardware.append(hardware_cpu)
         self.tracker._conf["cpu_model"] = hardware_cpu.get_model()
 
         hardware_gpu = AppleSiliconChip.from_utils(
-            self.tracker._output_dir, chip_part="GPU"
+            self.tracker._output_dir, chip_part="GPU", backend=backend
         )
         self.tracker._hardware.append(hardware_gpu)
         self.tracker._conf["gpu_model"] = hardware_gpu.get_model()
@@ -149,7 +156,7 @@ class ResourceTracker:
         if is_mac_os():
             cpu_model = detect_cpu_model()
             if cpu_model and is_mac_arm(cpu_model):
-                return "Mac OS and ARM processor detected: Please enable PowerMetrics sudo to measure CPU"
+                return "Mac OS and ARM processor detected: Please install macmon (`brew install macmon`) to measure CPU and GPU"
             else:
                 return "Mac OS detected: Please install Intel Power Gadget or enable PowerMetrics sudo to measure CPU"
         elif is_windows_os():
@@ -251,6 +258,11 @@ class ResourceTracker:
         if is_mac_os():
             cpu_model = detect_cpu_model() or ""
             if is_mac_arm(cpu_model):
+                # macmon measures the chip without sudo, and detecting it is
+                # only a PATH lookup, so it goes before the cpu_load estimate.
+                if macmon.is_macmon_available():
+                    self._setup_macmon()
+                    return True
                 if self._setup_cpu_load_fast(cpu_model):
                     return True
                 if powermetrics.is_powermetrics_available():

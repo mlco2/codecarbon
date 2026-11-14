@@ -54,7 +54,7 @@ instantiating the tracker. Energy is the integral of power over time:
 
 | Component | Best available source | Modelled fallback |
 |---|---|---|
-| CPU | Intel RAPL (Linux), Raspberry Pi 5 PMIC, Energy Meter Interface (Windows 11), `powermetrics` (macOS), Intel Power Gadget (legacy) | TDP × CPU load, or a flat constant |
+| CPU | Intel RAPL (Linux), Raspberry Pi 5 PMIC, Energy Meter Interface (Windows 11), `macmon` or `powermetrics` (macOS), Intel Power Gadget (legacy) | TDP × CPU load, or a flat constant |
 | GPU | NVML via `nvidia-ml-py` (Nvidia) or AMDSMI (AMD) — a direct device reading | none; without a supported GPU library, GPU is not counted |
 | RAM | the PMIC DRAM rails on a Raspberry Pi 5; RAPL only on specific hardware | modelled from an estimated DIMM count |
 
@@ -116,24 +116,25 @@ This is the part of CodeCarbon most often misread. The selection logic is
 [`core/resource_tracker.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/core/resource_tracker.py),
 and it is evaluated strictly in this order — the first row that applies wins.
 
-Rows 3–10 are the platform backends tried by `_try_platform_cpu_backend`. If
+Rows 3–11 are the platform backends tried by `_try_platform_cpu_backend`. If
 none of them matches, `set_CPU_tracking` delegates to `_setup_fallback_tracking`,
-which is where rows 11 and 12 are decided.
+which is where rows 12 and 13 are decided.
 
 | # | Condition | Result | Source |
 |---|---|---|---|
-| 1 | `force_cpu_power` is set | **Every platform backend is skipped** — RAPL is not consulted even if it is available — and your value becomes the TDP handed to row 11 or row 12 below. It is not the reported power. | `set_CPU_tracking` |
+| 1 | `force_cpu_power` is set | **Every platform backend is skipped** — RAPL is not consulted even if it is available — and your value becomes the TDP handed to row 12 or row 13 below. It is not the reported power. | `set_CPU_tracking` |
 | 2 | `force_mode_cpu_load` is set, `psutil` present, and a TDP is known (or `force_cpu_power` is set) | `cpu_load` mode | `set_CPU_tracking`, `_setup_cpu_load_mode` |
 | 3 | Linux **and** RAPL files readable | `intel_rapl` — hardware energy counters | `_try_platform_cpu_backend` |
 | 4 | Raspberry Pi 5 (`vcgencmd pmic_read_adc` answers) | `raspberry` — PMIC power readings | `_try_platform_cpu_backend`, `cpu.is_raspberry` |
-| 5 | macOS **and** Apple Silicon **and** `psutil` present | `cpu_load` mode | `_try_platform_cpu_backend`, `_setup_cpu_load_fast` |
-| 6 | macOS **and** Apple Silicon **and** no `psutil` **and** `powermetrics` usable | `powermetrics` | `_try_platform_cpu_backend` |
-| 7 | macOS **and** Intel **and** Intel Power Gadget installed | `intel_power_gadget` | `_try_platform_cpu_backend` |
-| 8 | macOS **and** Intel **and** `powermetrics` usable | `powermetrics` | `_try_platform_cpu_backend` |
-| 9 | Windows **and** EMI available | `windows_emi` — hardware energy counters | `_try_platform_cpu_backend` |
-| 10 | Windows **and** Intel Power Gadget installed | `intel_power_gadget` | `_try_platform_cpu_backend` |
-| 11 | none of the above, `psutil` present | `cpu_load` mode | `_setup_fallback_tracking` |
-| 12 | none of the above, no `psutil` | `constant` mode | `_setup_fallback_tracking` |
+| 5 | macOS **and** Apple Silicon **and** `macmon` on `PATH` | `macmon` — CPU and GPU power, no `sudo` needed | `_try_platform_cpu_backend`, `macmon.is_macmon_available` |
+| 6 | macOS **and** Apple Silicon **and** `psutil` present | `cpu_load` mode | `_try_platform_cpu_backend`, `_setup_cpu_load_fast` |
+| 7 | macOS **and** Apple Silicon **and** no `psutil` **and** `powermetrics` usable | `powermetrics` | `_try_platform_cpu_backend` |
+| 8 | macOS **and** Intel **and** Intel Power Gadget installed | `intel_power_gadget` | `_try_platform_cpu_backend` |
+| 9 | macOS **and** Intel **and** `powermetrics` usable | `powermetrics` | `_try_platform_cpu_backend` |
+| 10 | Windows **and** EMI available | `windows_emi` — hardware energy counters | `_try_platform_cpu_backend` |
+| 11 | Windows **and** Intel Power Gadget installed | `intel_power_gadget` | `_try_platform_cpu_backend` |
+| 12 | none of the above, `psutil` present | `cpu_load` mode | `_setup_fallback_tracking` |
+| 13 | none of the above, no `psutil` | `constant` mode | `_setup_fallback_tracking` |
 
 Two consequences worth stating plainly, because they surprise people:
 
@@ -144,12 +145,12 @@ Two consequences worth stating plainly, because they surprise people:
   `force_cpu_power=65` reports `65 × (0.1 + 0.9 × load³)` watts, between 6.5 W
   and 65 W, not a flat 65 W. Only on an installation without `psutil` does it
   become a flat figure, and then it is half your value, not your value
-  (row 12 and `constant` mode below). Unlike a registry TDP, it is used as
+  (row 13 and `constant` mode below). Unlike a registry TDP, it is used as
   given: it is not multiplied by the CPU package count.
-- **On Apple Silicon, `powermetrics` is effectively unreachable.**
-  `psutil` is a hard dependency of CodeCarbon, so row 5 fires before row 6 in
-  every normal installation. The `sudo`-granting instructions that used to
-  appear here describe a path the code no longer takes.
+- **On Apple Silicon, install `macmon` to get measured values.** Without it,
+  `psutil` (a hard dependency of CodeCarbon) makes row 6 fire before row 7 in
+  every normal installation, so `powermetrics` is effectively unreachable and
+  granting it `sudo` changes nothing.
 
 ### The fallback constants
 
@@ -278,12 +279,14 @@ option is enabled.
 Intel has since discontinued the tool; this is a known limitation,
 tracked in [issue #457](https://github.com/mlco2/codecarbon/issues/457).
 
-**macOS, Apple Silicon.** The Apple Silicon chip contains both CPU and GPU, and
-`powermetrics` can read both, but it requires `sudo` and — as row 5 of the table
-above shows — `cpu_load` mode is selected first whenever `psutil` is installed,
-which is the normal case. There is no known way to read Apple Silicon energy
-without administrative rights; if you know of one, please
-[open an issue](https://github.com/mlco2/codecarbon/issues).
+**macOS, Apple Silicon.** The Apple Silicon chip contains both CPU and GPU.
+CodeCarbon reads both with [`macmon`](https://github.com/vladkens/macmon),
+which runs as a normal user, without `sudo`. Install it with
+`brew install macmon`; CodeCarbon uses it automatically when it is on `PATH`.
+Each measure runs `macmon pipe` for 10 samples of 100 ms and averages the
+`cpu_power` and `gpu_power` fields. Without `macmon`, `cpu_load` mode is used
+(row 6 of the table above). `powermetrics` can read the same values but requires
+`sudo`, and it is only tried when `psutil` is missing.
 
 **Legacy Intel Power Gadget** is retained on all platforms for machines where
 it is still installed, but it should not be relied on for new setups.
@@ -322,8 +325,8 @@ informal walkthrough.
 Nvidia GPU energy is read through `nvidia-ml-py` (installed with the package),
 which queries NVML — a direct device reading, not a model. There is no fallback:
 if NVML is unavailable, GPU energy is not counted at all rather than estimated.
-On Apple Silicon under `powermetrics`, the integrated GPU is reported as a
-separate `AppleSiliconChip` device.
+On Apple Silicon under `macmon` or `powermetrics`, the integrated GPU is
+reported as a separate `AppleSiliconChip` device.
 
 ## RAM
 
