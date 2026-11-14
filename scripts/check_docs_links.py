@@ -200,6 +200,18 @@ def _check_external(session: requests.Session, url: str) -> tuple[bool, str]:
         return False, str(e)
 
 
+# (tag, attribute) pairs whose URL must resolve.
+CHECKED_ATTRIBUTES: tuple[tuple[str, str], ...] = (
+    ("a", "href"),
+    ("img", "src"),
+    ("link", "href"),
+    ("script", "src"),
+)
+
+# <link rel> values that name an origin to connect to, not a resource to fetch.
+SKIP_LINK_RELS: frozenset[str] = frozenset({"preconnect", "dns-prefetch"})
+
+
 def collect_checks(site_root: Path) -> list[tuple[Path, str, str, str]]:
     """Rows: (source_html, attr_name, url, kind) kind is local|external."""
     rows: list[tuple[Path, str, str, str]] = []
@@ -209,30 +221,19 @@ def collect_checks(site_root: Path) -> list[tuple[Path, str, str, str]]:
         soup = BeautifulSoup(
             html_path.read_text(encoding="utf-8", errors="replace"), "html.parser"
         )
-        for tag in soup.find_all("a", href=True):
-            href = tag["href"].strip()
-            if href.startswith(IGNORE_EXTERNAL_PREFIXES):
-                continue
-            if (
-                href.startswith("http://")
-                or href.startswith("https://")
-                or href.startswith("//")
-            ):
-                rows.append((html_path, "href", href, "external"))
-            else:
-                rows.append((html_path, "href", href, "local"))
-        for tag in soup.find_all("img", src=True):
-            src = tag["src"].strip()
-            if src.startswith("data:"):
-                continue
-            if (
-                src.startswith("http://")
-                or src.startswith("https://")
-                or src.startswith("//")
-            ):
-                rows.append((html_path, "src", src, "external"))
-            else:
-                rows.append((html_path, "src", src, "local"))
+        for tag_name, attr in CHECKED_ATTRIBUTES:
+            for tag in soup.find_all(tag_name, attrs={attr: True}):
+                if tag_name == "link" and SKIP_LINK_RELS.intersection(
+                    tag.get("rel") or []
+                ):
+                    continue
+                url = tag[attr].strip()
+                if url.startswith(IGNORE_EXTERNAL_PREFIXES) or url.startswith("data:"):
+                    continue
+                if url.startswith(("http://", "https://", "//")):
+                    rows.append((html_path, attr, url, "external"))
+                else:
+                    rows.append((html_path, attr, url, "local"))
     return rows
 
 

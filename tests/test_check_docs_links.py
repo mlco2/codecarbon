@@ -87,3 +87,41 @@ def test_site_url_path_reads_mkdocs_config(checker, tmp_path, line, expected):
 
 def test_default_base_path_matches_repository_site_url(checker):
     assert checker.site_url_path() == "/latest/"
+
+
+def _head_page(path: Path, head: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f"<html><head>{head}</head><body></body></html>", encoding="utf-8")
+
+
+def test_link_and_script_targets_are_checked(checker, monkeypatch, site, capsys):
+    (site / "assets").mkdir()
+    (site / "assets" / "main.css").write_text("", encoding="utf-8")
+    _head_page(
+        site / "404.html",
+        '<link rel="stylesheet" href="/latest/assets/main.css">'
+        '<link rel="icon" href="/latest/images/missing.ico">'
+        '<script src="/latest/assets/missing.js"></script>',
+    )
+
+    assert _run(checker, monkeypatch, site, "--base-path", "/latest/") == 1
+    err = capsys.readouterr().err
+    assert "404.html: href='/latest/images/missing.ico'" in err
+    assert "404.html: src='/latest/assets/missing.js'" in err
+    assert "main.css" not in err
+
+
+def test_preconnect_origins_and_inline_scripts_are_skipped(checker, site):
+    _head_page(
+        site / "index.html",
+        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+        '<link rel="canonical" href="https://docs.codecarbon.io/latest/">'
+        "<script>var x = 1;</script>",
+    )
+
+    rows = [
+        row for row in checker.collect_checks(site) if row[0] == site / "index.html"
+    ]
+    assert [(attr, url) for _, attr, url, _ in rows] == [
+        ("href", "https://docs.codecarbon.io/latest/")
+    ]
