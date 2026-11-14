@@ -30,6 +30,23 @@ It can also be set in the config file as a comma-separated string, e.g.
 
 The package has an in-built logger that logs data into a CSV file named `emissions.csv` in the `output_dir`, provided as an input parameter (defaults to the current directory), for each experiment tracked across projects.
 
+By default that file is written once at the end of the run. To also append a row on the same live cadence as API/Prometheus (`api_call_interval × measure_power_secs`), set `live_output_file`:
+
+```python-skip
+from codecarbon import EmissionsTracker
+
+tracker = EmissionsTracker(
+    live_output_file="emissions_live.csv",  # or "auto" / "" → emissions_<run_id>.csv
+)
+```
+
+Use the same name as `output_file` to enable live rows on the primary CSV. Leave `live_output_file` unset to keep the default final-only behavior.
+
+- Every row holds the **running totals** of the run so far (`emissions`, `energy_consumed`, `duration`...), not the amount for the interval. Take the last row of a `run_id` for its total, and do not sum rows of the same run.
+- A row is also appended at each `flush()` and at `stop()`. With `api_call_interval=-1` there are no live rows, only those, and CodeCarbon logs a warning.
+- With `"auto"`, the file is named after the `run_id` written in it. When the API output is on, that is the API run id.
+- Task CSV files (`start_task()`/`stop_task()`) are written only by the CSV output method, not by the interval file.
+
 The columns are written in the field order of the `EmissionsData` dataclass
 (`codecarbon/output_methods/emissions_data.py`).
 
