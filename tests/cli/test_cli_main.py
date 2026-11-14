@@ -1,5 +1,6 @@
 """Tests for the CodeCarbon CLI main function."""
 
+import inspect
 import io
 import os
 import sys
@@ -951,3 +952,46 @@ def test_monitor_accepts_fractional_forced_power(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert calls["kwargs"]["force_cpu_power"] == 42.5
     assert calls["kwargs"]["force_ram_power"] == 7.5
+
+
+# Tracker arguments `codecarbon monitor` cannot or need not expose.
+_NOT_CLI_TRACKER_ARGS = {
+    "logging_logger",  # a Python logger object
+    "output_handlers",  # Python output handler objects
+    "save_to_api",  # --api / --no-api
+}
+
+
+def test_monitor_exposes_every_tracker_option():
+    """Adding a tracker argument must add the matching `monitor` option (#1273)."""
+    from codecarbon.emissions_tracker import BaseEmissionsTracker
+
+    tracker_args = set(inspect.signature(BaseEmissionsTracker.__init__).parameters)
+    monitor_options = set(inspect.signature(cli_main.monitor).parameters)
+
+    missing = tracker_args - {"self"} - _NOT_CLI_TRACKER_ARGS - monitor_options
+    assert not missing, f"Add these options to `codecarbon monitor`: {missing}"
+
+
+def test_monitor_forwards_live_output_metadata_and_eso_options(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    result = CliRunner().invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--offline",
+            "--country-iso-code",
+            "GBR",
+            "--live-output-file",
+            "live.csv",
+            "--metadata",
+            "metadata.json",
+            "--use-national-grid-eso-api",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls["kwargs"]["live_output_file"] == "live.csv"
+    assert calls["kwargs"]["metadata"] == "metadata.json"
+    assert calls["kwargs"]["use_national_grid_eso_api"] is True

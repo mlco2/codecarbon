@@ -535,6 +535,18 @@ def monitor(
     rapl_prefer_psys: Annotated[
         bool | None, typer.Option(help="Prefer the RAPL platform power domain")
     ] = None,
+    live_output_file: Annotated[
+        str | None,
+        typer.Option(help="CSV file receiving every interval measurement"),
+    ] = None,
+    metadata: Annotated[
+        str | None,
+        typer.Option(help="JSON file of metadata added to the outputs"),
+    ] = None,
+    use_national_grid_eso_api: Annotated[
+        bool | None,
+        typer.Option(help="Use live UK National Grid ESO carbon intensity in GB"),
+    ] = None,
 ):
     """Monitor your machine's carbon emissions.
 
@@ -593,6 +605,9 @@ def monitor(
         "allow_multiple_runs": allow_multiple_runs,
         "rapl_include_dram": rapl_include_dram,
         "rapl_prefer_psys": rapl_prefer_psys,
+        "live_output_file": live_output_file,
+        "metadata": metadata,
+        "use_national_grid_eso_api": use_national_grid_eso_api,
     }
     tracker_args.update(
         {
