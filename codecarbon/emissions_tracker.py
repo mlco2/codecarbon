@@ -712,7 +712,15 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(csv_file_handler)
 
         if OutputMethod.LOGGER in methods:
-            self._output_handlers.append(self._logging_logger)
+            if self._logging_logger is None:
+                logger.warning(
+                    "OutputMethod.LOGGER was requested but no `logging_logger`"
+                    " was provided, so the logger output is skipped. Pass"
+                    " `logging_logger=LoggerOutput(...)` to EmissionsTracker"
+                    " to enable it."
+                )
+            else:
+                self._output_handlers.append(self._logging_logger)
 
         if self._emissions_endpoint:
             self._output_handlers.append(HTTPOutput(self._emissions_endpoint))
