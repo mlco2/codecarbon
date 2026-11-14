@@ -1828,9 +1828,12 @@ def track_emissions(
     pue: Optional[float] = _sentinel,
     wue: Optional[float] = _sentinel,
     force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
+    force_mode_cpu_load: Optional[bool] = _sentinel,
+    force_mode_constant: Optional[bool] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
     rapl_include_dram: Optional[bool] = _sentinel,
     rapl_prefer_psys: Optional[bool] = _sentinel,
+    metadata: Optional[Union[dict, str]] = _sentinel,
     use_national_grid_eso_api: Optional[bool] = _sentinel,
 ):
     """
@@ -1913,11 +1916,18 @@ def track_emissions(
                 litres of water consumed per kilowatt-hour of electricity consumed.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                          in gCO2e/kWh for emissions calculations.
+    :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD.
+    :param force_mode_constant: Estimate CPU power as a constant fraction of the CPU
+                                TDP (or of `force_cpu_power`), skipping RAPL, Power
+                                Gadget, powermetrics and CPU load tracking. Takes
+                                precedence over `force_mode_cpu_load`. Defaults to False.
     :param rapl_include_dram: Include DRAM in the counter-based CPU measurements
                               (Linux RAPL and Windows EMI, default: False).
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
+    :param metadata: Free-form metadata bag to enrich outputs. Either a dict or a path
+                     to a JSON file containing a dict. See `EmissionsTracker`.
     :param use_national_grid_eso_api: Opt-in: when True and the detected location
                              is Great Britain, fetch live carbon intensity from the
                              UK National Grid ESO Carbon Intensity API instead of
@@ -1977,9 +1987,12 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                    force_mode_cpu_load=force_mode_cpu_load,
+                    force_mode_constant=force_mode_constant,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    metadata=metadata,
                     use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             else:
@@ -2015,9 +2028,12 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                    force_mode_cpu_load=force_mode_cpu_load,
+                    force_mode_constant=force_mode_constant,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    metadata=metadata,
                     use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             tracker.start()
