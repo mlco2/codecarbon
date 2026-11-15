@@ -224,6 +224,34 @@ class TestEmissions(unittest.TestCase):
             emissions, 3 * canada["carbon_intensity"] / 1000, places=6
         )
 
+    def test_region_energy_mix_without_carbon_intensity_uses_mix_model(self):
+        """
+        A region without a carbon_intensity override is estimated from its
+        fossil mix, and metadata keys in its entry are ignored.
+        """
+        energy_mix = {
+            "coal": 10.0,
+            "petroleum": 0.1,
+            "naturalGas": 8.6,
+            "hydro": 81.3,
+            "total": 100.0,
+            "source": "ECCC NIR 2026",
+        }
+
+        emissions_per_kWh = Emissions._region_energy_mix_to_emissions_rate(energy_mix)
+
+        expected = (
+            0.995725971 * 10.0 + 0.8166885263 * 0.1 + 0.7438415916 * 8.6
+        ) / 100.0
+        self.assertAlmostEqual(emissions_per_kWh.kgs_per_kWh, expected, places=9)
+
+    def test_region_energy_mix_carbon_intensity_overrides_mix(self):
+        energy_mix = {"coal": 100.0, "total": 100.0, "carbon_intensity": 2.6}
+
+        emissions_per_kWh = Emissions._region_energy_mix_to_emissions_rate(energy_mix)
+
+        self.assertAlmostEqual(emissions_per_kWh.kgs_per_kWh, 0.0026, places=9)
+
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(

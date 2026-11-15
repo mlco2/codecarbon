@@ -452,6 +452,12 @@ class Emissions:
             "petroleum" and "naturalGas" and "total"
         :return: an EmissionsPerKwh object representing the average emissions rate
         """
+        # If an authoritative carbon intensity is provided for the region,
+        # use it directly instead of estimating from a simplified mix model.
+        carbon_intensity = energy_mix.get("carbon_intensity")
+        if carbon_intensity is not None:
+            return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
+
         # source:
         # https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
         emissions_by_source: Dict[str, EmissionsPerKWh] = {
@@ -459,22 +465,12 @@ class Emissions:
             "petroleum": EmissionsPerKWh.from_kgs_per_kWh(0.8166885263),
             "naturalGas": EmissionsPerKWh.from_kgs_per_kWh(0.7438415916),
         }
-        # If an authoritative carbon intensity is provided for the region,
-        # use it directly instead of estimating from a simplified mix model.
-        if energy_mix.get("carbon_intensity") is not None:
-            return EmissionsPerKWh.from_g_per_kWh(energy_mix.get("carbon_intensity"))
-
-        emissions_percentage: Dict[str, float] = {}
-        for energy_type in energy_mix.keys():
-            if energy_type not in [
-                "total",
-                "isoCode",
-                "country_name",
-                "carbon_intensity",
-            ]:
-                emissions_percentage[energy_type] = (
-                    energy_mix[energy_type] / energy_mix["total"]
-                )
+        # Only the fossil sources emit, so other keys (low-carbon sources,
+        # "total" or metadata) are not part of the weighted sum.
+        emissions_percentage: Dict[str, float] = {
+            source: energy_mix[source] / energy_mix["total"]
+            for source in emissions_by_source
+        }
         #  Weighted sum of emissions by % of contributions
         # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
         # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916 # noqa: E501
