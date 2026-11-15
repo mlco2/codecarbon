@@ -63,7 +63,10 @@ For Google Cloud Logging setup, refer to [Google Cloud documentation](https://cl
 Create an EmissionsTracker that sends output to your logger. Other save options can be used simultaneously:
 
 ``` python
-tracker = EmissionsTracker(save_to_logger=True, logging_logger=my_logger)
+tracker = EmissionsTracker(
+    output_methods=[OutputMethod.CSV, OutputMethod.LOGGER],
+    logging_logger=my_logger,
+)
 tracker.start()
 # Your code here
 emissions: float = tracker.stop()
@@ -71,7 +74,10 @@ emissions: float = tracker.stop()
 
 ## Complete Examples
 
-A full working example is available in `codecarbon/examples/logging_demo.py`.
+Full working examples are available in
+[`examples/logging_to_file.py`](https://github.com/mlco2/codecarbon/blob/master/examples/logging_to_file.py)
+and
+[`examples/logging_to_google_cloud.py`](https://github.com/mlco2/codecarbon/blob/master/examples/logging_to_google_cloud.py).
 
 ## Next Steps
 

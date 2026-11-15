@@ -156,6 +156,40 @@ def test_spec_from_hardware_windows_emi_cpu():
     assert "rapl_dir" not in spec
 
 
+def test_hardware_kind_raspberry():
+    raspberry_hw = type("Raspberry", (), {})()
+    assert hardware_cache._hardware_kind(raspberry_hw) == "raspberry"
+
+
+def test_spec_from_hardware_raspberry():
+    raspberry_hw = type(
+        "Raspberry",
+        (),
+        {"_model": "Raspberry Pi 5", "chip_part": "CPU"},
+    )()
+    assert hardware_cache._spec_from_hardware(raspberry_hw) == {
+        "kind": "raspberry",
+        "model": "Raspberry Pi 5",
+        "chip_part": "CPU",
+    }
+
+
+def test_spec_and_rebuild_roundtrip_for_raspberry():
+    spec = {"kind": "raspberry", "model": "Raspberry Pi 5", "chip_part": "CPU"}
+    fake_pi = SimpleNamespace(_model="Raspberry Pi 5")
+    with patch(
+        "codecarbon.external.hardware.Raspberry",
+        return_value=fake_pi,
+    ) as mock_pi_cls:
+        rebuilt = hardware_cache._hardware_from_spec(spec, "out")
+    mock_pi_cls.assert_called_once_with(
+        output_dir="out",
+        model="Raspberry Pi 5",
+        chip_part="CPU",
+    )
+    assert rebuilt._model == "Raspberry Pi 5"
+
+
 def test_spec_and_rebuild_roundtrip_for_apple_chip():
     spec = {"kind": "apple_chip", "model": "Apple M1", "chip_part": "CPU"}
     fake_chip = SimpleNamespace(_model="Apple M1")

@@ -1,0 +1,220 @@
+{
+  "_unit": {
+    "emissions": "lbs/MWh",
+    "regionCode": "2 digit state/region code"
+  },
+  "_source": {
+    "name": "EPA eGRID2023, annual CO2 equivalent total output emission rate",
+    "url": "https://www.epa.gov/egrid/download-data",
+    "field": "STC2ERTA",
+    "year": 2023
+  },
+  "alabama": {
+    "emissions": 713.976,
+    "regionCode": "AL"
+  },
+  "alaska": {
+    "emissions": 814.457,
+    "regionCode": "AK"
+  },
+  "arizona": {
+    "emissions": 689.104,
+    "regionCode": "AZ"
+  },
+  "arkansas": {
+    "emissions": 998.414,
+    "regionCode": "AR"
+  },
+  "california": {
+    "emissions": 394.769,
+    "regionCode": "CA"
+  },
+  "colorado": {
+    "emissions": 1091.078,
+    "regionCode": "CO"
+  },
+  "connecticut": {
+    "emissions": 540.674,
+    "regionCode": "CT"
+  },
+  "delaware": {
+    "emissions": 704.171,
+    "regionCode": "DE"
+  },
+  "district of columbia": {
+    "emissions": 395.011,
+    "regionCode": "DC"
+  },
+  "florida": {
+    "emissions": 789.133,
+    "regionCode": "FL"
+  },
+  "georgia": {
+    "emissions": 717.445,
+    "regionCode": "GA"
+  },
+  "hawaii": {
+    "emissions": 1394.68,
+    "regionCode": "HI"
+  },
+  "idaho": {
+    "emissions": 313.88,
+    "regionCode": "ID"
+  },
+  "illinois": {
+    "emissions": 474.436,
+    "regionCode": "IL"
+  },
+  "indiana": {
+    "emissions": 1465.502,
+    "regionCode": "IN"
+  },
+  "iowa": {
+    "emissions": 634.156,
+    "regionCode": "IA"
+  },
+  "kansas": {
+    "emissions": 733.284,
+    "regionCode": "KS"
+  },
+  "kentucky": {
+    "emissions": 1747.004,
+    "regionCode": "KY"
+  },
+  "louisiana": {
+    "emissions": 763.068,
+    "regionCode": "LA"
+  },
+  "maine": {
+    "emissions": 316.835,
+    "regionCode": "ME"
+  },
+  "maryland": {
+    "emissions": 522.207,
+    "regionCode": "MD"
+  },
+  "massachusetts": {
+    "emissions": 830.101,
+    "regionCode": "MA"
+  },
+  "michigan": {
+    "emissions": 797.432,
+    "regionCode": "MI"
+  },
+  "minnesota": {
+    "emissions": 752.329,
+    "regionCode": "MN"
+  },
+  "mississippi": {
+    "emissions": 828.274,
+    "regionCode": "MS"
+  },
+  "missouri": {
+    "emissions": 1454.593,
+    "regionCode": "MO"
+  },
+  "montana": {
+    "emissions": 1063.921,
+    "regionCode": "MT"
+  },
+  "nebraska": {
+    "emissions": 1025.822,
+    "regionCode": "NE"
+  },
+  "nevada": {
+    "emissions": 643.859,
+    "regionCode": "NV"
+  },
+  "new hampshire": {
+    "emissions": 276.222,
+    "regionCode": "NH"
+  },
+  "new jersey": {
+    "emissions": 470.168,
+    "regionCode": "NJ"
+  },
+  "new mexico": {
+    "emissions": 773.637,
+    "regionCode": "NM"
+  },
+  "new york": {
+    "emissions": 466.616,
+    "regionCode": "NY"
+  },
+  "north carolina": {
+    "emissions": 626.438,
+    "regionCode": "NC"
+  },
+  "north dakota": {
+    "emissions": 1297.852,
+    "regionCode": "ND"
+  },
+  "ohio": {
+    "emissions": 1068.27,
+    "regionCode": "OH"
+  },
+  "oklahoma": {
+    "emissions": 648.834,
+    "regionCode": "OK"
+  },
+  "oregon": {
+    "emissions": 364.963,
+    "regionCode": "OR"
+  },
+  "pennsylvania": {
+    "emissions": 647.871,
+    "regionCode": "PA"
+  },
+  "rhode island": {
+    "emissions": 840.004,
+    "regionCode": "RI"
+  },
+  "south carolina": {
+    "emissions": 560.363,
+    "regionCode": "SC"
+  },
+  "south dakota": {
+    "emissions": 335.582,
+    "regionCode": "SD"
+  },
+  "tennessee": {
+    "emissions": 661.166,
+    "regionCode": "TN"
+  },
+  "texas": {
+    "emissions": 771.179,
+    "regionCode": "TX"
+  },
+  "utah": {
+    "emissions": 1421.234,
+    "regionCode": "UT"
+  },
+  "vermont": {
+    "emissions": 52.239,
+    "regionCode": "VT"
+  },
+  "virginia": {
+    "emissions": 539.599,
+    "regionCode": "VA"
+  },
+  "washington": {
+    "emissions": 266.585,
+    "regionCode": "WA"
+  },
+  "west virginia": {
+    "emissions": 1968.869,
+    "regionCode": "WV"
+  },
+  "wisconsin": {
+    "emissions": 1163.572,
+    "regionCode": "WI"
+  },
+  "wyoming": {
+    "emissions": 1833.263,
+    "regionCode": "WY"
+  },
+  "usa": {
+    "emissions": 770.884,
+    "regionCode": "usa"
+  }
+}

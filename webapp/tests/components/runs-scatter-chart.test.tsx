@@ -1,13 +1,25 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+    describe,
+    it,
+    expect,
+    vi,
+    beforeEach,
+    beforeAll,
+    afterAll,
+} from "vitest";
 import { render, screen } from "@testing-library/react";
 
-class NoopResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-}
-// @ts-expect-error -- jsdom doesn't have it
-globalThis.ResizeObserver = NoopResizeObserver;
+// Recharts 3 renders nothing inside a zero-sized ResponsiveContainer, and
+// jsdom measures every element as 0x0 — give the container a size.
+beforeAll(() => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+        width: 800,
+        height: 450,
+    } as DOMRect);
+});
+afterAll(() => {
+    vi.restoreAllMocks();
+});
 
 const getRunEmissionsByExperimentMock = vi.hoisted(() => vi.fn());
 vi.mock("@/api/runs", () => ({

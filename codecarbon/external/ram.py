@@ -214,7 +214,7 @@ class RAM(BaseHardware):
                 .decode()
                 .strip()
             )
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             return
 
     def _parse_scontrol_memory_GB(self, mem):
