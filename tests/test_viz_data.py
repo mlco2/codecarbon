@@ -143,3 +143,18 @@ def test_get_country_choropleth_data():
         country_emissions=100,
     )
     assert output_choropleth_data == expected_choropleth_data
+
+
+def test_get_regional_emissions_choropleth_data_skips_metadata_keys():
+    viz_data = data.Data()
+
+    choropleth_data = viz_data.get_regional_emissions_choropleth_data(
+        net_energy_consumed=1.0, country_iso_code="USA"
+    )
+
+    usa_emissions = DataSource().get_country_emissions_data("usa")
+    regions = [name for name in usa_emissions if not name.startswith("_")]
+    assert [row["region_name"] for row in choropleth_data] == [
+        name.upper() for name in regions
+    ]
+    assert all(row["emissions"] > 0 for row in choropleth_data)

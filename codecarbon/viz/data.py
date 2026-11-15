@@ -195,8 +195,9 @@ class Data:
             }
         choropleth_data = []
         for region_name in region_emissions.keys():
-            region_code = region_emissions[region_name]["regionCode"]
-            if region_name not in ["_unit"]:
+            # Keys starting with "_" hold metadata ("_unit", "_source"), not regions
+            if not region_name.startswith("_"):
+                region_code = region_emissions[region_name]["regionCode"]
                 from codecarbon.core.units import Energy
 
                 energy_consumed = Energy.from_energy(kWh=net_energy_consumed)
