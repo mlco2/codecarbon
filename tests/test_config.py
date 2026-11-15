@@ -5,6 +5,7 @@ from textwrap import dedent
 from unittest import mock
 from unittest.mock import patch
 
+from codecarbon.core.carbon_intensity import NationalGridESOProvider
 from codecarbon.core.config import (
     clean_env_key,
     get_hierarchical_config,
@@ -313,9 +314,16 @@ class TestConfig(unittest.TestCase):
         tracker._ensure_emissions_engine()
         return tracker
 
+    @staticmethod
+    def _uses_national_grid_eso(tracker):
+        return any(
+            isinstance(p, NationalGridESOProvider)
+            for p in tracker._emissions._providers
+        )
+
     def test_use_national_grid_eso_api_defaults_to_false(self):
         tracker = self._tracker_with_conf("")
-        self.assertFalse(tracker._emissions._use_national_grid_eso_api)
+        self.assertFalse(self._uses_national_grid_eso(tracker))
 
     def test_use_national_grid_eso_api_from_config_file(self):
         global_conf = dedent("""\
@@ -323,7 +331,7 @@ class TestConfig(unittest.TestCase):
             use_national_grid_eso_api=true
             """)
         tracker = self._tracker_with_conf(global_conf)
-        self.assertIs(tracker._emissions._use_national_grid_eso_api, True)
+        self.assertTrue(self._uses_national_grid_eso(tracker))
 
     @mock.patch.dict(os.environ, {"CODECARBON_USE_NATIONAL_GRID_ESO_API": "false"})
     def test_use_national_grid_eso_api_false_string_from_env(self):
@@ -332,7 +340,7 @@ class TestConfig(unittest.TestCase):
             use_national_grid_eso_api=true
             """)
         tracker = self._tracker_with_conf(global_conf)
-        self.assertIs(tracker._emissions._use_national_grid_eso_api, False)
+        self.assertFalse(self._uses_national_grid_eso(tracker))
 
     def test_use_national_grid_eso_api_constructor_overrides_config(self):
         global_conf = dedent("""\
@@ -340,7 +348,7 @@ class TestConfig(unittest.TestCase):
             use_national_grid_eso_api=false
             """)
         tracker = self._tracker_with_conf(global_conf, use_national_grid_eso_api=True)
-        self.assertIs(tracker._emissions._use_national_grid_eso_api, True)
+        self.assertTrue(self._uses_national_grid_eso(tracker))
 
     def test_offline_tracker_accepts_force_carbon_intensity_parameter(self):
         with patch("builtins.open", new_callable=get_custom_mock_open("", "")):
