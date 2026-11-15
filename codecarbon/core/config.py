@@ -113,13 +113,6 @@ def normalize_gpu_ids(
     return None
 
 
-def _sanitize_config_val(key: str, val: str) -> str:
-    # strip shell metachars from path/file keys to neutralize injection
-    if key in ("output_dir", "log_file_name", "output_file_name"):
-        return "".join(c for c in val if c not in (";", "&", "|", "`", "$", "\n", "\r", "'", '"'))
-    return val
-
-
 def read_config_file(path: str) -> dict:
     """
     Read the `[codecarbon]` section of a single configuration file.
@@ -137,7 +130,7 @@ def read_config_file(path: str) -> dict:
     config.read(path)
     if not config.has_section(CONFIG_SECTION):
         return {}
-    return {k: _sanitize_config_val(k, v) for k, v in config[CONFIG_SECTION].items()}
+    return dict(config[CONFIG_SECTION])
 
 
 def log_config_sources(sources: Dict[str, str]) -> None:

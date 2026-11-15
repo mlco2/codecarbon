@@ -86,12 +86,11 @@ class OrganizationService:
     def patch_organization(
         self, organization_id: str, organization: OrganizationPatch, user: User
     ) -> Organization:
-        # ponytail: require admin rights to modify an organization, preventing BOLA/IDOR
         if not self._auth_context.can_write_organization(organization_id, user):
             raise UserException(
                 NotAllowedError(
-                    code=NotAllowedErrorEnum.OPERATION_NOT_ALLOWED,
-                    message="Admin privileges required to modify organization",
+                    code=NotAllowedErrorEnum.NOT_IN_ORGANISATION,
+                    message="Operation not authorized on organization",
                 )
             )
         else:
