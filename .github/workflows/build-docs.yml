@@ -9,6 +9,7 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+      - "overrides/**"
       - "pyproject.toml"
       - "uv.lock"
       - "scripts/check_docs_links.py"
