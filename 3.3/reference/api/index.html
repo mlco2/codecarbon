@@ -3390,6 +3390,25 @@ in gCO2e/kWh for emissions calculations.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>force_mode_constant</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimate CPU power as a constant fraction of the CPU TDP
+(or of <code>force_cpu_power</code>), skipping RAPL, Power Gadget,
+powermetrics and CPU load tracking. Takes precedence over
+<code>force_mode_cpu_load</code>. Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>allow_multiple_runs</code>
             </td>
             <td>
@@ -4817,6 +4836,41 @@ in gCO2e/kWh for emissions calculations.</p>
           </tr>
           <tr class="doc-section-item">
             <td>
+                <code>force_mode_cpu_load</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Force the addition of a CPU in MODE_CPU_LOAD.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>force_mode_constant</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Estimate CPU power as a constant fraction of the CPU
+TDP (or of <code>force_cpu_power</code>), skipping RAPL, Power
+Gadget, powermetrics and CPU load tracking. Takes
+precedence over <code>force_mode_cpu_load</code>. Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
                 <code>rapl_include_dram</code>
             </td>
             <td>
@@ -4844,6 +4898,23 @@ When True, measures CPU package + DRAM.</p>
               <div class="doc-md-description">
                 <p>Prefer psys over package domains for RAPL on Linux
 (default: False). When True, uses total platform power.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="codecarbon.emissions_tracker._sentinel">_sentinel</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>metadata</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="dict">dict</span>, <span title="str">str</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Free-form metadata bag to enrich outputs. Either a dict or a path
+to a JSON file containing a dict. See <code>EmissionsTracker</code>.</p>
               </div>
             </td>
             <td>

@@ -3037,7 +3037,7 @@ consumption is derived from the post-PUE energy in the same loop.</p>
 and it is evaluated strictly in this order — the first row that applies wins.</p>
 <p>Rows 3–10 are the platform backends tried by <code>_try_platform_cpu_backend</code>. If
 none of them matches, <code>set_CPU_tracking</code> delegates to <code>_setup_fallback_tracking</code>,
-which is where rows 11 and 12 are decided.</p>
+which is where rows 11 and 12 are decided. Row 0 is checked before all of them.</p>
 <table>
 <thead>
 <tr>
@@ -3048,6 +3048,12 @@ which is where rows 11 and 12 are decided.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>0</td>
+<td><code>force_mode_constant</code> is set</td>
+<td><code>constant</code> mode, from <code>force_cpu_power</code> if set, else the TDP. <strong>Every other row is skipped</strong>, including <code>force_mode_cpu_load</code></td>
+<td><code>set_CPU_tracking</code></td>
+</tr>
 <tr>
 <td>1</td>
 <td><code>force_cpu_power</code> is set</td>
@@ -3129,9 +3135,10 @@ which is where rows 11 and 12 are decided.</p>
   with an estimate. Because <code>psutil</code> is a hard dependency, the estimate is
   normally <code>cpu_load</code> mode with your value as the TDP, so in machine mode
   <code>force_cpu_power=65</code> reports <code>65 × (0.1 + 0.9 × load³)</code> watts, between 6.5 W
-  and 65 W, not a flat 65 W. Only on an installation without <code>psutil</code> does it
-  become a flat figure, and then it is half your value, not your value
-  (row 12 and <code>constant</code> mode below). Unlike a registry TDP, it is used as
+  and 65 W, not a flat 65 W. It becomes a flat figure only with
+  <code>force_mode_constant</code> (row 0) or on an installation without <code>psutil</code>
+  (row 12), and then it is half your value, not your value (<code>constant</code> mode
+  below). Unlike a registry TDP, it is used as
   given: it is not multiplied by the CPU package count.</li>
 <li><strong>On Apple Silicon, <code>powermetrics</code> is effectively unreachable.</strong>
   <code>psutil</code> is a hard dependency of CodeCarbon, so row 5 fires before row 6 in
@@ -3183,8 +3190,8 @@ ways, and <strong>the two ways are not the same</strong>:</p>
   models depending on <code>tracking_mode</code>.</strong></p>
 </li>
 <li>
-<p><strong><code>constant</code> mode</strong> — reached only when <code>psutil</code> is unavailable — applies a
-  flat half of TDP (<code>CPU._get_power_from_cpus</code> in
+<p><strong><code>constant</code> mode</strong> — reached with <code>force_mode_constant</code>, or when <code>psutil</code>
+  is unavailable — applies a flat half of TDP, whatever the <code>tracking_mode</code> (<code>CPU._get_power_from_cpus</code> in
   <a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py"><code>external/hardware.py</code></a>):</p>
 <div class="highlight"><pre><span></span><code>power = TDP × CONSUMPTION_PERCENTAGE_CONSTANT   # CONSUMPTION_PERCENTAGE_CONSTANT = 0.5
 </code></pre></div>

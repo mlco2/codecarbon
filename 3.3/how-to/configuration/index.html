@@ -998,6 +998,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#forcing-a-constant-cpu-power" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Forcing a Constant CPU Power
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#including-dram-in-the-cpu-measurement" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2391,6 +2402,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#forcing-a-constant-cpu-power" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Forcing a Constant CPU Power
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#including-dram-in-the-cpu-measurement" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2849,6 +2871,24 @@ and this source is only used as a fallback if that call fails.</p>
 <p><code>"process"</code> mode gives a lower-bound estimate of your code's footprint.
 <code>"machine"</code> mode is more conservative and accounts for all activity on the system.</p>
 </div>
+<h2 id="forcing-a-constant-cpu-power">Forcing a Constant CPU Power<a class="headerlink" href="#forcing-a-constant-cpu-power" title="Permanent link">&para;</a></h2>
+<p>Set <code>force_mode_constant</code> to skip every dynamic CPU backend (RAPL, Power Gadget,
+powermetrics, CPU load) and estimate CPU power as half of the CPU TDP, or of
+<code>force_cpu_power</code> if you set it:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[codecarbon]</span>
+<span class="na">force_mode_constant</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">true</span>
+<span class="na">force_cpu_power</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span>
+</code></pre></div>
+<p>Or in code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">EmissionsTracker</span><span class="p">(</span><span class="n">force_mode_constant</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">force_cpu_power</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</code></pre></div>
+<p>It takes precedence over <code>force_mode_cpu_load</code>. Without <code>force_cpu_power</code>, the
+TDP comes from the same ladder as the other estimates (see
+<a href="../../explanation/methodology/#the-fallback-constants">fallback constants</a>): the
+TDP database, else 4 W per thread for an unknown model, else 85 W when the CPU
+model cannot be detected.</p>
+<p>The constant does not follow the load, and in <code>tracking_mode="process"</code> it is
+still the power of the whole CPU, not your process's share.</p>
 <h2 id="including-dram-in-the-cpu-measurement">Including DRAM in the CPU Measurement<a class="headerlink" href="#including-dram-in-the-cpu-measurement" title="Permanent link">&para;</a></h2>
 <p>When CodeCarbon reads the CPU energy counters, the hardware also exposes a
 <code>DRAM</code> domain measuring the memory controller. It is <strong>excluded by default</strong>, so
