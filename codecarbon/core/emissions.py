@@ -306,7 +306,7 @@ class Emissions:
         ├─ Electricity Maps API (si token)
         ├─ get_region_emissions (USA/CAN/CHN/SWE/NOR/FIN)
         │   └─ _try_get_nordic_region_emissions (pour SWE/NOR/FIN)
-        │   └─ country_emissions_data (pour USA et CAN)
+        │   └─ country_emissions_data (for USA and CAN)
         │   └─ _try_get_china_province_emissions (pour CHN)
         └─ get_country_emissions (fallback)
 
