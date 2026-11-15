@@ -10,14 +10,6 @@ from codecarbon.output_methods.base_output import BaseOutput
 from codecarbon.output_methods.emissions_data import EmissionsData, TaskEmissionsData
 
 
-def _sanitize_record(record: dict) -> dict:
-    # ponytail: prefix quote neutralizes CSV formula/DDE injection in spreadsheet viewers
-    return {
-        k: f"'{v}" if isinstance(v, str) and v.startswith(("=", "+", "-", "@", "\t", "\r")) else v
-        for k, v in record.items()
-    }
-
-
 class FileOutput(BaseOutput):
     """
     Saves experiment artifacts to a file
@@ -105,7 +97,7 @@ class FileOutput(BaseOutput):
             backup(self.save_file_path)
             file_exists = False
 
-        new_df = pd.DataFrame.from_records([_sanitize_record(dict(total.values))])
+        new_df = pd.DataFrame.from_records([dict(total.values)])
 
         if not file_exists:
             new_df.to_csv(self.save_file_path, index=False)
@@ -142,7 +134,7 @@ class FileOutput(BaseOutput):
             self.output_dir, "emissions_" + experiment_name + "_" + run_id + ".csv"
         )
         new_df = pd.DataFrame.from_records(
-            [_sanitize_record(dict(data_point.values)) for data_point in data]
+            [dict(data_point.values) for data_point in data]
         )
         # Filter out empty or all-NA columns only from new_df, to avoid warnings from Pandas
         # see https://github.com/pandas-dev/pandas/issues/55928
