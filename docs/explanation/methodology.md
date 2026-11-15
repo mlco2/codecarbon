@@ -118,10 +118,11 @@ and it is evaluated strictly in this order — the first row that applies wins.
 
 Rows 3–10 are the platform backends tried by `_try_platform_cpu_backend`. If
 none of them matches, `set_CPU_tracking` delegates to `_setup_fallback_tracking`,
-which is where rows 11 and 12 are decided.
+which is where rows 11 and 12 are decided. Row 0 is checked before all of them.
 
 | # | Condition | Result | Source |
 |---|---|---|---|
+| 0 | `force_mode_constant` is set | `constant` mode, from `force_cpu_power` if set, else the TDP. **Every other row is skipped**, including `force_mode_cpu_load` | `set_CPU_tracking` |
 | 1 | `force_cpu_power` is set | **Every platform backend is skipped** — RAPL is not consulted even if it is available — and your value becomes the TDP handed to row 11 or row 12 below. It is not the reported power. | `set_CPU_tracking` |
 | 2 | `force_mode_cpu_load` is set, `psutil` present, and a TDP is known (or `force_cpu_power` is set) | `cpu_load` mode | `set_CPU_tracking`, `_setup_cpu_load_mode` |
 | 3 | Linux **and** RAPL files readable | `intel_rapl` — hardware energy counters | `_try_platform_cpu_backend` |
@@ -142,9 +143,10 @@ Two consequences worth stating plainly, because they surprise people:
   with an estimate. Because `psutil` is a hard dependency, the estimate is
   normally `cpu_load` mode with your value as the TDP, so in machine mode
   `force_cpu_power=65` reports `65 × (0.1 + 0.9 × load³)` watts, between 6.5 W
-  and 65 W, not a flat 65 W. Only on an installation without `psutil` does it
-  become a flat figure, and then it is half your value, not your value
-  (row 12 and `constant` mode below). Unlike a registry TDP, it is used as
+  and 65 W, not a flat 65 W. It becomes a flat figure only with
+  `force_mode_constant` (row 0) or on an installation without `psutil`
+  (row 12), and then it is half your value, not your value (`constant` mode
+  below). Unlike a registry TDP, it is used as
   given: it is not multiplied by the CPU package count.
 - **On Apple Silicon, `powermetrics` is effectively unreachable.**
   `psutil` is a hard dependency of CodeCarbon, so row 5 fires before row 6 in
@@ -173,8 +175,8 @@ ways, and **the two ways are not the same**:
 - **`cpu_load` mode** — see the next section. **It uses two different power
   models depending on `tracking_mode`.**
 
-- **`constant` mode** — reached only when `psutil` is unavailable — applies a
-  flat half of TDP (`CPU._get_power_from_cpus` in
+- **`constant` mode** — reached with `force_mode_constant`, or when `psutil`
+  is unavailable — applies a flat half of TDP, whatever the `tracking_mode` (`CPU._get_power_from_cpus` in
   [`external/hardware.py`](https://github.com/mlco2/codecarbon/blob/master/codecarbon/external/hardware.py)):
 
     ```text
