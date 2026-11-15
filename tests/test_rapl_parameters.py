@@ -659,9 +659,12 @@ def test_rapl_psys_does_not_read_dram(tmp_path, monkeypatch, caplog, prefer_psys
         )
 
     assert rapl._dram_files == []
-    # The flag is not silently ignored
+    # The flag is not silently ignored, and the RAM estimate added on top of
+    # psys (which usually includes the memory) is pointed out
     assert any(
-        "rapl_include_dram" in r.getMessage() and "psys" in r.getMessage()
+        "rapl_include_dram" in r.getMessage()
+        and "psys" in r.getMessage()
+        and "force_ram_power=0" in r.getMessage()
         for r in caplog.records
         if r.levelno == logging.WARNING
     )

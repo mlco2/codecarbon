@@ -429,6 +429,12 @@ class IntelPowerGadget:
         # TODO: Read energy
 
 
+PSYS_RAM_HINT = (
+    "The RAM estimate is added on top of psys, which usually includes the "
+    "memory: set force_ram_power=0 to not count the memory twice"
+)
+
+
 class IntelRAPL:
     """
     A class to interface Intel's Running Average Power Limit (RAPL) for monitoring CPU power consumption.
@@ -708,11 +714,12 @@ class IntelRAPL:
 
     def _warn_dram_unused_with_psys(self, dram_domains) -> None:
         """psys usually includes the memory: its DRAM domains are not read."""
+        logger.info("\tRAPL - %s", PSYS_RAM_HINT)
         if self.rapl_include_dram and dram_domains:
             logger.warning(
-                "\tRAPL - rapl_include_dram=True is ignored with the psys domain, "
-                "which usually includes the memory already: the RAM power is "
-                "estimated"
+                "\tRAPL - rapl_include_dram=True is ignored with the psys domain: "
+                "the DRAM domains are not read. %s",
+                PSYS_RAM_HINT,
             )
 
     def _select_domains_to_use(

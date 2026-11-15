@@ -106,6 +106,9 @@ and consistent measurements:
     -   May include non-CPU components affected by the computation
     -   **Note**: On some older Intel systems (e.g., Kaby Lake), psys
         can report unexpectedly high values
+    -   psys usually includes the memory, yet the RAM is still
+        estimated on top of it. Set `force_ram_power=0` to not count
+        the memory twice when your psys domain includes it
 3.  **Interface deduplication**: When the same domain appears in both
     `intel-rapl` and `intel-rapl-mmio`:
     -   Detects duplicate domains by name
@@ -122,7 +125,8 @@ and consistent measurements:
     seen through both `intel-rapl` and `intel-rapl-mmio` is caught by
     the mirror detection below rather than by name. With
     `psys`, which usually includes the memory, the DRAM domains are not
-    read and the RAM keeps its estimate.
+    read and the RAM keeps its estimate, so the memory is counted twice
+    unless `force_ram_power=0` is set.
 
 ## Platform-Specific Behavior
 
