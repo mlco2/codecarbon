@@ -1,4 +1,4 @@
-import { ID, MOCK, MockProjectWire } from "./data";
+import { ID, MOCK, MockProjectWire, organizationReportBetween } from "./data";
 
 export type MockResponse = { status: number; body?: unknown };
 
@@ -21,15 +21,29 @@ const handlers: Handler[] = [
     // ─── Auth ──────────────────────────────────────────────────────────────
     ({ pathname, method }) => {
         if (method === "GET" && pathname === "/auth/check") {
-            return ok({ user: MOCK.user });
+            // Token claims, as the API returns them, not the database user.
+            return ok({
+                user: {
+                    sub: MOCK.user.id,
+                    email: MOCK.user.email,
+                    fields: { name: MOCK.user.name },
+                },
+            });
         }
         return undefined;
     },
 
     // ─── Organizations ─────────────────────────────────────────────────────
-    ({ pathname, method, body }) => {
+    ({ pathname, method, searchParams, body }) => {
         if (method === "GET" && pathname === "/organizations") {
-            return ok(MOCK.organization.list);
+            return ok(
+                MOCK.organization.list.map((org) => ({
+                    ...org,
+                    is_admin: (
+                        MOCK.organization.usersByOrgId[org.id] ?? []
+                    ).some((m) => m.id === MOCK.user.id && m.is_admin),
+                })),
+            );
         }
         if (method === "POST" && pathname === "/organizations") {
             const input = (body ?? {}) as {
@@ -49,7 +63,20 @@ const handlers: Handler[] = [
         }
         const sums = pathname.match(/^\/organizations\/([^/]+)\/sums$/);
         if (method === "GET" && sums) {
-            return ok(MOCK.organization.report);
+            // Honour the same query parameters as the real endpoint, so the
+            // dashboard's date picker actually changes the figures locally.
+            const parse = (key: string) => {
+                const raw = searchParams.get(key);
+                if (!raw) return null;
+                const d = new Date(raw);
+                return Number.isNaN(d.getTime()) ? null : d;
+            };
+            return ok(
+                organizationReportBetween(
+                    parse("start_date"),
+                    parse("end_date"),
+                ),
+            );
         }
         const users = pathname.match(/^\/organizations\/([^/]+)\/users$/);
         if (method === "GET" && users) {

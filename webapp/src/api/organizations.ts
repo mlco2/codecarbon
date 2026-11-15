@@ -43,6 +43,31 @@ export async function createOrganization(organization: {
     });
 }
 
+/*
+ * Add a member to an organization by email address.
+ *
+ * The endpoint looks the address up among existing accounts and subscribes it
+ * to the organization; it does not send an invitation, and it answers with a
+ * bare status object rather than the member it added, so there is nothing to
+ * validate and the caller refetches the list.
+ */
+export async function addOrganizationUser(
+    organizationId: string,
+    email: string,
+): Promise<void> {
+    await fetchApiVoid(`/organizations/${organizationId}/add-user`, {
+        method: "POST",
+        body: JSON.stringify({ email }),
+    });
+}
+
+/*
+ * Remove a member from an organization.
+ *
+ * The endpoint is admin-only and refuses to remove the organization's last
+ * administrator, so an administrator can be removed while another remains. It
+ * answers with a bare status object, so the caller refetches the list.
+ */
 export async function removeUserFromOrganization(
     organizationId: string,
     userId: string,

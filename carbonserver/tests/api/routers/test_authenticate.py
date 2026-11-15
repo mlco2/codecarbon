@@ -176,3 +176,179 @@ async def test_revoke_token_exception(oidc_provider, mock_oidc_client):
 
     # Should not raise
     await oidc_provider.revoke_token("test-access-token")
+
+
+# --- RP-initiated logout tests ---
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_prefers_id_token_hint(oidc_provider, mock_oidc_client):
+    """The id_token is the hint the provider trusts, so it wins when present."""
+    mock_oidc_client.load_server_metadata.return_value = {
+        "end_session_endpoint": "https://auth.example.com/logout",
+    }
+
+    url = await oidc_provider.get_end_session_url(
+        "https://dashboard.test", id_token="raw-id-token"
+    )
+
+    assert url.startswith("https://auth.example.com/logout?")
+    assert "id_token_hint=raw-id-token" in url
+    assert "post_logout_redirect_uri=https%3A%2F%2Fdashboard.test" in url
+    assert "client_id" not in url
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_falls_back_to_client_id(oidc_provider, mock_oidc_client):
+    """Sessions opened before we kept the id_token still need a redirect target,
+    which the provider only honours alongside a client_id."""
+    mock_oidc_client.load_server_metadata.return_value = {
+        "end_session_endpoint": "https://auth.example.com/logout",
+    }
+
+    url = await oidc_provider.get_end_session_url("https://dashboard.test")
+
+    assert "client_id=" in url
+    assert "id_token_hint" not in url
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_without_endpoint(oidc_provider, mock_oidc_client):
+    """No end_session_endpoint means a local-only logout, not a failure."""
+    mock_oidc_client.load_server_metadata.return_value = {}
+
+    assert await oidc_provider.get_end_session_url("https://dashboard.test") is None
+
+
+@pytest.mark.asyncio
+async def test_end_session_url_metadata_failure(oidc_provider, mock_oidc_client):
+    """Logout must never break because the provider is unreachable."""
+    mock_oidc_client.load_server_metadata.side_effect = ConnectionError("unreachable")
+
+    assert await oidc_provider.get_end_session_url("https://dashboard.test") is None
+
+
+def test_account_url_derives_from_issuer(monkeypatch):
+    """Without OIDC_ACCOUNT_URL, the account console is Keycloak's, derived
+    from the issuer."""
+    monkeypatch.setattr(
+        "carbonserver.api.services.auth_providers.oidc_auth_provider.settings."
+        "oidc_issuer_url",
+        "https://authentication.codecarbon.io/realms/codecarbon/",
+        raising=False,
+    )
+
+    assert (
+        OIDCAuthProvider.get_account_url()
+        == "https://authentication.codecarbon.io/realms/codecarbon/account/"
+    )
+
+
+def test_account_url_can_be_set_for_other_providers(monkeypatch):
+    """Other providers (Auth0, Fief...) host the console elsewhere, so the URL
+    can be configured instead of returning a 404 from {issuer}/account/."""
+    module = "carbonserver.api.services.auth_providers.oidc_auth_provider.settings."
+    monkeypatch.setattr(module + "oidc_issuer_url", "https://tenant.auth0.com/")
+    monkeypatch.setattr(
+        module + "oidc_account_url", "https://tenant.example.com/profile"
+    )
+
+    assert OIDCAuthProvider.get_account_url() == "https://tenant.example.com/profile"
+
+
+@pytest.mark.asyncio
+async def test_login_keeps_raw_id_token_in_its_own_cookie(monkeypatch):
+    """The logout hint must live outside the size-capped session cookie, and
+    only a raw JWT string is usable as a hint."""
+    monkeypatch.setattr(authenticate.settings, "frontend_url", "https://dashboard.test")
+    token = {"access_token": "access-secret", "id_token": "raw.id.token"}
+    request = MagicMock()
+    request.url_for.return_value = "https://api.test/auth/login"
+    request.base_url = "https://api.test/"
+    request.session = {}
+    auth_provider = MagicMock()
+    auth_provider.client.authorize_access_token = AsyncMock(return_value=token)
+    auth_provider.create_redirect_response.side_effect = lambda url: Response(url)
+
+    response = await authenticate.get_login(
+        request=request,
+        code="authorization-code",
+        sign_up_service=MagicMock(),
+        auth_provider=auth_provider,
+    )
+
+    cookies = response.headers.getlist("set-cookie")
+    assert any(c.startswith("user_id_token=raw.id.token;") for c in cookies)
+    assert "id_token" not in request.session
+
+
+EXPERIMENT = {
+    "name": "Run on AWS",
+    "description": "d",
+    "timestamp": "2021-04-04T08:43:00+02:00",
+    "country_name": "France",
+    "country_iso_code": "FRA",
+    "region": "france",
+    "on_cloud": True,
+    "cloud_provider": "aws",
+    "cloud_region": "eu-west-1a",
+    "project_id": "8edb03e1-9a28-452a-9c93-a3b6560136d7",
+}
+
+
+@pytest.fixture
+def protected_client(monkeypatch):
+    """Full-ish app with the catch-all 500 handler, auth enabled, provider rejecting tokens."""
+    from starlette.responses import JSONResponse
+
+    from carbonserver.api.routers import experiments
+    from carbonserver.api.services import auth_service
+
+    monkeypatch.setattr(auth_service.settings, "auth_provider", "oidc")
+    monkeypatch.setattr(auth_service.settings, "environment", "production")
+    container = ServerContainer()
+    container.wire(modules=[authenticate, experiments, auth_service])
+    provider = MagicMock()
+    provider.get_user_info = AsyncMock(side_effect=Exception("expired"))
+    container.auth_provider.override(provider)
+    container.sign_up_service.override(MagicMock())
+    container.user_service.override(MagicMock())
+    container.experiment_service.override(MagicMock())
+    app = FastAPI()
+    app.container = container
+    app.include_router(experiments.router)
+    app.include_router(authenticate.router)
+
+    async def generic(request, exc):
+        return JSONResponse({"detail": "Generic error"}, status_code=500)
+
+    app.add_exception_handler(Exception, generic)
+    yield TestClient(app, raise_server_exceptions=False)
+    container.unwire()
+
+
+def test_protected_endpoint_without_token_returns_401(protected_client):
+    response = protected_client.post("/experiments", json=EXPERIMENT)
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Missing or invalid access token"}
+    assert response.headers["WWW-Authenticate"] == "Bearer"
+
+
+def test_protected_endpoint_with_invalid_token_returns_401(protected_client):
+    response = protected_client.post(
+        "/experiments", json=EXPERIMENT, headers={"Authorization": "Bearer bad"}
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "JWKS validation of the token failed"
+
+
+def test_auth_check_without_token_returns_null_user(protected_client):
+    # The real SignUpService.check_jwt_user(None) raises TypeError (None["sub"]); mimic it.
+    sign_up = MagicMock()
+    sign_up.check_jwt_user.side_effect = TypeError(
+        "'NoneType' object is not subscriptable"
+    )
+    protected_client.app.container.sign_up_service.override(sign_up)
+    response = protected_client.get("/auth/check")
+    assert response.status_code == 200
+    assert response.json() == {"user": None}
