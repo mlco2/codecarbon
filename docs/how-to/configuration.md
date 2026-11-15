@@ -323,13 +323,14 @@ What it does depends on the interface:
   dropped for the estimate. When the CPU is measured with the `psys` domain
   (`rapl_prefer_psys`, or no `package` domain), which usually includes the
   memory already, the `dram` domain is not read and the RAM keeps its
-  estimate.
+  estimate, with a warning.
 - **Windows 11**: the `DRAM` channels of the Energy Meter Interface, which
   exposes the very same RAPL counters, are still added to the CPU energy,
   while the RAM keeps its estimate. The memory power is then counted twice.
 
-The option is ignored for the RAM when `force_ram_power` is set or when
-`tracking_mode="process"`, since the DRAM counter measures the whole machine.
+The option is ignored for the RAM, with a warning, when `force_ram_power` is
+set or when `tracking_mode="process"`, since the DRAM counter measures the
+whole machine.
 It has no effect when CodeCarbon falls back to TDP/CPU-load estimation.
 
 ## Access internet through proxy server

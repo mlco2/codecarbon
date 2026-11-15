@@ -393,12 +393,24 @@ class ResourceTracker:
         if (
             ram is None
             or cpu_hw is None
-            or ram._force_ram_power is not None
-            # The DRAM counter is machine-wide: keep the per-process estimate
-            or ram._tracking_mode != "machine"
             or cpu_hw._mode != "intel_rapl"
             or not cpu_hw._intel_interface._dram_files
         ):
+            return
+        if ram._force_ram_power is not None:
+            logger.warning(
+                "rapl_include_dram=True: the RAPL DRAM counter is not used, "
+                "as force_ram_power is set"
+            )
+            return
+        if ram._tracking_mode != "machine":
+            # The DRAM counter is machine-wide: keep the per-process estimate
+            logger.warning(
+                "rapl_include_dram=True: the RAPL DRAM counter measures the "
+                "whole machine, so it is not used with tracking_mode='%s': "
+                "the RAM power is estimated",
+                ram._tracking_mode,
+            )
             return
         ram._dram_source = cpu_hw._intel_interface
         self.ram_tracker = "RAPL DRAM measurement (estimation model as fallback)"

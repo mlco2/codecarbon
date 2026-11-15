@@ -413,7 +413,7 @@ def test_rapl_include_dram_logs_message(tmp_path):
             "rapl_include_dram=False" in m for m in messages
         ), f"Expected log message about rapl_include_dram=False, got: {messages}"
         assert any(
-            "rapl_include_dram=True for complete hardware measurement" in m
+            "rapl_include_dram=True to measure the RAM energy with it" in m
             for m in messages
         ), f"Expected suggestion to use rapl_include_dram=True, got: {messages}"
 
@@ -638,7 +638,7 @@ def test_rapl_dram_energy_is_none_when_a_sample_is_skipped(tmp_path, monkeypatch
 
 @pytest.mark.skipif(not sys.platform.lower().startswith("lin"), reason="requires Linux")
 @pytest.mark.parametrize("prefer_psys", [True, False])
-def test_rapl_psys_does_not_read_dram(tmp_path, monkeypatch, prefer_psys):
+def test_rapl_psys_does_not_read_dram(tmp_path, monkeypatch, caplog, prefer_psys):
     """psys usually includes the DRAM already: it is never read apart."""
     monkeypatch.setattr(sys, "platform", "linux")
     provider = tmp_path / "intel-rapl"
@@ -653,9 +653,16 @@ def test_rapl_psys_does_not_read_dram(tmp_path, monkeypatch, prefer_psys):
         (d / "energy_uj").write_text("1000000")
         (d / "max_energy_range_uj").write_text("262143328850")
 
-    rapl = IntelRAPL(
-        rapl_dir=str(tmp_path), rapl_include_dram=True, rapl_prefer_psys=prefer_psys
-    )
+    with caplog.at_level(logging.WARNING, logger="codecarbon"):
+        rapl = IntelRAPL(
+            rapl_dir=str(tmp_path), rapl_include_dram=True, rapl_prefer_psys=prefer_psys
+        )
 
     assert rapl._dram_files == []
+    # The flag is not silently ignored
+    assert any(
+        "rapl_include_dram" in r.getMessage() and "psys" in r.getMessage()
+        for r in caplog.records
+        if r.levelno == logging.WARNING
+    )
     assert rapl.get_dram_energy(Time.from_seconds(1)) is None

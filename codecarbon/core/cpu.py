@@ -706,6 +706,15 @@ class IntelRAPL:
 
         return package_domains, psys_domains, dram_domains, subdomain_of_package
 
+    def _warn_dram_unused_with_psys(self, dram_domains) -> None:
+        """psys usually includes the memory: its DRAM domains are not read."""
+        if self.rapl_include_dram and dram_domains:
+            logger.warning(
+                "\tRAPL - rapl_include_dram=True is ignored with the psys domain, "
+                "which usually includes the memory already: the RAM power is "
+                "estimated"
+            )
+
     def _select_domains_to_use(
         self, package_domains, psys_domains, dram_domains, readable_domains
     ):
@@ -721,6 +730,7 @@ class IntelRAPL:
                 logger.info(
                     "\tRAPL - Package domains available but not used due to rapl_prefer_psys=True"
                 )
+            self._warn_dram_unused_with_psys(dram_domains)
         elif package_domains:
             logger.info(
                 "\tRAPL - Using %d package domain(s) for CPU power measurement",
@@ -754,6 +764,7 @@ class IntelRAPL:
                 "Power readings may vary significantly from CPU specifications."
             )
             domains_to_use = psys_domains
+            self._warn_dram_unused_with_psys(dram_domains)
         else:
             logger.warning(
                 "\tRAPL - No package or psys domains found, using all available domains"
