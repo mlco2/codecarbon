@@ -6,9 +6,10 @@ https://github.com/mlco2/impact
 https://github.com/responsibleproblemsolving/energy-usage
 """
 
+import re
 from typing import TYPE_CHECKING, Dict, Optional
 
-from codecarbon.core import electricitymaps_api
+from codecarbon.core import electricitymaps_api, national_grid_eso_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
@@ -23,6 +24,10 @@ _NORDIC_REGIONS_BY_COUNTRY = {
     "FIN": {"FI"},
 }
 
+_CHINA_REGION_SUFFIX = re.compile(
+    r"\s+(autonomous region|municipality|province|sheng|shi|zizhiqu)$"
+)
+
 
 class Emissions:
     def __init__(
@@ -33,6 +38,7 @@ class Emissions:
             str
         ] = None,  # Deprecated, for backward compatibility
         force_carbon_intensity_g_co2e_kwh: Optional[float] = None,
+        use_national_grid_eso_api: bool = False,
     ):
         self._data_source = data_source
 
@@ -47,6 +53,10 @@ class Emissions:
 
         self._electricitymaps_api_token = electricitymaps_api_token
         self._force_carbon_intensity_g_co2e_kwh = force_carbon_intensity_g_co2e_kwh
+        # Opt-in only: this makes a live network call on every GBR run if left
+        # on. Defaults to False, mirroring how electricitymaps_api_token being
+        # unset keeps the Electricity Maps call off.
+        self._use_national_grid_eso_api = use_national_grid_eso_api
 
     def get_cloud_emissions(
         self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
@@ -141,7 +151,7 @@ class Emissions:
             )
 
         state = selected["state"].item()
-        if state is not None:
+        if isinstance(state, str):
             return state
         city = selected["city"].item()
         return city
@@ -169,9 +179,38 @@ class Emissions:
                     + f"Retrieved emissions for {geo.country_name} using Electricity Maps API :{emissions * 1000} g CO2eq"
                 )
                 return emissions
+            except electricitymaps_api.ElectricityMapsAPICooldownError as e:
+                # The failure that started the cooldown was already logged.
+                logger.debug(
+                    "electricitymaps_api.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
             except Exception as e:
                 logger.error(
                     "electricitymaps_api.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
+
+        if self._use_national_grid_eso_api and national_grid_eso_api.is_supported(geo):
+            try:
+                emissions = national_grid_eso_api.get_emissions(energy, geo)
+                logger.debug(
+                    "national_grid_eso_api.get_emissions: "
+                    + f"Retrieved emissions for {geo.country_name} using National Grid ESO API: {emissions * 1000} g CO2eq"
+                )
+                return emissions
+            except national_grid_eso_api.NationalGridESOAPICooldownError as e:
+                # The failure that started the cooldown was already logged.
+                logger.debug(
+                    "national_grid_eso_api.get_emissions: "
+                    + str(e)
+                    + " >>> Using CodeCarbon's data."
+                )
+            except Exception as e:
+                logger.error(
+                    "national_grid_eso_api.get_emissions: "
                     + str(e)
                     + " >>> Using CodeCarbon's data."
                 )
@@ -180,7 +219,8 @@ class Emissions:
             geo.country_iso_code.upper() if geo.country_iso_code is not None else None
         )
         compute_with_regional_data: bool = (geo.region is not None) and (
-            country_iso_code in ["USA", "CAN"] or self._is_supported_nordic_region(geo)
+            country_iso_code in ["USA", "CAN", "CHN"]
+            or self._is_supported_nordic_region(geo)
         )
 
         if compute_with_regional_data:
@@ -231,6 +271,30 @@ class Emissions:
         )
         return geo.region.upper() in country_regions
 
+    def _try_get_china_province_emissions(
+        self, energy: Energy, geo: GeoMetadata
+    ) -> Optional[float]:
+        """
+        Computes emissions with the official 2023 MEE/NBS provincial factor.
+        Returns None if the province is unknown or not published (Tibet,
+        Hong Kong, Macao and Taiwan), so the caller uses the national value.
+        """
+        if geo.region is None:
+            return None
+
+        name = _CHINA_REGION_SUFFIX.sub("", " ".join(geo.region.lower().split()))
+        china_data = self._data_source.get_china_provincial_emissions_data()
+        for province, province_data in china_data["data"].items():
+            if name in province_data["names"]:
+                emission_factor_g = province_data["emission_factor"]
+                emissions = emission_factor_g / 1000 * energy.kWh
+                logger.debug(
+                    f"China province {province}: Retrieved emissions using static factor "
+                    + f"{emission_factor_g} gCO2/kWh: {emissions * 1000} g CO2"
+                )
+                return emissions
+        return None
+
     def get_region_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
         Computes emissions for a region on private infra.
@@ -240,10 +304,11 @@ class Emissions:
 
         get_private_infra_emissions
         ├─ Electricity Maps API (si token)
-        ├─ get_region_emissions (USA/CAN/SWE/NOR/FIN)
+        ├─ get_region_emissions (USA/CAN/CHN/SWE/NOR/FIN)
         │   └─ _try_get_nordic_region_emissions (pour SWE/NOR/FIN)
         │   └─ country_emissions_data (pour USA)
         │   └─ country_energy_mix_data (pour CAN)
+        │   └─ _try_get_china_province_emissions (pour CHN)
         └─ get_country_emissions (fallback)
 
         :param energy: Mean power consumption of the process (kWh)
@@ -258,6 +323,13 @@ class Emissions:
             geo.country_iso_code is not None
             and geo.country_iso_code.upper() in _NORDIC_REGIONS_BY_COUNTRY
         ):
+            return self.get_country_emissions(energy, geo)
+
+        # Handle China provinces (official MEE/NBS factors)
+        if geo.country_iso_code is not None and geo.country_iso_code.upper() == "CHN":
+            china_emissions = self._try_get_china_province_emissions(energy, geo)
+            if china_emissions is not None:
+                return china_emissions
             return self.get_country_emissions(energy, geo)
 
         # Handle USA and Canada regional data
@@ -335,7 +407,7 @@ class Emissions:
             in Kgs.CO2 / kWh
         """
         # If we have the chance to have the carbon intensity for this country
-        if energy_mix.get("carbon_intensity"):
+        if energy_mix.get("carbon_intensity") is not None:
             return EmissionsPerKWh.from_g_per_kWh(energy_mix.get("carbon_intensity"))
 
         # Else we compute it from the energy mix.
@@ -353,7 +425,7 @@ class Emissions:
                 carbon_intensity_for_type = carbon_intensity_per_source.get(
                     energy_type[: -len("_TWh")]
                 )
-                if carbon_intensity_for_type:  # to ignore "total_TWh"
+                if carbon_intensity_for_type is not None:  # to ignore "total_TWh"
                     carbon_intensity += (
                         energy_per_year / energy_sum
                     ) * carbon_intensity_for_type

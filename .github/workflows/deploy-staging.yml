@@ -1,0 +1,51 @@
+# Deploy a branch to staging on Clever Cloud
+# Helpful to see visually the changes in a PR before merging to main.
+name: Deploy to Clever Cloud (staging)
+
+# Manual trigger only: GitHub restricts workflow_dispatch to users with write access,
+# so only maintainers can deploy a branch to staging (Actions > Run workflow > pick branch).
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        type: choice
+        options: [both, api, ui]
+        default: both
+      pr:
+        description: "PR number to deploy, works for fork PRs (empty = selected branch)"
+        type: string
+        required: false
+
+# Staging is shared: never run two deploys at the same time.
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        # refs/pull/N/head exists in this repo even for fork PRs. Fork code is only
+        # pushed to Clever Cloud, never executed on the runner.
+        ref: ${{ inputs.pr && format('refs/pull/{0}/head', inputs.pr) || github.ref }}
+        fetch-depth: 0 # Same as git fetch --unshallow
+        clean: true    # Remove any untracked files or modifications
+
+    # $/ loads the action from the dispatched branch, not from the checked-out PR,
+    # so a fork can't change the steps that run with the Clever Cloud secrets.
+    - name: Deploy to Clever Cloud (STAGING)
+      uses: $/.github/actions/deploy-clever-cloud
+      with:
+        target: ${{ inputs.target }}
+        clever-token: ${{ secrets.CLEVER_TOKEN }}
+        clever-secret: ${{ secrets.CLEVER_SECRET }}
+        backend-app-id: ${{ secrets.BE_CLEVER_APP_ID_STAGING }}
+        frontend-app-id: ${{ secrets.FE_CLEVER_APP_ID_STAGING }}
+        frontend-app-alias: ${{ secrets.FE_CLEVER_APP_ALIAS_STAGING }}

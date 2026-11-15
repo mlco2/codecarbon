@@ -5,10 +5,14 @@ OfflineEmissionsTracker, context manager and decorator @track_emissions
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
+import json
 import os
 import platform
 import re
+import sys
+import threading
 import time
 import uuid
 import warnings
@@ -21,9 +25,10 @@ import psutil
 
 from codecarbon._version import __version__
 from codecarbon.core.config import get_hierarchical_config, normalize_gpu_ids
+from codecarbon.core.slurm import warn_on_multi_rank_double_counting
 from codecarbon.core.units import Energy, Power, Time, Water
 from codecarbon.core.util import count_cpus, count_physical_cpus, suppress
-from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip
+from codecarbon.external.hardware import CPU, GPU, AppleSiliconChip, Raspberry
 from codecarbon.external.logger import logger, set_logger_format, set_logger_level
 from codecarbon.external.ram import RAM
 from codecarbon.external.scheduler import PeriodicScheduler
@@ -35,6 +40,7 @@ from codecarbon.output_methods.emissions_data import EmissionsData
 
 if TYPE_CHECKING:
     from codecarbon.external.geography import CloudMetadata, GeoMetadata
+    from codecarbon.output_methods.boamps import BoAmpsOutput
     from codecarbon.output_methods.logger import LoggerOutput
 
 # /!\ Warning: current implementation prevents the user from setting any value to None
@@ -50,6 +56,30 @@ if TYPE_CHECKING:
 #
 # To fix this, a complex move would be to have default values set to the sentinel:
 # _sentinel = object()
+
+_PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__)) + os.sep
+# The `@suppress(...)` decorator adds a `contextlib` frame to the stack.
+_CONTEXTLIB_FILE = os.path.abspath(contextlib.__file__)
+
+
+def _caller_stacklevel() -> int:
+    """
+    ``stacklevel`` of the first frame outside the codecarbon package, so a warning
+    raised deep inside tracker initialization points at the user's code whatever
+    the entry point (``EmissionsTracker``, ``OfflineEmissionsTracker``,
+    ``@track_emissions``, ...).
+    """
+    frame = sys._getframe(1)  # the function calling warnings.warn()
+    level = 1
+    while frame is not None:
+        filename = os.path.abspath(frame.f_code.co_filename)
+        if not filename.startswith(_PACKAGE_DIR) and filename != _CONTEXTLIB_FILE:
+            return level
+        frame = frame.f_back
+        level += 1
+    return 2
+
+
 # see: https://stackoverflow.com/questions/67202314/
 #      python-distinguish-default-argument-and-argument-provided-with-default-value
 
@@ -223,8 +253,11 @@ class BaseEmissionsTracker(ABC):
             warnings.warn(
                 "The save_to_* parameters are deprecated and will be removed in a "
                 "future version. Use output_methods=[OutputMethod.CSV, ...] instead.",
-                DeprecationWarning,
-                stacklevel=2,
+                # FutureWarning, not DeprecationWarning: this one is aimed at
+                # end users, and the default filter hides DeprecationWarning
+                # unless it comes from __main__.
+                FutureWarning,
+                stacklevel=_caller_stacklevel(),
             )
 
         self._set_from_conf(output_methods, "output_methods")
@@ -267,6 +300,8 @@ class BaseEmissionsTracker(ABC):
             self._output_methods.append(OutputMethod.LOGFIRE)
 
     def _initialize_runtime_state(self) -> None:
+        self._api_output = None
+        self.run_id = uuid.uuid4()
         self._start_time: Optional[float] = None
         self._last_measured_time: float = time.perf_counter()
         self._total_energy: Energy = Energy.from_energy(kWh=0)
@@ -277,6 +312,11 @@ class BaseEmissionsTracker(ABC):
         self._gpu_utilization_history: List[float] = []
         self._ram_utilization_history: List[float] = []
         self._ram_used_history: List[float] = []
+        # The monitor thread appends while the measurement thread clears/averages
+        self._utilization_history_lock = threading.Lock()
+        # A scheduled measurement still running when stop() gave up joining it
+        # must not overlap the final one
+        self._measurement_lock = threading.RLock()
         self._total_cpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_gpu_energy: Energy = Energy.from_energy(kWh=0)
         self._total_ram_energy: Energy = Energy.from_energy(kWh=0)
@@ -374,6 +414,7 @@ class BaseEmissionsTracker(ABC):
             self._data_source,
             self._electricitymaps_api_token,
             force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
+            use_national_grid_eso_api=self._use_national_grid_eso_api,
         )
 
     def _ensure_geo_metadata(self) -> None:
@@ -415,6 +456,7 @@ class BaseEmissionsTracker(ABC):
         tracking_mode: Optional[str] = _sentinel,
         log_level: Optional[Union[int, str]] = _sentinel,
         on_csv_write: Optional[str] = _sentinel,
+        live_output_file: Optional[str] = _sentinel,
         logger_preamble: Optional[str] = _sentinel,
         force_cpu_power: Optional[int] = _sentinel,
         force_ram_power: Optional[int] = _sentinel,
@@ -422,9 +464,12 @@ class BaseEmissionsTracker(ABC):
         wue: Optional[float] = _sentinel,
         force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
+        force_mode_constant: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
+        metadata: Optional[Union[dict, str]] = _sentinel,
+        use_national_grid_eso_api: Optional[bool] = _sentinel,
     ):
         """
         :param project_name: Project name for current experiment run, default name
@@ -447,7 +492,7 @@ class BaseEmissionsTracker(ABC):
                                    EmissionsTracker(output_methods=[OutputMethod.CSV, OutputMethod.API])
 
                                Available values: ``CSV``, ``API``, ``LOGGER``,
-                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``.
+                               ``PROMETHEUS``, ``LOGFIRE``, ``BOAMPS``, ``SCI``.
                                When provided, the individual ``save_to_*`` flags are
                                ignored. Defaults to ``[OutputMethod.CSV]``.
                                Can also be set in config as a comma-separated string:
@@ -493,6 +538,11 @@ class BaseEmissionsTracker(ABC):
         :param on_csv_write: When calling tracker.flush() manually: "update" to overwrite
                              the existing run_id row, or "append" to add a new row to the
                              CSV file. Defaults to "append".
+        :param live_output_file: Optional CSV filename for interval measurement export.
+                             When set, CodeCarbon appends a row on the same cadence as
+                             API/Prometheus (``api_call_interval * measure_power_secs``).
+                             Use ``"auto"`` (or an empty string) to name the file
+                             ``emissions_<run_id>.csv``. Defaults to None (disabled).
         :param logger_preamble: String to systematically include in the logger.
                                 messages. Defaults to "".
         :param force_cpu_power: Force the CPU max power consumption in watts. Use this if you
@@ -510,6 +560,10 @@ class BaseEmissionsTracker(ABC):
         :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                                                   in gCO2e/kWh for emissions calculations.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
+        :param force_mode_constant: Estimate CPU power as a constant fraction of the CPU TDP
+                                    (or of `force_cpu_power`), skipping RAPL, Power Gadget,
+                                    powermetrics and CPU load tracking. Takes precedence over
+                                    `force_mode_cpu_load`. Defaults to False.
         :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
                                     Defaults to True since v3 (was False in v2).
         :param rapl_include_dram: Include DRAM (memory) power in the counter-based CPU
@@ -522,6 +576,25 @@ class BaseEmissionsTracker(ABC):
                                  (CPU + chipset + PCIe). When False, uses package domains which
                                  are more reliable. Note: psys can report higher values than
                                  CPU TDP and may be unreliable on older systems.
+        :param metadata: Free-form metadata bag to enrich outputs. Either a dict or a
+                         path to a JSON file containing a dict. Individual output methods
+                         read their own section from it. When ``OutputMethod.BOAMPS`` is
+                         used, the ``boamps`` key (or, for backward compatibility, the whole
+                         dict) is read following the BoAmps schema structure (with ``task``,
+                         ``header``, ``quality``, ``infrastructure``, ``environment``
+                         sections) to fill the required BoAmps fields (taskStage, taskFamily,
+                         algorithms, dataset) that cannot be auto-detected by CodeCarbon.
+                         Can also be set in config as a path to a JSON file:
+                         ``metadata=metadata.json``.
+        :param use_national_grid_eso_api: Opt-in: when True and the detected location is
+                                 Great Britain, fetch live carbon intensity from the UK
+                                 National Grid ESO Carbon Intensity API
+                                 (https://carbonintensity.org.uk/, Open Government Licence
+                                 v3.0) instead of CodeCarbon's static country-average data.
+                                 This makes a network call (4 s timeout, value cached
+                                 for 5 minutes per process, back-off after a failure)
+                                 and reports a Great-Britain-wide figure, not a
+                                 regional one. Defaults to False.
         """
 
         # logger.info("base tracker init")
@@ -583,14 +656,20 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(output_handlers, "output_handlers", [])
         self._set_from_conf(tracking_mode, "tracking_mode", "machine")
         self._set_from_conf(on_csv_write, "on_csv_write", "append")
+        self._set_from_conf(live_output_file, "live_output_file", None)
+        self._set_from_conf(metadata, "metadata")
         self._set_from_conf(logger_preamble, "logger_preamble", "")
         self._set_from_conf(force_cpu_power, "force_cpu_power", None, float)
         self._set_from_conf(force_ram_power, "force_ram_power", None, float)
+        self._set_from_conf(
+            use_national_grid_eso_api, "use_national_grid_eso_api", False, bool
+        )
         self._set_from_conf(pue, "pue", 1.0, float)
         self._set_from_conf(wue, "wue", 0, float)
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
         self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
         self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
+        self._set_from_conf(force_mode_constant, "force_mode_constant", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -603,6 +682,7 @@ class BaseEmissionsTracker(ABC):
         assert self._tracking_mode in ["machine", "process"]
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
+        warn_on_multi_rank_double_counting(self._tracking_mode)
         self._initialize_runtime_state()
         self._initialize_scheduler_state()
         self._initialize_emissions_context()
@@ -614,26 +694,28 @@ class BaseEmissionsTracker(ABC):
         """
         methods = set(self._output_methods) if self._output_methods else set()
 
-        if not methods and not self._emissions_endpoint:
-            self.run_id = uuid.uuid4()
+        if (
+            not methods
+            and not self._emissions_endpoint
+            and self._live_output_file is None
+        ):
             return
 
-        from codecarbon.output_methods.boamps import BoAmpsOutput
         from codecarbon.output_methods.file import FileOutput
         from codecarbon.output_methods.http import CodeCarbonAPIOutput, HTTPOutput
         from codecarbon.output_methods.metrics.logfire import LogfireOutput
         from codecarbon.output_methods.metrics.prometheus import PrometheusOutput
 
         methods = set(self._output_methods) if self._output_methods else set()
+        csv_file_handler = None
 
         if OutputMethod.CSV in methods:
-            self._output_handlers.append(
-                FileOutput(
-                    self._output_file,
-                    self._output_dir,
-                    self._on_csv_write,
-                )
+            csv_file_handler = FileOutput(
+                self._output_file,
+                self._output_dir,
+                self._on_csv_write,
             )
+            self._output_handlers.append(csv_file_handler)
 
         if OutputMethod.LOGGER in methods:
             self._output_handlers.append(self._logging_logger)
@@ -647,11 +729,11 @@ class BaseEmissionsTracker(ABC):
                 experiment_id=self._experiment_id,
                 api_key=api_key,
                 conf=self._conf,
+                # _adopt_api_run() creates the run before each record.
+                create_run_on_emit=False,
             )
-            self.run_id = cc_api__out.run_id
+            self._api_output = cc_api__out
             self._output_handlers.append(cc_api__out)
-        else:
-            self.run_id = uuid.uuid4()
 
         if OutputMethod.PROMETHEUS in methods:
             self._output_handlers.append(
@@ -669,7 +751,134 @@ class BaseEmissionsTracker(ABC):
             self._output_handlers.append(LogfireOutput())
 
         if OutputMethod.BOAMPS in methods:
-            self._output_handlers.append(BoAmpsOutput(output_dir=self._output_dir))
+            self._output_handlers.append(self._build_boamps_output())
+
+        if OutputMethod.SCI in methods:
+            self._output_handlers.append(self._build_sci_output())
+
+        self._init_interval_csv_output(csv_file_handler)
+
+    def _resolve_metadata(self) -> Optional[dict]:
+        """
+        Resolve the generic ``metadata`` (a dict or a path to a JSON file) to a
+        dict, or None when it is absent or unreadable.
+        """
+        metadata = getattr(self, "_metadata", None)
+
+        if isinstance(metadata, str) and metadata:
+            try:
+                with open(metadata) as f:
+                    metadata = json.load(f)
+            except FileNotFoundError:
+                logger.error(f"Metadata file not found: {metadata}")
+                metadata = None
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in metadata file '{metadata}': {e}")
+                metadata = None
+
+        return metadata if isinstance(metadata, dict) else None
+
+    def _build_sci_output(self):
+        """
+        Build a SCIOutput, enriched with the ``sci`` section of the generic
+        ``metadata`` when available.
+        """
+        from codecarbon.output_methods.sci import SCIOutput
+
+        metadata = self._resolve_metadata()
+        sci_context = metadata.get("sci") if metadata else None
+        if sci_context:
+            try:
+                return SCIOutput.from_dict(sci_context, output_dir=self._output_dir)
+            except (TypeError, ValueError) as e:
+                logger.error(
+                    f"Invalid 'sci' section in metadata: {e}. "
+                    "Writing an SCI report without the declarations."
+                )
+        return SCIOutput(output_dir=self._output_dir)
+
+    def _build_boamps_output(self) -> BoAmpsOutput:
+        """
+        Build a BoAmpsOutput, enriched with user-provided metadata when available.
+
+        The generic ``metadata`` (a dict or a path to a JSON file) is resolved to a
+        dict, then the BoAmps section is read from its ``boamps`` key. For backward
+        compatibility, if there is no ``boamps`` key the whole dict is used as the
+        BoAmps context. Falls back to a bare BoAmpsOutput when no metadata is provided.
+        """
+        metadata = self._resolve_metadata()
+
+        from codecarbon.output_methods.boamps import BoAmpsOutput
+
+        if isinstance(metadata, dict):
+            boamps_context = metadata.get("boamps", metadata)
+            if isinstance(boamps_context, dict) and boamps_context:
+                return BoAmpsOutput.from_dict(
+                    boamps_context, output_dir=self._output_dir
+                )
+
+        return BoAmpsOutput(output_dir=self._output_dir)
+
+    def _resolve_live_output_file(self) -> Optional[str]:
+        """Return the interval CSV filename, or None when interval export is disabled."""
+        from codecarbon.output_methods.file import IntervalFileOutput
+
+        if self._live_output_file is None:
+            return None
+        if self._live_output_file_is_auto():
+            return IntervalFileOutput.run_file_name(self.run_id)
+        return self._live_output_file.strip()
+
+    def _live_output_file_is_auto(self) -> bool:
+        """``"auto"`` or ``""``: name the interval CSV after the run_id."""
+        name = (
+            self._live_output_file.strip()
+            if isinstance(self._live_output_file, str)
+            else ""
+        )
+        return name in ("", "auto")
+
+    def _init_interval_csv_output(self, csv_file_handler) -> None:
+        """
+        Opt-in interval CSV export (#467): write measurement rows on the same
+        cadence as API/Prometheus live outputs.
+        """
+        from codecarbon.output_methods.file import IntervalFileOutput
+
+        interval_file_name = self._resolve_live_output_file()
+        if interval_file_name is None:
+            return
+        if self._api_call_interval == -1:
+            logger.warning(
+                "live_output_file is set but api_call_interval=-1 disables live"
+                " outputs: %s will only get a row at flush() and stop().",
+                interval_file_name,
+            )
+
+        # Compare paths, not spellings: "./emissions.csv" is the primary file too.
+        if csv_file_handler is not None and os.path.abspath(
+            csv_file_handler.save_file_path
+        ) == os.path.abspath(os.path.join(self._output_dir, interval_file_name)):
+            csv_file_handler.enable_live_out = True
+            logger.info(
+                "Interval CSV export enabled on %s "
+                "(every api_call_interval * measure_power_secs)",
+                interval_file_name,
+            )
+            return
+
+        self._output_handlers.append(
+            IntervalFileOutput(
+                interval_file_name,
+                self._output_dir,
+                name_after_run_id=self._live_output_file_is_auto(),
+            )
+        )
+        logger.info(
+            "Interval CSV export enabled: %s "
+            "(every api_call_interval * measure_power_secs)",
+            interval_file_name,
+        )
 
     def get_detected_hardware(self) -> Dict[str, Any]:
         """
@@ -729,21 +938,20 @@ class BaseEmissionsTracker(ABC):
             return
 
         self._ensure_hardware_ready()
+        self._adopt_api_run()
+
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
 
         self._scheduler.start()
-        if self._output_handlers:
-            self._scheduler_monitor_power.start()
+        # Always started: it also samples power for hardware without an
+        # energy counter, needed even when nothing is written out.
+        self._scheduler_monitor_power.start()
         self._measure_power_and_energy()
 
     def start_task(self, task_name=None) -> None:
@@ -790,18 +998,19 @@ class BaseEmissionsTracker(ABC):
             task_name = uuid.uuid4().__str__()
         if task_name in self._tasks.keys():
             task_name += "_" + uuid.uuid4().__str__()
+        # start_task() can be used without start(): create the API run here too.
+        # A previous start() or start_task() already wrote records, so a switch
+        # of run_id is late.
+        self._adopt_api_run(late=self._start_time is not None)
         self._last_measured_time = self._start_time = time.perf_counter()
 
-        # Clear utilization history for fresh measurements
-        self._cpu_utilization_history.clear()
-        self._ram_utilization_history.clear()
-        self._ram_used_history.clear()
-        self._gpu_utilization_history.clear()
+        self._clear_utilization_history()
 
         # Read initial energy for hardware
         for hardware in self._hardware:
             hardware.start()
-        prepared_data_for_task_start = self._prepare_emissions_data()
+        # The API run was just tried above: do not try again.
+        prepared_data_for_task_start = self._prepare_emissions_data(adopt_api_run=False)
         self._active_task_emissions_at_start = dataclasses.replace(
             prepared_data_for_task_start
         )
@@ -823,10 +1032,13 @@ class BaseEmissionsTracker(ABC):
         Restart the periodic scheduler if, and only if, start_task paused a running
         one. No-op for pure start_task/stop_task usage, and when called from stop()
         where the scheduler has already been released.
+        The 1s monitoring scheduler, stopped by stop_task, is restarted with it.
         """
         if self._scheduler is not None and self._scheduler_paused_by_task:
             self._scheduler_paused_by_task = False
             self._scheduler.start()
+            if self._scheduler_monitor_power is not None:
+                self._scheduler_monitor_power.start()
 
     def stop_task(self, task_name: str = None) -> EmissionsData:
         """
@@ -845,8 +1057,10 @@ class BaseEmissionsTracker(ABC):
             self._resume_scheduler_if_paused_by_task()
             return None
         self._measure_power_and_energy()
-        emissions_data = (
-            self._prepare_emissions_data()
+        # No API run creation here: this record is not sent anywhere, and a
+        # blocking HTTP call would be counted in the task duration.
+        emissions_data = self._prepare_emissions_data(
+            adopt_api_run=False
         )  # This is emissions_data_at_stop
 
         if self._active_task_emissions_at_start is None:
@@ -1020,11 +1234,43 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
-    def _prepare_emissions_data(self) -> EmissionsData:
+    def _adopt_api_run(self, late: bool = False) -> None:
+        """
+        Create the API run if it does not exist yet (blocking HTTP call), then
+        use its id as run_id, so every output shares it.
+        :param late: records may already carry the local run_id, so warn when
+            it switches, and stay quiet on failure to avoid repeating the error.
+        """
+        if self._api_output is None:
+            return
+        try:
+            self._api_output._ensure_api_run()
+        except Exception:
+            # The API client already logs the failure itself.
+            if not late:
+                logger.warning(
+                    f"Could not create the API run, using local run_id {self.run_id}"
+                )
+            return
+        api_run_id = self._api_output.run_id
+        if api_run_id and api_run_id != self.run_id:
+            if late:
+                logger.warning(
+                    f"API run created late: switching run_id from {self.run_id} to"
+                    f" {api_run_id}. Earlier local records used {self.run_id}."
+                )
+            self.run_id = api_run_id
+
+    def _prepare_emissions_data(self, adopt_api_run: bool = True) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
+        :param adopt_api_run: try to create the API run first, if it is missing.
         :return: EmissionsData object with the total emissions data.
         """
+        if adopt_api_run:
+            # Before building the record, so the record written when the API
+            # comes back already carries the API run id.
+            self._adopt_api_run(late=True)
         self._update_emissions()
         self._ensure_cloud_conf()
         cloud = self._get_cloud_metadata()
@@ -1097,25 +1343,15 @@ class BaseEmissionsTracker(ABC):
             emissions=emissions,  # kg
             emissions_rate=emissions / duration.seconds,  # kg/s
             cpu_utilization_percent=(
-                sum(self._cpu_utilization_history) / len(self._cpu_utilization_history)
-                if self._cpu_utilization_history
-                else 0
+                self._mean_utilization(self._cpu_utilization_history)
             ),
             gpu_utilization_percent=(
-                sum(self._gpu_utilization_history) / len(self._gpu_utilization_history)
-                if self._gpu_utilization_history
-                else 0
+                self._mean_utilization(self._gpu_utilization_history)
             ),
             ram_utilization_percent=(
-                sum(self._ram_utilization_history) / len(self._ram_utilization_history)
-                if self._ram_utilization_history
-                else 0
+                self._mean_utilization(self._ram_utilization_history)
             ),
-            ram_used_gb=(
-                sum(self._ram_used_history) / len(self._ram_used_history)
-                if self._ram_used_history
-                else 0
-            ),
+            ram_used_gb=(self._mean_utilization(self._ram_used_history)),
             cpu_power=avg_cpu_power,
             gpu_power=avg_gpu_power,
             ram_power=avg_ram_power,
@@ -1178,6 +1414,17 @@ class BaseEmissionsTracker(ABC):
         :return: Metadata containing cloud info
         """
 
+    def _clear_utilization_history(self) -> None:
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.clear()
+            self._ram_utilization_history.clear()
+            self._ram_used_history.clear()
+            self._gpu_utilization_history.clear()
+
+    def _mean_utilization(self, history: List[float]) -> float:
+        with self._utilization_history_lock:
+            return sum(history) / len(history) if history else 0
+
     def _monitor_power(self) -> None:
         """
         Monitor the power consumption of the hardware.
@@ -1186,16 +1433,17 @@ class BaseEmissionsTracker(ABC):
         This method is called every 1 second. Even if we are in Task mode.
         """
         for hardware in self._hardware:
-            if isinstance(hardware, CPU):
+            if isinstance(hardware, (CPU, GPU)):
                 hardware.monitor_power()
 
         # Collect CPU and RAM utilization metrics
-        self._cpu_utilization_history.append(psutil.cpu_percent())
-        self._ram_utilization_history.append(psutil.virtual_memory().percent)
-        self._ram_used_history.append(psutil.virtual_memory().used / (1024**3))
+        cpu_utilization = psutil.cpu_percent()
+        ram_utilization = psutil.virtual_memory().percent
+        ram_used = psutil.virtual_memory().used / (1024**3)
 
         # Collect GPU utilization metrics (lightweight path — skips
         # heavyweight calls like process lists, memory, temperature).
+        gpu_utilizations = []
         for hardware in self._hardware:
             if isinstance(hardware, GPU):
                 gpu_ids_to_monitor = hardware.gpu_ids
@@ -1206,9 +1454,13 @@ class BaseEmissionsTracker(ABC):
                         and resolved_gpu_index in gpu_ids_to_monitor
                         and "gpu_utilization" in gpu_detail
                     ):
-                        self._gpu_utilization_history.append(
-                            gpu_detail["gpu_utilization"]
-                        )
+                        gpu_utilizations.append(gpu_detail["gpu_utilization"])
+
+        with self._utilization_history_lock:
+            self._cpu_utilization_history.append(cpu_utilization)
+            self._ram_utilization_history.append(ram_utilization)
+            self._ram_used_history.append(ram_used)
+            self._gpu_utilization_history.extend(gpu_utilizations)
 
     def _do_measurements(self) -> None:
         for hardware in self._hardware:
@@ -1256,6 +1508,21 @@ class BaseEmissionsTracker(ABC):
                     f"Energy consumed for RAM : {self._total_ram_energy.kWh:.6f} kWh"
                     + f". RAM Power : {self._ram_power.W} W"
                 )
+            elif isinstance(hardware, Raspberry):
+                if hardware.chip_part == "CPU":
+                    self._total_cpu_energy += energy
+                    self._cpu_power = power
+                    logger.info(
+                        f"Energy consumed for all CPUs : {self._total_cpu_energy.kWh:.6f} kWh"
+                        + f". Total CPU Power : {self._cpu_power.W} W"
+                    )
+                elif hardware.chip_part == "RAM":
+                    self._total_ram_energy += energy
+                    self._ram_power = power
+                    logger.info(
+                        f"Energy consumed for RAMs : {self._total_ram_energy.kWh:.6f} kWh"
+                        + f". Total RAM Power : {self._ram_power.W} W"
+                    )
             elif isinstance(hardware, AppleSiliconChip):
                 if hardware.chip_part == "CPU":
                     self._total_cpu_energy += energy
@@ -1289,8 +1556,9 @@ class BaseEmissionsTracker(ABC):
 
     def _measure_power_and_energy_if_stale(self, min_interval_s: float = 0.05) -> None:
         """Measure only if the last sample is older than ``min_interval_s``."""
-        if time.perf_counter() - self._last_measured_time >= min_interval_s:
-            self._measure_power_and_energy()
+        with self._measurement_lock:
+            if time.perf_counter() - self._last_measured_time >= min_interval_s:
+                self._measure_power_and_energy()
 
     def _measure_power_and_energy(self) -> None:
         """
@@ -1298,6 +1566,10 @@ class BaseEmissionsTracker(ABC):
         every `self._measure_power_secs` seconds.
         :return: None
         """
+        with self._measurement_lock:
+            self._measure_power_and_energy_locked()
+
+    def _measure_power_and_energy_locked(self) -> None:
         try:
             last_duration = time.perf_counter() - self._last_measured_time
         except AttributeError as e:
@@ -1543,6 +1815,7 @@ def track_emissions(
     tracking_mode: Optional[str] = _sentinel,
     log_level: Optional[Union[int, str]] = _sentinel,
     on_csv_write: Optional[str] = _sentinel,
+    live_output_file: Optional[str] = _sentinel,
     logger_preamble: Optional[str] = _sentinel,
     offline: Optional[bool] = _sentinel,
     country_iso_code: Optional[str] = _sentinel,
@@ -1555,9 +1828,13 @@ def track_emissions(
     pue: Optional[float] = _sentinel,
     wue: Optional[float] = _sentinel,
     force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
+    force_mode_cpu_load: Optional[bool] = _sentinel,
+    force_mode_constant: Optional[bool] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
     rapl_include_dram: Optional[bool] = _sentinel,
     rapl_prefer_psys: Optional[bool] = _sentinel,
+    metadata: Optional[Union[dict, str]] = _sentinel,
+    use_national_grid_eso_api: Optional[bool] = _sentinel,
 ):
     """
     Decorator that supports both `EmissionsTracker` and `OfflineEmissionsTracker`
@@ -1566,7 +1843,10 @@ def track_emissions(
                          default name is "codecarbon".
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15.
-    :param api_call_interval: Number of measure to make before calling the Code Carbon API.
+    :param api_call_interval: Number of measurements between API calls (default: 8).
+                              -1: call API only on flush() and at the end.
+                              1: at every measure.
+                              2: every 2 measures, and so on.
     :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
                          emissions data.
     :param api_key: API key for Code Carbon API (mandatory!).
@@ -1603,6 +1883,8 @@ def track_emissions(
                       Defaults to "info".
     :param on_csv_write: When calling tracker.flush() manually: "update" to overwrite the
                          existing run_id row, or "append" to add a new row. Defaults to "append".
+    :param live_output_file: Optional CSV filename for interval measurement export. See
+                         EmissionsTracker. Defaults to None (disabled).
     :param logger_preamble: String to systematically include in the logger.
                             messages. Defaults to "".
     :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
@@ -1611,7 +1893,7 @@ def track_emissions(
     :param country_iso_code: 3-letter ISO code of the country where the experiment is
                              being run. Required if offline=True. See global_energy_mix.json.
     :param region: Optional Province/State/City where the infrastructure is hosted.
-                   Supported for US States (e.g. California, New York).
+                   Supported for US States and Canada (e.g. California, New York).
     :param cloud_provider: The cloud provider specified for estimating emissions
                            intensity, defaults to None.
                            See https://github.com/mlco2/codecarbon/
@@ -1637,11 +1919,23 @@ def track_emissions(
                 litres of water consumed per kilowatt-hour of electricity consumed.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                          in gCO2e/kWh for emissions calculations.
+    :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD.
+    :param force_mode_constant: Estimate CPU power as a constant fraction of the CPU
+                                TDP (or of `force_cpu_power`), skipping RAPL, Power
+                                Gadget, powermetrics and CPU load tracking. Takes
+                                precedence over `force_mode_cpu_load`. Defaults to False.
     :param rapl_include_dram: Include DRAM in the counter-based CPU measurements
                               (Linux RAPL and Windows EMI, default: False).
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
+    :param metadata: Free-form metadata bag to enrich outputs. Either a dict or a path
+                     to a JSON file containing a dict. See `EmissionsTracker`.
+    :param use_national_grid_eso_api: Opt-in: when True and the detected location
+                             is Great Britain, fetch live carbon intensity from the
+                             UK National Grid ESO Carbon Intensity API instead of
+                             CodeCarbon's static country-average data. Defaults to
+                             False.
 
     :return: The decorated function
     """
@@ -1684,6 +1978,7 @@ def track_emissions(
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
+                    live_output_file=live_output_file,
                     logger_preamble=logger_preamble,
                     country_iso_code=country_iso_code,
                     region=region,
@@ -1695,9 +1990,13 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                    force_mode_cpu_load=force_mode_cpu_load,
+                    force_mode_constant=force_mode_constant,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    metadata=metadata,
+                    use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             else:
                 tracker = EmissionsTracker(
@@ -1725,15 +2024,20 @@ def track_emissions(
                     tracking_mode=tracking_mode,
                     log_level=log_level,
                     on_csv_write=on_csv_write,
+                    live_output_file=live_output_file,
                     logger_preamble=logger_preamble,
                     force_cpu_power=force_cpu_power,
                     force_ram_power=force_ram_power,
                     pue=pue,
                     wue=wue,
                     force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                    force_mode_cpu_load=force_mode_cpu_load,
+                    force_mode_constant=force_mode_constant,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    metadata=metadata,
+                    use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             tracker.start()
             try:

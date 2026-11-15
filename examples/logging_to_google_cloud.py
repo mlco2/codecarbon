@@ -4,7 +4,7 @@ import time
 
 import google.cloud.logging
 
-from codecarbon import EmissionsTracker
+from codecarbon import EmissionsTracker, OutputMethod
 from codecarbon.output import GoogleCloudLoggerOutput, LoggerOutput
 
 
@@ -40,7 +40,10 @@ if __name__ == "__main__":
         external_logger.setLevel(logging.INFO)
         external_logger = LoggerOutput(external_logger, logging.INFO)
 
-    tracker = EmissionsTracker(save_to_logger=True, logging_logger=external_logger)
+    tracker = EmissionsTracker(
+        output_methods=[OutputMethod.CSV, OutputMethod.LOGGER],
+        logging_logger=external_logger,
+    )
     tracker.start()
     train_model(epochs=1)  # Each epoch last 30 secondes
     emissions: float = tracker.stop()

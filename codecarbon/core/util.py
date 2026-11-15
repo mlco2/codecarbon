@@ -158,7 +158,7 @@ def count_cpus() -> int:
         scontrol = subprocess.check_output(
             ["scontrol", "show", "job", SLURM_JOB_ID]
         ).decode()
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         logger.warning(
             f"Error running `scontrol show job {SLURM_JOB_ID}` "
             + "to count SLURM-available cpus. Using the machine's cpu count."

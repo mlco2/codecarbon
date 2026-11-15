@@ -1,0 +1,9 @@
+# Wait for every coverage upload before reporting, otherwise codecov/project
+# fails while the Windows job is still running (Windows-only code looks
+# uncovered). One upload per python-test job in
+# .github/workflows/test-package.yml: keep this number equal to its matrix size.
+codecov:
+  notify:
+    after_n_builds: 4
+comment:
+  after_n_builds: 4
