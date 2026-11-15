@@ -220,7 +220,7 @@ class TestAmdGpu:
 
         assert result == 123
 
-    def test_get_total_energy_consumption_missing_keys_warns(self):
+    def test_get_total_energy_consumption_missing_keys_logs(self):
         from codecarbon.core.gpu import AMDGPUDevice
 
         fake_amdsmi = SimpleNamespace(amdsmi_get_energy_count=mock.MagicMock())
@@ -232,14 +232,14 @@ class TestAmdGpu:
 
         with (
             mock.patch("codecarbon.core.gpu_amd.amdsmi", fake_amdsmi, create=True),
-            mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock,
+            mock.patch("codecarbon.core.gpu.logger.debug") as debug_mock,
         ):
             result = device._get_total_energy_consumption()
 
         assert result is None
-        warning_mock.assert_called()
+        debug_mock.assert_called()
 
-    def test_get_total_energy_consumption_exception_warns(self):
+    def test_get_total_energy_consumption_exception_logs(self):
         from codecarbon.core.gpu import AMDGPUDevice
 
         fake_amdsmi = SimpleNamespace(amdsmi_get_energy_count=mock.MagicMock())
@@ -249,12 +249,12 @@ class TestAmdGpu:
 
         with (
             mock.patch("codecarbon.core.gpu_amd.amdsmi", fake_amdsmi, create=True),
-            mock.patch("codecarbon.core.gpu.logger.warning") as warning_mock,
+            mock.patch("codecarbon.core.gpu.logger.debug") as debug_mock,
         ):
             result = device._get_total_energy_consumption()
 
         assert result is None
-        warning_mock.assert_called()
+        debug_mock.assert_called()
 
     def test_get_gpu_name_success_and_failure(self):
         from codecarbon.core.gpu import AMDGPUDevice
@@ -570,3 +570,32 @@ class TestAllGPUDevicesAmd:
         assert devices.get_gpu_static_info() == []
         assert devices.get_gpu_details() == []
         assert devices.get_delta(Time(1)) == []
+
+
+@pytest.mark.parametrize("gpu_index, warned", [(0, True), (1, False)])
+def test_zero_power_warning_skips_second_gcd_of_dual_gcd_device(gpu_index, warned):
+    from codecarbon.core.gpu import AMDGPUDevice
+    from codecarbon.core.units import Time
+
+    with (
+        mock.patch.object(
+            AMDGPUDevice, "_get_gpu_name", return_value="AMD Instinct MI250X"
+        ),
+        mock.patch.object(AMDGPUDevice, "_get_uuid", return_value="uuid"),
+        mock.patch.object(AMDGPUDevice, "_get_power_limit", return_value=500),
+        mock.patch.object(
+            AMDGPUDevice,
+            "_get_memory_info",
+            return_value=SimpleNamespace(total=1024),
+        ),
+        mock.patch.object(
+            AMDGPUDevice, "_get_total_energy_consumption", return_value=None
+        ),
+        mock.patch.object(AMDGPUDevice, "_get_power_usage", return_value=0),
+        mock.patch("codecarbon.core.gpu_device.logger.warning") as warning,
+    ):
+        device = AMDGPUDevice(handle="handle", gpu_index=gpu_index)
+        device.delta(Time.from_seconds(15))
+
+    messages = [call.args[0] for call in warning.call_args_list]
+    assert any("reports 0 W" in m for m in messages) is warned

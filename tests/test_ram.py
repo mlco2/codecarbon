@@ -139,6 +139,18 @@ class TestRAM(unittest.TestCase):
 
         self.assertIsNone(ram._read_slurm_scontrol())
 
+    @mock.patch(
+        "codecarbon.external.ram.subprocess.check_output",
+        side_effect=FileNotFoundError(2, "No such file or directory", "scontrol"),
+    )
+    def test_read_slurm_scontrol_returns_none_when_scontrol_is_missing(
+        self, mock_check_output
+    ):
+        # SLURM env vars propagate into containers that do not ship the client tools.
+        ram = RAM(tracking_mode="slurm")
+
+        self.assertIsNone(ram._read_slurm_scontrol())
+
     @mock.patch("codecarbon.external.ram.psutil.virtual_memory")
     def test_parse_scontrol_falls_back_to_machine_total_when_missing_mem(
         self, mock_virtual_memory

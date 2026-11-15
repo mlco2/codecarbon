@@ -1,0 +1,83 @@
+# Deploy the checked-out repository (API and/or static UI) to Clever Cloud.
+# The caller must check out the code to deploy (with fetch-depth: 0) in the workspace root;
+# the action itself can be referenced with `uses: $/.github/actions/deploy-clever-cloud`.
+name: Deploy to Clever Cloud
+description: Install Clever Tools, log in, and deploy the API and/or UI apps
+
+inputs:
+  target:
+    description: "What to deploy: both, api or ui"
+    required: false
+    default: both
+  clever-token:
+    description: Clever Cloud token
+    required: true
+  clever-secret:
+    description: Clever Cloud secret
+    required: true
+  backend-app-id:
+    description: Clever Cloud app ID of the API (required unless target is ui)
+    required: false
+  frontend-app-id:
+    description: Clever Cloud app ID of the static SPA (required unless target is api)
+    required: false
+  frontend-app-alias:
+    description: Clever Cloud alias of the static SPA (required unless target is api)
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Check inputs
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        BE_APP_ID: ${{ inputs.backend-app-id }}
+        FE_APP_ID: ${{ inputs.frontend-app-id }}
+        FE_APP_ALIAS: ${{ inputs.frontend-app-alias }}
+      run: |
+        case "$TARGET" in
+          both|api|ui) ;;
+          *) echo "::error::Invalid target '$TARGET', expected both, api or ui"; exit 1 ;;
+        esac
+        if [ "$TARGET" != ui ] && [ -z "$BE_APP_ID" ]; then
+          echo "::error::backend-app-id is required to deploy the API"; exit 1
+        fi
+        if [ "$TARGET" != api ] && { [ -z "$FE_APP_ID" ] || [ -z "$FE_APP_ALIAS" ]; }; then
+          echo "::error::frontend-app-id and frontend-app-alias are required to deploy the UI"; exit 1
+        fi
+
+    - name: Install Clever Tools CLI
+      shell: bash
+      run: |
+        CC_VERSION=latest
+        curl -s -O https://clever-tools.clever-cloud.com/releases/${CC_VERSION}/clever-tools-${CC_VERSION}_linux.tar.gz
+        tar -xf clever-tools-${CC_VERSION}_linux.tar.gz -C "$RUNNER_TEMP"
+        rm clever-tools-${CC_VERSION}_linux.tar.gz
+        echo "$RUNNER_TEMP/clever-tools-${CC_VERSION}_linux" >> "$GITHUB_PATH"
+
+    - name: Login to Clever Cloud
+      shell: bash
+      env:
+        CLEVER_TOKEN: ${{ inputs.clever-token }}
+        CLEVER_SECRET: ${{ inputs.clever-secret }}
+      run: clever login --token "$CLEVER_TOKEN" --secret "$CLEVER_SECRET"
+
+    - name: Deploy backend to Clever Cloud
+      if: inputs.target != 'ui'
+      shell: bash
+      env:
+        CLEVER_APP_ID: ${{ inputs.backend-app-id }}
+      run: |
+        clever link "$CLEVER_APP_ID"
+        clever deploy -f
+
+    - name: Deploy frontend (static SPA) to Clever Cloud
+      if: inputs.target != 'api'
+      shell: bash
+      env:
+        CLEVER_APP_ID: ${{ inputs.frontend-app-id }}
+        CLEVER_APP_ALIAS: ${{ inputs.frontend-app-alias }}
+      run: |
+        clever link "$CLEVER_APP_ID"
+        clever deploy -a "$CLEVER_APP_ALIAS" -f

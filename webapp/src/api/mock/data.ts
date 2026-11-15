@@ -4,6 +4,7 @@ import type {
     ExperimentReport,
     Organization,
     OrganizationReport,
+    OrganizationUser,
     IProjectToken,
     RunMetadata,
     User,
@@ -242,6 +243,30 @@ function makeRunRow(args: {
     };
 }
 
+/*
+ * Fixture timestamps are anchored to the current date rather than hardcoded, so
+ * the mock always has data inside the dashboards' default 30-day window. They are
+ * spread across that window so that narrowing the date range visibly changes the
+ * numbers — which is the point of having a date filter to exercise.
+ */
+const DAY_MS = 24 * 60 * 60 * 1000;
+const daysAgo = (days: number, hour = 10) => {
+    const d = new Date(Date.now() - days * DAY_MS);
+    d.setUTCHours(hour, 0, 0, 0);
+    return d.toISOString();
+};
+
+/** Spacing between samples in `makeEmissionSeries`, in seconds. */
+export const EMISSION_INTERVAL_SECONDS = 5 * 60;
+
+const AT = {
+    baseline1: daysAgo(20),
+    baseline2: daysAgo(20, 11),
+    optimized1: daysAgo(5),
+    production: daysAgo(2),
+    tokenLastUsed: daysAgo(1, 8),
+};
+
 // ─── Composed data (built top-down from the aggregate root) ────────────────
 
 const organization = makeOrganization({
@@ -294,7 +319,7 @@ const experimentBaseline = makeExperiment({
     projectId: ID.projects.training,
     name: "Baseline run",
     description: "First experiment baseline",
-    timestamp: "2026-04-01T10:00:00Z",
+    timestamp: AT.baseline1,
 });
 
 const experimentOptimized = makeExperiment({
@@ -302,7 +327,7 @@ const experimentOptimized = makeExperiment({
     projectId: ID.projects.training,
     name: "Optimized model",
     description: "Quantized variant",
-    timestamp: "2026-04-15T10:00:00Z",
+    timestamp: AT.optimized1,
     onCloud: true,
     cloudProvider: "aws",
     cloudRegion: "eu-west-3",
@@ -313,7 +338,7 @@ const experimentProduction = makeExperiment({
     projectId: ID.projects.inference,
     name: "Production rollout",
     description: "Live inference",
-    timestamp: "2026-04-20T10:00:00Z",
+    timestamp: AT.production,
     onCloud: true,
     cloudProvider: "gcp",
     cloudRegion: "europe-west1",
@@ -340,7 +365,7 @@ const optimizedReport = makeExperimentReport({
 const runBaseline1 = makeRunRow({
     runId: ID.runs.baseline1,
     experimentId: ID.experiments.baseline,
-    timestamp: "2026-04-01T10:00:00Z",
+    timestamp: AT.baseline1,
     emissions: 0.617,
     energyConsumed: 2.839,
     durationSeconds: 1800,
@@ -349,7 +374,7 @@ const runBaseline1 = makeRunRow({
 const runBaseline2 = makeRunRow({
     runId: ID.runs.baseline2,
     experimentId: ID.experiments.baseline,
-    timestamp: "2026-04-01T11:00:00Z",
+    timestamp: AT.baseline2,
     emissions: 0.617,
     energyConsumed: 2.839,
     durationSeconds: 1800,
@@ -358,7 +383,7 @@ const runBaseline2 = makeRunRow({
 const runOptimized1 = makeRunRow({
     runId: ID.runs.optimized1,
     experimentId: ID.experiments.optimized,
-    timestamp: "2026-04-15T10:00:00Z",
+    timestamp: AT.optimized1,
     emissions: 0.567,
     energyConsumed: 2.345,
     durationSeconds: 1800,
@@ -368,10 +393,62 @@ const ciToken = makeProjectToken({
     id: ID.tokens.ci,
     projectId: ID.projects.training,
     name: "Local dev token",
-    lastUsed: "2026-04-30T08:00:00Z",
+    lastUsed: AT.tokenLastUsed,
 });
 
 // ─── Exported aggregate (consumed by handlers.ts) ──────────────────────────
+
+/*
+ * The organization's emission rows, flattened across every run. The backend's
+ * `/organizations/{id}/sums` filters this table by `emissions.timestamp` and
+ * aggregates the matches, so the mock does the same rather than returning a
+ * constant — otherwise a date filter cannot be exercised locally at all.
+ */
+function organizationEmissionRows(): Emission[] {
+    return [
+        ...makeEmissionSeries({
+            runId: ID.runs.baseline1,
+            samples: 12,
+            startedAt: new Date(AT.baseline1),
+        }),
+        ...makeEmissionSeries({
+            runId: ID.runs.baseline2,
+            samples: 12,
+            startedAt: new Date(AT.baseline2),
+        }),
+        ...makeEmissionSeries({
+            runId: ID.runs.optimized1,
+            samples: 6,
+            startedAt: new Date(AT.optimized1),
+        }),
+    ];
+}
+
+const round = (n: number, dp = 3) => Number(n.toFixed(dp));
+
+/**
+ * Aggregate the organization's emissions over a date range, the way
+ * `read_organization_detailed_sums` does. Bounds are inclusive; either may be
+ * omitted, matching the endpoint's optional query parameters.
+ */
+export function organizationReportBetween(
+    start?: Date | null,
+    end?: Date | null,
+): OrganizationReport {
+    const rows = organizationEmissionRows().filter((e) => {
+        const t = new Date(e.timestamp).getTime();
+        if (start && t < start.getTime()) return false;
+        if (end && t > end.getTime()) return false;
+        return true;
+    });
+    return {
+        name: organization.name,
+        emissions: round(rows.reduce((a, e) => a + e.emissions_sum, 0)),
+        energy_consumed: round(rows.reduce((a, e) => a + e.energy_consumed, 0)),
+        // Each row covers one sampling interval.
+        duration: rows.length * EMISSION_INTERVAL_SECONDS,
+    };
+}
 
 export const MOCK = {
     user: adminUser,
@@ -382,9 +459,26 @@ export const MOCK = {
             [organization.id]: organization,
         } as Record<string, Organization>,
         report: organizationReport,
+        /*
+         * `GET /organizations/{id}/users` returns the backend's
+         * `OrganizationUser`: a user plus their membership of that organization,
+         * including `is_admin`. The admin/member split mirrors the two fixture
+         * users.
+         */
         usersByOrgId: {
-            [organization.id]: [adminUser, memberUser],
-        } as Record<string, User[]>,
+            [organization.id]: [
+                {
+                    ...adminUser,
+                    organization_id: organization.id,
+                    is_admin: true,
+                },
+                {
+                    ...memberUser,
+                    organization_id: organization.id,
+                    is_admin: false,
+                },
+            ],
+        } as Record<string, OrganizationUser[]>,
     },
 
     project: {

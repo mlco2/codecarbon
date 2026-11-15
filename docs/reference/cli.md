@@ -2,6 +2,12 @@
 
 CodeCarbon provides a command-line interface for tracking emissions without modifying code.
 
+## Global options
+
+| Option | Description |
+|--------|-------------|
+| `--version`, `-v` | Show the installed CodeCarbon version and exit |
+
 ## Commands
 
 ### `codecarbon config`
@@ -41,10 +47,14 @@ Displays real-time emissions data for all processes on your machine. Press `Ctrl
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `--no-api` | flag | false | Do not send data to the API (local-only measurement) |
-| `--offline` | flag | false | Run without internet access |
-| `--country-iso-code` | string | - | ISO 3166-1 alpha-3 country code (required in offline mode) |
-| `--log-level` | choice | ERROR | Log level: DEBUG, INFO, WARNING, ERROR |
+| `--project-name` | string | - | Project name for the current experiment |
+| `--measure-power-secs` | int | 10 | Interval in seconds between two measures |
+| `--api-call-interval` | int | 30 | Number of measures between API calls |
+| `--api` / `--no-api` | flag | `--api` | Send data to the API, or do not (local-only measurement) |
+| `--offline` / `--no-offline` | flag | `--no-offline` | Run without internet access |
+| `--country-iso-code` | string | - | 3-letter country ISO code. Required in offline mode, unless it is set in the config file |
+| `--region` | string | - | Region or province, for offline mode |
+| `--log-level` | string | error | Log level: critical, error, warning, info, debug |
 
 **Examples:**
 ```bash
@@ -98,3 +108,25 @@ codecarbon detect
 ```
 
 Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon uses to estimate energy consumption. Useful for verifying that CodeCarbon can see all your hardware.
+
+### `codecarbon get-token`
+
+Get an API token for a project.
+
+**Usage:**
+```bash
+codecarbon get-token PROJECT_ID
+```
+
+Requests a new API token for the project `PROJECT_ID` and prints it. Add it to the `api_key` field of your configuration file. You must be logged in first (see `codecarbon login`).
+
+### `codecarbon test-api`
+
+Check that your API access works.
+
+**Usage:**
+```bash
+codecarbon test-api
+```
+
+Makes an authenticated request to the CodeCarbon API and prints the list of your organizations.

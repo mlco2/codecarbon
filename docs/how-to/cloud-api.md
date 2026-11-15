@@ -19,12 +19,12 @@ The login command will create a default project and save your credentials to `.c
 
 ## Send Emissions from Your Code
 
-With your account set up, you're ready to start sending emissions data. Use the `save_to_api=True` parameter to upload tracking data:
+With your account set up, you're ready to start sending emissions data. Add `OutputMethod.API` to `output_methods` to upload tracking data:
 
 ``` python
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 
-@track_emissions(save_to_api=True)
+@track_emissions(output_methods=[OutputMethod.CSV, OutputMethod.API])
 def train_model():
     # GPU intensive training code  goes here
 
@@ -32,7 +32,9 @@ if __name__ =="__main__":
     train_model()
 ```
 
-The decorator will automatically send your emissions data to the dashboard. You can also specify additional options in `@track_emissions()` or in `.codecarbon.config`.
+The decorator will automatically send your emissions data to the dashboard. The API stores durations with sub-second precision, so runs shorter than one second are kept. Only a zero or negative duration is skipped. You can also specify additional options in `@track_emissions()` or in `.codecarbon.config`.
+
+`start()` (or `start_task()`, when you track tasks without `start()`) registers the run on the API with a blocking HTTP call, and `tracker.run_id` then switches from a locally generated id to the API run id, so every output shares it. If the API is unreachable, tracking continues with the local id, and the tracker retries each time it writes a record. From the first record written after the API comes back, `run_id` is the API run id. Records written before keep the local id, so with `on_csv_write="update"` the CSV file gets one row per id.
 
 ## Create Projects & Experiments
 
@@ -41,11 +43,11 @@ By default, `codecarbon login` creates a default experiment in your first projec
 **Option 1: In your code**
 
 ``` python
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 
 @track_emissions(
     experiment_id="your experiment id",
-    save_to_api=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
 )
 def train_model():
     ...

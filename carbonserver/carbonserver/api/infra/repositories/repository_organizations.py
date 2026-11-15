@@ -22,6 +22,7 @@ from carbonserver.api.schemas import (
     OrganizationCreate,
     OrganizationReport,
     OrganizationUser,
+    OrganizationWithRole,
     User,
 )
 
@@ -66,17 +67,23 @@ class SqlAlchemyRepository(Organizations):
                 )
             return self.map_sql_to_schema(e)
 
-    def list_organizations(self, user: User) -> List[OrganizationUser]:
+    def list_organizations(self, user: User) -> List[OrganizationWithRole]:
         if user is None:
             return []
         with self.session_factory() as session:
             e = (
-                session.query(SqlModelOrganization)
+                session.query(SqlModelOrganization, SqlModelMembership.is_admin)
                 .join(SqlModelMembership)
                 .filter(SqlModelMembership.user_id == user.id)
                 .all()
             )
-            return [self.map_sql_to_schema(row) for row in e]
+            return [
+                OrganizationWithRole(
+                    **self.map_sql_to_schema(organization).model_dump(),
+                    is_admin=bool(is_admin),
+                )
+                for organization, is_admin in e
+            ]
 
     def list_users(self, organization_id: UUID) -> List[OrganizationUser]:
         with self.session_factory() as session:
