@@ -11,6 +11,7 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+      - "overrides/**"
       - "scripts/deploy-docs.sh"
       - "codecarbon/_version.py"
       - "pyproject.toml"
