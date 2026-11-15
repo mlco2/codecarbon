@@ -30,6 +30,54 @@ def test_get_project_data(emissions_data: pd.DataFrame):
     pd.testing.assert_frame_equal(pd.DataFrame(project_data.data), emissions_data)
 
 
+def test_get_project_summary(emissions_data: pd.DataFrame):
+    viz_data = data.Data()
+    project_data = viz_data.get_project_data(emissions_data, project_name="codecarbon")
+    project_summary = viz_data.get_project_summary(project_data.data)
+    assert project_summary["last_run"]["timestamp"] == "2021-09-23T15:04:51"
+    assert project_summary["total"]["duration"] == pytest.approx(161.20380687713623)
+    assert project_summary["total"]["emissions"] == pytest.approx(0.0004490989249167)
+    assert project_summary["total"]["energy_consumed"] == pytest.approx(
+        0.00057442898176
+    )
+    assert project_summary["country_name"] == "Morocco"
+    assert project_summary["country_iso_code"] == "MAR"
+    assert project_summary["region"] == "casablanca-settat"
+    assert project_summary["on_cloud"] == "N"
+
+
+def test_get_project_summary_empty(emissions_data: pd.DataFrame):
+    """Selecting no project used to raise an IndexError, see #918."""
+    viz_data = data.Data()
+    project_data = viz_data.get_project_data(emissions_data, project_name=None)
+    assert project_data.data == []
+
+    project_summary = viz_data.get_project_summary(project_data.data)
+    assert project_summary == {
+        "last_run": {
+            "timestamp": "",
+            "duration": 0,
+            "emissions": 0,
+            "energy_consumed": 0,
+        },
+        "total": {"duration": 0, "emissions": 0, "energy_consumed": 0},
+        "country_name": "",
+        "country_iso_code": "",
+        "region": "",
+        "on_cloud": "N",
+        "cloud_provider": "",
+        "cloud_region": "",
+    }
+
+    # The callbacks read the same keys whether or not a project is selected.
+    populated_summary = viz_data.get_project_summary(
+        viz_data.get_project_data(emissions_data, project_name="codecarbon").data
+    )
+    assert project_summary.keys() == populated_summary.keys()
+    assert project_summary["last_run"].keys() == populated_summary["last_run"].keys()
+    assert project_summary["total"].keys() == populated_summary["total"].keys()
+
+
 def test_get_global_emissions_choropleth_data(
     global_energy_mix_data: Dict[str, Dict[str, Any]],
 ):

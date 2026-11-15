@@ -305,3 +305,16 @@ def test_run_and_monitor_passes_telemetry_level_override(monkeypatch):
 
     assert exc_info.value.exit_code == 0
     assert captured.get("telemetry_level") == "disabled"
+
+
+def test_run_and_monitor_tracks_the_process_by_default(monkeypatch):
+    captured = _run_and_monitor_capturing(monkeypatch)
+
+    assert captured["kwargs"]["tracking_mode"] == "process"
+
+
+def test_run_and_monitor_accepts_an_explicit_tracking_mode(monkeypatch):
+    """`codecarbon monitor --tracking-mode machine -- cmd` must not raise TypeError."""
+    captured = _run_and_monitor_capturing(monkeypatch, tracking_mode="machine")
+
+    assert captured["kwargs"]["tracking_mode"] == "machine"

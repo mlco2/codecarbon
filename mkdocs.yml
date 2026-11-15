@@ -28,13 +28,18 @@ theme:
         icon: lucide/moon
         name: Switch to light mode
   features:
+    - content.action.copy
     - content.action.edit
     - content.action.view
+    - content.code.annotate
     - content.code.copy
     - content.code.select
+    - content.footnote.tooltips
     - content.tabs.link
     - content.tooltips
     - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.preview
     - navigation.instant.progress
     - navigation.tracking
     - navigation.tabs
@@ -44,6 +49,7 @@ theme:
     - navigation.top
     - navigation.footer
     - search.highlight
+    - toc.follow
   icon:
     github: mlco2/codecarbon
 
@@ -72,12 +78,33 @@ plugins:
         "logging/output.md": "reference/output.md"
         "logging/to_logger.md": "how-to/logging.md"
         "logging/visualize.md": "how-to/visualize.md"
-        "contributing/CODE_OF_CONDUCT/": "how-to/code-of-conduct.md"
-        "contributing/CONTRIBUTING/": "how-to/contributing.md"
-        "contributing/AI_POLICY/": "how-to/ai_policy.md"
-        "contributing/working_with_agent/": "how-to/working_with_agent.md"
-        "contributing/agents-instructions/": "how-to/agent-instructions.md"
-        "contributing/SECURITY/": "how-to/security.md"
+        "contributing/CODE_OF_CONDUCT.md": "how-to/code-of-conduct.md"
+        "contributing/CONTRIBUTING.md": "how-to/contributing.md"
+        "contributing/AI_POLICY.md": "how-to/ai_policy.md"
+        "contributing/working_with_agent.md": "how-to/working_with_agent.md"
+        "contributing/agents-instructions.md": "how-to/agent-instructions.md"
+        "contributing/SECURITY.md": "how-to/security.md"
+  - glightbox
+  - privacy:
+      # The default fetches every optional theme library (about 9 MB). MathJax stays on
+      # unpkg: it loads its fonts relative to its own URL, which a copied script breaks.
+      assets_include:
+        - unpkg.com/glightbox@*
+        - fonts.googleapis.com/*
+        - fonts.gstatic.com/*
+  - meta-descriptions
+  - llmstxt:
+      # Docs are served under /latest/, not at site_url (scripts/deploy-docs.sh).
+      base_url: https://docs.codecarbon.io/latest/
+      sections:
+        Tutorials:
+          - tutorials/*.md
+        How-to guides:
+          - how-to/*.md
+        Explanation:
+          - explanation/*.md
+        Reference:
+          - reference/*.md
   - mkdocstrings:
       handlers:
         python:
@@ -111,8 +138,8 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:zensical.extensions.emoji.twemoji
+      emoji_generator: !!python/name:zensical.extensions.emoji.to_svg
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.keys
