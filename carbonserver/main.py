@@ -60,12 +60,26 @@ def create_app() -> FastAPI:
     server.add_exception_handler(UserException, user_exception_handler)
     server.add_exception_handler(ValidationError, validation_exception_handler)
     server.add_exception_handler(Exception, generic_exception_handler)
-    session_key = settings.session_secret_key or (
-        "dev-secret-key" if settings.environment == "develop" else os.urandom(32).hex()
-    )
-    server.add_middleware(SessionMiddleware, secret_key=session_key)
+    server.add_middleware(SessionMiddleware, secret_key=get_session_secret_key())
 
     return server
+
+
+def get_session_secret_key() -> str:
+    """
+    Key signing the session cookie that holds the OAuth login state.
+    Set SESSION_SECRET_KEY outside development: the random fallback differs in
+    every worker and after every restart, which breaks logins in progress.
+    """
+    if settings.session_secret_key:
+        return settings.session_secret_key
+    if settings.environment in DEV_ENVIRONMENTS:
+        return "dev-secret-key"
+    logger.warning(
+        "SESSION_SECRET_KEY is not set: using a random key, so sessions do not "
+        "survive a restart and are not shared between workers."
+    )
+    return os.urandom(32).hex()
 
 
 def init_container():
