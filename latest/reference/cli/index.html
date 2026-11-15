@@ -2593,6 +2593,10 @@
 </code></pre></div></p>
 <p>Displays real-time emissions data for all processes on your machine. Press <code>Ctrl+C</code> to stop.</p>
 <p><strong>Options:</strong></p>
+<p>Each option overrides the matching key of <code>.codecarbon.config</code> or <code>CODECARBON_*</code>
+variable (see <a href="../../how-to/configuration/">Configuration</a>). An option left out keeps
+the configured value. Each flag also has a negative form, such as
+<code>--no-rapl-include-dram</code>.</p>
 <table>
 <thead>
 <tr>
@@ -2625,7 +2629,7 @@
 <td><code>--api</code> / <code>--no-api</code></td>
 <td>flag</td>
 <td><code>--api</code></td>
-<td>Send data to the API, or do not (local-only measurement)</td>
+<td>Add or remove the API from the output methods</td>
 </tr>
 <tr>
 <td><code>--offline</code> / <code>--no-offline</code></td>
@@ -2651,8 +2655,191 @@
 <td>error</td>
 <td>Log level: critical, error, warning, info, debug</td>
 </tr>
+<tr>
+<td><code>--experiment-id</code></td>
+<td>string</td>
+<td>-</td>
+<td>Experiment ID, satisfies the online-mode check</td>
+</tr>
+<tr>
+<td><code>--experiment-name</code></td>
+<td>string</td>
+<td>-</td>
+<td>Experiment name</td>
+</tr>
+<tr>
+<td><code>--api-endpoint</code></td>
+<td>string</td>
+<td>-</td>
+<td>CodeCarbon API endpoint</td>
+</tr>
+<tr>
+<td><code>--api-key</code></td>
+<td>string</td>
+<td>-</td>
+<td>CodeCarbon API key</td>
+</tr>
+<tr>
+<td><code>--output-methods</code></td>
+<td>string</td>
+<td>-</td>
+<td>Comma-separated output methods: <code>csv</code>, <code>api</code>, <code>logger</code>, <code>prometheus</code>, <code>logfire</code>, ...</td>
+</tr>
+<tr>
+<td><code>--output-dir</code></td>
+<td>string</td>
+<td>-</td>
+<td>Directory for output files</td>
+</tr>
+<tr>
+<td><code>--output-file</code></td>
+<td>string</td>
+<td>-</td>
+<td>Output CSV file name</td>
+</tr>
+<tr>
+<td><code>--on-csv-write</code></td>
+<td>string</td>
+<td>-</td>
+<td><code>append</code> or <code>update</code></td>
+</tr>
+<tr>
+<td><code>--live-output-file</code></td>
+<td>string</td>
+<td>-</td>
+<td>CSV file receiving every interval measurement</td>
+</tr>
+<tr>
+<td><code>--metadata</code></td>
+<td>string</td>
+<td>-</td>
+<td>JSON file of metadata added to the outputs</td>
+</tr>
+<tr>
+<td><code>--prometheus-url</code></td>
+<td>string</td>
+<td>-</td>
+<td>Prometheus push gateway URL</td>
+</tr>
+<tr>
+<td><code>--emissions-endpoint</code></td>
+<td>string</td>
+<td>-</td>
+<td>HTTP endpoint receiving the emissions</td>
+</tr>
+<tr>
+<td><code>--logger-preamble</code></td>
+<td>string</td>
+<td>-</td>
+<td>Text prefixed to the tracker log messages</td>
+</tr>
+<tr>
+<td><code>--gpu-ids</code></td>
+<td>string</td>
+<td>-</td>
+<td>Comma-separated GPU IDs to track, such as <code>0,2</code></td>
+</tr>
+<tr>
+<td><code>--tracking-mode</code></td>
+<td>string</td>
+<td>-</td>
+<td><code>machine</code> or <code>process</code> (<code>process</code> when wrapping a command)</td>
+</tr>
+<tr>
+<td><code>--force-cpu-power</code></td>
+<td>float</td>
+<td>-</td>
+<td>CPU power in watts, replaces the estimate</td>
+</tr>
+<tr>
+<td><code>--force-ram-power</code></td>
+<td>float</td>
+<td>-</td>
+<td>RAM power in watts, replaces the estimate</td>
+</tr>
+<tr>
+<td><code>--force-mode-cpu-load</code></td>
+<td>flag</td>
+<td>-</td>
+<td>Estimate CPU power from its load</td>
+</tr>
+<tr>
+<td><code>--force-mode-constant</code></td>
+<td>flag</td>
+<td>-</td>
+<td>Estimate CPU power as a constant fraction of its TDP, takes precedence over <code>--force-mode-cpu-load</code></td>
+</tr>
+<tr>
+<td><code>--pue</code></td>
+<td>float</td>
+<td>-</td>
+<td>Power Usage Effectiveness of the data center</td>
+</tr>
+<tr>
+<td><code>--wue</code></td>
+<td>float</td>
+<td>-</td>
+<td>Water Usage Effectiveness, in L/kWh</td>
+</tr>
+<tr>
+<td><code>--force-carbon-intensity-g-co2e-kwh</code></td>
+<td>float</td>
+<td>-</td>
+<td>Carbon intensity of the electricity, in gCO2e/kWh</td>
+</tr>
+<tr>
+<td><code>--electricitymaps-api-token</code></td>
+<td>string</td>
+<td>-</td>
+<td>Electricity Maps API token</td>
+</tr>
+<tr>
+<td><code>--use-national-grid-eso-api</code></td>
+<td>flag</td>
+<td>-</td>
+<td>In Great Britain, use the live National Grid ESO carbon intensity</td>
+</tr>
+<tr>
+<td><code>--rapl-include-dram</code></td>
+<td>flag</td>
+<td>-</td>
+<td>Include DRAM in the RAPL measures</td>
+</tr>
+<tr>
+<td><code>--rapl-prefer-psys</code></td>
+<td>flag</td>
+<td>-</td>
+<td>Prefer the RAPL platform (psys) domain</td>
+</tr>
+<tr>
+<td><code>--allow-multiple-runs</code></td>
+<td>flag</td>
+<td>-</td>
+<td>Allow several CodeCarbon instances at the same time</td>
+</tr>
+<tr>
+<td><code>--save-to-file</code>, <code>--save-to-logger</code>, <code>--save-to-prometheus</code>, <code>--save-to-logfire</code></td>
+<td>flag</td>
+<td>-</td>
+<td>Deprecated: use <code>--output-methods</code></td>
+</tr>
+<tr>
+<td><code>--co2-signal-api-token</code></td>
+<td>string</td>
+<td>-</td>
+<td>Deprecated: use <code>--electricitymaps-api-token</code></td>
+</tr>
 </tbody>
 </table>
+<p>In online mode, <code>--output-methods</code> replaces the configured output methods, and
+<code>--api</code> / <code>--no-api</code> then adds or removes the API.</p>
+<div class="admonition warning">
+<p class="admonition-title">Secrets on the command line</p>
+<p>Other users of the machine can read command-line arguments, and your shell
+saves them in its history. Prefer the <code>CODECARBON_API_KEY</code> and
+<code>CODECARBON_ELECTRICITYMAPS_API_TOKEN</code> environment variables, or the
+configuration file, to <code>--api-key</code> and <code>--electricitymaps-api-token</code>.</p>
+</div>
 <p><strong>Examples:</strong>
 <div class="highlight"><pre><span></span><code><span class="c1"># Monitor with API (default)</span>
 codecarbon<span class="w"> </span>monitor
@@ -2665,6 +2852,9 @@ codecarbon<span class="w"> </span>monitor<span class="w"> </span>--offline<span 
 
 <span class="c1"># Monitor with debug logging</span>
 codecarbon<span class="w"> </span>monitor<span class="w"> </span>--log-level<span class="w"> </span>DEBUG
+
+<span class="c1"># Monitor a server in a data center, writing to a CSV file and the logger</span>
+codecarbon<span class="w"> </span>monitor<span class="w"> </span>--no-api<span class="w"> </span>--pue<span class="w"> </span><span class="m">1</span>.4<span class="w"> </span>--output-methods<span class="w"> </span>csv,logger
 </code></pre></div></p>
 <h3 id="codecarbon-monitor-command"><code>codecarbon monitor -- &lt;command&gt;</code><a class="headerlink" href="#codecarbon-monitor-command" title="Permanent link">&para;</a></h3>
 <p>Track emissions for a specific command or process.</p>
