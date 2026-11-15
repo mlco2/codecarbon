@@ -1,6 +1,6 @@
 site_name: CodeCarbon
 site_description: Measure and reduce carbon emissions from computing - Official Documentation
-site_url: https://docs.codecarbon.io/
+site_url: https://docs.codecarbon.io/latest/
 docs_dir: docs
 site_dir: site
 repo_url: https://github.com/mlco2/codecarbon

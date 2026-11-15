@@ -532,3 +532,61 @@ class TestFileOutput(unittest.TestCase):
 
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(len(df), 2)
+
+    def test_live_out_noop_when_disabled(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.live_out(self.emissions_data, self.emissions_data)
+        self.assertFalse(os.path.isfile(file_output.save_file_path))
+
+    def test_live_out_appends_when_enabled(self):
+        file_output = FileOutput(
+            "interval.csv",
+            self.temp_dir,
+            on_csv_write="append",
+            enable_live_out=True,
+        )
+        file_output.live_out(self.emissions_data, self.emissions_data)
+        file_output.live_out(self.emissions_data, self.emissions_data)
+
+        df = pd.read_csv(file_output.save_file_path)
+        self.assertEqual(len(df), 2)
+        self.assertEqual(df.iloc[0]["run_id"], "test_run_id")
+
+    def test_live_and_final_writes_do_not_overlap(self):
+        # live_out runs on the scheduler thread while flush() calls out() on
+        # the caller's thread: two writes to one file must not interleave.
+        import threading
+        import time
+
+        file_output = FileOutput(
+            "interval.csv", self.temp_dir, on_csv_write="update", enable_live_out=True
+        )
+        events = []
+        release = threading.Event()
+        real_to_csv = pd.DataFrame.to_csv
+
+        def slow_to_csv(df, *args, **kwargs):
+            events.append("start")
+            release.wait(timeout=2)
+            real_to_csv(df, *args, **kwargs)
+            events.append("end")
+
+        with patch.object(pd.DataFrame, "to_csv", slow_to_csv):
+            live = threading.Thread(
+                target=file_output.live_out,
+                args=(self.emissions_data, self.emissions_data),
+            )
+            final = threading.Thread(
+                target=file_output.out, args=(self.emissions_data, None)
+            )
+            live.start()
+            while not events:
+                time.sleep(0.01)
+            final.start()
+            time.sleep(0.2)
+            release.set()
+            live.join()
+            final.join()
+
+        self.assertEqual(events, ["start", "end", "start", "end"])
+        self.assertEqual(len(pd.read_csv(file_output.save_file_path)), 1)
