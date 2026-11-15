@@ -187,9 +187,10 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 5.  **Interface deduplication**: The same domain may appear in both
     `intel-rapl` (MSR) and `intel-rapl-mmio` interfaces. CodeCarbon
     automatically deduplicates, preferring MMIO.
-6.  **DRAM measurement**: CodeCarbon does not include DRAM domains by
-    default (`rapl_include_dram=False`) for CPU hardware measurement. Set
-    `rapl_include_dram=True` to measure CPU package + DRAM domains.
+6.  **DRAM measurement**: CodeCarbon does not read DRAM domains by
+    default (`rapl_include_dram=False`): the RAM power is estimated. Set
+    `rapl_include_dram=True` to report the DRAM domains as the RAM
+    energy. They are never added to the CPU package.
 7.  **Platform-specific behavior**:
     -   Intel modern: package or psys (with rapl_prefer_psys=True)
     -   Intel older: package-0 for CPU only
@@ -200,7 +201,7 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
     -   Discrete GPUs (use nvidia-smi/rocm-smi)
     -   SSDs, peripherals, fans
     -   Actual DRAM chips — the `dram` domain reports memory-controller
-        power, and CodeCarbon excludes it by default (`rapl_include_dram=False`)
+        power, and CodeCarbon only reads it as the RAM energy with `rapl_include_dram=True`
     -   Complete system power (use wall meter for accuracy)
 
 ## Appendix: raw measurements from three machines
