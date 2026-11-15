@@ -367,20 +367,25 @@ class IntelPowerGadget:
         if not (self._system.startswith("win") or self._system.startswith("darwin")):
             return None
 
-        # list without shell=True eliminates shell injection on both OSes
-        returncode = subprocess.call(
-            [
-                self._cli,
-                "-duration",
-                str(self._duration),
-                "-resolution",
-                str(self._resolution),
-                "-file",
-                self._log_file_path,
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        # An argument list without a shell: paths are never parsed by a shell
+        try:
+            returncode = subprocess.call(
+                [
+                    self._cli,
+                    "-duration",
+                    str(self._duration),
+                    "-resolution",
+                    str(self._resolution),
+                    "-file",
+                    self._log_file_path,
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except OSError as e:
+            # The shell used to turn a missing executable into exit code 127
+            logger.warning("Unable to run Intel Power Gadget %s: %s", self._cli, e)
+            return None
 
         if returncode != 0:
             logger.warning(

@@ -310,6 +310,47 @@ class TestIntelPowerGadget(unittest.TestCase):
         mock_call.assert_called_once()
         mock_warning.assert_called_once()
 
+    def test_log_values_warns_when_cli_is_missing(self):
+        gadget = IntelPowerGadget.__new__(IntelPowerGadget)
+        gadget._system = "darwin"
+        gadget._cli = "/nonexistent/Intel Power Gadget/PowerLog"
+        gadget._duration = 1
+        gadget._resolution = 100
+        gadget._log_file_path = "intel.csv"
+
+        with mock.patch("codecarbon.core.cpu.logger.warning") as mock_warning:
+            gadget._log_values()
+
+        mock_warning.assert_called_once()
+
+    def test_log_values_passes_arguments_without_a_shell_on_macos(self):
+        gadget = IntelPowerGadget.__new__(IntelPowerGadget)
+        gadget._system = "darwin"
+        gadget._cli = "/Applications/Intel Power Gadget/PowerLog"
+        gadget._duration = 1
+        gadget._resolution = 100
+        gadget._log_file_path = "/tmp/it's; touch pwned.csv"
+
+        with mock.patch(
+            "codecarbon.core.cpu.subprocess.call", return_value=0
+        ) as mock_call:
+            gadget._log_values()
+
+        args, kwargs = mock_call.call_args
+        self.assertEqual(
+            args[0],
+            [
+                "/Applications/Intel Power Gadget/PowerLog",
+                "-duration",
+                "1",
+                "-resolution",
+                "100",
+                "-file",
+                "/tmp/it's; touch pwned.csv",
+            ],
+        )
+        self.assertFalse(kwargs.get("shell", False))
+
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._log_values")
     @mock.patch("pandas.read_csv", side_effect=Exception("bad csv"))
     @mock.patch("codecarbon.core.cpu.IntelPowerGadget._setup_cli")
