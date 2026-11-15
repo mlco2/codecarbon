@@ -127,7 +127,9 @@ def init_server(container):
     ]
 
     if settings.environment == "develop":
-        origins.extend(["http://localhost", "http://localhost:3000", "http://localhost:8000"])
+        origins.extend(
+            ["http://localhost", "http://localhost:3000", "http://localhost:8000"]
+        )
 
     origins.extend(CORS_ORIGINS)
 
@@ -152,8 +154,3 @@ app.mount("/api", app, name="api")
 @app.get("/")
 def default():
     return {"status": "OK"}
-
-
-@app.exception_handler(UserException)
-async def custom_exception_handler(request: Request, exc: UserException):
-    raise get_http_exception(exc)
