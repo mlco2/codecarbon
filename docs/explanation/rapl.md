@@ -117,7 +117,10 @@ and consistent measurements:
     domains are not read and the RAM power is estimated. With
     `rapl_include_dram=True` and `package` domains, the DRAM domains
     (top-level, or children of their package as on most servers) are
-    reported as the RAM energy, never added to the CPU package. With
+    reported as the RAM energy, never added to the CPU package. DRAM
+    zones are told apart by zone id, one per socket, so the same DRAM
+    seen through both `intel-rapl` and `intel-rapl-mmio` is caught by
+    the mirror detection below rather than by name. With
     `psys`, which usually includes the memory, the DRAM domains are not
     read and the RAM keeps its estimate.
 
@@ -135,7 +138,7 @@ and consistent measurements:
 -   `core` reports very low energy values
 -   Unclear if `core` is included in `package` (vendor documentation is
     sparse)
--   On some multi-die CPUs (e.g., Threadripper), separate package domains mirror the same socket-wide counter. CodeCarbon flags counters holding the same value at startup, confirms with the energy deltas of the first measurement interval where both counters were read and accumulated energy that they are true mirrors, and keeps only one, so CPU energy is not multiplied by the number of dies.
+-   On some multi-die CPUs (e.g., Threadripper), separate package domains mirror the same socket-wide counter. CodeCarbon flags counters holding the same value at startup, confirms with the energy deltas of the first measurement interval where both counters were read and accumulated energy that they are true mirrors, and keeps only one, so CPU energy is not multiplied by the number of dies. DRAM counters get the same check among themselves (a DRAM counter is never compared with a package one), so the RAM energy is not multiplied either.
 
 **What RAPL Does NOT Measure**:
 

@@ -593,7 +593,8 @@ def _make_nested_dram_tree(base, sockets):
         dram = package / f"intel-rapl:{socket}:0"
         dram.mkdir()
         (dram / "name").write_text("dram")
-        (dram / "energy_uj").write_text("500000")
+        # Distinct counters per socket, or they would look like one mirrored
+        (dram / "energy_uj").write_text(str(500000 + socket * 5_000_000))
         (dram / "max_energy_range_uj").write_text("262143328850")
         (base / f"intel-rapl:{socket}").symlink_to(package)
         (base / f"intel-rapl:{socket}:0").symlink_to(dram)
@@ -614,7 +615,7 @@ def test_rapl_reads_nested_dram_zones_once_per_socket(tmp_path, monkeypatch, soc
     assert len(rapl._dram_files) == sockets
     assert len(rapl._rapl_files) == sockets
     for dram_file in dram_files:
-        dram_file.write_text(str(500000 + 25000))
+        dram_file.write_text(str(int(dram_file.read_text()) + 25000))
 
     _, energy = rapl.get_dram_energy(Time.from_seconds(1))
     assert energy.kWh == pytest.approx(sockets * 25000 / (1000 * 3600 * 1e6))
@@ -630,7 +631,7 @@ def test_rapl_dram_energy_is_none_when_a_sample_is_skipped(tmp_path, monkeypatch
     dram_files[0].write_text(str(500000 + 25000))
     # Backwards by more than max_energy_range_uj: cannot be corrected
     rapl._dram_files[1].max_energy_reading = Energy(0)
-    dram_files[1].write_text("400000")
+    dram_files[1].write_text(str(int(dram_files[1].read_text()) - 100000))
 
     assert rapl.get_dram_energy(Time.from_seconds(1)) is None
 

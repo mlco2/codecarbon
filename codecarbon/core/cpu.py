@@ -878,7 +878,7 @@ class IntelRAPL:
             for rapl_file in self._rapl_files:
                 rapl_file.delta(duration)
 
-            self._confirm_mirrored_files()
+            self._rapl_files = self._confirm_mirrored_files(self._rapl_files)
 
             for rapl_file in self._rapl_files:
                 if rapl_file.path in self._mirrored_candidates:
@@ -919,12 +919,19 @@ class IntelRAPL:
             return None
         for rapl_file in self._dram_files:
             rapl_file.delta(duration)
-        if any(rapl_file.sample_skipped for rapl_file in self._dram_files):
+        self._dram_files = self._confirm_mirrored_files(self._dram_files)
+        # A file still suspected of duplicating another counter is left out
+        measured = [
+            rapl_file
+            for rapl_file in self._dram_files
+            if rapl_file.path not in self._mirrored_candidates
+        ]
+        if any(rapl_file.sample_skipped for rapl_file in measured):
             return None
         return (
-            Power.from_watts(sum(rapl_file.power.W for rapl_file in self._dram_files)),
+            Power.from_watts(sum(rapl_file.power.W for rapl_file in measured)),
             Energy.from_energy(
-                sum(rapl_file.energy_delta.kWh for rapl_file in self._dram_files)
+                sum(rapl_file.energy_delta.kWh for rapl_file in measured)
             ),
         )
 
@@ -934,14 +941,19 @@ class IntelRAPL:
         """
         for rapl_file in self._rapl_files + self._dram_files:
             rapl_file.start()
-        counters = [
-            (rapl_file.path, float(rapl_file.last_energy))
-            for rapl_file in self._rapl_files
-            if rapl_file.last_energy is not None
-        ]
-        self._mirrored_candidates = find_mirrored_counters(
-            counters, SEQUENTIAL_READ_TOLERANCE_KWH
-        )
+        # DRAM is compared with DRAM only: a DRAM zone is never a copy of a
+        # package, but one counter can show up through two DRAM zones (MSR and
+        # MMIO, or once per die)
+        self._mirrored_candidates = {}
+        for files in (self._rapl_files, self._dram_files):
+            counters = [
+                (rapl_file.path, float(rapl_file.last_energy))
+                for rapl_file in files
+                if rapl_file.last_energy is not None
+            ]
+            self._mirrored_candidates.update(
+                find_mirrored_counters(counters, SEQUENTIAL_READ_TOLERANCE_KWH)
+            )
         for path, reference_path in self._mirrored_candidates.items():
             logger.warning(
                 "\tRAPL - Energy counter at %s looks like a mirror of %s, it is "
@@ -950,9 +962,11 @@ class IntelRAPL:
                 reference_path,
             )
 
-    def _confirm_mirrored_files(self) -> None:
+    def _confirm_mirrored_files(self, files: List[RAPLFile]) -> List[RAPLFile]:
         """
-        Decide the fate of the files flagged as duplicates at ``start()``.
+        Decide the fate of the files of ``files`` flagged as duplicates at
+        ``start()``, and return ``files`` without the confirmed duplicates.
+        Candidates from another file list are left pending.
 
         Two independent meters could hold indistinguishable counters at the
         single instant of the initial reading, so a candidate is only dropped
@@ -962,11 +976,15 @@ class IntelRAPL:
         anything yet stays pending until an interval is conclusive.
         """
         if not self._mirrored_candidates:
-            return
-        files_by_path = {rapl_file.path: rapl_file for rapl_file in self._rapl_files}
+            return files
+        files_by_path = {rapl_file.path: rapl_file for rapl_file in files}
         pending = {}
         confirmed = set()
         for path, reference_path in self._mirrored_candidates.items():
+            if path not in files_by_path:
+                # Checked with its own file list
+                pending[path] = reference_path
+                continue
             rapl_file = files_by_path.get(path)
             reference = files_by_path.get(reference_path)
             if rapl_file is None or reference is None:
@@ -983,8 +1001,8 @@ class IntelRAPL:
                 confirmed.add(path)
                 logger.warning(
                     "\tRAPL - Energy counter at %s mirrors the one at %s, it is "
-                    "dropped to avoid double-counting the CPU power (multi-die "
-                    "CPUs mirror the package counter on each die)",
+                    "dropped to avoid double-counting its energy (multi-die "
+                    "CPUs mirror a counter on each die)",
                     path,
                     reference_path,
                 )
@@ -995,12 +1013,7 @@ class IntelRAPL:
                     path,
                 )
         self._mirrored_candidates = pending
-        if confirmed:
-            self._rapl_files = [
-                rapl_file
-                for rapl_file in self._rapl_files
-                if rapl_file.path not in confirmed
-            ]
+        return [rapl_file for rapl_file in files if rapl_file.path not in confirmed]
 
 
 class TDP:
