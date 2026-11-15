@@ -954,6 +954,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#configuration-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Configuration keys
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#electricity-maps-api-token" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2336,6 +2347,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#configuration-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Configuration keys
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#electricity-maps-api-token" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2497,7 +2519,7 @@ with a section header <code>[codecarbon]</code> as the first line in the file.</
 <p><code>~/.codecarbon.config</code></p>
 <div class="highlight"><pre><span></span><code><span class="o">[</span>codecarbon<span class="o">]</span>
 <span class="nv">measure_power_secs</span><span class="o">=</span><span class="m">10</span>
-<span class="nv">save_to_file</span><span class="o">=</span>local-overwrite
+<span class="nv">output_methods</span><span class="o">=</span>csv
 <span class="nv">emissions_endpoint</span><span class="o">=</span>localhost:7777
 </code></pre></div>
 </li>
@@ -2505,7 +2527,7 @@ with a section header <code>[codecarbon]</code> as the first line in the file.</
 <p><code>./.codecarbon.config</code> will override <code>~/.codecarbon.config</code> if the
     same parameter is set in both files:</p>
 <div class="highlight"><pre><span></span><code><span class="o">[</span>codecarbon<span class="o">]</span>
-<span class="nv">save_to_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span>
+<span class="nv">output_methods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>csv,logger
 <span class="nv">output_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>/Users/victor/emissions
 <span class="nv">electricitymaps_api_token</span><span class="o">=</span>script-overwrite
 <span class="nv">experiment_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>235b1da5-aaaa-aaaa-aaaa-893681599d2c
@@ -2525,7 +2547,6 @@ with a section header <code>[codecarbon]</code> as the first line in the file.</
     parameter is set in both:</p>
 <div class="highlight"><pre><span></span><code><span class="n">EmissionsTracker</span><span class="p">(</span>
    <span class="n">api_call_interval</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-   <span class="n">save_to_api</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
    <span class="n">electricitymaps_api_token</span><span class="o">=</span><span class="s2">"some-token"</span><span class="p">)</span>
 </code></pre></div>
 </li>
@@ -2534,9 +2555,8 @@ with a section header <code>[codecarbon]</code> as the first line in the file.</
 <p>Yields attributes:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
     <span class="s2">"measure_power_secs"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># from ~/.codecarbon.config</span>
-    <span class="s2">"save_to_file"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>   <span class="c1"># from ./.codecarbon.config (override ~/.codecarbon.config)</span>
+    <span class="s2">"output_methods"</span><span class="p">:</span> <span class="s2">"csv,logger"</span><span class="p">,</span>   <span class="c1"># from ./.codecarbon.config (override ~/.codecarbon.config)</span>
     <span class="s2">"api_call_interval"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="c1"># from script</span>
-    <span class="s2">"save_to_api"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>   <span class="c1"># from script</span>
     <span class="s2">"experiment_id"</span><span class="p">:</span> <span class="s2">"235b1da5-aaaa-aaaa-aaaa-893681599d2c"</span><span class="p">,</span> <span class="c1"># from ./.codecarbon.config</span>
     <span class="s2">"log_level"</span><span class="p">:</span> <span class="s2">"WARNING"</span><span class="p">,</span> <span class="c1"># from environment variable (override ./.codecarbon.config)</span>
     <span class="s2">"tracking_mode"</span><span class="p">:</span> <span class="s2">"process"</span><span class="p">,</span> <span class="c1"># from ./.codecarbon.config</span>
@@ -2564,6 +2584,179 @@ that under the hood <code>codecarbon</code> uses
 which relies on the <a href="https://docs.python.org/3/library/configparser.html#supported-ini-file-structure">INI
 syntax</a>.</p>
 </div>
+<h2 id="configuration-keys">Configuration keys<a class="headerlink" href="#configuration-keys" title="Permanent link">&para;</a></h2>
+<p>These are all the keys that the tracker reads from the configuration files, the environment and the constructor. Each key can also be set as the environment variable <code>CODECARBON_&lt;KEY&gt;</code>, where <code>&lt;KEY&gt;</code> is the key in upper case. For example, <code>CODECARBON_LOG_LEVEL</code> sets <code>log_level</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>allow_multiple_runs</code></td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>electricitymaps_api_token</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>output_methods</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>save_to_api</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>save_to_file</code></td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>save_to_logger</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>save_to_prometheus</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>save_to_logfire</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>force_carbon_intensity_g_co2e_kwh</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>api_call_interval</code></td>
+<td><code>8</code></td>
+</tr>
+<tr>
+<td><code>api_endpoint</code></td>
+<td><code>https://api.codecarbon.io</code></td>
+</tr>
+<tr>
+<td><code>api_key</code></td>
+<td><code>api_key</code></td>
+</tr>
+<tr>
+<td><code>emissions_endpoint</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>experiment_name</code></td>
+<td><code>base</code></td>
+</tr>
+<tr>
+<td><code>gpu_ids</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>log_level</code></td>
+<td><code>info</code></td>
+</tr>
+<tr>
+<td><code>measure_power_secs</code></td>
+<td><code>15</code></td>
+</tr>
+<tr>
+<td><code>output_dir</code></td>
+<td><code>.</code></td>
+</tr>
+<tr>
+<td><code>output_file</code></td>
+<td><code>emissions.csv</code></td>
+</tr>
+<tr>
+<td><code>project_name</code></td>
+<td><code>codecarbon</code></td>
+</tr>
+<tr>
+<td><code>logging_logger</code></td>
+<td>none (constructor only: a Python object)</td>
+</tr>
+<tr>
+<td><code>prometheus_url</code></td>
+<td><code>localhost:9091</code></td>
+</tr>
+<tr>
+<td><code>output_handlers</code></td>
+<td><code>[]</code> (constructor only: Python objects)</td>
+</tr>
+<tr>
+<td><code>tracking_mode</code></td>
+<td><code>machine</code></td>
+</tr>
+<tr>
+<td><code>on_csv_write</code></td>
+<td><code>append</code></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>logger_preamble</code></td>
+<td>empty string</td>
+</tr>
+<tr>
+<td><code>force_cpu_power</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>force_ram_power</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>pue</code></td>
+<td><code>1.0</code></td>
+</tr>
+<tr>
+<td><code>wue</code></td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td><code>force_mode_cpu_load</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>rapl_include_dram</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>rapl_prefer_psys</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>experiment_id</code></td>
+<td><code>5b0fa12a-3dd7-45bb-9766-cc326314d9f1</code></td>
+</tr>
+<tr>
+<td><code>cloud_provider</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>cloud_region</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>country_2letter_iso_code</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>country_iso_code</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>region</code></td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>A default of "none" means the key is unset unless you provide a value. <code>save_to_*</code> keys are deprecated and are ignored when <code>output_methods</code> is set. The <code>cloud_*</code>, <code>country_*</code> and <code>region</code> keys are read by <code>OfflineEmissionsTracker</code>.</p>
 <h2 id="electricity-maps-api-token">Electricity Maps API Token<a class="headerlink" href="#electricity-maps-api-token" title="Permanent link">&para;</a></h2>
 <p>By default, CodeCarbon estimates carbon intensity using annual country-level
 averages from Our World in Data. Providing an <code>electricitymaps_api_token</code>

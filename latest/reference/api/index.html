@@ -4103,7 +4103,10 @@ locations.</p>
 
 </div><h2 id="track_emissions-decorator">@track_emissions Decorator<a class="headerlink" href="#track_emissions-decorator" title="Permanent link">&para;</a></h2>
 <p>The decorator accepts the same parameters as <code>EmissionsTracker</code>, plus <code>offline</code>
-and <code>country_iso_code</code> for offline mode:</p>
+and <code>country_iso_code</code> for offline mode. It does not accept <code>force_mode_cpu_load</code>
+or <code>metadata</code> as arguments. Set them in the config file, with the
+<code>CODECARBON_FORCE_MODE_CPU_LOAD</code> and <code>CODECARBON_METADATA</code> environment variables,
+or use <code>EmissionsTracker</code> directly:</p>
 
 
 <div class="doc doc-object doc-function">
@@ -4190,7 +4193,10 @@ defaults to 15.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of measure to make before calling the Code Carbon API.</p>
+                <p>Number of measurements between API calls (default: 8).
+-1: call API only on flush() and at the end.
+1: at every measure.
+2: every 2 measures, and so on.</p>
               </div>
             </td>
             <td>
@@ -4657,7 +4663,7 @@ being run. Required if offline=True. See global_energy_mix.json.</p>
             <td>
               <div class="doc-md-description">
                 <p>Optional Province/State/City where the infrastructure is hosted.
-Supported for US States (e.g. California, New York).</p>
+Supported for US States and Canada (e.g. California, New York).</p>
               </div>
             </td>
             <td>

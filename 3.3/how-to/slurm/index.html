@@ -2951,6 +2951,14 @@ git<span class="w"> </span>pull
 <p>Use <code>sbatch</code> to submit your job script:</p>
 <div class="highlight"><pre><span></span><code>sbatch<span class="w"> </span>examples/slurm_rocm/run_codecarbon_pytorch.slurm
 </code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">One tracker per node</p>
+<p>With <code>tracking_mode="machine"</code> (the default), each tracker measures the whole node.
+If several ranks on one node start a tracker, the node is counted several times.
+CodeCarbon logs a warning when a machine-mode tracker runs on a SLURM local rank
+other than 0 (<code>SLURM_LOCALID</code>). Start the tracker on local rank 0 only, or use
+<code>tracking_mode="process"</code>.</p>
+</div>
 <h3 id="step-7-monitor-job-status">Step 7: Monitor Job Status<a class="headerlink" href="#step-7-monitor-job-status" title="Permanent link">&para;</a></h3>
 <p>Monitor your job execution:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># View all running jobs</span>

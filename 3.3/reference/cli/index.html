@@ -2138,6 +2138,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Global options
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#commands" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2198,6 +2209,28 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         <code>codecarbon detect</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codecarbon-get-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>codecarbon get-token</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codecarbon-test-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>codecarbon test-api</code>
       </span>
     </span>
   </a>
@@ -2319,6 +2352,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Global options
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#commands" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -2379,6 +2423,28 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         <code>codecarbon detect</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codecarbon-get-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>codecarbon get-token</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codecarbon-test-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <code>codecarbon test-api</code>
       </span>
     </span>
   </a>
@@ -2478,6 +2544,21 @@
 
 <h1 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h1>
 <p>CodeCarbon provides a command-line interface for tracking emissions without modifying code.</p>
+<h2 id="global-options">Global options<a class="headerlink" href="#global-options" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--version</code>, <code>-v</code></td>
+<td>Show the installed CodeCarbon version and exit</td>
+</tr>
+</tbody>
+</table>
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <h3 id="codecarbon-config"><code>codecarbon config</code><a class="headerlink" href="#codecarbon-config" title="Permanent link">&para;</a></h3>
 <p>Create or modify a <code>.codecarbon.config</code> configuration file interactively.</p>
@@ -2509,28 +2590,52 @@
 </thead>
 <tbody>
 <tr>
-<td><code>--no-api</code></td>
-<td>flag</td>
-<td>false</td>
-<td>Do not send data to the API (local-only measurement)</td>
+<td><code>--project-name</code></td>
+<td>string</td>
+<td>-</td>
+<td>Project name for the current experiment</td>
 </tr>
 <tr>
-<td><code>--offline</code></td>
+<td><code>--measure-power-secs</code></td>
+<td>int</td>
+<td>10</td>
+<td>Interval in seconds between two measures</td>
+</tr>
+<tr>
+<td><code>--api-call-interval</code></td>
+<td>int</td>
+<td>30</td>
+<td>Number of measures between API calls</td>
+</tr>
+<tr>
+<td><code>--api</code> / <code>--no-api</code></td>
 <td>flag</td>
-<td>false</td>
+<td><code>--api</code></td>
+<td>Send data to the API, or do not (local-only measurement)</td>
+</tr>
+<tr>
+<td><code>--offline</code> / <code>--no-offline</code></td>
+<td>flag</td>
+<td><code>--no-offline</code></td>
 <td>Run without internet access</td>
 </tr>
 <tr>
 <td><code>--country-iso-code</code></td>
 <td>string</td>
 <td>-</td>
-<td>ISO 3166-1 alpha-3 country code (required in offline mode)</td>
+<td>3-letter country ISO code. Required in offline mode, unless it is set in the config file</td>
+</tr>
+<tr>
+<td><code>--region</code></td>
+<td>string</td>
+<td>-</td>
+<td>Region or province, for offline mode</td>
 </tr>
 <tr>
 <td><code>--log-level</code></td>
-<td>choice</td>
-<td>ERROR</td>
-<td>Log level: DEBUG, INFO, WARNING, ERROR</td>
+<td>string</td>
+<td>error</td>
+<td>Log level: critical, error, warning, info, debug</td>
 </tr>
 </tbody>
 </table>
@@ -2571,6 +2676,18 @@ codecarbon<span class="w"> </span>monitor<span class="w"> </span>--<span class="
 <div class="highlight"><pre><span></span><code>codecarbon<span class="w"> </span>detect
 </code></pre></div></p>
 <p>Displays detected RAM, CPU, GPU, and other hardware information that CodeCarbon uses to estimate energy consumption. Useful for verifying that CodeCarbon can see all your hardware.</p>
+<h3 id="codecarbon-get-token"><code>codecarbon get-token</code><a class="headerlink" href="#codecarbon-get-token" title="Permanent link">&para;</a></h3>
+<p>Get an API token for a project.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code>codecarbon<span class="w"> </span>get-token<span class="w"> </span>PROJECT_ID
+</code></pre></div></p>
+<p>Requests a new API token for the project <code>PROJECT_ID</code> and prints it. Add it to the <code>api_key</code> field of your configuration file. You must be logged in first (see <code>codecarbon login</code>).</p>
+<h3 id="codecarbon-test-api"><code>codecarbon test-api</code><a class="headerlink" href="#codecarbon-test-api" title="Permanent link">&para;</a></h3>
+<p>Check that your API access works.</p>
+<p><strong>Usage:</strong>
+<div class="highlight"><pre><span></span><code>codecarbon<span class="w"> </span>test-api
+</code></pre></div></p>
+<p>Makes an authenticated request to the CodeCarbon API and prints the list of your organizations.</p>
 
 
 
