@@ -13,8 +13,7 @@
   {% if page.meta and page.meta.description %}
     {% set description = page.meta.description %}
   {% endif %}
-  {# The docs are deployed under /latest/ (scripts/deploy-docs.sh), not at site_url itself. #}
-  {% set base = config.site_url ~ "latest/" %}
+  {% set base = config.site_url %}
   {% set image = base ~ "images/og-card.png" %}
 
   <meta property="og:type" content="website">

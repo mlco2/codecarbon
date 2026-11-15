@@ -422,6 +422,9 @@ The first level that answers wins.
 Some countries lack data for the most recent year, in which case the most
 recent available year is used.
 
+For a cloud region, the location comes from `impact.csv`. If the row has no state,
+CodeCarbon uses the city as the region.
+
 !!! warning "The fallbacks are silent"
 
     Every step down this ladder degrades quietly. If your cloud provider and
