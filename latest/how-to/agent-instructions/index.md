@@ -1,0 +1,206 @@
+# CodeCarbon Copilot Instructions
+
+This repository contains multiple components for tracking CO2 emissions from computing.
+
+CodeCarbon works by measuring electricity consumption on the computer and convert it to CO2 emissions using electricity carbon intensity from the grid where the computer is located.
+
+It's a mono-repo for a Python package, a centralized API and an online dashboard.
+
+The package also have a command line to monitor computer's emissions without wrinting Python code.
+
+Here's what you need to know to navigate and contribute effectively.
+
+## Repository Structure
+
+### Main Components
+
+1. **📦 codecarbon/** - Core Python package
+2. Main library for tracking carbon emissions
+3. CLI tools and utilities
+4. Core emission tracking functionality
+5. **🔌 carbonserver/** - API Backend
+6. FastAPI-based REST API
+7. PostgreSQL database integration
+8. User management and data persistence
+9. Run with: `uv run task docker` or `uv run task dashboard`
+10. **📊 dashboard/viz** - Python Dashboard (Dash-based)
+11. Interactive dashboard using Dash/Plotly
+12. Visualizes emission data from CSV files
+13. Run with: `uv run task carbonboard`
+14. **🌐 webapp/** - Web Dashboard
+15. Modern React web application
+16. Connects to the API backend
+17. Run with: `cd webapp && pnpm dev`
+18. **Before editing anything under `webapp/`, read `webapp/AGENTS.md` first** — it is binding for all webapp work (propose before editing, never commit). Claude Code loads `webapp/CLAUDE.md`, which only imports `webapp/AGENTS.md`.
+
+### Key Directories
+
+- **tests/** - Unit tests for the core package
+- **docs/** - Zensical documentation (build with `uv run task docs`)
+- **examples/** - Usage examples and demos
+- **deploy/** - Deployment configurations and scripts
+
+## Development Setup
+
+### Prerequisites
+
+- Python 3.7+ (preferably 3.11+)
+- uv (Python project manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Node.js 24+ and pnpm (for webapp): `corepack enable` installs the pinned pnpm
+- Docker (for API development)
+
+### Quick Start
+
+1. **Core Package Development:**
+
+   ```
+   # Run tests
+   uv run task test-package
+
+   # Run specific test
+   uv run pytest tests/test_emissions_tracker.py
+
+   # Lint and format (runs the pre-commit hooks, which rewrite files in place)
+   uv run task format
+   ```
+2. **API Development:**
+
+   ```
+   # Start API with Docker (recommended)
+   uv run task docker
+
+   # Or run locally (requires PostgreSQL setup)
+   uv run task dashboard
+
+   # Test API
+   uv run task test-api-unit
+   uv run task test-api-integ
+   ```
+3. **Dashboard Development:**
+
+   ```
+   # Python dashboard
+   uv run task carbonboard
+
+   # Js webapp
+   cd webapp
+   pnpm install
+   pnpm dev
+   ```
+
+## Testing Strategy
+
+### Core Package Tests
+
+- **Unit tests**: `tests/test_*.py` - Test individual components
+- **Integration tests**: Include real hardware testing with `CODECARBON_ALLOW_MULTIPLE_RUNS=True`
+- **Run specific tests**: `uv run pytest tests/test_specific.py`
+
+### API Tests
+
+- **Unit tests**: `uv run task test-api-unit` - Test business logic
+- **Integration tests**: `uv run task test-api-integ` - Test with database
+- **See**: `carbonserver/tests/TESTING.md` for detailed testing guide
+
+### Manual Testing
+
+- **Stress testing**: Use `7z b` for CPU or gpu-burn for GPU testing
+- **CLI testing**: Use examples in `examples/` directory
+- **Monitor with**: `nvidia-smi` for GPU metrics comparison
+
+## Common Development Patterns
+
+### Adding New Features
+
+1. **Check existing tests** in `tests/` for similar functionality
+2. **Add unit tests** first (test-driven development)
+3. **Update documentation** if public interface changes
+4. **Follow coding style**: Use `uv run task format`
+
+### API Development
+
+1. **Follow FastAPI patterns** - see routers in `carbonserver/carbonserver/api/routers/`
+2. **Use dependency injection** - see `carbonserver/container.py`
+3. **Database migrations** - use Alembic (see `carbonserver/carbonserver/database/alembic/`)
+4. **Test with Postman** - collection in `carbonserver/tests/postman/`
+
+### Dashboard Development
+
+1. **Python Dashboard**: Uses Dash + Plotly, see `codecarbon/viz`
+2. **React Dashboard**: Modern React components in `webapp/src/`
+3. **Connect to API**: Set `CODECARBON_API_URL=http://localhost:8008` for local development
+
+## Environment Management
+
+### UV Task Management
+
+```
+# List all available tasks
+uv run task -l
+
+# Main tasks:
+# - test-package: Core package testing
+# - format: Lint and format, by running the pre-commit hooks
+# - test-api-unit: API unit tests
+# - test-api-integ: API integration tests
+# - dashboard: Run API locally
+# - docker: Start API with Docker
+# - carbonboard: Python dashboard
+# - docs: Build documentation
+```
+
+### Configuration Files
+
+- **pyproject.toml**: Main project configuration
+- **.codecarbon.config**: Runtime configuration for API connection
+- **docker-compose.yml**: Local development with PostgreSQL
+
+## Documentation and Help
+
+### Key Documentation Files
+
+- **[CONTRIBUTING.md](<https://docs.codecarbon.io/latest/how-to/contributing/>)**: Detailed contribution guidelines and setup
+- **[README.md](<https://github.com/mlco2/codecarbon/blob/master/README.md>)**: Project overview and quickstart
+- **[carbonserver/README.md](<https://github.com/mlco2/codecarbon/blob/master/carbonserver/README.md>)**: API architecture and database schema
+- **[webapp/README.md](<https://github.com/mlco2/codecarbon/blob/master/webapp/README.md>)**: React dashboard setup
+- **[carbonserver/tests/TESTING.md](<https://github.com/mlco2/codecarbon/blob/master/carbonserver/tests/TESTING.md>)**: Comprehensive testing guide
+
+### VS Code Debugging
+
+The repository includes VS Code launch configurations in `docs/how-to/development.md` for: - Debugging current Python file - Running pytest with debugger - Testing codecarbon CLI monitor
+
+### Getting Help
+
+- **[FAQ](<https://docs.codecarbon.io/latest/explanation/faq/>)**
+- **[Documentation](<https://docs.codecarbon.io>)**
+- **[Issues](<https://github.com/mlco2/codecarbon/issues>)**
+
+## Architecture Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   codecarbon    │    │   carbonserver  │    │   dashboards    │
+│   (package)     │───▶│     (API)       │◀───│  (2 versions)   │
+│                 │    │                 │    │                 │
+│ • CLI tools     │    │ • FastAPI       │    │ • Dash (Python) │
+│ • Tracking core │    │ • PostgreSQL    │    │ • React   (Web) │
+│ • Data output   │    │ • Authentication│    │ • Visualization │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+The package can work standalone (offline mode) or connect to the API for cloud features and dashboard visualization.
+
+## Opening Pull Requests
+
+Fill in every section of `.github/PULL_REQUEST_TEMPLATE.md` and pass it with `gh pr create --body-file`; a plain `--body` skips the template. Leave the AI Usage Disclosure choice to the human contributor.
+
+## Tips for Effective Development
+
+1. **Start with tests**: Run existing tests first to understand current state
+2. **Use examples**: Check `examples/` directory for usage patterns
+3. **Environment isolation**: Use uv for dependency management and virtual environments
+4. **Incremental development**: Test frequently with `uv run task test-package`
+5. **Check CI**: Ensure your changes pass the same checks as GitHub Actions
+6. **Read architecture docs**: Understand the emission calculation methodology in docs/
+
+Remember: CodeCarbon is about measuring computing emissions, in the goal of helping to reduce them. Every contribution helps make computing more sustainable! 🌱

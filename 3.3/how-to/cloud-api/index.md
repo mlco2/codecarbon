@@ -1,0 +1,68 @@
+# Use the Cloud API &amp; Dashboard
+
+This guide shows how to send your emissions data to the CodeCarbon cloud platform, where you can visualize results and collaborate with your team on a shared dashboard.
+
+> [!WARNING]
+>
+> **API Mode**
+>
+> API mode uploads your emissions data to CodeCarbon's central server. Thanks to [CleverCloud](<https://www.clever.cloud/>), usage is free within reasonable limits.
+
+[![CodeCarbon architecture](<https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/code_carbon_archi.png>)](<https://github.com/mlco2/codecarbon/raw/master/carbonserver/Images/code_carbon_archi.png>)
+
+## Prerequisites
+
+First, we'll create an account and authenticate your local environment:
+
+1. Create an account on the [CodeCarbon dashboard](<https://dashboard.codecarbon.io/>)
+2. Run `codecarbon login` from your terminal to authenticate
+
+The login command will create a default project and save your credentials to `.codecarbon.config`.
+
+## Send Emissions from Your Code
+
+With your account set up, you're ready to start sending emissions data. Add `OutputMethod.API` to `output_methods` to upload tracking data:
+
+```
+from codecarbon import OutputMethod, track_emissions
+
+@track_emissions(output_methods=[OutputMethod.CSV, OutputMethod.API])
+def train_model():
+    # GPU intensive training code  goes here
+
+if __name__ =="__main__":
+    train_model()
+```
+
+The decorator will automatically send your emissions data to the dashboard. The API stores durations with sub-second precision, so runs shorter than one second are kept. Only a zero or negative duration is skipped. You can also specify additional options in `@track_emissions()` or in `.codecarbon.config`.
+
+`start()` (or `start_task()`, when you track tasks without `start()`) registers the run on the API with a blocking HTTP call, and `tracker.run_id` then switches from a locally generated id to the API run id, so every output shares it. If the API is unreachable, tracking continues with the local id, and the tracker retries each time it writes a record. From the first record written after the API comes back, `run_id` is the API run id. Records written before keep the local id, so with `on_csv_write="update"` the CSV file gets one row per id.
+
+## Create Projects &amp; Experiments
+
+By default, `codecarbon login` creates a default experiment in your first project. If you want to organize runs by experiment, you can specify an `experiment_id` explicitly. Set the experiment ID in two ways:
+
+**Option 1: In your code**
+
+```
+from codecarbon import OutputMethod, track_emissions
+
+@track_emissions(
+    experiment_id="your experiment id",
+    output_methods=[OutputMethod.CSV, OutputMethod.API],
+)
+def train_model():
+    ...
+```
+
+**Option 2: In `.codecarbon.config`**
+
+```
+[codecarbon]
+experiment_id = your experiment id
+save_to_api = true
+```
+
+## View Your Results
+
+Once your runs complete, visit the [CodeCarbon dashboard](<https://dashboard.codecarbon.io/>) to see your results. For more visualization options, see the [visualization guide](<https://docs.codecarbon.io/latest/how-to/visualize/index.md>).

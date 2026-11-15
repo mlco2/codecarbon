@@ -1,0 +1,56 @@
+# CodeCarbon
+
+> Measure and reduce carbon emissions from computing - Official Documentation
+
+## Tutorials
+
+- [Tracking with the CLI](<https://docs.codecarbon.io/latest/tutorials/cli/index.md>)
+- [Compare Model Efficiency](<https://docs.codecarbon.io/latest/tutorials/comparing-model-efficiency/index.md>)
+- [Quickstart](<https://docs.codecarbon.io/latest/tutorials/first-tracking/index.md>)
+- [Tracking with Python](<https://docs.codecarbon.io/latest/tutorials/python-api/index.md>)
+
+## How-to guides
+
+- [Agent Instructions](<https://docs.codecarbon.io/latest/how-to/agent-instructions/index.md>)
+- [LLMs and Agents](<https://docs.codecarbon.io/latest/how-to/agents/index.md>)
+- [AI Policy](<https://docs.codecarbon.io/latest/how-to/ai_policy/index.md>)
+- [Deploy with Ansible](<https://docs.codecarbon.io/latest/how-to/ansible/index.md>)
+- [Use the Cloud API &amp; Dashboard](<https://docs.codecarbon.io/latest/how-to/cloud-api/index.md>)
+- [Code of Conduct](<https://docs.codecarbon.io/latest/how-to/code-of-conduct/index.md>)
+- [Integrate with Comet](<https://docs.codecarbon.io/latest/how-to/comet/index.md>)
+- [Configure CodeCarbon](<https://docs.codecarbon.io/latest/how-to/configuration/index.md>)
+- [Contribution Guidelines](<https://docs.codecarbon.io/latest/how-to/contributing/index.md>)
+- [Development Guide](<https://docs.codecarbon.io/latest/how-to/development/index.md>)
+- [HuggingFace Diffusers](<https://docs.codecarbon.io/latest/how-to/diffusers/index.md>)
+- [Get accurate CPU measurements (Linux/RAPL)](<https://docs.codecarbon.io/latest/how-to/enable-rapl/index.md>)
+- [Examples](<https://docs.codecarbon.io/latest/how-to/examples/index.md>)
+- [Installation](<https://docs.codecarbon.io/latest/how-to/installation/index.md>)
+- [Deploy as a Linux Service](<https://docs.codecarbon.io/latest/how-to/linux-service/index.md>)
+- [Log to External Systems](<https://docs.codecarbon.io/latest/how-to/logging/index.md>)
+- [scikit-learn](<https://docs.codecarbon.io/latest/how-to/scikit-learn/index.md>)
+- [Security Policy](<https://docs.codecarbon.io/latest/how-to/security/index.md>)
+- [Run on SLURM (ROCm/PyTorch)](<https://docs.codecarbon.io/latest/how-to/slurm/index.md>)
+- [Test on Scaleway](<https://docs.codecarbon.io/latest/how-to/test-on-scaleway/index.md>)
+- [HuggingFace Transformers](<https://docs.codecarbon.io/latest/how-to/transformers/index.md>)
+- [Troubleshooting](<https://docs.codecarbon.io/latest/how-to/troubleshooting/index.md>)
+- [Visualize Emissions](<https://docs.codecarbon.io/latest/how-to/visualize/index.md>)
+- [Working with Coding Agent](<https://docs.codecarbon.io/latest/how-to/working_with_agent/index.md>)
+
+## Explanation
+
+- [Accuracy and Validation](<https://docs.codecarbon.io/latest/explanation/accuracy/index.md>)
+- [CodeCarbon vs Alternatives](<https://docs.codecarbon.io/latest/explanation/alternatives/index.md>)
+- [FAQ](<https://docs.codecarbon.io/latest/explanation/faq/index.md>)
+- [Methodology](<https://docs.codecarbon.io/latest/explanation/methodology/index.md>)
+- [Model Comparisons](<https://docs.codecarbon.io/latest/explanation/model-comparisons/index.md>)
+- [Power Estimation](<https://docs.codecarbon.io/latest/explanation/power-estimation/index.md>)
+- [RAPL Metrics](<https://docs.codecarbon.io/latest/explanation/rapl/index.md>)
+- [When to Use CodeCarbon vs EcoLogits](<https://docs.codecarbon.io/latest/explanation/when-to-use/index.md>)
+- [Why CodeCarbon](<https://docs.codecarbon.io/latest/explanation/why/index.md>)
+
+## Reference
+
+- [API Reference](<https://docs.codecarbon.io/latest/reference/api/index.md>)
+- [CLI Reference](<https://docs.codecarbon.io/latest/reference/cli/index.md>)
+- [Deprecations and Migrations](<https://docs.codecarbon.io/latest/reference/deprecations/index.md>)
+- [Output Formats](<https://docs.codecarbon.io/latest/reference/output/index.md>)

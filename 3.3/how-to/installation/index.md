@@ -1,0 +1,80 @@
+# Installing CodeCarbon
+
+> [!NOTE]
+>
+> **Python Support**
+>
+> We recommend using a [supported Python version](<https://devguide.python.org/versions/>).
+
+## From PyPi repository
+
+The package is hosted on the pip repository [here](<https://pypi.org/project/codecarbon/>).
+
+To install the package, run the following command in your terminal.
+
+```
+pip install codecarbon
+```
+
+## Using Conda environments
+
+If you're using Conda for environment management, you can install CodeCarbon with pip in your Conda environment:
+
+```
+conda create --name codecarbon
+conda activate codecarbon
+pip install codecarbon
+```
+
+> [!NOTE]
+>
+> **Conda Support**
+>
+> Starting from 3.3.0 we start to maintain again an official Conda packages on [conda-forge](<https://anaconda.org/channels/conda-forge/packages/codecarbon/overview>):
+>
+> ```
+> conda install -c conda-forge codecarbon
+> ```
+>
+> The [channel `codecarbon`](<https://anaconda.org/channels/codecarbon/packages/codecarbon/overview>) is outdated.
+
+## Dependencies
+
+The following packages are used by the CodeCarbon package, and will be installed along with the package itself:
+
+```
+arrow
+click
+pandas
+prometheus_client
+psutil
+py-cpuinfo
+nvidia-ml-py
+rapidfuzz
+requests
+questionary
+rich
+typer
+```
+
+Please refer to [pyproject.toml](<https://github.com/mlco2/codecarbon/blob/master/pyproject.toml>) for the latest list of the packages used.
+
+## After installing on Linux
+
+CodeCarbon is most accurate when it can read the Intel RAPL hardware energy counters, which are root-only by default on modern kernels. Without them it estimates CPU power from CPU load and the processor's TDP. See [Improve Measurement Accuracy with RAPL](<https://docs.codecarbon.io/latest/how-to/enable-rapl/index.md>) for a permanent, reboot-proof setup.
+
+## (Non-Python users) Standalone installer
+
+If you are not using Python but would like to run CodeCarbon (for instance to use the [CodeCarbon Command line](<https://docs.codecarbon.io/latest/tutorials/cli/index.md>)), we provide a standalone installer.
+
+Use curl to download and run the script:
+
+```
+curl -LsSf https://codecarbon.io/scripts/install.sh | sh
+```
+
+For Windows (PowerShell):
+
+```
+powershell -ExecutionPolicy ByPass -c "irm https://codecarbon.io/scripts/install.ps1 | iex"
+```
