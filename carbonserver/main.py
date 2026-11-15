@@ -21,7 +21,7 @@ from carbonserver.api.routers import (
     telemetry,
 )
 from carbonserver.api.services import auth_service
-from carbonserver.config import settings
+from carbonserver.config import DEV_ENVIRONMENTS, settings
 from carbonserver.container import ServerContainer
 from carbonserver.database.database import engine
 from carbonserver.logger import logger
@@ -111,40 +111,39 @@ def init_server(container):
     server.include_router(telemetry.router)
     add_pagination(server)
 
-    # Add CORS from env variable
-    raw_cors = os.environ.get("CORS_ORIGINS", "")
-    CORS_ORIGINS = [origin.strip() for origin in raw_cors.split(",") if origin.strip()]
-
-    origins = [
-        "https://api.codecarbon.io",
-        "https://dashboard.codecarbon.io",
-        "https://dash-dev.cleverapps.io/",
-        "https://dash-dev.cleverapps.io/api",
-        "http://localhost",
-        "http://localhost:3000",
-        "http://localhost:8000",
-        *CORS_ORIGINS,
-    ]
-
-    if settings.environment == "develop":
-        origins.extend(
-            ["http://localhost", "http://localhost:3000", "http://localhost:8000"]
-        )
-
-    origins.extend(CORS_ORIGINS)
-
-    if settings.frontend_url != "":
-        origins.append(settings.frontend_url)
-
     server.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=get_cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
     return server
+
+
+def get_cors_origins() -> list[str]:
+    """
+    Origins allowed to call the API with credentials: the public dashboards,
+    localhost in development only, CORS_ORIGINS (comma separated) and FRONTEND_URL.
+    """
+    origins = [
+        "https://api.codecarbon.io",
+        "https://dashboard.codecarbon.io",
+        "https://dash-dev.cleverapps.io/",
+        "https://dash-dev.cleverapps.io/api",
+    ]
+    if settings.environment in DEV_ENVIRONMENTS:
+        origins += [
+            "http://localhost",
+            "http://localhost:3000",
+            "http://localhost:8000",
+        ]
+    raw_cors = os.environ.get("CORS_ORIGINS", "")
+    origins += [origin.strip() for origin in raw_cors.split(",") if origin.strip()]
+    if settings.frontend_url != "":
+        origins.append(settings.frontend_url)
+    return origins
 
 
 app = create_app()
