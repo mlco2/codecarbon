@@ -13,7 +13,7 @@ from codecarbon.core import electricitymaps_api, national_grid_eso_api
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
-from codecarbon.input import DataSource, DataSourceException
+from codecarbon.input import DataSource
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -306,8 +306,7 @@ class Emissions:
         ├─ Electricity Maps API (si token)
         ├─ get_region_emissions (USA/CAN/CHN/SWE/NOR/FIN)
         │   └─ _try_get_nordic_region_emissions (pour SWE/NOR/FIN)
-        │   └─ country_emissions_data (pour USA)
-        │   └─ country_energy_mix_data (pour CAN)
+        │   └─ country_emissions_data (pour USA et CAN)
         │   └─ _try_get_china_province_emissions (pour CHN)
         └─ get_country_emissions (fallback)
 
@@ -333,33 +332,38 @@ class Emissions:
             return self.get_country_emissions(energy, geo)
 
         # Handle USA and Canada regional data
-        try:
-            country_emissions_data = self._data_source.get_country_emissions_data(
-                geo.country_iso_code.lower()
+        country_emissions_data = self._data_source.get_country_emissions_data(
+            geo.country_iso_code.lower()
+        )
+
+        if geo.region.startswith("_") or geo.region not in country_emissions_data:
+            # TODO: Deal with missing data, default to something
+            raise ValueError(
+                f"Region: {geo.region} not found for Country"
+                + f" with ISO CODE : {geo.country_iso_code}"
             )
 
-            if geo.region not in country_emissions_data:
-                # TODO: Deal with missing data, default to something
-                raise ValueError(
-                    f"Region: {geo.region} not found for Country"
-                    + f" with ISO CODE : {geo.country_iso_code}"
-                )
-
-            emissions_per_kWh: EmissionsPerKWh = EmissionsPerKWh.from_lbs_per_mWh(
-                country_emissions_data[geo.region]["emissions"]
-            )
-        except DataSourceException:
-            # This country has regional data at the energy mix level,
-            # not the emissions level
-            country_energy_mix_data = self._data_source.get_country_energy_mix_data(
-                geo.country_iso_code.lower()
-            )
-            region_energy_mix_data = country_energy_mix_data[geo.region]
-            emissions_per_kWh = self._region_energy_mix_to_emissions_rate(
-                region_energy_mix_data
-            )
+        emissions_per_kWh = self._regional_emissions_rate(
+            country_emissions_data[geo.region]["emissions"],
+            country_emissions_data["_unit"]["emissions"],
+        )
 
         return emissions_per_kWh.kgs_per_kWh * energy.kWh  # kgs
+
+    @staticmethod
+    def _regional_emissions_rate(emissions: float, unit: str) -> EmissionsPerKWh:
+        """
+        Convert a regional emission rate, in the unit stated by its data file,
+        into an EmissionsPerKWh.
+        :param emissions: emission rate of the region
+        :param unit: "lbs/MWh" (USA, eGRID) or "g/kWh" (Canada, ECCC)
+        :return: an EmissionsPerKwh object
+        """
+        if unit == "lbs/MWh":
+            return EmissionsPerKWh.from_lbs_per_mWh(emissions)
+        if unit == "g/kWh":
+            return EmissionsPerKWh.from_g_per_kWh(emissions)
+        raise ValueError(f"Unknown regional emissions unit: {unit}")
 
     def get_country_emissions(self, energy: Energy, geo: GeoMetadata) -> float:
         """
@@ -441,49 +445,3 @@ class Emissions:
             )
 
         return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
-
-    @staticmethod
-    def _region_energy_mix_to_emissions_rate(energy_mix: Dict) -> EmissionsPerKWh:
-        """
-        Convert a mix of energy sources into emissions per kWh
-        https://github.com/responsibleproblemsolving/energy-usage#calculating-co2-emissions
-        :param energy_mix: A dictionary that breaks down the energy produced into
-            sources, with a total value. Format will vary, but must have keys for "coal"
-            "petroleum" and "naturalGas" and "total"
-        :return: an EmissionsPerKwh object representing the average emissions rate
-        """
-        # If an authoritative carbon intensity is provided for the region,
-        # use it directly instead of estimating from a simplified mix model.
-        carbon_intensity = energy_mix.get("carbon_intensity")
-        if carbon_intensity is not None:
-            return EmissionsPerKWh.from_g_per_kWh(carbon_intensity)
-
-        # source:
-        # https://github.com/responsibleproblemsolving/energy-usage#conversion-to-co2
-        emissions_by_source: Dict[str, EmissionsPerKWh] = {
-            "coal": EmissionsPerKWh.from_kgs_per_kWh(0.995725971),
-            "petroleum": EmissionsPerKWh.from_kgs_per_kWh(0.8166885263),
-            "naturalGas": EmissionsPerKWh.from_kgs_per_kWh(0.7438415916),
-        }
-        # Only the fossil sources emit, so other keys (low-carbon sources,
-        # "total" or metadata) are not part of the weighted sum.
-        emissions_percentage: Dict[str, float] = {
-            source: energy_mix[source] / energy_mix["total"]
-            for source in emissions_by_source
-        }
-        #  Weighted sum of emissions by % of contributions
-        # `emissions_percentage`: coal: 0.5, petroleum: 0.25, naturalGas: 0.25
-        # `emission_value`: coal: 0.995725971, petroleum: 0.8166885263, naturalGas: 0.7438415916 # noqa: E501
-        # `emissions_per_kWh`: (0.5 * 0.995725971) + (0.25 * 0.8166885263) * (0.25 * 0.7438415916) # noqa: E501
-        #  >> 0.5358309 kg/kWh
-        emissions_per_kWh = EmissionsPerKWh.from_kgs_per_kWh(
-            sum(
-                [
-                    emissions_percentage[source]
-                    * value.kgs_per_kWh  # % (0.x)  # kgs / kWh
-                    for source, value in emissions_by_source.items()
-                ]
-            )
-        )
-
-        return emissions_per_kWh

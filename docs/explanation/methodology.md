@@ -465,7 +465,7 @@ reports a region in one of them:
 | Country | Granularity | Source |
 |---------|-------------|--------|
 | United States | State | [EPA eGRID2023 emission rate per state](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/usa_emissions.json) |
-| Canada | Province and territory | [ECCC NIR 2026 consumption intensity per province, 2024](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json) |
+| Canada | Province and territory | [ECCC NIR 2026 consumption intensity per province and territory, 2024](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2024/canada_emissions.json) |
 | Sweden, Norway, Finland | Electricity bidding zone (SE1-SE4, NO1-NO5, FI) | [ENTSO-E generation mix, 2025](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/nordic_emissions.json) |
 | China | Province (30 provinces, municipalities and autonomous regions) | [MEE/NBS Announcement 2025 No. 47, 2023 factors](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/china_provincial_emissions.json) |
 
@@ -494,13 +494,13 @@ Change Canada's *National Inventory Report 1990–2024* (2026), Annex 7,
 Table A7-6 — the `.xlsx` file published at the
 [ECCC data portal](https://data-donnees.az.ec.gc.ca/data/substances/monitor/canada-s-official-greenhouse-gas-inventory/C-Tables-Electricity-Canada-Provinces-Territories).
 These consumption intensities include grid losses and other relevant
-emissions. They are stored as `carbon_intensity` in
-`canada_energy_mix.json`, which sits in the `2023/` directory for
-historical reasons; its per-source percentages are only used for an entry
-without `carbon_intensity`. When a province or territory entry has a `carbon_intensity`
-field, CodeCarbon uses it directly instead of estimating from the
-simplified fossil-only mix model, mirroring the behaviour of the global
-energy mix file.
+emissions. They range from 2.6 gCO₂eq/kWh in Quebec to 760 gCO₂eq/kWh in
+Nunavut. CodeCarbon uses them directly, the same way as the US state
+values; the unit of each regional file is stated in its `_unit` entry.
+CodeCarbon 3.3 and earlier estimated the Canadian values from a 2023
+provincial energy mix with fossil-only emission factors
+(`2023/canada_energy_mix.json`, kept in the repository for reference but
+no longer packaged).
 
 When a region is not found in the regional data, CodeCarbon falls back
 to the country value.

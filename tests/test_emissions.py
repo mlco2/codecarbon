@@ -224,33 +224,41 @@ class TestEmissions(unittest.TestCase):
             emissions, 3 * canada["carbon_intensity"] / 1000, places=6
         )
 
-    def test_region_energy_mix_without_carbon_intensity_uses_mix_model(self):
-        """
-        A region without a carbon_intensity override is estimated from its
-        fossil mix, and metadata keys in its entry are ignored.
-        """
-        energy_mix = {
-            "coal": 10.0,
-            "petroleum": 0.1,
-            "naturalGas": 8.6,
-            "hydro": 81.3,
-            "total": 100.0,
-            "source": "ECCC NIR 2026",
-        }
+    def test_regional_emissions_rate_uses_the_file_unit(self):
+        lbs = Emissions._regional_emissions_rate(1000.0, "lbs/MWh")
+        grams = Emissions._regional_emissions_rate(73, "g/kWh")
 
-        emissions_per_kWh = Emissions._region_energy_mix_to_emissions_rate(energy_mix)
+        self.assertAlmostEqual(lbs.kgs_per_kWh, 0.45359237, places=6)
+        self.assertAlmostEqual(grams.kgs_per_kWh, 0.073, places=9)
+        with self.assertRaises(ValueError):
+            Emissions._regional_emissions_rate(73, "kg/kWh")
 
-        expected = (
-            0.995725971 * 10.0 + 0.8166885263 * 0.1 + 0.7438415916 * 8.6
-        ) / 100.0
-        self.assertAlmostEqual(emissions_per_kWh.kgs_per_kWh, expected, places=9)
+    def test_canada_emissions_data_has_every_province_and_territory(self):
+        canada = self._data_source.get_country_emissions_data("can")
 
-    def test_region_energy_mix_carbon_intensity_overrides_mix(self):
-        energy_mix = {"coal": 100.0, "total": 100.0, "carbon_intensity": 2.6}
+        self.assertEqual(canada["_unit"]["emissions"], "g/kWh")
+        self.assertEqual(canada["_source"]["year"], 2024)
+        regions = {k: v for k, v in canada.items() if not k.startswith("_")}
+        self.assertEqual(
+            sorted(v["regionCode"] for v in regions.values()),
+            sorted(
+                ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE"]
+                + ["QC", "SK", "YT"]
+            ),
+        )
+        self.assertTrue(all(0 < v["emissions"] < 1000 for v in regions.values()))
 
-        emissions_per_kWh = Emissions._region_energy_mix_to_emissions_rate(energy_mix)
+    def test_get_emissions_PRIVATE_INFRA_CANADA_metadata_key_falls_back_to_country(
+        self,
+    ):
+        energy = Energy.from_energy(kWh=3)
+        geo = GeoMetadata(country_iso_code="CAN", country_name="Canada", region="_unit")
 
-        self.assertAlmostEqual(emissions_per_kWh.kgs_per_kWh, 0.0026, places=9)
+        emissions = self._emissions.get_private_infra_emissions(energy, geo)
+
+        self.assertAlmostEqual(
+            emissions, self._emissions.get_country_emissions(energy, geo), places=6
+        )
 
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
         # WHEN
@@ -260,8 +268,8 @@ class TestEmissions(unittest.TestCase):
                 country_iso_code="CAN", country_name="Canada", region="ontario"
             ),
         )
-        # Ontario now uses the ECCC NIR 2026 consumption intensity override.
-        # ECCC Table A7-6: Ontario 2024 consumption intensity = 73 g CO2e/kWh.
+        # ECCC NIR 2026, Table A7-6: Ontario 2024 consumption intensity
+        # is 73 g CO2e/kWh (codecarbon/data/private_infra/2024/canada_emissions.json).
         manually_computed_emissions = 3 * 73 / 1000
 
         # THEN
@@ -410,9 +418,6 @@ class TestEmissions(unittest.TestCase):
                     patch.object(
                         self._data_source, "get_country_emissions_data"
                     ) as get_regional_emissions_data,
-                    patch.object(
-                        self._data_source, "get_country_energy_mix_data"
-                    ) as get_regional_energy_mix_data,
                     patch("codecarbon.core.emissions.logger.error") as log_error,
                     patch("codecarbon.core.emissions.logger.warning") as log_warning,
                 ):
@@ -421,7 +426,6 @@ class TestEmissions(unittest.TestCase):
                 self.assertAlmostEqual(emissions, expected_emissions, places=6)
                 get_nordic_data.assert_not_called()
                 get_regional_emissions_data.assert_not_called()
-                get_regional_energy_mix_data.assert_not_called()
                 log_error.assert_not_called()
                 log_warning.assert_not_called()
 
@@ -439,15 +443,11 @@ class TestEmissions(unittest.TestCase):
             patch.object(
                 self._data_source, "get_country_emissions_data"
             ) as get_regional_emissions_data,
-            patch.object(
-                self._data_source, "get_country_energy_mix_data"
-            ) as get_regional_energy_mix_data,
         ):
             emissions = self._emissions.get_private_infra_emissions(energy, geo)
 
         self.assertAlmostEqual(emissions, expected_emissions, places=6)
         get_regional_emissions_data.assert_not_called()
-        get_regional_energy_mix_data.assert_not_called()
 
     def test_try_get_nordic_region_emissions_returns_none_if_region_data_missing(self):
         # GIVEN
