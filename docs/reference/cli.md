@@ -78,6 +78,7 @@ the configured value. Each flag also has a negative form, such as
 | `--force-cpu-power` | float | - | CPU power in watts, replaces the estimate |
 | `--force-ram-power` | float | - | RAM power in watts, replaces the estimate |
 | `--force-mode-cpu-load` | flag | - | Estimate CPU power from its load |
+| `--force-mode-constant` | flag | - | Estimate CPU power as a constant fraction of its TDP, takes precedence over `--force-mode-cpu-load` |
 | `--pue` | float | - | Power Usage Effectiveness of the data center |
 | `--wue` | float | - | Water Usage Effectiveness, in L/kWh |
 | `--force-carbon-intensity-g-co2e-kwh` | float | - | Carbon intensity of the electricity, in gCO2e/kWh |

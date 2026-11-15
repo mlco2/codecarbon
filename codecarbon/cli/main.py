@@ -526,6 +526,10 @@ def monitor(
     force_mode_cpu_load: Annotated[
         bool | None, typer.Option(help="Force CPU load estimation mode")
     ] = None,
+    force_mode_constant: Annotated[
+        bool | None,
+        typer.Option(help="Estimate CPU power as a constant fraction of its TDP"),
+    ] = None,
     allow_multiple_runs: Annotated[
         bool | None, typer.Option(help="Allow concurrent CodeCarbon instances")
     ] = None,
@@ -602,6 +606,7 @@ def monitor(
         "wue": wue,
         "force_carbon_intensity_g_co2e_kwh": force_carbon_intensity_g_co2e_kwh,
         "force_mode_cpu_load": force_mode_cpu_load,
+        "force_mode_constant": force_mode_constant,
         "allow_multiple_runs": allow_multiple_runs,
         "rapl_include_dram": rapl_include_dram,
         "rapl_prefer_psys": rapl_prefer_psys,
