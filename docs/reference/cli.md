@@ -45,16 +45,59 @@ Displays real-time emissions data for all processes on your machine. Press `Ctrl
 
 **Options:**
 
+Each option overrides the matching key of `.codecarbon.config` or `CODECARBON_*`
+variable (see [Configuration](../how-to/configuration.md)). An option left out keeps
+the configured value. Each flag also has a negative form, such as
+`--no-rapl-include-dram`.
+
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--project-name` | string | - | Project name for the current experiment |
 | `--measure-power-secs` | int | 10 | Interval in seconds between two measures |
 | `--api-call-interval` | int | 30 | Number of measures between API calls |
-| `--api` / `--no-api` | flag | `--api` | Send data to the API, or do not (local-only measurement) |
+| `--api` / `--no-api` | flag | `--api` | Add or remove the API from the output methods |
 | `--offline` / `--no-offline` | flag | `--no-offline` | Run without internet access |
 | `--country-iso-code` | string | - | 3-letter country ISO code. Required in offline mode, unless it is set in the config file |
 | `--region` | string | - | Region or province, for offline mode |
 | `--log-level` | string | error | Log level: critical, error, warning, info, debug |
+| `--experiment-id` | string | - | Experiment ID, satisfies the online-mode check |
+| `--experiment-name` | string | - | Experiment name |
+| `--api-endpoint` | string | - | CodeCarbon API endpoint |
+| `--api-key` | string | - | CodeCarbon API key |
+| `--output-methods` | string | - | Comma-separated output methods: `csv`, `api`, `logger`, `prometheus`, `logfire`, ... |
+| `--output-dir` | string | - | Directory for output files |
+| `--output-file` | string | - | Output CSV file name |
+| `--on-csv-write` | string | - | `append` or `update` |
+| `--live-output-file` | string | - | CSV file receiving every interval measurement |
+| `--metadata` | string | - | JSON file of metadata added to the outputs |
+| `--prometheus-url` | string | - | Prometheus push gateway URL |
+| `--emissions-endpoint` | string | - | HTTP endpoint receiving the emissions |
+| `--logger-preamble` | string | - | Text prefixed to the tracker log messages |
+| `--gpu-ids` | string | - | Comma-separated GPU IDs to track, such as `0,2` |
+| `--tracking-mode` | string | - | `machine` or `process` (`process` when wrapping a command) |
+| `--force-cpu-power` | float | - | CPU power in watts, replaces the estimate |
+| `--force-ram-power` | float | - | RAM power in watts, replaces the estimate |
+| `--force-mode-cpu-load` | flag | - | Estimate CPU power from its load |
+| `--force-mode-constant` | flag | - | Estimate CPU power as a constant fraction of its TDP, takes precedence over `--force-mode-cpu-load` |
+| `--pue` | float | - | Power Usage Effectiveness of the data center |
+| `--wue` | float | - | Water Usage Effectiveness, in L/kWh |
+| `--force-carbon-intensity-g-co2e-kwh` | float | - | Carbon intensity of the electricity, in gCO2e/kWh |
+| `--electricitymaps-api-token` | string | - | Electricity Maps API token |
+| `--use-national-grid-eso-api` | flag | - | In Great Britain, use the live National Grid ESO carbon intensity |
+| `--rapl-include-dram` | flag | - | Include DRAM in the RAPL measures |
+| `--rapl-prefer-psys` | flag | - | Prefer the RAPL platform (psys) domain |
+| `--allow-multiple-runs` | flag | - | Allow several CodeCarbon instances at the same time |
+| `--save-to-file`, `--save-to-logger`, `--save-to-prometheus`, `--save-to-logfire` | flag | - | Deprecated: use `--output-methods` |
+| `--co2-signal-api-token` | string | - | Deprecated: use `--electricitymaps-api-token` |
+
+In online mode, `--output-methods` replaces the configured output methods, and
+`--api` / `--no-api` then adds or removes the API.
+
+!!! warning "Secrets on the command line"
+    Other users of the machine can read command-line arguments, and your shell
+    saves them in its history. Prefer the `CODECARBON_API_KEY` and
+    `CODECARBON_ELECTRICITYMAPS_API_TOKEN` environment variables, or the
+    configuration file, to `--api-key` and `--electricitymaps-api-token`.
 
 **Examples:**
 ```bash
@@ -69,6 +112,9 @@ codecarbon monitor --offline --country-iso-code FRA
 
 # Monitor with debug logging
 codecarbon monitor --log-level DEBUG
+
+# Monitor a server in a data center, writing to a CSV file and the logger
+codecarbon monitor --no-api --pue 1.4 --output-methods csv,logger
 ```
 
 ### `codecarbon monitor -- <command>`
