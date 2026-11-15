@@ -56,3 +56,53 @@ def test_user_exception_returns_its_http_status(main_module, error, status_code)
 
     assert response.status_code == status_code
     assert response.json() == {"detail": error.message}
+
+
+def load_app(monkeypatch, environment, cors_origins=None):
+    from carbonserver.config import settings
+
+    monkeypatch.setattr(settings, "environment", environment)
+    monkeypatch.setattr(settings, "frontend_url", "")
+    if cors_origins is None:
+        monkeypatch.delenv("CORS_ORIGINS", raising=False)
+    else:
+        monkeypatch.setenv("CORS_ORIGINS", cors_origins)
+    return load_main()
+
+
+def allowed_origin(main, origin):
+    """Origin echoed by a CORS preflight request, None when refused."""
+    response = TestClient(main.app).options(
+        "/",
+        headers={"Origin": origin, "Access-Control-Request-Method": "GET"},
+    )
+    return response.headers.get("access-control-allow-origin")
+
+
+@pytest.mark.parametrize("environment", ["local", "develop"])
+def test_cors_allows_localhost_in_development(monkeypatch, environment):
+    main = load_app(monkeypatch, environment)
+
+    assert allowed_origin(main, "http://localhost:3000") == "http://localhost:3000"
+
+
+def test_cors_refuses_localhost_in_production(monkeypatch):
+    main = load_app(monkeypatch, "production")
+
+    assert allowed_origin(main, "http://localhost:3000") is None
+    assert (
+        allowed_origin(main, "https://dashboard.codecarbon.io")
+        == "https://dashboard.codecarbon.io"
+    )
+
+
+def test_cors_origins_env_var_is_listed_once(monkeypatch):
+    main = load_app(
+        monkeypatch, "production", " https://a.example , ,https://b.example,"
+    )
+
+    origins = main.get_cors_origins()
+
+    assert allowed_origin(main, "https://b.example") == "https://b.example"
+    assert origins.count("https://a.example") == 1
+    assert "" not in origins

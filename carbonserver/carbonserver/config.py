@@ -1,6 +1,9 @@
 from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Environments where the server runs on a developer machine, over plain http.
+DEV_ENVIRONMENTS = ("local", "develop")
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="", extra="ignore")
