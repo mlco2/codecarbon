@@ -14,6 +14,29 @@ from codecarbon.external.logger import logger
 
 RAM_SLOT_POWER_X86 = 5  # Watts
 
+# Memory limit of the cgroup mounted at /sys/fs/cgroup, v2 first, then v1.
+# Inside a container this is usually the container's own cgroup, while psutil
+# reports the host's memory.
+CGROUP_MEMORY_LIMIT_FILES = (
+    "/sys/fs/cgroup/memory.max",
+    "/sys/fs/cgroup/memory/memory.limit_in_bytes",
+)
+
+
+def _cgroup_memory_limit_bytes() -> Optional[int]:
+    """
+    Return the cgroup memory limit in bytes, or None when there is no limit
+    ("max" in cgroup v2) or no readable limit file.
+    """
+    for path in CGROUP_MEMORY_LIMIT_FILES:
+        try:
+            with open(path) as f:
+                value = f.read().strip()
+        except OSError:
+            continue
+        return int(value) if value.isdigit() else None
+    return None
+
 
 @dataclass
 class RAM(BaseHardware):
@@ -60,6 +83,7 @@ class RAM(BaseHardware):
         self._children = children
         self._tracking_mode = tracking_mode
         self._force_ram_power = force_ram_power
+        self._logged_cgroup_limit = False
         # Check if using ARM architecture
         self.is_arm_cpu = self._detect_arm_cpu()
 
@@ -310,6 +334,26 @@ class RAM(BaseHardware):
             else psutil.virtual_memory().total / B_TO_GB
         )
 
+    def _machine_memory_for_power_GB(self) -> float:
+        """
+        Memory to size RAM power from in machine mode: machine_memory_GB, or the
+        container's cgroup memory limit when that is lower. SLURM jobs keep
+        their allocation.
+        """
+        memory_GB = self.machine_memory_GB
+        if SLURM_JOB_ID:
+            return memory_GB
+        limit = _cgroup_memory_limit_bytes()
+        if limit is None or limit / B_TO_GB >= memory_GB:
+            return memory_GB
+        if not self._logged_cgroup_limit:
+            logger.info(
+                f"Sizing RAM power from the cgroup memory limit "
+                f"({limit / B_TO_GB:.2f} GB) instead of {memory_GB:.2f} GB"
+            )
+            self._logged_cgroup_limit = True
+        return limit / B_TO_GB
+
     def total_power(self) -> Power:
         """
         Compute the Power (kW) consumed by the current process (and its children if
@@ -327,7 +371,7 @@ class RAM(BaseHardware):
 
         try:
             memory_GB = (
-                self.machine_memory_GB
+                self._machine_memory_for_power_GB()
                 if self._tracking_mode == "machine"
                 else self.process_memory_GB
             )
