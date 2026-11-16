@@ -145,6 +145,14 @@ Use `sbatch` to submit your job script:
 sbatch examples/slurm_rocm/run_codecarbon_pytorch.slurm
 ```
 
+!!! warning "One tracker per node"
+
+    With `tracking_mode="machine"` (the default), each tracker measures the whole node.
+    If several ranks on one node start a tracker, the node is counted several times.
+    CodeCarbon logs a warning when a machine-mode tracker runs on a SLURM local rank
+    other than 0 (`SLURM_LOCALID`). Start the tracker on local rank 0 only, or use
+    `tracking_mode="process"`.
+
 ### Step 7: Monitor Job Status
 
 Monitor your job execution:

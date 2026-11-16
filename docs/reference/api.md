@@ -56,7 +56,10 @@ All parameters are documented below:
 ## @track_emissions Decorator
 
 The decorator accepts the same parameters as `EmissionsTracker`, plus `offline`
-and `country_iso_code` for offline mode:
+and `country_iso_code` for offline mode. It does not accept `force_mode_cpu_load`
+or `metadata` as arguments. Set them in the config file, with the
+`CODECARBON_FORCE_MODE_CPU_LOAD` and `CODECARBON_METADATA` environment variables,
+or use `EmissionsTracker` directly:
 
 ::: codecarbon.emissions_tracker.track_emissions
     options:
