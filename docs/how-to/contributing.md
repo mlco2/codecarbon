@@ -73,7 +73,7 @@ share:
 
 - [Development guide](https://docs.codecarbon.io/latest/how-to/development/) — UV commands, debugging, stress testing, dependency
   management, building the docs, running the API and dashboards locally
-- [Maintainer guide](https://docs.codecarbon.io/latest/maintaining/) — release process and deployment
+- [Maintainer guide](https://docs.codecarbon.io/latest/maintaining/) —  release process and deployment
 - [AI policy](https://docs.codecarbon.io/latest/how-to/ai_policy/)
 - [Code of conduct](https://docs.codecarbon.io/latest/how-to/code-of-conduct/)
 
