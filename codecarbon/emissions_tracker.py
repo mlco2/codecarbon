@@ -8,6 +8,7 @@ from __future__ import annotations
 import contextlib
 import dataclasses
 import json
+import math
 import os
 import platform
 import re
@@ -474,8 +475,8 @@ class BaseEmissionsTracker(ABC):
         """
         :param project_name: Project name for current experiment run, default name
                              is "codecarbon".
-        :param measure_power_secs: Interval (in seconds) to measure hardware power
-                                   usage, defaults to 15.
+        :param measure_power_secs: Finite positive interval (in seconds) to measure
+                                   hardware power usage, defaults to 15.
         :param api_call_interval: Number of measurements between API calls (default: 8).
                             -1: call API only on flush() and at the end.
                             1: at every measure.
@@ -624,6 +625,17 @@ class BaseEmissionsTracker(ABC):
         self._force_carbon_intensity_g_co2e_kwh = parsed_intensity
         self._conf["force_carbon_intensity_g_co2e_kwh"] = parsed_intensity
         self.force_carbon_intensity_g_co2e_kwh = parsed_intensity
+
+        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
+        try:
+            valid_measure_power_secs = math.isfinite(
+                self._measure_power_secs
+            ) and self._measure_power_secs > 0
+        except TypeError:
+            valid_measure_power_secs = False
+        if not valid_measure_power_secs:
+            raise ValueError("measure_power_secs must be a finite positive number.")
+
         if self._configure_multiple_runs(allow_multiple_runs):
             return
 
@@ -638,7 +650,6 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(experiment_name, "experiment_name", "base")
         self._set_from_conf(gpu_ids, "gpu_ids")
         self._set_from_conf(log_level, "log_level", "info")
-        self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
         self._set_from_conf(output_dir, "output_dir", ".")
         self._set_from_conf(output_file, "output_file", "emissions.csv")
         self._set_from_conf(project_name, "project_name", "codecarbon")

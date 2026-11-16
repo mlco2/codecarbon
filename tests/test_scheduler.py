@@ -21,6 +21,12 @@ class TestPeriodicScheduler(unittest.TestCase):
         self.addCleanup(scheduler.stop)
         return scheduler
 
+    def test_nonpositive_or_nonfinite_intervals_are_rejected(self):
+        for interval in (0, -1, float("nan"), float("inf"), -float("inf")):
+            with self.subTest(interval=interval):
+                with self.assertRaisesRegex(ValueError, "finite positive"):
+                    PeriodicScheduler(interval, lambda: None)
+
     def test_ticks_run_on_a_single_thread(self):
         """Regression guard: one long-lived thread, not one thread per tick."""
         names = []

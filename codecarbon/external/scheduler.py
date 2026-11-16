@@ -35,6 +35,13 @@ class PeriodicScheduler:
         ::args:: args to pass to the function.
         ::kwargs:: kwargs to pass to the function.
         """
+        try:
+            valid_interval = math.isfinite(interval) and interval > 0
+        except TypeError:
+            valid_interval = False
+        if not valid_interval:
+            raise ValueError("interval must be a finite positive number")
+
         self.interval = interval
         self.function = function
         self.args = args
