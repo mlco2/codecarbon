@@ -78,16 +78,12 @@ def get_env_cloud_details(timeout: int = 1) -> Optional[Any]:
         try:
             params = CLOUD_METADATA_MAPPING[provider]
             headers = _get_headers(provider, params, timeout=timeout)
-            response = requests.get(
-                params["url"], headers=headers, timeout=timeout
-            )
+            response = requests.get(params["url"], headers=headers, timeout=timeout)
             if response.status_code == 401 and provider == "AWS":
                 headers = _get_headers(
                     provider, params, timeout=timeout, require_token=True
                 )
-                response = requests.get(
-                    params["url"], headers=headers, timeout=timeout
-                )
+                response = requests.get(params["url"], headers=headers, timeout=timeout)
             response.raise_for_status()
             response_data = response.json()
 
