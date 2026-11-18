@@ -90,4 +90,4 @@ But for the core logic of the product, we want to ensure that humans fully under
 
 ## Additional Resources
 
-For comprehensive guidance on contributing to CodeCarbon, including development workflows, code quality standards, testing practices, and AI-assisted development best practices, see [Contributing](<https://docs.codecarbon.io/latest/how-to/contributing/index.md>).
+For comprehensive guidance on contributing to CodeCarbon, including development workflows, code quality standards, testing practices, and AI-assisted development best practices, see [Contributing](<https://docs.codecarbon.io/latest/how-to/contributing/>).

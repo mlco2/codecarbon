@@ -28,7 +28,7 @@ uv run task pre-commit-install
 uv run task test-package
 ```
 
-Most pull requests are expected to contain either new tests or test updates. See [development](<https://docs.codecarbon.io/latest/how-to/development/index.md#tests>) for details.
+Most pull requests are expected to contain either new tests or test updates. See [development](<https://docs.codecarbon.io/latest/how-to/development/#tests>) for details.
 
 ## Check style before you push
 
@@ -52,10 +52,10 @@ You have a cool idea, but do not know if it fits with CodeCarbon? You can create
 
 ## More detail
 
-- [Development guide](<https://docs.codecarbon.io/latest/how-to/development/index.md>) — UV commands, debugging, stress testing, dependency management, building the docs, running the API and dashboards locally
-- [Maintainer guide](<https://docs.codecarbon.io/latest/maintaining/index.md>) — release process and deployment
-- [AI policy](<https://docs.codecarbon.io/latest/how-to/ai_policy/index.md>)
-- [Code of conduct](<https://docs.codecarbon.io/latest/how-to/code-of-conduct/index.md>)
+- [Development guide](<https://docs.codecarbon.io/latest/how-to/development/>) — UV commands, debugging, stress testing, dependency management, building the docs, running the API and dashboards locally
+- [Maintainer guide](<https://docs.codecarbon.io/latest/maintaining/>) — release process and deployment
+- [AI policy](<https://docs.codecarbon.io/latest/how-to/ai_policy/>)
+- [Code of conduct](<https://docs.codecarbon.io/latest/how-to/code-of-conduct/>)
 
 ## Questions or Need Help?
 
