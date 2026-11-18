@@ -24,16 +24,14 @@ class TestCarbonTrackerFlush(unittest.TestCase):
     def setUp(self) -> None:
         self.project_name = "project_TestCarbonTrackerFlush"
         self.emissions_file = "emissions-test-TestCarbonTrackerFlush.csv"
-        self.emissions_path = tempfile.gettempdir()
+        # A per-test directory, so that two tests counting rows in "their" file
+        # can never end up counting rows in the same one, see #1371.
+        self._temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._temp_dir.cleanup)
+        self.emissions_path = self._temp_dir.name
         self.emissions_file_path = os.path.join(
             self.emissions_path, self.emissions_file
         )
-        if os.path.isfile(self.emissions_file_path):
-            os.remove(self.emissions_file_path)
-
-    def tearDown(self) -> None:
-        if os.path.isfile(self.emissions_file_path):
-            os.remove(self.emissions_file_path)
 
     def test_carbon_tracker_online_flush(self):
         tracker = EmissionsTracker(

@@ -186,6 +186,27 @@ class TestCodeCarbonAPIOutput(unittest.TestCase):
         self.assertEqual(api_output.api.run_id, "run-created")
         self.assertEqual(api_output.run_id, "run-created")
 
+    def test_codecarbon_api_out_without_run_creation_skips_missing_run(self):
+        with patch(
+            "codecarbon.output_methods.http.ApiClient._create_run"
+        ) as mock_create_run:
+            api_output = CodeCarbonAPIOutput(
+                endpoint_url="http://test.com",
+                experiment_id="exp-1",
+                api_key=self.api_key,
+                conf=None,
+                create_run_on_emit=False,
+            )
+            api_output.out(None, self.emissions_data)
+            api_output.live_out(None, self.emissions_data)
+
+        mock_create_run.assert_not_called()
+        self.mock_add_emission.assert_not_called()
+
+        api_output.api.run_id = "run-created"
+        api_output.out(None, self.emissions_data)
+        self.mock_add_emission.assert_called_once()
+
     @patch("codecarbon.output_methods.http.logger.error")
     def test_codecarbon_live_out_api_call_failure(self, mock_logger):
         self.mock_add_emission.side_effect = Exception("Test exception")

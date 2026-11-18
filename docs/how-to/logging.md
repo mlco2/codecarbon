@@ -74,7 +74,10 @@ emissions: float = tracker.stop()
 
 ## Complete Examples
 
-A full working example is available in `codecarbon/examples/logging_demo.py`.
+Full working examples are available in
+[`examples/logging_to_file.py`](https://github.com/mlco2/codecarbon/blob/master/examples/logging_to_file.py)
+and
+[`examples/logging_to_google_cloud.py`](https://github.com/mlco2/codecarbon/blob/master/examples/logging_to_google_cloud.py).
 
 ## Next Steps
 
