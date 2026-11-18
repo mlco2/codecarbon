@@ -1129,7 +1129,7 @@ class BaseEmissionsTracker(ABC):
         # scheduled measurement to shutdown
         self._measure_power_and_energy_if_stale()
 
-        emissions_data = self._prepare_emissions_data()
+        emissions_data = self._prepare_emissions_data(final=True)
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         self._persist_data(
@@ -1179,7 +1179,7 @@ class BaseEmissionsTracker(ABC):
         # or if scheduler interval was longer than the run
         self._measure_power_and_energy_if_stale()
 
-        emissions_data = self._prepare_emissions_data()
+        emissions_data = self._prepare_emissions_data(final=True)
         emissions_data_delta = self._compute_emissions_delta(emissions_data)
 
         self._persist_data(
@@ -1234,17 +1234,18 @@ class BaseEmissionsTracker(ABC):
             self._total_emissions += delta_emissions
             self._last_energy_covered = self._total_energy
 
-    def _adopt_api_run(self, late: bool = False) -> None:
+    def _adopt_api_run(self, late: bool = False, final: bool = False) -> None:
         """
         Create the API run if it does not exist yet (blocking HTTP call), then
         use its id as run_id, so every output shares it.
         :param late: records may already carry the local run_id, so warn when
             it switches, and stay quiet on failure to avoid repeating the error.
+        :param final: flush() or stop(): bypass the run-creation cooldown.
         """
         if self._api_output is None:
             return
         try:
-            self._api_output._ensure_api_run()
+            self._api_output._ensure_api_run(final=final)
         except Exception:
             # The API client already logs the failure itself.
             if not late:
@@ -1261,16 +1262,19 @@ class BaseEmissionsTracker(ABC):
                 )
             self.run_id = api_run_id
 
-    def _prepare_emissions_data(self, adopt_api_run: bool = True) -> EmissionsData:
+    def _prepare_emissions_data(
+        self, adopt_api_run: bool = True, final: bool = False
+    ) -> EmissionsData:
         """
         Prepare the emissions data to be sent to the API or written to a file.
         :param adopt_api_run: try to create the API run first, if it is missing.
+        :param final: flush() or stop(): bypass the run-creation cooldown.
         :return: EmissionsData object with the total emissions data.
         """
         if adopt_api_run:
             # Before building the record, so the record written when the API
             # comes back already carries the API run id.
-            self._adopt_api_run(late=True)
+            self._adopt_api_run(late=True, final=final)
         self._update_emissions()
         self._ensure_cloud_conf()
         cloud = self._get_cloud_metadata()
