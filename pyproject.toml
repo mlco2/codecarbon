@@ -179,7 +179,7 @@ docs-serve = "zensical serve -f mkdocs.yml"
 carbonboard = "python codecarbon/viz/carbonboard.py"
 
 [tool.bumpver]
-current_version = "3.3.2"
+current_version = "3.3.3"
 version_pattern = "MAJOR.MINOR.PATCH[_TAGNUM]"
 
 [tool.bumpver.file_patterns]
