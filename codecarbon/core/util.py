@@ -1,3 +1,4 @@
+import math
 import os
 import re
 import subprocess
@@ -146,9 +147,98 @@ def _windows_get_physical_sockets():
         return 1  # Fallback:at least one socket
 
 
+def _read_cgroup_cpu_limit(cgroup_dir, v2):
+    try:
+        if v2:
+            with open(os.path.join(cgroup_dir, "cpu.max")) as f:
+                quota, period = f.read().split()[:2]
+
+            if quota == "max":
+                return None
+        else:
+            with open(os.path.join(cgroup_dir, "cpu.cfs_quota_us")) as f:
+                quota = f.read().strip()
+
+            with open(os.path.join(cgroup_dir, "cpu.cfs_period_us")) as f:
+                period = f.read().strip()
+
+        quota = int(quota)
+        period = int(period)
+
+        if quota <= 0 or period <= 0:
+            return None
+
+        return quota / period
+
+    except (OSError, ValueError):
+        return None
+
+
+def _cgroup_cpu_limit(proc_cgroup="/proc/self/cgroup", cgroup_root="/sys/fs/cgroup"):
+    try:
+        with open(proc_cgroup) as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return None
+
+    limits = []
+
+    for line in lines:
+        parts = line.split(":", 2)
+
+        if len(parts) != 3:
+            continue
+
+        controllers, path = parts[1], parts[2]
+
+        if not controllers:
+            mounts = [cgroup_root]
+            v2 = True
+        elif "cpu" in controllers.split(","):
+            mounts = [
+                os.path.join(cgroup_root, name)
+                for name in ("cpu", "cpu,cpuacct", "cpuacct,cpu")
+            ]
+            v2 = False
+        else:
+            continue
+
+        for mount in mounts:
+            relative_path = path.strip("/")
+
+            while True:
+                limit = _read_cgroup_cpu_limit(os.path.join(mount, relative_path), v2)
+
+                if limit is not None:
+                    limits.append(limit)
+
+                if not relative_path:
+                    break
+
+                relative_path = os.path.dirname(relative_path)
+
+    return min(limits) if limits else None
+
+
 def count_cpus() -> int:
     if SLURM_JOB_ID is None:
-        return psutil.cpu_count()
+        cpu_count = None
+
+        if hasattr(os, "sched_getaffinity"):
+            try:
+                cpu_count = len(os.sched_getaffinity(0))
+            except OSError:
+                pass
+
+        if not cpu_count:
+            cpu_count = psutil.cpu_count()
+
+        cpu_quota = _cgroup_cpu_limit()
+
+        if cpu_quota is not None and cpu_count:
+            cpu_count = max(1, min(cpu_count, math.ceil(cpu_quota)))
+
+        return cpu_count
 
     try:
         logger.debug(
