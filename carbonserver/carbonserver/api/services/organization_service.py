@@ -18,6 +18,7 @@ from carbonserver.api.schemas import (
     Organization,
     OrganizationCreate,
     OrganizationPatch,
+    OrganizationWithRole,
     User,
 )
 from carbonserver.api.services.auth_context import AuthContext
@@ -67,7 +68,7 @@ class OrganizationService:
             )
             return organization
 
-    def list_organizations(self, user: User = None) -> List[Organization]:
+    def list_organizations(self, user: User = None) -> List[OrganizationWithRole]:
         return self._repository.list_organizations(user=user)
 
     def list_users(

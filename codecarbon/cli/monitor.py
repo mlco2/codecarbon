@@ -71,11 +71,9 @@ def run_and_monitor(
         raise typer.Exit(1)
 
     tracker_cls = OfflineEmissionsTracker if offline else EmissionsTracker
-    tracker = tracker_cls(
-        save_to_logger=False,
-        tracking_mode="process",
-        **tracker_args,
-    )
+    # Track the command's process unless `--tracking-mode` says otherwise.
+    tracker_args.setdefault("tracking_mode", "process")
+    tracker = tracker_cls(**tracker_args)
 
     print("🌱 CodeCarbon: Starting emissions tracking...")
     print(f"   Command: {' '.join(command)}")

@@ -38,6 +38,12 @@ cp -r "$REPO_ROOT/$SITE_DIR" "$VERSION_MINOR"
 rm -rf latest
 cp -r "$VERSION_MINOR" latest
 
+# GitHub Pages serves only /404.html for a missing path. Its links are absolute
+# /latest/... paths (site_url), so the copy works from the root.
+if [[ -f latest/404.html ]]; then
+  cp latest/404.html 404.html
+fi
+
 VERSIONS_JSON="versions.json"
 python3 << PYEOF
 import json

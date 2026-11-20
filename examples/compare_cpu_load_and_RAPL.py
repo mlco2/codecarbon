@@ -292,14 +292,14 @@ tracker_cpu_load = EmissionsTracker(
     allow_multiple_runs=True,
     logger_preamble="CPU Load",
     log_level=log_level,
-    save_to_file=False,
+    output_methods=[],
 )
 tracker_rapl = EmissionsTracker(
     measure_power_secs=measure_power_secs,
     allow_multiple_runs=True,
     logger_preamble="RAPL",
     log_level=log_level,
-    save_to_file=False,
+    output_methods=[],
 )
 
 # Check if we could use RAPL
@@ -379,14 +379,14 @@ def measure_power(load_type):
         allow_multiple_runs=True,
         logger_preamble="CPU Load",
         log_level=log_level,
-        save_to_file=False,
+        output_methods=[],
     )
     tracker_rapl = EmissionsTracker(
         measure_power_secs=measure_power_secs,
         allow_multiple_runs=True,
         logger_preamble="RAPL",
         log_level=log_level,
-        save_to_file=False,
+        output_methods=[],
     )
 
 

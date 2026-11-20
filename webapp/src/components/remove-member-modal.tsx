@@ -1,85 +1,72 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription } from "./ui/dialog";
+import ModalHeader from "./ui/modal-header";
+import { PrimaryButton } from "./ui/primary-button";
+import { SecondaryButton } from "./ui/secondary-button";
 
-interface RemoveMemberModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    memberName: string;
-    memberId: string;
-    organizationName: string;
-    onRemove: (memberId: string) => Promise<void>;
-}
-
+/*
+ * Confirm removing a member from the organization.
+ *
+ * The same shell as the create dialogs, with the form replaced by a sentence and
+ * a pair of buttons: removal takes no input, so the only thing left to
+ * establish is that the right person was picked, and from which organization.
+ * There is no type-the-name gate as on project deletion — this destroys
+ * nothing, and the page's own invite field puts the member back.
+ */
 export default function RemoveMemberModal({
-    open,
-    onOpenChange,
+    isOpen,
+    onClose,
+    onConfirm,
     memberName,
-    memberId,
     organizationName,
-    onRemove,
-}: RemoveMemberModalProps) {
-    const [isRemoving, setIsRemoving] = useState(false);
-
-    const handleRemove = async () => {
-        setIsRemoving(true);
-        try {
-            await onRemove(memberId);
-            onOpenChange(false);
-        } catch (error) {
-            console.error("Error removing member:", error);
-        } finally {
-            setIsRemoving(false);
-        }
-    };
-
+    isRemoving,
+}: Readonly<{
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    /** Their name, or their email address when the API has no name. */
+    memberName: string;
+    organizationName: string;
+    isRemoving: boolean;
+}>) {
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-destructive">
-                        <AlertTriangle className="h-5 w-5" />
-                        Remove member
-                    </DialogTitle>
-                    <DialogDescription>
-                        <span className="font-medium">{memberName}</span> will
-                        lose access to {organizationName} and all of its
-                        projects. Their emission data is kept, and they can be
-                        added back later.
-                    </DialogDescription>
-                </DialogHeader>
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => {
+                if (!open && !isRemoving) onClose();
+            }}
+        >
+            {/* The design's own close control lives in the header, so the shared
+                corner button is omitted. */}
+            <DialogContent
+                hideClose
+                className="max-w-[560px] gap-0 rounded-none border-2 border-black bg-cc-background p-0 shadow-dialog"
+            >
+                <ModalHeader title="Remove member" />
 
-                <DialogFooter className="gap-2 sm:gap-0">
-                    <Button
-                        variant="outline"
-                        onClick={() => onOpenChange(false)}
-                        disabled={isRemoving}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        onClick={handleRemove}
-                        disabled={isRemoving}
-                    >
-                        {isRemoving ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Removing...
-                            </>
-                        ) : (
-                            "Remove member"
-                        )}
-                    </Button>
-                </DialogFooter>
+                <div className="flex flex-col gap-7 px-6 py-8 sm:px-10 sm:py-10">
+                    <DialogDescription className="type-mono-regular type-field break-words text-cc-white">
+                        Remove {memberName} from {organizationName}? They lose
+                        access to the organization and all of its projects.
+                        Their emission data is kept, and they can be added back
+                        later by email.
+                    </DialogDescription>
+
+                    <div className="flex flex-wrap gap-4 pt-4">
+                        <PrimaryButton
+                            type="button"
+                            onClick={onConfirm}
+                            disabled={isRemoving}
+                        >
+                            {isRemoving ? "Removing..." : "Remove member"}
+                        </PrimaryButton>
+                        <SecondaryButton
+                            onClick={onClose}
+                            disabled={isRemoving}
+                        >
+                            Cancel
+                        </SecondaryButton>
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
     );
