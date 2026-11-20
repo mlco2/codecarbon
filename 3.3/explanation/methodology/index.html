@@ -3580,8 +3580,8 @@ reports a region in one of them:</p>
 </tr>
 <tr>
 <td>Canada</td>
-<td>Province</td>
-<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json">Energy mix per province, 2023</a></td>
+<td>Province and territory</td>
+<td><a href="https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2024/canada_emissions.json">ECCC NIR 2026 consumption intensity per province and territory, 2024</a></td>
 </tr>
 <tr>
 <td>Sweden, Norway, Finland</td>
@@ -3612,6 +3612,19 @@ factors count CO₂ only (no other greenhouse gases, no lifecycle
 emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
 Kong, Macao and Taiwan are not in the official table and use the
 country value.</p>
+<p>For Canada, the provincial and territorial values are 2024
+<strong>consumption</strong> intensities in g CO₂e/kWh from Environment and Climate
+Change Canada's <em>National Inventory Report 1990–2024</em> (2026), Annex 7,
+Table A7-6 — the <code>.xlsx</code> file published at the
+<a href="https://data-donnees.az.ec.gc.ca/data/substances/monitor/canada-s-official-greenhouse-gas-inventory/C-Tables-Electricity-Canada-Provinces-Territories">ECCC data portal</a>.
+These consumption intensities include grid losses and other relevant
+emissions. They range from 2.6 gCO₂eq/kWh in Quebec to 760 gCO₂eq/kWh in
+Nunavut. CodeCarbon uses them directly, the same way as the US state
+values; the unit of each regional file is stated in its <code>_unit</code> entry.
+CodeCarbon 3.3 and earlier estimated the Canadian values from a 2023
+provincial energy mix with fossil-only emission factors
+(<code>2023/canada_energy_mix.json</code>, kept in the repository for reference but
+no longer packaged).</p>
 <p>When a region is not found in the regional data, CodeCarbon falls back
 to the country value.</p>
 <h3 id="the-legacy-per-fuel-table">The legacy per-fuel table<a class="headerlink" href="#the-legacy-per-fuel-table" title="Permanent link">&para;</a></h3>

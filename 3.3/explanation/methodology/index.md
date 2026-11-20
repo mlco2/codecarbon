@@ -288,13 +288,15 @@ For some countries, CodeCarbon has sub-national carbon intensity data and uses i
 | Country | Granularity | Source |
 | --- | --- | --- |
 | United States | State | [EPA eGRID2023 emission rate per state](<https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/usa_emissions.json>) |
-| Canada | Province | [Energy mix per province, 2023](<https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json>) |
+| Canada | Province and territory | [ECCC NIR 2026 consumption intensity per province and territory, 2024](<https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2024/canada_emissions.json>) |
 | Sweden, Norway, Finland | Electricity bidding zone (SE1-SE4, NO1-NO5, FI) | [ENTSO-E generation mix, 2025](<https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/nordic_emissions.json>) |
 | China | Province (30 provinces, municipalities and autonomous regions) | [MEE/NBS Announcement 2025 No. 47, 2023 factors](<https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/china_provincial_emissions.json>) |
 
 For the United States, the values are the eGRID2023 state annual CO₂eq total output emission rates published by the U.S. Environmental Protection Agency ([source](<https://www.epa.gov/egrid/download-data>)). They range from 24 gCO₂eq/kWh in Vermont to 893 gCO₂eq/kWh in West Virginia, with a national value of 350 gCO₂eq/kWh. To update them when EPA publishes a new edition, download the eGRID data workbook and run `uv run --with openpyxl python codecarbon/data/private_infra/update_usa_emissions.py <workbook> --year <year>`.
 
 For China, the values are the official provincial average electricity CO₂ emission factors published by the Ministry of Ecology and Environment and the National Bureau of Statistics ([source](<https://www.mee.gov.cn/xxgk2018/xxgk/xxgk01/202512/t20251231_1139517.html>)). They range from 133 gCO₂/kWh in Yunnan to 680 gCO₂/kWh in Tianjin, whereas the national value is 525 gCO₂eq/kWh. Note that these official factors count CO₂ only (no other greenhouse gases, no lifecycle emissions), whereas the per-country values are in CO₂eq. Tibet, Hong Kong, Macao and Taiwan are not in the official table and use the country value.
+
+For Canada, the provincial and territorial values are 2024 **consumption** intensities in g CO₂e/kWh from Environment and Climate Change Canada's *National Inventory Report 1990–2024* (2026), Annex 7, Table A7-6 — the `.xlsx` file published at the [ECCC data portal](<https://data-donnees.az.ec.gc.ca/data/substances/monitor/canada-s-official-greenhouse-gas-inventory/C-Tables-Electricity-Canada-Provinces-Territories>). These consumption intensities include grid losses and other relevant emissions. They range from 2.6 gCO₂eq/kWh in Quebec to 760 gCO₂eq/kWh in Nunavut. CodeCarbon uses them directly, the same way as the US state values; the unit of each regional file is stated in its `_unit` entry. CodeCarbon 3.3 and earlier estimated the Canadian values from a 2023 provincial energy mix with fossil-only emission factors (`2023/canada_energy_mix.json`, kept in the repository for reference but no longer packaged).
 
 When a region is not found in the regional data, CodeCarbon falls back to the country value.
 
