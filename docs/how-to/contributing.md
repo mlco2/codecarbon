@@ -260,8 +260,6 @@ If any of the linters/formatters fail, check the difference with `git diff`, add
 
 You can also run `pre-commit` with `uv run pre-commit run --all-file` to check all file.
 
-The PySentry dependency audit hook runs on push, so run `pre-commit install --hook-type pre-push` to enable it. It needs network access to fetch the advisory database.
-
 
 <!-- TOC --><a name="dependencies-management"></a>
 ### Dependencies management
