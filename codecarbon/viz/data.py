@@ -49,17 +49,12 @@ class Data:
                 "emissions": round(last_run["emissions"], 1),
                 "energy_consumed": round((last_run["energy_consumed"]), 1),
             },
-            "total": {
-                "duration": sum(
-                    map(lambda experiment: experiment["duration"], project_data)
-                ),
-                "emissions": sum(
-                    map(lambda experiment: experiment["emissions"], project_data)
-                ),
-                "energy_consumed": sum(
-                    map(lambda experiment: experiment["energy_consumed"], project_data)
-                ),
-            },
+            # Runs without a measurement (NaN) add nothing to the totals.
+            "total": pd.DataFrame(project_data)[
+                ["duration", "emissions", "energy_consumed"]
+            ]
+            .sum()
+            .to_dict(),
             "country_name": last_run["country_name"],
             "country_iso_code": last_run["country_iso_code"],
             "region": last_run["region"],
