@@ -84,7 +84,7 @@ the configured value. Each flag also has a negative form, such as
 | `--force-carbon-intensity-g-co2e-kwh` | float | - | Carbon intensity of the electricity, in gCO2e/kWh |
 | `--electricitymaps-api-token` | string | - | Electricity Maps API token |
 | `--use-national-grid-eso-api` | flag | - | In Great Britain, use the live National Grid ESO carbon intensity |
-| `--rapl-include-dram` | flag | - | Include DRAM in the RAPL measures |
+| `--rapl-include-dram` | flag | - | Measure the RAM with the DRAM energy counter instead of estimating it (Linux RAPL, machine tracking mode) |
 | `--rapl-prefer-psys` | flag | - | Prefer the RAPL platform (psys) domain |
 | `--allow-multiple-runs` | flag | - | Allow several CodeCarbon instances at the same time |
 | `--save-to-file`, `--save-to-logger`, `--save-to-prometheus`, `--save-to-logfire` | flag | - | Deprecated: use `--output-methods` |

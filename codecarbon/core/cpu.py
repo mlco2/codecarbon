@@ -12,7 +12,7 @@ import shutil
 import subprocess
 import sys
 from functools import lru_cache
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import psutil
 from rapidfuzz import fuzz, process, utils
@@ -23,7 +23,7 @@ from codecarbon.core.rapl import (
     counters_match,
     find_mirrored_counters,
 )
-from codecarbon.core.units import Time
+from codecarbon.core.units import Energy, Power, Time
 from codecarbon.core.util import count_cpus, detect_cpu_model
 from codecarbon.external.logger import logger
 
@@ -429,6 +429,12 @@ class IntelPowerGadget:
         # TODO: Read energy
 
 
+PSYS_RAM_HINT = (
+    "The RAM estimate is added on top of psys, which usually includes the "
+    "memory: set force_ram_power=0 to not count the memory twice"
+)
+
+
 class IntelRAPL:
     """
     A class to interface Intel's Running Average Power Limit (RAPL) for monitoring CPU power consumption.
@@ -444,15 +450,15 @@ class IntelRAPL:
         _rapl_files (List[RAPLFile]): A list of RAPLFile objects representing the files to read energy data from.
         _cpu_details (Dict): A dictionary storing the latest CPU energy details.
         _last_mesure (int): Placeholder for storing the last measurement time.
-        rapl_include_dram (bool): Whether to include DRAM power in measurements (default: False for complete hardware measurement).
+        rapl_include_dram (bool): Whether to read the DRAM domains, reported by get_dram_energy() and never in the CPU details (default: False).
         rapl_prefer_psys (bool): Whether to prefer psys domain over package domains (default: False).
                                 When True, uses psys (platform/system) domain which includes CPU + platform components.
                                 When False (default), uses package domains which are more reliable and match CPU TDP specs.
 
     Args:
         rapl_dir (str): Path to RAPL directory (default: "/sys/class/powercap/intel-rapl/subsystem")
-        rapl_include_dram (bool): Include DRAM domain for complete hardware measurement (default: False).
-                                  Set to False to measure only CPU package power.
+        rapl_include_dram (bool): Read the DRAM domains alongside the package ones, for the
+                                  RAM energy (default: False). Ignored with psys domains.
         rapl_prefer_psys (bool): Prefer psys (platform) domain over package domains (default: False).
                                 Set to True to measure total platform power (CPU + chipset + PCIe).
                                 Note: psys can report higher values than CPU TDP and may be less reliable on older systems.
@@ -478,6 +484,8 @@ class IntelRAPL:
         self._lin_rapl_dir = rapl_dir
         self._system = sys.platform.lower()
         self._rapl_files = []
+        # DRAM domains, read apart to report the RAM energy (never the CPU's)
+        self._dram_files: List[RAPLFile] = []
         # Files that look like a duplicate of another counter, but whose
         # energy deltas have not confirmed it yet. They are left out of the
         # measurement while pending. Maps file path -> mirrored file path.
@@ -686,24 +694,14 @@ class IntelRAPL:
                     domain_dir,
                 )
             elif "dram" in domain_lower:
-                parent_dir = os.path.dirname(domain_dir)
-                if (
-                    parent_dir.endswith(("intel-rapl", "intel-rapl-mmio"))
-                    or os.path.basename(domain_dir).count(":") == 1
-                ):
-                    dram_domains.append(domain_tuple)
-                    logger.debug(
-                        "\tRAPL - Found top-level DRAM domain '%s' at %s",
-                        domain_name,
-                        domain_dir,
-                    )
-                else:
-                    subdomain_of_package.append(domain_tuple)
-                    logger.debug(
-                        "\tRAPL - Found DRAM subdomain '%s' at %s (will be skipped to avoid double-counting)",
-                        domain_name,
-                        domain_dir,
-                    )
+                # Top-level or a child zone of its package (the usual layout on
+                # servers): the package energy never includes the DRAM's
+                dram_domains.append(domain_tuple)
+                logger.debug(
+                    "\tRAPL - Found DRAM domain '%s' at %s",
+                    domain_name,
+                    domain_dir,
+                )
             elif any(sub in domain_lower for sub in ["core", "uncore"]):
                 subdomain_of_package.append(domain_tuple)
                 logger.debug(
@@ -713,6 +711,16 @@ class IntelRAPL:
                 )
 
         return package_domains, psys_domains, dram_domains, subdomain_of_package
+
+    def _warn_dram_unused_with_psys(self, dram_domains) -> None:
+        """psys usually includes the memory: its DRAM domains are not read."""
+        logger.info("\tRAPL - %s", PSYS_RAM_HINT)
+        if self.rapl_include_dram and dram_domains:
+            logger.warning(
+                "\tRAPL - rapl_include_dram=True is ignored with the psys domain: "
+                "the DRAM domains are not read. %s",
+                PSYS_RAM_HINT,
+            )
 
     def _select_domains_to_use(
         self, package_domains, psys_domains, dram_domains, readable_domains
@@ -729,6 +737,7 @@ class IntelRAPL:
                 logger.info(
                     "\tRAPL - Package domains available but not used due to rapl_prefer_psys=True"
                 )
+            self._warn_dram_unused_with_psys(dram_domains)
         elif package_domains:
             logger.info(
                 "\tRAPL - Using %d package domain(s) for CPU power measurement",
@@ -738,14 +747,14 @@ class IntelRAPL:
 
             if self.rapl_include_dram and dram_domains:
                 logger.info(
-                    "\tRAPL - Including %d DRAM domain(s) for complete hardware power measurement (CPU+DRAM)",
+                    "\tRAPL - Reading %d DRAM domain(s) as the RAM energy",
                     len(dram_domains),
                 )
                 domains_to_use.extend(dram_domains)
             elif dram_domains and not self.rapl_include_dram:
                 logger.info(
                     "\tRAPL - Found %d DRAM domain(s) but not including (rapl_include_dram=False). "
-                    "Set rapl_include_dram=True for complete hardware measurement.",
+                    "Set rapl_include_dram=True to measure the RAM energy with it.",
                     len(dram_domains),
                 )
 
@@ -762,11 +771,16 @@ class IntelRAPL:
                 "Power readings may vary significantly from CPU specifications."
             )
             domains_to_use = psys_domains
+            self._warn_dram_unused_with_psys(dram_domains)
         else:
             logger.warning(
                 "\tRAPL - No package or psys domains found, using all available domains"
             )
-            domains_to_use = readable_domains
+            domains_to_use = [
+                domain
+                for domain in readable_domains
+                if self.rapl_include_dram or "dram" not in (domain[5] or "").lower()
+            ]
 
         return domains_to_use
 
@@ -777,7 +791,12 @@ class IntelRAPL:
             name, domain_dir, is_mmio, rapl_file, rapl_file_max, domain_name = (
                 domain_tuple
             )
-            base_name = domain_name if domain_name else os.path.basename(domain_dir)
+            zone_id = os.path.basename(domain_dir)
+            base_name = domain_name if domain_name else zone_id
+            if "dram" in base_name.lower():
+                # Every socket's DRAM zone is named "dram": key on the zone id
+                # (intel-rapl:N:M), the same whatever path it was found through
+                base_name = zone_id
             if base_name not in domain_map or (
                 is_mmio and not domain_map[base_name][2]
             ):
@@ -801,16 +820,19 @@ class IntelRAPL:
             domain_name,
         ) in domain_map.values():
             try:
-                if domain_name and (
-                    "package" in domain_name.lower() or "psys" in domain_name.lower()
-                ):
+                domain_lower = (domain_name or "").lower()
+                is_dram = "dram" in domain_lower
+                if is_dram:
+                    display_name = f"DRAM Energy Delta_{len(self._dram_files)}(kWh)"
+                elif "package" in domain_lower or "psys" in domain_lower:
                     display_name = f"Processor Energy Delta_{domain_index}(kWh)"
                     domain_index += 1
                 else:
                     display_name = name
 
                 interface_type = "MMIO" if is_mmio else "MSR"
-                self._rapl_files.append(
+                files = self._dram_files if is_dram else self._rapl_files
+                files.append(
                     RAPLFile(name=display_name, path=rapl_file, max_path=rapl_file_max)
                 )
                 logger.info(
@@ -843,7 +865,8 @@ class IntelRAPL:
         Fetches RAPL files from the RAPL directory.
 
         By default, reads CPU package only
-        Set rapl_include_dram=True to measure CPU package + DRAM domains
+        Set rapl_include_dram=True to also read the DRAM domains, which are
+        reported as the RAM energy by get_dram_energy()
         """
         candidate_bases = self._get_rapl_candidate_bases()
         domain_dirs = self._collect_domain_dirs(candidate_bases)
@@ -873,7 +896,7 @@ class IntelRAPL:
             for rapl_file in self._rapl_files:
                 rapl_file.delta(duration)
 
-            self._confirm_mirrored_files()
+            self._rapl_files = self._confirm_mirrored_files(self._rapl_files)
 
             for rapl_file in self._rapl_files:
                 if rapl_file.path in self._mirrored_candidates:
@@ -904,22 +927,51 @@ class IntelRAPL:
         """
         return self._cpu_details
 
+    def get_dram_energy(self, duration: Time) -> Optional[Tuple[Power, Energy]]:
+        """
+        Power and energy of the DRAM domains since the previous call, or None
+        when no DRAM domain is read (rapl_include_dram=False or none found) or
+        a counter could not measure this interval (unreadable, uncorrectable wrap).
+        """
+        if not self._dram_files:
+            return None
+        for rapl_file in self._dram_files:
+            rapl_file.delta(duration)
+        self._dram_files = self._confirm_mirrored_files(self._dram_files)
+        # A file still suspected of duplicating another counter is left out
+        measured = [
+            rapl_file
+            for rapl_file in self._dram_files
+            if rapl_file.path not in self._mirrored_candidates
+        ]
+        if any(rapl_file.sample_skipped for rapl_file in measured):
+            return None
+        return (
+            Power.from_watts(sum(rapl_file.power.W for rapl_file in measured)),
+            Energy.from_energy(
+                sum(rapl_file.energy_delta.kWh for rapl_file in measured)
+            ),
+        )
+
     def start(self) -> None:
         """
         Starts monitoring CPU energy consumption.
         """
-        for rapl_file in self._rapl_files:
+        for rapl_file in self._rapl_files + self._dram_files:
             rapl_file.start()
-        # DRAM domains are a different measurement, never a duplicate
-        counters = [
-            (rapl_file.path, float(rapl_file.last_energy))
-            for rapl_file in self._rapl_files
-            if "dram" not in rapl_file.name.lower()
-            and rapl_file.last_energy is not None
-        ]
-        self._mirrored_candidates = find_mirrored_counters(
-            counters, SEQUENTIAL_READ_TOLERANCE_KWH
-        )
+        # DRAM is compared with DRAM only: a DRAM zone is never a copy of a
+        # package, but one counter can show up through two DRAM zones (MSR and
+        # MMIO, or once per die)
+        self._mirrored_candidates = {}
+        for files in (self._rapl_files, self._dram_files):
+            counters = [
+                (rapl_file.path, float(rapl_file.last_energy))
+                for rapl_file in files
+                if rapl_file.last_energy is not None
+            ]
+            self._mirrored_candidates.update(
+                find_mirrored_counters(counters, SEQUENTIAL_READ_TOLERANCE_KWH)
+            )
         for path, reference_path in self._mirrored_candidates.items():
             logger.warning(
                 "\tRAPL - Energy counter at %s looks like a mirror of %s, it is "
@@ -928,9 +980,11 @@ class IntelRAPL:
                 reference_path,
             )
 
-    def _confirm_mirrored_files(self) -> None:
+    def _confirm_mirrored_files(self, files: List[RAPLFile]) -> List[RAPLFile]:
         """
-        Decide the fate of the files flagged as duplicates at ``start()``.
+        Decide the fate of the files of ``files`` flagged as duplicates at
+        ``start()``, and return ``files`` without the confirmed duplicates.
+        Candidates from another file list are left pending.
 
         Two independent meters could hold indistinguishable counters at the
         single instant of the initial reading, so a candidate is only dropped
@@ -940,11 +994,15 @@ class IntelRAPL:
         anything yet stays pending until an interval is conclusive.
         """
         if not self._mirrored_candidates:
-            return
-        files_by_path = {rapl_file.path: rapl_file for rapl_file in self._rapl_files}
+            return files
+        files_by_path = {rapl_file.path: rapl_file for rapl_file in files}
         pending = {}
         confirmed = set()
         for path, reference_path in self._mirrored_candidates.items():
+            if path not in files_by_path:
+                # Checked with its own file list
+                pending[path] = reference_path
+                continue
             rapl_file = files_by_path.get(path)
             reference = files_by_path.get(reference_path)
             if rapl_file is None or reference is None:
@@ -961,8 +1019,8 @@ class IntelRAPL:
                 confirmed.add(path)
                 logger.warning(
                     "\tRAPL - Energy counter at %s mirrors the one at %s, it is "
-                    "dropped to avoid double-counting the CPU power (multi-die "
-                    "CPUs mirror the package counter on each die)",
+                    "dropped to avoid double-counting its energy (multi-die "
+                    "CPUs mirror a counter on each die)",
                     path,
                     reference_path,
                 )
@@ -973,12 +1031,7 @@ class IntelRAPL:
                     path,
                 )
         self._mirrored_candidates = pending
-        if confirmed:
-            self._rapl_files = [
-                rapl_file
-                for rapl_file in self._rapl_files
-                if rapl_file.path not in confirmed
-            ]
+        return [rapl_file for rapl_file in files if rapl_file.path not in confirmed]
 
 
 class TDP:

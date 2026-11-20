@@ -78,8 +78,62 @@ def test_rapl_start_keeps_dram_when_it_matches_a_package_counter(tmp_path, monke
 
     assert len(rapl._mirrored_candidates) == 1
     details = rapl.get_cpu_details(Time.from_seconds(1))
-    assert len(_counted_domains(details)) == 2
-    assert "dram" in details
+    assert len(_counted_domains(details)) == 1
+    # The DRAM domain is read apart for the RAM, never checked as a mirror
+    assert [f.path for f in rapl._dram_files] == [
+        str(tmp_path / "intel-rapl" / "intel-rapl:2" / "energy_uj")
+    ]
+    assert rapl._dram_files[0].path not in rapl._mirrored_candidates
+    assert rapl.get_dram_energy(Time.from_seconds(1)) is not None
+
+
+def test_rapl_mirrored_dram_counter_is_counted_once(tmp_path, monkeypatch):
+    """The same DRAM counter seen through two zones (MSR and MMIO, or once
+    per die) is flagged at start(), then dropped once the deltas match, so
+    the RAM energy is not counted twice."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0", 3000000), ("dram", 1000000), ("dram", 1000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path), rapl_include_dram=True)
+    rapl.start()
+    assert len(rapl._dram_files) == 2
+    assert list(rapl._mirrored_candidates) == [str(energy_files[2])]
+
+    # Both views advance by the same 36 J (1e-5 kWh)
+    energy_files[1].write_text("37000000")
+    energy_files[2].write_text("37000000")
+    _, energy = rapl.get_dram_energy(Time.from_seconds(1))
+
+    assert energy.kWh == pytest.approx(1e-5, rel=1e-5)
+    assert [f.path for f in rapl._dram_files] == [str(energy_files[1])]
+    assert rapl._mirrored_candidates == {}
+    # The package counter is measured as before
+    assert len(_counted_domains(rapl.get_cpu_details(Time.from_seconds(1)))) == 1
+
+
+def test_rapl_dram_counters_with_diverging_deltas_are_both_measured(
+    tmp_path, monkeypatch
+):
+    """Two DRAM zones that held the same counter at start() but accumulate
+    different energies are two sockets: both are measured."""
+    monkeypatch.setattr(sys, "platform", "linux")
+    energy_files = _make_rapl_tree(
+        tmp_path, [("package-0", 3000000), ("dram", 1000000), ("dram", 1000000)]
+    )
+
+    rapl = IntelRAPL(rapl_dir=str(tmp_path), rapl_include_dram=True)
+    rapl.start()
+    assert len(rapl._mirrored_candidates) == 1
+
+    energy_files[1].write_text("37000000")  # 36 J
+    energy_files[2].write_text("19000000")  # 18 J
+    _, energy = rapl.get_dram_energy(Time.from_seconds(1))
+
+    assert energy.kWh == pytest.approx(1.5e-5, rel=1e-5)
+    assert len(rapl._dram_files) == 2
+    assert rapl._mirrored_candidates == {}
 
 
 def test_rapl_start_skips_unreadable_counters(tmp_path, monkeypatch):

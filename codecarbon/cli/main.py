@@ -534,7 +534,8 @@ def monitor(
         bool | None, typer.Option(help="Allow concurrent CodeCarbon instances")
     ] = None,
     rapl_include_dram: Annotated[
-        bool | None, typer.Option(help="Include DRAM power in RAPL measurements")
+        bool | None,
+        typer.Option(help="Measure the RAM with the DRAM energy counter (Linux RAPL)"),
     ] = None,
     rapl_prefer_psys: Annotated[
         bool | None, typer.Option(help="Prefer the RAPL platform power domain")
