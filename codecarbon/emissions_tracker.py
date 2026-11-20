@@ -628,10 +628,10 @@ class BaseEmissionsTracker(ABC):
 
         self._set_from_conf(measure_power_secs, "measure_power_secs", 15, float)
         try:
-            valid_measure_power_secs = math.isfinite(
-                self._measure_power_secs
-            ) and self._measure_power_secs > 0
-        except TypeError:
+            valid_measure_power_secs = (
+                math.isfinite(self._measure_power_secs) and self._measure_power_secs > 0
+            )
+        except TypeError:  # None or non-numeric, e.g. unparsable config value
             valid_measure_power_secs = False
         if not valid_measure_power_secs:
             raise ValueError("measure_power_secs must be a finite positive number.")
@@ -1852,8 +1852,8 @@ def track_emissions(
     :param fn: Function to be decorated
     :param project_name: Project name for current experiment run,
                          default name is "codecarbon".
-    :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
-                               defaults to 15.
+    :param measure_power_secs: Finite positive interval (in seconds) to measure
+                               hardware power usage, defaults to 15.
     :param api_call_interval: Number of measurements between API calls (default: 8).
                               -1: call API only on flush() and at the end.
                               1: at every measure.
