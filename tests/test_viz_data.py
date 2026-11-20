@@ -143,3 +143,39 @@ def test_get_country_choropleth_data():
         country_emissions=100,
     )
     assert output_choropleth_data == expected_choropleth_data
+
+
+def test_get_regional_emissions_choropleth_data_skips_metadata_keys():
+    viz_data = data.Data()
+
+    choropleth_data = viz_data.get_regional_emissions_choropleth_data(
+        net_energy_consumed=1.0, country_iso_code="USA"
+    )
+
+    usa_emissions = DataSource().get_country_emissions_data("usa")
+    regions = [name for name in usa_emissions if not name.startswith("_")]
+    assert [row["region_name"] for row in choropleth_data] == [
+        name.upper() for name in regions
+    ]
+    assert all(row["emissions"] > 0 for row in choropleth_data)
+
+
+def test_canada_regional_emissions_map_has_every_province():
+    from codecarbon.viz.components import Components
+
+    viz_data = data.Data()
+    choropleth_data = viz_data.get_regional_emissions_choropleth_data(
+        net_energy_consumed=1.0, country_iso_code="CAN"
+    )
+
+    figure = Components().get_regional_emissions_choropleth_figure(
+        choropleth_data, "CAN"
+    )
+
+    assert sorted(row["region_code"] for row in choropleth_data) == sorted(
+        ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE"]
+        + ["QC", "SK", "YT"]
+    )
+    assert sorted(figure.data[0].locations) == list(range(1, 14))
+    ontario = next(row for row in choropleth_data if row["region_code"] == "ON")
+    assert ontario["emissions"] == pytest.approx(0.073, rel=1e-5)

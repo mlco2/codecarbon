@@ -1,0 +1,63 @@
+{
+  "_unit": {
+    "emissions": "g/kWh",
+    "regionCode": "2 letter province/territory code"
+  },
+  "_source": {
+    "name": "Environment and Climate Change Canada, National Inventory Report 1990-2024 (2026), Annex 7, Table A7-6, electricity consumption intensity (g CO2e/kWh)",
+    "url": "https://data-donnees.az.ec.gc.ca/data/substances/monitor/canada-s-official-greenhouse-gas-inventory/C-Tables-Electricity-Canada-Provinces-Territories",
+    "year": 2024
+  },
+  "alberta": {
+    "emissions": 346,
+    "regionCode": "AB"
+  },
+  "british columbia": {
+    "emissions": 18,
+    "regionCode": "BC"
+  },
+  "manitoba": {
+    "emissions": 3.0,
+    "regionCode": "MB"
+  },
+  "new brunswick": {
+    "emissions": 375,
+    "regionCode": "NB"
+  },
+  "newfoundland and labrador": {
+    "emissions": 17,
+    "regionCode": "NL"
+  },
+  "northwest territories": {
+    "emissions": 490,
+    "regionCode": "NT"
+  },
+  "nova scotia": {
+    "emissions": 628,
+    "regionCode": "NS"
+  },
+  "nunavut": {
+    "emissions": 760,
+    "regionCode": "NU"
+  },
+  "ontario": {
+    "emissions": 73,
+    "regionCode": "ON"
+  },
+  "prince edward island": {
+    "emissions": 265,
+    "regionCode": "PE"
+  },
+  "quebec": {
+    "emissions": 2.6,
+    "regionCode": "QC"
+  },
+  "saskatchewan": {
+    "emissions": 581,
+    "regionCode": "SK"
+  },
+  "yukon": {
+    "emissions": 134,
+    "regionCode": "YT"
+  }
+}

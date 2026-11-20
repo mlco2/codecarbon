@@ -465,7 +465,7 @@ reports a region in one of them:
 | Country | Granularity | Source |
 |---------|-------------|--------|
 | United States | State | [EPA eGRID2023 emission rate per state](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/usa_emissions.json) |
-| Canada | Province | [Energy mix per province, 2023](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/canada_energy_mix.json) |
+| Canada | Province and territory | [ECCC NIR 2026 consumption intensity per province and territory, 2024](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2024/canada_emissions.json) |
 | Sweden, Norway, Finland | Electricity bidding zone (SE1-SE4, NO1-NO5, FI) | [ENTSO-E generation mix, 2025](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/nordic_emissions.json) |
 | China | Province (30 provinces, municipalities and autonomous regions) | [MEE/NBS Announcement 2025 No. 47, 2023 factors](https://github.com/mlco2/codecarbon/blob/master/codecarbon/data/private_infra/2023/china_provincial_emissions.json) |
 
@@ -487,6 +487,20 @@ factors count CO₂ only (no other greenhouse gases, no lifecycle
 emissions), whereas the per-country values are in CO₂eq. Tibet, Hong
 Kong, Macao and Taiwan are not in the official table and use the
 country value.
+
+For Canada, the provincial and territorial values are 2024
+**consumption** intensities in g CO₂e/kWh from Environment and Climate
+Change Canada's *National Inventory Report 1990–2024* (2026), Annex 7,
+Table A7-6 — the `.xlsx` file published at the
+[ECCC data portal](https://data-donnees.az.ec.gc.ca/data/substances/monitor/canada-s-official-greenhouse-gas-inventory/C-Tables-Electricity-Canada-Provinces-Territories).
+These consumption intensities include grid losses and other relevant
+emissions. They range from 2.6 gCO₂eq/kWh in Quebec to 760 gCO₂eq/kWh in
+Nunavut. CodeCarbon uses them directly, the same way as the US state
+values; the unit of each regional file is stated in its `_unit` entry.
+CodeCarbon 3.3 and earlier estimated the Canadian values from a 2023
+provincial energy mix with fossil-only emission factors
+(`2023/canada_energy_mix.json`, kept in the repository for reference but
+no longer packaged).
 
 When a region is not found in the regional data, CodeCarbon falls back
 to the country value.
