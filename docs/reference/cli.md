@@ -60,6 +60,7 @@ the configured value. Each flag also has a negative form, such as
 | `--country-iso-code` | string | - | 3-letter country ISO code. Required in offline mode, unless it is set in the config file |
 | `--region` | string | - | Region or province, for offline mode |
 | `--log-level` | string | error | Log level: critical, error, warning, info, debug |
+| `--telemetry-level` | string | - | One-run level: `disabled` or `minimal` |
 | `--experiment-id` | string | - | Experiment ID, satisfies the online-mode check |
 | `--experiment-name` | string | - | Experiment name |
 | `--api-endpoint` | string | - | CodeCarbon API endpoint |
@@ -143,6 +144,34 @@ codecarbon monitor -- node app.js --port 8080
 **Options:**
 
 Same options as `codecarbon monitor` apply (see above).
+
+### `codecarbon telemetry`
+
+Configure **product telemetry** (library usage metadata), separate from `codecarbon config` (dashboard org/project/experiment).
+
+**Usage:**
+
+```bash
+codecarbon telemetry              # interactive wizard
+codecarbon telemetry set <level>  # disabled | minimal
+codecarbon telemetry status       # resolved tier and whether it was set explicitly
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--config PATH` | Use a specific `.codecarbon.config`. Without it, `set` writes `~/.codecarbon.config`, `status` reads the merged global and local files, and the wizard asks which file to use |
+
+See [Product telemetry](../how-to/telemetry.md) for what `minimal` collects and how to opt out.
+
+### `codecarbon monitor --telemetry-level`
+
+Override the telemetry tier for a single monitor run (does not update config).
+
+```bash
+codecarbon monitor --telemetry-level disabled -- python train.py
+```
 
 ### `codecarbon detect`
 

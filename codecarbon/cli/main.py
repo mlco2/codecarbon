@@ -18,6 +18,7 @@ from codecarbon.cli.cli_utils import (
     get_existing_exp_id,
     overwrite_local_config,
 )
+from codecarbon.cli.telemetry_cli import ask_telemetry_level_once, telemetry_app
 
 API_URL = os.environ.get("API_URL", "https://dashboard.codecarbon.io/api")
 
@@ -25,6 +26,7 @@ DEFAULT_PROJECT_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 DEFAULT_ORGANIzATION_ID = "e60afa92-17b7-4720-91a0-1ae91e409ba1"
 
 codecarbon = typer.Typer(no_args_is_help=True)
+codecarbon.add_typer(telemetry_app, name="telemetry")
 
 # save_to_* configuration key -> (output method, default), as the tracker reads them
 _SAVE_TO_KEYS = {
@@ -223,6 +225,7 @@ def config():
     )
 
     print("Welcome to CodeCarbon configuration wizard")
+    ask_telemetry_level_once()
     home = Path.home()
     global_path = (home / ".codecarbon.config").expanduser().resolve()
 
@@ -418,6 +421,17 @@ def _external_config() -> dict:
         return {}
 
 
+def _telemetry_tracker_args(telemetry_level: Optional[str], offline: bool) -> dict:
+    """Ask for the telemetry level once, or forward this run's override."""
+    if telemetry_level is None:
+        if not offline:
+            ask_telemetry_level_once()
+        return {}
+    from codecarbon.cli.telemetry_cli import normalize_telemetry_level
+
+    return {"telemetry_level": normalize_telemetry_level(telemetry_level)}
+
+
 @codecarbon.command(
     "monitor",
     short_help="Monitor your machine's carbon emissions.",
@@ -454,6 +468,12 @@ def monitor(
         str,
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
     ] = "error",
+    telemetry_level: Annotated[
+        Optional[str],
+        typer.Option(
+            help="Override telemetry level for this run only (disabled or minimal).",
+        ),
+    ] = None,
     api_endpoint: Annotated[
         str | None, typer.Option(help="CodeCarbon API endpoint")
     ] = None,
@@ -559,6 +579,7 @@ def monitor(
     Emissions are appended to the same emissions.csv report. See
     https://docs.codecarbon.io/latest/tutorials/cli/#track-any-command
     """
+    telemetry_args = _telemetry_tracker_args(telemetry_level, offline)
 
     external_conf = _external_config()
 
@@ -579,6 +600,7 @@ def monitor(
             # Nothing configures it: keep the defaults advertised by `--help`
             # (and an unattended monitor quiet) instead of the tracker's own.
             tracker_args[name] = value
+    tracker_args.update(telemetry_args)
 
     optional_tracker_args = {
         "api_endpoint": api_endpoint,

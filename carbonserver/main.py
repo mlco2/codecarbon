@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from carbonserver.api.errors import DBException, UserException, get_http_exception
-from carbonserver.api.infra.database import sql_models, telemetry_sql_models
+from carbonserver.api.infra.database import sql_models
 from carbonserver.api.routers import (
     authenticate,
     emissions,
@@ -81,7 +81,6 @@ def init_db(container):
     db = container.db()
     db.create_database()
     sql_models.Base.metadata.create_all(bind=engine)
-    telemetry_sql_models.Base.metadata.create_all(bind=engine)
 
 
 def init_server(container):
