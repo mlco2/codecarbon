@@ -567,7 +567,7 @@ class TestCarbonTracker(unittest.TestCase):
                 if isinstance(handler, CodeCarbonAPIOutput)
             )
 
-            def create_run(experiment_id):
+            def create_run(experiment_id, **kwargs):
                 api_output.api.run_id = "run-created"
                 return "run-created"
 
@@ -650,7 +650,7 @@ class TestCarbonTracker(unittest.TestCase):
             api_output = tracker._api_output
 
             # API down at start(), back up at the first emission.
-            def create_run(experiment_id):
+            def create_run(experiment_id, **kwargs):
                 if mock_create_run.call_count == 1:
                     raise Exception("API is down")
                 api_output.api.run_id = "run-created"
@@ -697,7 +697,7 @@ class TestCarbonTracker(unittest.TestCase):
             api_output = tracker._api_output
 
             # API down at start(), back up only when stop() writes the record.
-            def create_run(experiment_id):
+            def create_run(experiment_id, **kwargs):
                 if mock_create_run.call_count == 1:
                     raise Exception("API is down")
                 api_output.api.run_id = "run-created"
@@ -741,7 +741,7 @@ class TestCarbonTracker(unittest.TestCase):
             )
             api_output = tracker._api_output
 
-            def create_run(experiment_id):
+            def create_run(experiment_id, **kwargs):
                 api_output.api.run_id = "run-created"
                 return "run-created"
 
@@ -1142,7 +1142,7 @@ class TestCarbonTracker(unittest.TestCase):
             local_run_id = tracker.run_id
             api_output = tracker._api_output
 
-            def create_run(experiment_id):
+            def create_run(experiment_id, **kwargs):
                 api_output.api.run_id = "api-run-id"
                 return "api-run-id"
 
@@ -2061,6 +2061,88 @@ class TestCarbonTracker(unittest.TestCase):
 
         # Verification: If it wasn't cumulative, it would be 3.0 kWh * 300 g/kWh = 0.9 kg
         self.assertLess(data3.emissions, 0.8)
+
+    @responses.activate
+    def test_stop_attempts_run_creation_once_when_server_down(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # GIVEN a server that always fails to create a run.
+        responses.add(
+            responses.POST,
+            "http://test-api.com/runs",
+            json={"message": "down"},
+            status=503,
+        )
+        tracker = EmissionsTracker(
+            measure_power_secs=1,
+            save_to_file=False,
+            output_methods=[OutputMethod.API],
+            api_endpoint="http://test-api.com",
+            experiment_id="11111111-1111-1111-1111-111111111111",
+            api_key="fake-key",
+        )
+
+        # WHEN
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        calls_before_stop = len(responses.calls)
+        tracker.stop()
+
+        # THEN stop() attempts run creation exactly once.
+        run_calls = [
+            c
+            for c in responses.calls[calls_before_stop:]
+            if c.request.url.endswith("/runs")
+        ]
+        self.assertEqual(1, len(run_calls))
+
+    @responses.activate
+    def test_stop_bypasses_run_creation_cooldown(
+        self,
+        mock_cli_setup,
+        mock_log_values,
+        mocked_get_gpu_details,
+        mocked_env_cloud_details,
+        mocked_get_gpu_utilization_list,
+        mocked_is_gpu_details_available,
+        mocked_is_nvidia_system,
+    ):
+        # GIVEN a server that is down at start(), then back before stop(),
+        # so stop() runs inside the run-creation cooldown.
+        responses.add(responses.POST, "http://test-api.com/runs", status=503)
+        responses.add(
+            responses.POST,
+            "http://test-api.com/runs",
+            json={"id": "run-created"},
+            status=201,
+        )
+        responses.add(responses.POST, "http://test-api.com/emissions", status=201)
+        tracker = EmissionsTracker(
+            measure_power_secs=1,
+            save_to_file=False,
+            output_methods=[OutputMethod.API],
+            api_endpoint="http://test-api.com",
+            experiment_id="11111111-1111-1111-1111-111111111111",
+            api_key="fake-key",
+        )
+
+        # WHEN
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        tracker.stop()
+
+        # THEN stop() retries the run creation and sends the final emission.
+        urls = [c.request.url for c in responses.calls]
+        self.assertEqual(2, sum(u.endswith("/runs") for u in urls))
+        self.assertEqual(1, sum(u.endswith("/emissions") for u in urls))
+        self.assertEqual("run-created", tracker.run_id)
 
 
 def test_deprecation_warning_survives_the_default_filter():
