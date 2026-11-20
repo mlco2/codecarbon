@@ -276,3 +276,16 @@ def test_run_and_monitor_reports_no_path_without_file_output(monkeypatch, capsys
     out = _run_and_capture(monkeypatch, capsys, [SimpleNamespace()])
 
     assert "Savedto:" not in out
+
+
+def test_run_and_monitor_tracks_the_process_by_default(monkeypatch):
+    captured = _run_and_monitor_capturing(monkeypatch)
+
+    assert captured["kwargs"]["tracking_mode"] == "process"
+
+
+def test_run_and_monitor_accepts_an_explicit_tracking_mode(monkeypatch):
+    """`codecarbon monitor --tracking-mode machine -- cmd` must not raise TypeError."""
+    captured = _run_and_monitor_capturing(monkeypatch, tracking_mode="machine")
+
+    assert captured["kwargs"]["tracking_mode"] == "machine"

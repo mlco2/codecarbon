@@ -464,6 +464,7 @@ class BaseEmissionsTracker(ABC):
         wue: Optional[float] = _sentinel,
         force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
         force_mode_cpu_load: Optional[bool] = _sentinel,
+        force_mode_constant: Optional[bool] = _sentinel,
         allow_multiple_runs: Optional[bool] = _sentinel,
         rapl_include_dram: Optional[bool] = _sentinel,
         rapl_prefer_psys: Optional[bool] = _sentinel,
@@ -559,6 +560,10 @@ class BaseEmissionsTracker(ABC):
         :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                                                   in gCO2e/kWh for emissions calculations.
         :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD
+        :param force_mode_constant: Estimate CPU power as a constant fraction of the CPU TDP
+                                    (or of `force_cpu_power`), skipping RAPL, Power Gadget,
+                                    powermetrics and CPU load tracking. Takes precedence over
+                                    `force_mode_cpu_load`. Defaults to False.
         :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
                                     Defaults to True since v3 (was False in v2).
         :param rapl_include_dram: Include DRAM (memory) power in the counter-based CPU
@@ -664,6 +669,7 @@ class BaseEmissionsTracker(ABC):
         self._set_from_conf(force_mode_cpu_load, "force_mode_cpu_load", False, bool)
         self._set_from_conf(rapl_include_dram, "rapl_include_dram", False, bool)
         self._set_from_conf(rapl_prefer_psys, "rapl_prefer_psys", False, bool)
+        self._set_from_conf(force_mode_constant, "force_mode_constant", False, bool)
         self._set_from_conf(
             experiment_id, "experiment_id", "5b0fa12a-3dd7-45bb-9766-cc326314d9f1"
         )
@@ -1830,9 +1836,12 @@ def track_emissions(
     pue: Optional[float] = _sentinel,
     wue: Optional[float] = _sentinel,
     force_carbon_intensity_g_co2e_kwh: Optional[float] = _sentinel,
+    force_mode_cpu_load: Optional[bool] = _sentinel,
+    force_mode_constant: Optional[bool] = _sentinel,
     allow_multiple_runs: Optional[bool] = _sentinel,
     rapl_include_dram: Optional[bool] = _sentinel,
     rapl_prefer_psys: Optional[bool] = _sentinel,
+    metadata: Optional[Union[dict, str]] = _sentinel,
     use_national_grid_eso_api: Optional[bool] = _sentinel,
 ):
     """
@@ -1842,7 +1851,10 @@ def track_emissions(
                          default name is "codecarbon".
     :param measure_power_secs: Interval (in seconds) to measure hardware power usage,
                                defaults to 15.
-    :param api_call_interval: Number of measure to make before calling the Code Carbon API.
+    :param api_call_interval: Number of measurements between API calls (default: 8).
+                              -1: call API only on flush() and at the end.
+                              1: at every measure.
+                              2: every 2 measures, and so on.
     :param api_endpoint: Optional URL of Code Carbon API endpoint for sending
                          emissions data.
     :param api_key: API key for Code Carbon API (mandatory!).
@@ -1889,7 +1901,7 @@ def track_emissions(
     :param country_iso_code: 3-letter ISO code of the country where the experiment is
                              being run. Required if offline=True. See global_energy_mix.json.
     :param region: Optional Province/State/City where the infrastructure is hosted.
-                   Supported for US States (e.g. California, New York).
+                   Supported for US States and Canada (e.g. California, New York).
     :param cloud_provider: The cloud provider specified for estimating emissions
                            intensity, defaults to None.
                            See https://github.com/mlco2/codecarbon/
@@ -1915,11 +1927,18 @@ def track_emissions(
                 litres of water consumed per kilowatt-hour of electricity consumed.
     :param force_carbon_intensity_g_co2e_kwh: Override grid carbon intensity
                          in gCO2e/kWh for emissions calculations.
+    :param force_mode_cpu_load: Force the addition of a CPU in MODE_CPU_LOAD.
+    :param force_mode_constant: Estimate CPU power as a constant fraction of the CPU
+                                TDP (or of `force_cpu_power`), skipping RAPL, Power
+                                Gadget, powermetrics and CPU load tracking. Takes
+                                precedence over `force_mode_cpu_load`. Defaults to False.
     :param rapl_include_dram: Include DRAM in the counter-based CPU measurements
                               (Linux RAPL and Windows EMI, default: False).
                               When True, measures CPU package + DRAM.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
+    :param metadata: Free-form metadata bag to enrich outputs. Either a dict or a path
+                     to a JSON file containing a dict. See `EmissionsTracker`.
     :param use_national_grid_eso_api: Opt-in: when True and the detected location
                              is Great Britain, fetch live carbon intensity from the
                              UK National Grid ESO Carbon Intensity API instead of
@@ -1979,9 +1998,12 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                    force_mode_cpu_load=force_mode_cpu_load,
+                    force_mode_constant=force_mode_constant,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    metadata=metadata,
                     use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             else:
@@ -2017,9 +2039,12 @@ def track_emissions(
                     pue=pue,
                     wue=wue,
                     force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                    force_mode_cpu_load=force_mode_cpu_load,
+                    force_mode_constant=force_mode_constant,
                     allow_multiple_runs=allow_multiple_runs,
                     rapl_include_dram=rapl_include_dram,
                     rapl_prefer_psys=rapl_prefer_psys,
+                    metadata=metadata,
                     use_national_grid_eso_api=use_national_grid_eso_api,
                 )
             tracker.start()
