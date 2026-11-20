@@ -345,6 +345,17 @@ class TestRAM(unittest.TestCase):
                     f.write("not a number\n")
                 self.assertIsNone(_cgroup_memory_limit_bytes())
 
+    def test_cgroup_memory_limit_of_zero_means_no_limit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            v2 = os.path.join(tmp, "memory.max")
+            with open(v2, "w") as f:
+                f.write("0\n")
+            with mock.patch("codecarbon.external.ram.CGROUP_MEMORY_LIMIT_FILES", (v2,)):
+                limit = _cgroup_memory_limit_bytes()
+        self.assertIsNone(limit)
+        mock_calc, _ = self._machine_power_with_limit(64, limit)
+        mock_calc.assert_called_once_with(64.0)
+
     def test_cgroup_memory_limit_skips_an_unreadable_v2_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             v2 = os.path.join(tmp, "memory.max")

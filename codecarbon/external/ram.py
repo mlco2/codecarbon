@@ -34,7 +34,8 @@ def _cgroup_memory_limit_bytes() -> Optional[int]:
                 value = f.read().strip()
         except OSError:
             continue
-        return int(value) if value.isdigit() else None
+        limit = int(value) if value.isdigit() else 0
+        return limit if limit > 0 else None
     return None
 
 
