@@ -378,6 +378,15 @@ class TestConfig(unittest.TestCase):
         self.assertIsNone(tracker.force_carbon_intensity_g_co2e_kwh)
         self.assertIsNone(tracker._conf["force_carbon_intensity_g_co2e_kwh"])
 
+    def test_measure_power_secs_must_be_finite_and_positive(self):
+        for interval in (0, -1, float("nan"), float("inf"), -float("inf")):
+            with self.subTest(interval=interval):
+                with self.assertRaisesRegex(ValueError, "finite positive"):
+                    EmissionsTracker(
+                        measure_power_secs=interval,
+                        allow_multiple_runs=True,
+                    )
+
     def test_track_emissions_forwards_force_carbon_intensity_parameter(self):
         with patch("codecarbon.emissions_tracker.EmissionsTracker") as tracker_class:
 

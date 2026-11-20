@@ -431,7 +431,9 @@ def monitor(
     ] = None,
     measure_power_secs: Annotated[
         int,
-        typer.Option(help="Interval between two measures."),
+        typer.Option(
+            help="Interval between two measures, in seconds (must be a positive number)."
+        ),
     ] = 10,
     api_call_interval: Annotated[
         int,
