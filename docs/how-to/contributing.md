@@ -42,7 +42,7 @@ uv run task test-package
 ```
 
 Most pull requests are expected to contain either new tests or test updates. See
-[development](development.md#tests) for details.
+[development](https://docs.codecarbon.io/latest/how-to/development/#tests) for details.
 
 ## Check style before you push
 
@@ -71,11 +71,11 @@ share:
 
 ## More detail
 
-- [Development guide](development.md) — UV commands, debugging, stress testing, dependency
+- [Development guide](https://docs.codecarbon.io/latest/how-to/development/) — UV commands, debugging, stress testing, dependency
   management, building the docs, running the API and dashboards locally
-- [Maintainer guide](../maintaining.md) — release process and deployment
-- [AI policy](ai_policy.md)
-- [Code of conduct](code-of-conduct.md)
+- [Maintainer guide](https://docs.codecarbon.io/latest/maintaining/) — release process and deployment
+- [AI policy](https://docs.codecarbon.io/latest/how-to/ai_policy/)
+- [Code of conduct](https://docs.codecarbon.io/latest/how-to/code-of-conduct/)
 
 ## Questions or Need Help?
 
