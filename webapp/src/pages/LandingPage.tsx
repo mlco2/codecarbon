@@ -7,8 +7,8 @@ export default function LandingPage() {
     const mock = isMockMode();
     const apiConfigured = !!import.meta.env.VITE_API_URL;
     return (
-        <>
-            <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+        <div className="flex min-h-[100dvh] flex-col bg-background">
+            <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
                 <div className="mx-auto text-center">
                     <h1 className="text-4xl font-semi-bold tracking-tight text-foreground sm:text-5xl">
                         Welcome to Code Carbon!
@@ -52,7 +52,7 @@ export default function LandingPage() {
                     </div>
                 </div>
             </main>
-            <footer className="mx-auto text-center mb-4 text-sm text-muted-foreground space-y-2">
+            <footer className="mx-auto text-center px-4 pb-6 text-sm text-muted-foreground space-y-2">
                 <p>
                     New to Code Carbon? Learn more at{" "}
                     <a
@@ -74,6 +74,6 @@ export default function LandingPage() {
                     .
                 </p>
             </footer>
-        </>
+        </div>
     );
 }

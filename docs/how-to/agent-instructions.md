@@ -34,6 +34,9 @@ Here's what you need to know to navigate and contribute effectively.
    - Modern React web application
    - Connects to the API backend
    - Run with: `cd webapp && pnpm dev`
+   - **Before editing anything under `webapp/`, read `webapp/AGENTS.md` first** —
+     it is binding for all webapp work (propose before editing, never commit).
+     Claude Code loads `webapp/CLAUDE.md`, which only imports `webapp/AGENTS.md`.
 
 ### Key Directories
 
@@ -47,7 +50,7 @@ Here's what you need to know to navigate and contribute effectively.
 ### Prerequisites
 - Python 3.7+ (preferably 3.11+)
 - uv (Python project manager): `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- Node.js & pnpm (for webapp): `npm install -g pnpm` or `curl -fsSL https://get.pnpm.io/install.sh | sh -`
+- Node.js 24+ and pnpm (for webapp): `corepack enable` installs the pinned pnpm
 - Docker (for API development)
 
 ### Quick Start
@@ -157,7 +160,7 @@ uv run task -l
 - **[carbonserver/tests/TESTING.md](https://github.com/mlco2/codecarbon/blob/master/carbonserver/tests/TESTING.md)**: Comprehensive testing guide
 
 ### VS Code Debugging
-The repository includes VS Code launch configurations in `docs/how-to/contributing.md` for:
+The repository includes VS Code launch configurations in `docs/how-to/development.md` for:
 - Debugging current Python file
 - Running pytest with debugger
 - Testing codecarbon CLI monitor
@@ -181,6 +184,10 @@ The repository includes VS Code launch configurations in `docs/how-to/contributi
 ```
 
 The package can work standalone (offline mode) or connect to the API for cloud features and dashboard visualization.
+
+## Opening Pull Requests
+
+Fill in every section of `.github/PULL_REQUEST_TEMPLATE.md` and pass it with `gh pr create --body-file`; a plain `--body` skips the template. Leave the AI Usage Disclosure choice to the human contributor.
 
 ## Tips for Effective Development
 

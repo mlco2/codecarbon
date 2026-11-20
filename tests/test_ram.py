@@ -139,6 +139,18 @@ class TestRAM(unittest.TestCase):
 
         self.assertIsNone(ram._read_slurm_scontrol())
 
+    @mock.patch(
+        "codecarbon.external.ram.subprocess.check_output",
+        side_effect=FileNotFoundError(2, "No such file or directory", "scontrol"),
+    )
+    def test_read_slurm_scontrol_returns_none_when_scontrol_is_missing(
+        self, mock_check_output
+    ):
+        # SLURM env vars propagate into containers that do not ship the client tools.
+        ram = RAM(tracking_mode="slurm")
+
+        self.assertIsNone(ram._read_slurm_scontrol())
+
     @mock.patch("codecarbon.external.ram.psutil.virtual_memory")
     def test_parse_scontrol_falls_back_to_machine_total_when_missing_mem(
         self, mock_virtual_memory
@@ -437,3 +449,9 @@ class TestRAM(unittest.TestCase):
             ram_power = ram.total_power()
             # Verify the calculation method was not called
             mock_calc.assert_not_called()
+
+    def test_default_pid_is_resolved_at_init(self):
+        # A default evaluated at import time would keep the importing
+        # process's pid, e.g. in a forked child.
+        with mock.patch("os.getpid", return_value=12345):
+            self.assertEqual(RAM(tracking_mode="process")._pid, 12345)

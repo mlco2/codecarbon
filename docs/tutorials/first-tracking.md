@@ -58,6 +58,7 @@ print(f"Energy consumed: {tracker.final_emissions_data.energy_consumed:.6f} kWh"
 ## What's next?
 
 - [Configure CodeCarbon](../how-to/configuration.md) with config files, environment variables, or script parameters
+- On Linux, [get accurate CPU measurements](../how-to/enable-rapl.md) by enabling the RAPL hardware energy counters
 - Learn about [CLI tracking](cli.md) to monitor without code changes
 - Explore all [Python API options](python-api.md) (decorators, explicit objects, offline mode)
 - See the full [API Reference](../reference/api.md) for all configuration parameters

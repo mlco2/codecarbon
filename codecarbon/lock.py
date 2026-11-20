@@ -27,18 +27,30 @@ class Lock:
             self.release
         )  # Ensure release() is called on unexpected exit of the user's python code
         # If there is more than one thread add a lock
-        self._thread_lock = threading.Lock()
-        # If the current thread is the main thread, register signal handlers
-        if threading.current_thread() is threading.main_thread():
-            # Register signal handlers to ensure lock release on interruption
-            signal.signal(signal.SIGINT, self._handle_exit)  # Ctrl+C
-            signal.signal(signal.SIGTERM, self._handle_exit)  # Termination signal
+        # Reentrant: _handle_exit -> release() can fire on a thread already holding it.
+        self._thread_lock = threading.RLock()
+        # Previous signal handlers, restored on release().
+        self._previous_handlers = {}
 
     def _handle_exit(self, signum, frame):
-        """Ensures the lock file is removed when the script is interrupted."""
-        logger.debug(f"Signal {signum} received. Releasing lock and exiting.")
-        self.release()
-        raise SystemExit(1)  # Exit gracefully to prevent further execution
+        """Delegates to the handler we replaced, releasing the lock if the run ends."""
+        logger.debug(f"Signal {signum} received.")
+        previous = self._previous_handlers.get(signum, signal.SIG_DFL)
+        if callable(previous):
+            try:
+                return previous(signum, frame)
+            except BaseException:
+                # The application is exiting (KeyboardInterrupt, sys.exit, ...).
+                # If the handler returned, it chose to keep running (graceful
+                # shutdown): keep the lock, stop() or atexit will release it.
+                self.release()
+                raise
+        self.release()  # also restores the previous handlers
+        # Default disposition: raise instead of re-sending the signal, so that
+        # `finally` / `__exit__` still run and the tracker writes its last row.
+        if signum == signal.SIGINT:
+            raise KeyboardInterrupt
+        raise SystemExit(128 + signum)
 
     def acquire(self):
         """Creates a lock file and ensures it's the only instance running."""
@@ -48,6 +60,19 @@ class Lock:
                 with open(LOCKFILE, "x") as _:
                     logger.debug(f"Lock file created. Path: {LOCKFILE}")
                     self._has_created_lock = True
+                # Only now that we own the lock file: a failed acquire() must not
+                # leave the host application's handlers hijacked for good, since
+                # release() is never reached on that path.
+                if threading.current_thread() is threading.main_thread():
+                    for sig in (signal.SIGINT, signal.SIGTERM):
+                        # An ignored signal never ends the run (e.g. SIGINT for a
+                        # background job): catching it would only drop the lock
+                        # while the tracker keeps running.
+                        if signal.getsignal(sig) == signal.SIG_IGN:
+                            continue
+                        self._previous_handlers[sig] = signal.signal(
+                            sig, self._handle_exit
+                        )
             except FileExistsError:
                 logger.debug(
                     f"Lock file {LOCKFILE} already exists. This usually means another instance of codecarbon is running. You can safely delete it if you want or use allow_multiple_runs parameter to always bypass it."
@@ -55,14 +80,35 @@ class Lock:
                 raise
 
     def release(self):
-        """Removes the lock file on exit."""
+        """Removes the lock file and restores the signal handlers we replaced."""
         with self._thread_lock:
             logger.debug("Removing the lock")
+            atexit.unregister(self.release)
             try:
                 # Remove the lock file only if it was created by this instance
                 if self._has_created_lock:
+                    self._has_created_lock = False
                     os.remove(LOCKFILE)
             except OSError as e:
                 logger.debug(f"Error: {e}")
                 if e.errno != errno.ENOENT:
                     raise
+            finally:
+                self._restore_signal_handlers()
+
+    def _restore_signal_handlers(self):
+        # signal.signal() only works on the main thread. Elsewhere, keep our
+        # handlers: a later signal still releases (a no-op) and forwards.
+        if threading.current_thread() is not threading.main_thread():
+            return
+        for sig, handler in list(self._previous_handlers.items()):
+            try:
+                # Only restore if nobody installed another handler after us.
+                if signal.getsignal(sig) == self._handle_exit:
+                    # None: the handler was installed from C, use the default.
+                    signal.signal(sig, signal.SIG_DFL if handler is None else handler)
+            except (ValueError, TypeError, OSError) as e:
+                logger.debug(f"Could not restore handler for signal {sig}: {e}")
+            # Forget it only now: a signal landing before the restore above
+            # must still find the handler to forward to.
+            self._previous_handlers.pop(sig, None)

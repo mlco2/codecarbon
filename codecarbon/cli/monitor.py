@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from typing import Optional
 
 import typer
 from rich import print
@@ -12,9 +13,9 @@ from typing_extensions import Annotated
 def run_and_monitor(
     ctx: typer.Context,
     log_level: Annotated[
-        str,
+        Optional[str],
         typer.Option(help="Log level (critical, error, warning, info, debug)"),
-    ] = "error",
+    ] = None,
     offline: bool = False,
     **tracker_args,
 ):
@@ -51,7 +52,11 @@ def run_and_monitor(
     from codecarbon.emissions_tracker import EmissionsTracker, OfflineEmissionsTracker
     from codecarbon.external.logger import set_logger_level
 
-    set_logger_level(log_level)
+    # `log_level` is None when nothing set it: leave it to the tracker, which
+    # resolves it from the configuration file and the environment.
+    if log_level is not None:
+        set_logger_level(log_level)
+        tracker_args["log_level"] = log_level
 
     # Get the command from remaining args (strip nested subcommand / `--` leftovers)
     command = list(getattr(ctx, "args", None) or [])
@@ -66,12 +71,9 @@ def run_and_monitor(
         raise typer.Exit(1)
 
     tracker_cls = OfflineEmissionsTracker if offline else EmissionsTracker
-    tracker = tracker_cls(
-        log_level=log_level,
-        save_to_logger=False,
-        tracking_mode="process",
-        **tracker_args,
-    )
+    # Track the command's process unless `--tracking-mode` says otherwise.
+    tracker_args.setdefault("tracking_mode", "process")
+    tracker = tracker_cls(**tracker_args)
 
     print("🌱 CodeCarbon: Starting emissions tracking...")
     print(f"   Command: {' '.join(command)}")
@@ -116,13 +118,12 @@ def run_and_monitor(
         else:
             print("   Emissions: N/A")
 
-        # Show where the data was saved
-        if hasattr(tracker, "_conf") and "output_file" in tracker._conf:
-            output_path = tracker._conf["output_file"]
-            # Make it absolute if it's relative
-            if not os.path.isabs(output_path):
-                output_path = os.path.abspath(output_path)
-            print(f"   Saved to: {output_path}")
+        # Show where the data was saved, asking the output handlers themselves
+        # so the path stays right whatever `output_dir` / `output_file` are.
+        for handler in getattr(tracker, "_output_handlers", []):
+            save_file_path = getattr(handler, "save_file_path", None)
+            if save_file_path:
+                print(f"   Saved to: {os.path.abspath(save_file_path)}")
 
         print("   ⚠️  Note: Tracked the command process and its children")
         print("=" * 60)

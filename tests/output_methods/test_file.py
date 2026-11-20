@@ -1,7 +1,9 @@
+import csv
 import os
 import shutil
 import tempfile
 import unittest
+from dataclasses import replace
 from unittest.mock import patch
 
 import pandas as pd
@@ -87,6 +89,32 @@ class TestFileOutput(unittest.TestCase):
 
         self.assertTrue(file_output.has_valid_headers(self.emissions_data))
 
+    def test_file_output_preserves_reordered_header_alignment(self):
+        for mode in ("append", "update"):
+            with self.subTest(mode=mode):
+                output = FileOutput(f"{mode}.csv", self.temp_dir, on_csv_write=mode)
+                output.out(self.emissions_data, None)
+                df = pd.read_csv(output.save_file_path)
+                df[list(reversed(df.columns))].to_csv(
+                    output.save_file_path, index=False
+                )
+                next_run = replace(
+                    self.emissions_data, run_id="next_run", project_name="next_project"
+                )
+
+                output.out(next_run, None)
+
+                with open(output.save_file_path, newline="") as file:
+                    rows = list(csv.DictReader(file))
+                self.assertEqual(len(rows), 2)
+                self.assertEqual(
+                    rows[-1],
+                    {
+                        key: str(value) if value is not None else ""
+                        for key, value in next_run.values.items()
+                    },
+                )
+
     def test_has_valid_headers_failure(self):
         file_output = FileOutput("test.csv", self.temp_dir)
         file_output.out(self.emissions_data, None)
@@ -168,6 +196,62 @@ class TestFileOutput(unittest.TestCase):
         file_output.out(new_data, None)
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(df["cpu_power"].iloc[0], 2)
+
+    def test_file_output_out_update_with_always_empty_columns(self):
+        """Regression test: updating a run must not coerce incoming values to the
+        dtype pandas inferred for the existing column.
+
+        An OfflineEmissionsTracker leaves longitude/latitude empty, and
+        gpu_count/gpu_model are empty on CPU-only machines. Such columns are read
+        back from the CSV as float64, so the previous implementation evaluated
+        numpy.float64("") / numpy.float64(None) and raised on the second write.
+        """
+        empty_columns_data = EmissionsData(
+            timestamp="2023-01-01T00:00:00",
+            project_name="test_project",
+            run_id="test_run_id",
+            experiment_id="test_experiment_id",
+            duration=10,
+            emissions=0.5,
+            emissions_rate=0.05,
+            cpu_power=20,
+            gpu_power=0,
+            ram_power=5,
+            cpu_energy=200,
+            gpu_energy=0,
+            ram_energy=50,
+            energy_consumed=250,
+            water_consumed=0.1,
+            country_name="Testland",
+            country_iso_code="TS",
+            region="Test Region",
+            cloud_provider="",
+            cloud_region="",
+            os="TestOS",
+            python_version="3.8",
+            codecarbon_version="2.0",
+            cpu_count=4,
+            cpu_model="Test CPU",
+            gpu_count=None,
+            gpu_model=None,
+            longitude=None,
+            latitude=None,
+            ram_total_size=16,
+            tracking_mode="machine",
+        )
+
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="update")
+        file_output.out(empty_columns_data, None)
+
+        empty_columns_data.cpu_power = 2
+        # This should not raise.
+        file_output.out(empty_columns_data, None)
+
+        df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
+        self.assertEqual(len(df), 1)
+        self.assertEqual(df["cpu_power"].iloc[0], 2)
+        self.assertIn("longitude", df.columns)
+        self.assertIn("gpu_model", df.columns)
 
     # def test_file_output_out_consistent_column_ordering(self):
     #     file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
@@ -448,3 +532,61 @@ class TestFileOutput(unittest.TestCase):
 
         df = pd.read_csv(os.path.join(self.temp_dir, "test.csv"))
         self.assertEqual(len(df), 2)
+
+    def test_live_out_noop_when_disabled(self):
+        file_output = FileOutput("test.csv", self.temp_dir, on_csv_write="append")
+        file_output.live_out(self.emissions_data, self.emissions_data)
+        self.assertFalse(os.path.isfile(file_output.save_file_path))
+
+    def test_live_out_appends_when_enabled(self):
+        file_output = FileOutput(
+            "interval.csv",
+            self.temp_dir,
+            on_csv_write="append",
+            enable_live_out=True,
+        )
+        file_output.live_out(self.emissions_data, self.emissions_data)
+        file_output.live_out(self.emissions_data, self.emissions_data)
+
+        df = pd.read_csv(file_output.save_file_path)
+        self.assertEqual(len(df), 2)
+        self.assertEqual(df.iloc[0]["run_id"], "test_run_id")
+
+    def test_live_and_final_writes_do_not_overlap(self):
+        # live_out runs on the scheduler thread while flush() calls out() on
+        # the caller's thread: two writes to one file must not interleave.
+        import threading
+        import time
+
+        file_output = FileOutput(
+            "interval.csv", self.temp_dir, on_csv_write="update", enable_live_out=True
+        )
+        events = []
+        release = threading.Event()
+        real_to_csv = pd.DataFrame.to_csv
+
+        def slow_to_csv(df, *args, **kwargs):
+            events.append("start")
+            release.wait(timeout=2)
+            real_to_csv(df, *args, **kwargs)
+            events.append("end")
+
+        with patch.object(pd.DataFrame, "to_csv", slow_to_csv):
+            live = threading.Thread(
+                target=file_output.live_out,
+                args=(self.emissions_data, self.emissions_data),
+            )
+            final = threading.Thread(
+                target=file_output.out, args=(self.emissions_data, None)
+            )
+            live.start()
+            while not events:
+                time.sleep(0.01)
+            final.start()
+            time.sleep(0.2)
+            release.set()
+            live.join()
+            final.join()
+
+        self.assertEqual(events, ["start", "end", "start", "end"])
+        self.assertEqual(len(pd.read_csv(file_output.save_file_path)), 1)

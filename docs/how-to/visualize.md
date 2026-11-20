@@ -33,6 +33,7 @@ carbonboard --filepath="examples/emissions.csv" --port=3333
 
 - `--filepath`: Path to the CSV file containing your emissions data
 - `--port`: Optional port number (default is 8050)
+- `--host`: Optional  hostname to listen on (default is 127.0.0.1).
 
 Then open your browser to `http://localhost:3333` to view the dashboard.
 

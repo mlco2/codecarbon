@@ -1,14 +1,14 @@
 import logging
 import time
 
-from codecarbon import track_emissions
+from codecarbon import OutputMethod, track_emissions
 from codecarbon.external.logger import logger
 
 
 @track_emissions(
     measure_power_secs=5,
     api_call_interval=3,
-    save_to_prometheus=True,
+    output_methods=[OutputMethod.CSV, OutputMethod.PROMETHEUS],
 )
 def train_model():
     """

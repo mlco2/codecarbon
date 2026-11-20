@@ -90,6 +90,14 @@ class TestAuthMethods(unittest.TestCase):
             loaded = auth._load_credentials()
             self.assertEqual(loaded, tokens)
 
+    @patch("builtins.open", side_effect=PermissionError(13, "Permission denied"))
+    def test_save_credentials_unwritable_directory(self, mock_open):
+        with self.assertRaises(ValueError) as ctx:
+            auth._save_credentials({"access_token": "a"})
+        message = str(ctx.exception)
+        self.assertIn(str(auth._CREDENTIALS_FILE.resolve()), message)
+        self.assertIn("Permission denied", message)
+
     @patch("codecarbon.cli.auth.requests.get")
     @patch("codecarbon.cli.auth.KeySet.import_key_set")
     @patch("codecarbon.cli.auth.jose_jwt.decode")

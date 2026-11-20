@@ -1,5 +1,6 @@
 import os
 import unittest
+from pathlib import Path
 from textwrap import dedent
 from unittest import mock
 from unittest.mock import patch
@@ -7,6 +8,7 @@ from unittest.mock import patch
 from codecarbon.core.config import (
     clean_env_key,
     get_hierarchical_config,
+    get_hierarchical_config_with_sources,
     normalize_gpu_ids,
     parse_env_config,
     parse_gpu_ids,
@@ -170,6 +172,65 @@ class TestConfig(unittest.TestCase):
             }
             self.assertDictEqual(conf, target)
 
+    @mock.patch.dict(
+        os.environ,
+        {
+            "CODECARBON_EXPERIMENT_ID": "SUCCESS:overwritten",
+        },
+    )
+    def test_config_sources(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            no_overwrite=path/to/somewhere
+            local_overwrite=ERROR:not overwritten
+            experiment_id=ERROR:not overwritten
+            """)
+        local_conf = dedent("""\
+            [codecarbon]
+            local_overwrite=SUCCESS:overwritten
+            local_new_key=cool value
+            """)
+
+        global_path = str((Path.home() / ".codecarbon.config").expanduser().resolve())
+        local_path = str((Path.cwd() / ".codecarbon.config").expanduser().resolve())
+
+        with patch(
+            "builtins.open", new_callable=get_custom_mock_open(global_conf, local_conf)
+        ):
+            conf, sources = get_hierarchical_config_with_sources()
+
+        self.assertEqual(conf["local_overwrite"], "SUCCESS:overwritten")
+        self.assertEqual(conf["experiment_id"], "SUCCESS:overwritten")
+        # Every key has a source, and it is the last layer that set it.
+        self.assertEqual(set(conf), set(sources))
+        self.assertEqual(sources["no_overwrite"], global_path)
+        self.assertEqual(sources["local_overwrite"], local_path)
+        self.assertEqual(sources["local_new_key"], local_path)
+        self.assertEqual(sources["experiment_id"], "CODECARBON_EXPERIMENT_ID")
+        self.assertEqual(
+            sources["allow_multiple_runs"], "CODECARBON_ALLOW_MULTIPLE_RUNS"
+        )
+
+    def test_config_sources_are_logged_without_values(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            api_key=do-not-log-me
+            measure_power_secs=10
+            """)
+
+        with patch("builtins.open", new_callable=get_custom_mock_open(global_conf, "")):
+            with self.assertLogs("codecarbon", level="INFO") as logs:
+                get_hierarchical_config()
+
+        message = "\n".join(logs.output)
+        global_path = str((Path.home() / ".codecarbon.config").expanduser().resolve())
+        self.assertIn(f"api_key from {global_path}", message)
+        self.assertIn(f"measure_power_secs from {global_path}", message)
+        self.assertIn(
+            "allow_multiple_runs from CODECARBON_ALLOW_MULTIPLE_RUNS", message
+        )
+        self.assertNotIn("do-not-log-me", message)
+
     def test_empty_conf(self):
         global_conf = ""
         local_conf = ""
@@ -242,6 +303,44 @@ class TestConfig(unittest.TestCase):
 
         self.assertEqual(tracker.force_carbon_intensity_g_co2e_kwh, 456.7)
         self.assertEqual(tracker._conf["force_carbon_intensity_g_co2e_kwh"], 456.7)
+
+    def _tracker_with_conf(self, global_conf, **kwargs):
+        with patch("builtins.open", new_callable=get_custom_mock_open(global_conf, "")):
+            with patch("os.path.exists", return_value=True):
+                tracker = EmissionsTracker(
+                    save_to_file=False, allow_multiple_runs=True, **kwargs
+                )
+        tracker._ensure_emissions_engine()
+        return tracker
+
+    def test_use_national_grid_eso_api_defaults_to_false(self):
+        tracker = self._tracker_with_conf("")
+        self.assertFalse(tracker._emissions._use_national_grid_eso_api)
+
+    def test_use_national_grid_eso_api_from_config_file(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            use_national_grid_eso_api=true
+            """)
+        tracker = self._tracker_with_conf(global_conf)
+        self.assertIs(tracker._emissions._use_national_grid_eso_api, True)
+
+    @mock.patch.dict(os.environ, {"CODECARBON_USE_NATIONAL_GRID_ESO_API": "false"})
+    def test_use_national_grid_eso_api_false_string_from_env(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            use_national_grid_eso_api=true
+            """)
+        tracker = self._tracker_with_conf(global_conf)
+        self.assertIs(tracker._emissions._use_national_grid_eso_api, False)
+
+    def test_use_national_grid_eso_api_constructor_overrides_config(self):
+        global_conf = dedent("""\
+            [codecarbon]
+            use_national_grid_eso_api=false
+            """)
+        tracker = self._tracker_with_conf(global_conf, use_national_grid_eso_api=True)
+        self.assertIs(tracker._emissions._use_national_grid_eso_api, True)
 
     def test_offline_tracker_accepts_force_carbon_intensity_parameter(self):
         with patch("builtins.open", new_callable=get_custom_mock_open("", "")):

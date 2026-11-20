@@ -1,5 +1,6 @@
 import os
 import tempfile
+import threading
 import time
 import unittest
 from unittest import mock
@@ -12,6 +13,8 @@ from codecarbon.emissions_tracker import (
     OfflineEmissionsTracker,
     track_emissions,
 )
+from codecarbon.external import scheduler as scheduler_module
+from tests.testutils import FakeClock
 
 
 def heavy_computation(run_time_secs: int = 3):
@@ -88,7 +91,42 @@ class TestCarbonTrackerConstant(unittest.TestCase):
         assertdf = pd.read_csv(self.emissions_file_path)
         self.assertEqual(USER_INPUT_CPU_POWER / 2, assertdf["cpu_power"][0])
 
-    @mock.patch("codecarbon.external.hardware.psutil.cpu_percent", return_value=50.0)
+    @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
+    @mock.patch.object(cpu, "is_psutil_available")
+    def test_carbon_tracker_offline_constant_pue(self, mock_tdp, mock_psutil):
+        # The PUE must be applied to the reported power as well as to the energy,
+        # so that energy_consumed stays consistent with the power columns.
+        USER_INPUT_CPU_POWER = 1_000
+        PUE = 2.0
+        mock_tdp.return_value = None
+        mock_psutil.return_value = False
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            output_dir=self.emissions_path,
+            output_file=self.emissions_file,
+            force_cpu_power=USER_INPUT_CPU_POWER,
+            pue=PUE,
+        )
+        tracker.start()
+        heavy_computation(run_time_secs=1)
+        emissions = tracker.stop()
+        assert isinstance(emissions, float)
+        assertdf = pd.read_csv(self.emissions_file_path)
+        self.assertEqual(USER_INPUT_CPU_POWER / 2 * PUE, assertdf["cpu_power"][0])
+        # energy_consumed must be reconstructible from the reported power
+        total_power = (
+            assertdf["cpu_power"][0]
+            + assertdf["gpu_power"][0]
+            + assertdf["ram_power"][0]
+        )
+        expected_energy = total_power * assertdf["duration"][0] / 3600 / 1000
+        self.assertAlmostEqual(
+            expected_energy, assertdf["energy_consumed"][0], delta=expected_energy * 0.1
+        )
+
+    @mock.patch(
+        "codecarbon.external.hardware.SystemCPULoadMeter.percent", return_value=50.0
+    )
     @mock.patch.object(cpu.TDP, "_get_cpu_power_from_registry")
     @mock.patch.object(cpu, "is_psutil_available")
     def test_carbon_tracker_offline_load_force_cpu_power(
@@ -167,3 +205,55 @@ class TestCarbonTrackerConstant(unittest.TestCase):
 
         finally:
             tracker.stop()
+
+
+class TestFinalMeasurementWaitsForInFlightTick(unittest.TestCase):
+    @mock.patch.object(scheduler_module, "STOP_JOIN_TIMEOUT_SECONDS", 0.01)
+    def test_stop_does_not_overlap_a_slow_scheduled_measurement(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="USA",
+            measure_power_secs=1,
+            output_methods=[],
+            allow_multiple_runs=True,
+        )
+        clock = tracker._scheduler.clock = FakeClock()
+        tracker.start()
+        main = threading.current_thread()
+        do_measurements = tracker._do_measurements
+        in_flight = {"now": 0, "max": 0}
+        entered = threading.Event()
+        # Set once stop() reaches its final measurement, whether it waits for
+        # the lock (fixed) or measures right away (the overlap).
+        final_measurement_reached = threading.Event()
+
+        def slow_do_measurements():
+            in_flight["now"] += 1
+            in_flight["max"] = max(in_flight["max"], in_flight["now"])
+            if threading.current_thread() is main:
+                final_measurement_reached.set()
+            else:
+                entered.set()
+                final_measurement_reached.wait(5)
+            do_measurements()
+            in_flight["now"] -= 1
+
+        class LockSpy:
+            def __init__(self, lock):
+                self.lock = lock
+
+            def __enter__(self):
+                if threading.current_thread() is main:
+                    final_measurement_reached.set()
+                return self.lock.__enter__()
+
+            def __exit__(self, *exc):
+                return self.lock.__exit__(*exc)
+
+        tracker._do_measurements = slow_do_measurements
+        tracker._measurement_lock = LockSpy(tracker._measurement_lock)
+        clock.advance(1, settle=False)
+        self.assertTrue(entered.wait(5), "the scheduled measurement never ran")
+        # Make the last sample stale so stop() takes its final measurement.
+        tracker._last_measured_time -= 1
+        tracker.stop()  # the join times out while the tick is still running
+        self.assertEqual(in_flight["max"], 1, "final measurement overlapped a tick")

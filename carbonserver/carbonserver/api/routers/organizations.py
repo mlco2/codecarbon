@@ -13,6 +13,7 @@ from carbonserver.api.schemas import (
     OrganizationPatch,
     OrganizationReport,
     OrganizationUser,
+    OrganizationWithRole,
 )
 from carbonserver.api.services.auth_service import (
     MandatoryUserWithAuthDependency,
@@ -86,7 +87,7 @@ def read_organization(
     "/organizations",
     tags=ORGANIZATIONS_ROUTER_TAGS,
     status_code=status.HTTP_200_OK,
-    response_model=List[Organization],
+    response_model=List[OrganizationWithRole],
 )
 @inject
 def list_organizations(
@@ -94,7 +95,7 @@ def list_organizations(
     organization_service: OrganizationService = Depends(
         Provide[ServerContainer.organization_service]
     ),
-) -> List[Organization]:
+) -> List[OrganizationWithRole]:
     return organization_service.list_organizations(user=auth_user.db_user)
 
 
@@ -163,6 +164,28 @@ def organization_add_user(
     organization_service.add_user_by_mail(
         organization_id=organization_id,
         email=input.email,
+        user=auth_user.db_user,
+    )
+    return {"status": "ok"}
+
+
+@router.delete(
+    "/organizations/{organization_id}/users/{user_id}",
+    tags=ORGANIZATIONS_ROUTER_TAGS,
+    status_code=status.HTTP_200_OK,
+)
+@inject
+def organization_remove_user(
+    organization_id: str,
+    user_id: str,
+    auth_user: UserWithAuthDependency = Depends(MandatoryUserWithAuthDependency),
+    organization_service: OrganizationService = Depends(
+        Provide[ServerContainer.organization_service]
+    ),
+):
+    organization_service.remove_user(
+        organization_id=organization_id,
+        user_id=user_id,
         user=auth_user.db_user,
     )
     return {"status": "ok"}

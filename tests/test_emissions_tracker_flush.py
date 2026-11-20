@@ -24,16 +24,14 @@ class TestCarbonTrackerFlush(unittest.TestCase):
     def setUp(self) -> None:
         self.project_name = "project_TestCarbonTrackerFlush"
         self.emissions_file = "emissions-test-TestCarbonTrackerFlush.csv"
-        self.emissions_path = tempfile.gettempdir()
+        # A per-test directory, so that two tests counting rows in "their" file
+        # can never end up counting rows in the same one, see #1371.
+        self._temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._temp_dir.cleanup)
+        self.emissions_path = self._temp_dir.name
         self.emissions_file_path = os.path.join(
             self.emissions_path, self.emissions_file
         )
-        if os.path.isfile(self.emissions_file_path):
-            os.remove(self.emissions_file_path)
-
-    def tearDown(self) -> None:
-        if os.path.isfile(self.emissions_file_path):
-            os.remove(self.emissions_file_path)
 
     def test_carbon_tracker_online_flush(self):
         tracker = EmissionsTracker(
@@ -95,6 +93,19 @@ class TestCarbonTrackerFlush(unittest.TestCase):
             ]
         )
         self.assertEqual("test", emissions_df["experiment_id"].values[0])
+
+    def test_flush_with_active_task(self):
+        tracker = EmissionsTracker(
+            output_dir=self.emissions_path, output_file=self.emissions_file
+        )
+        tracker.start()
+        tracker.start_task("my_task")
+        heavy_computation(run_time_secs=1)
+        tracker.flush()
+        tracker.stop_task()
+        emissions = tracker.stop()
+        assert isinstance(emissions, float)
+        self.assertNotEqual(emissions, 0.0)
 
     def verify_output_file(self, file_path: str, expected_lines=3) -> None:
         with open(file_path, "r") as f:

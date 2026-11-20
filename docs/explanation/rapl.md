@@ -78,6 +78,13 @@ counting!)
 
 **Correct approach**: Use only psys (9.6W) ✅
 
+A second, unrelated double-count shows up on some multi-die AMD CPUs
+(Threadripper / EPYC): `package-0-die-0` and `package-0-die-1` can both
+expose the **same** socket-wide energy counter. They are not two
+independent packages. Summing identical readings multiplies CPU power
+by the die count. See the Threadripper teaser below and
+[issue #1274](https://github.com/mlco2/codecarbon/issues/1274).
+
 ## CodeCarbon's RAPL Strategy
 
 CodeCarbon implements intelligent domain selection to provide reliable
@@ -91,7 +98,7 @@ and consistent measurements:
         generations
     -   Can be supplemented with `dram` domains for complete hardware
         measurement (package + DRAM)
-2.  **Optional psys mode**: Set `prefer_psys=True` to use `psys`
+2.  **Optional psys mode**: Set `rapl_prefer_psys=True` to use `psys`
     (platform/system) domain instead:
     -   Provides total platform power (CPU + chipset + PCIe + some other
         components)
@@ -106,7 +113,7 @@ and consistent measurements:
     -   Falls back to MSR if MMIO is unreadable
 4.  **Subdomain filtering**: Excludes `core` and `uncore` subdomains
     when `package` is available to avoid double-counting
-5.  **DRAM exclusion**: By default (`include_dram=False`), don't add
+5.  **DRAM exclusion**: By default (`rapl_include_dram=False`), don't add
     DRAM domain to package. As DRAM is supposed to be in RAM power, not
     CPU in a future version of CodeCarbon.
 
@@ -124,7 +131,7 @@ and consistent measurements:
 -   `core` reports very low energy values
 -   Unclear if `core` is included in `package` (vendor documentation is
     sparse)
--   Multiple dies may report as separate packages (e.g., Threadripper)
+-   On some multi-die CPUs (e.g., Threadripper), separate package domains mirror the same socket-wide counter. CodeCarbon flags counters holding the same value at startup, confirms with the energy deltas of the first measurement interval where both counters were read and accumulated energy that they are true mirrors, and keeps only one, so CPU energy is not multiplied by the number of dies.
 
 **What RAPL Does NOT Measure**:
 
@@ -148,11 +155,67 @@ Measurements," (K. N. Khan, M. Hirki, T. Niemi, J. K. Nurminen, and Z.
 Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 1--26, Apr. 2018, doi: 10.1145/3177754.)
 
-## RAPL Measurements: Real-World Examples
+## Key Takeaways for RAPL Measurements
+
+1.  **CodeCarbon defaults to package domains**: This provides the most
+    reliable and consistent measurements that match CPU TDP
+    specifications. Package domains update correctly under load across
+    all Intel generations.
+2.  **psys can be unreliable**: While `psys` provides total platform
+    power, it:
+    -   Can report higher values than expected (includes chipset, PCIe,
+        etc.)
+    -   May not include all CPU components on older Intel systems : on
+        some computers, `psys` is lower than `package`.
+    -   So it is disabled by default, you can enable it with
+        `rapl_prefer_psys=True` if desired
+3.  **Avoid summing overlapping domains**: Never sum psys + package +
+    core + uncore. They are hierarchical and overlapping. This causes
+    2-3x over-counting!
+4.  **Domain hierarchy**:
+    -   psys ⊃ package ⊃ {core, uncore}
+    -   Correct: Use package alone (CodeCarbon default) OR psys alone
+        (with rapl_prefer_psys=True)
+    -   Wrong: Sum multiple levels
+5.  **Interface deduplication**: The same domain may appear in both
+    `intel-rapl` (MSR) and `intel-rapl-mmio` interfaces. CodeCarbon
+    automatically deduplicates, preferring MMIO.
+6.  **DRAM measurement**: CodeCarbon does not include DRAM domains by
+    default (`rapl_include_dram=False`) for CPU hardware measurement. Set
+    `rapl_include_dram=True` to measure CPU package + DRAM domains.
+7.  **Platform-specific behavior**:
+    -   Intel modern: package or psys (with rapl_prefer_psys=True)
+    -   Intel older: package-0 for CPU only
+    -   AMD: use package domains. If several `package-X-die-Y`
+        domains report the same energy, keep one — do not sum
+        mirrors. Sum only domains with distinct counters.
+8.  **Limitations**: RAPL does NOT measure:
+    -   Discrete GPUs (use nvidia-smi/rocm-smi)
+    -   SSDs, peripherals, fans
+    -   Actual DRAM chips — the `dram` domain reports memory-controller
+        power, and CodeCarbon excludes it by default (`rapl_include_dram=False`)
+    -   Complete system power (use wall meter for accuracy)
+
+## Appendix: raw measurements from three machines
+
+!!! note
+
+    Everything below is raw annotated output collected from three real machines.
+    It is kept as evidence for the domain-selection rules above; you do not need
+    to read it to understand how CodeCarbon picks RAPL domains.
 
 Choosing the right metric to track CPU power consumption depends on CPU
 hardware and available domains. Below are measurements from different
 systems showing the importance of avoiding double-counting.
+
+!!! warning "The two Intel walkthroughs were collected with `rapl_prefer_psys=True`"
+
+    Their `psys` readings and the "use psys only" annotations inside the code
+    blocks describe that non-default configuration. With the default
+    `rapl_prefer_psys=False`, CodeCarbon uses the **package** domain(s) instead:
+    psys is detected and explicitly skipped (`IntelRAPL._select_domains_to_use` in `codecarbon/core/cpu.py`).
+    The package figure is given alongside psys in each block, so you can read
+    the default behaviour off the same numbers.
 
 We investigate RAPL on various architectures :
 
@@ -164,7 +227,23 @@ We investigate RAPL on various architectures :
 Desktop computer with AMD Ryzen Threadripper 1950X 16-Core (32 threads)
 Power plug measure when idle (10% CPU): 125 W
 package-0-die-0: 68 W | package-0-die-1: 68 W | CodeCarbon: 137 W
+
+⚠️  WRONG: 68 W + 68 W = 137 W. The two dies report the same
+    socket-wide RAPL counter (issue 1274). This is one meter read
+    twice, not two independent 68 W packages. CPU RAPL here is
+    ~68 W, not 137 W.
 ```
+
+!!! warning "Mirrored per-die RAPL counters"
+
+    Two dies reporting the exact same 68 W is not a coincidence. On
+    some multi-die AMD CPUs the Linux powercap `package-*-die-*`
+    domains all read one socket-wide energy counter, so this 137 W
+    figure is an over-count. The numbers here are left exactly as
+    observed. CodeCarbon now detects such mirrors and keeps only one
+    (see [CodeCarbon's RAPL Strategy](#codecarbons-rapl-strategy)).
+    Tracking: [#1274](https://github.com/mlco2/codecarbon/issues/1274),
+    [#1379](https://github.com/mlco2/codecarbon/issues/1379).
 
 ### Laptop: Intel(R) Core(TM) Ultra 7 265H (TDP 28W)
 
@@ -183,8 +262,9 @@ RAPL domains (individual readings):
 ✅  CORRECT: Use psys only = 6.66W (matches battery discharge)
 ```
 
-**CodeCarbon behavior**: Uses **psys only** (6.66W) to avoid
-double-counting.
+**CodeCarbon behavior**: by default uses **package-0 only** (3.85W) — never a
+sum of overlapping domains. With `rapl_prefer_psys=True` it uses **psys only**
+(6.66W), which is what matches the battery discharge rate here.
 
 **Under Load (stress-ng)**:
 
@@ -200,8 +280,9 @@ RAPL domains:
 ✅  CORRECT: Use psys only = 24.69W (close to battery discharge)
 ```
 
-**CodeCarbon measurement**: 22W using psys (accurate, within expected
-range)
+**CodeCarbon measurement**: 22W using psys, with `rapl_prefer_psys=True`
+(accurate, within expected range). The default configuration would have
+reported the package-0 figure (21.35W) instead.
 
 **Note**: The package-0 measurement (21.35W) excludes some platform
 components like chipset and PCIe that are included in psys (24.69W).
@@ -245,11 +326,10 @@ Analysis:
 - Core power (14.00W) matches the CPU TDP spec (15W)
 ```
 
-**CodeCarbon behavior**: Uses **psys only** (29.97W) for accurate total
-platform measurement.
-
-**Legacy behavior (before v2.x)**: Would have measured only package-0
-(15.73W), missing ~14W of platform power!
+**CodeCarbon behavior**: by default uses **package-0 only** (15.73W). With
+`rapl_prefer_psys=True` it uses **psys only** (29.97W), the total platform
+figure — roughly 14W more, because psys also covers chipset, PCIe and other
+platform components that are not CPU power.
 
 ### Desktop: AMD Ryzen Threadripper 1950X (16-Core, 32 threads, Multi-die)
 
@@ -301,54 +381,21 @@ Total Power Consumption: 181.05 Watts
 280 - 100 (idle) = 180 W
 
 Analysis:
-- Each die independently measured via RAPL
+- This capture exposes a single package-0 domain (kernel-dependent)
+- It is not the mirrored 68 W + 68 W case in the teaser above
 - No psys domain available on this AMD system
 - RAPL counter range: 234 sec at 280W (potential wraparound consideration)
 ```
 
 **AMD RAPL Characteristics**:
 
--   Multi-die CPUs report separate packages (package-0-die-0,
-    package-0-die-1)
+-   Multi-die CPUs may report separate packages (package-0-die-0,
+    package-0-die-1). On some parts those domains **mirror the same
+    socket-wide counter**; summing identical readings double-counts
+    CPU power (the 68 W + 68 W → 137 W teaser above). Distinct
+    counters (for example two sockets) should still be added.
 -   No psys domain available on older AMD processors
 -   `core` domain reports very low values (unclear if included in
     package)
--   Package measurements are generally reliable for total CPU power
-
-## Key Takeaways for RAPL Measurements
-
-1.  **CodeCarbon defaults to package domains**: This provides the most
-    reliable and consistent measurements that match CPU TDP
-    specifications. Package domains update correctly under load across
-    all Intel generations.
-2.  **psys can be unreliable**: While `psys` provides total platform
-    power, it:
-    -   Can report higher values than expected (includes chipset, PCIe,
-        etc.)
-    -   May not include all CPU components on older Intel systems : on
-        some computers, `psys` is lower than `package`.
-    -   So it is disabled by default, you can enable it with
-        `prefer_psys=True` if desired
-3.  **Avoid summing overlapping domains**: Never sum psys + package +
-    core + uncore. They are hierarchical and overlapping. This causes
-    2-3x over-counting!
-4.  **Domain hierarchy**:
-    -   psys ⊃ package ⊃ {core, uncore}
-    -   Correct: Use package alone (CodeCarbon default) OR psys alone
-        (with prefer_psys=True)
-    -   Wrong: Sum multiple levels
-5.  **Interface deduplication**: The same domain may appear in both
-    `intel-rapl` (MSR) and `intel-rapl-mmio` interfaces. CodeCarbon
-    automatically deduplicates, preferring MMIO.
-6.  **DRAM measurement**: CodeCarbon does not include DRAM domains by
-    default (`include_dram=False`) for CPU hardware measurement. Set
-    `include_dram=True` to measure CPU package + DRAM domains.
-7.  **Platform-specific behavior**:
-    -   Intel modern: package or psys (with prefer_psys=True)
-    -   Intel older: package-0 for CPU only
-    -   AMD: Sum all package-X-die-Y for multi-die CPUs
-8.  **Limitations**: RAPL does NOT measure:
-    -   Discrete GPUs (use nvidia-smi/rocm-smi)
-    -   SSDs, peripherals, fans
-    -   Actual DRAM chips, we still have to investigate on this point
-    -   Complete system power (use wall meter for accuracy)
+-   A single, non-mirrored package reading is generally reliable for
+    total CPU power

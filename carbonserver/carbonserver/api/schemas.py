@@ -56,7 +56,7 @@ class User(UserBase):
 class EmissionBase(BaseModel):
     timestamp: datetime
     run_id: UUID
-    duration: int = Field(
+    duration: float = Field(
         ..., gt=0, description="The duration must be greater than zero"
     )
     emissions_sum: Optional[float] = Field(
@@ -283,7 +283,7 @@ class ExperimentReport(ExperimentBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    duration: int
+    duration: float
     emissions_rate: float
     emissions_count: int
     cpu_utilization_percent: Optional[float] = None
@@ -396,7 +396,7 @@ class ProjectReport(ProjectBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    duration: int
+    duration: float
     emissions_rate: float
     emissions_count: int
     cpu_utilization_percent: Optional[float] = None
@@ -431,6 +431,12 @@ class Organization(OrganizationBase):
     id: UUID
 
 
+class OrganizationWithRole(Organization):
+    """An organization as listed for a user, with whether they administer it."""
+
+    is_admin: bool = False
+
+
 class OrganizationReport(OrganizationBase):
     organization_id: UUID
     name: str
@@ -443,7 +449,7 @@ class OrganizationReport(OrganizationBase):
     gpu_energy: float
     ram_energy: float
     energy_consumed: float
-    duration: int
+    duration: float
     emissions_rate: float
     emissions_count: int
     cpu_utilization_percent: Optional[float] = None

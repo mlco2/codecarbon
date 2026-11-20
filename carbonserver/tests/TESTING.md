@@ -14,7 +14,7 @@ To test the interface exposed by entities, in memory repositories can be used to
         ```bash
         docker-compose up -d postgres pgadmin
         ```
-        - Use [alembic](carbonserver/carbonserver/database/alembic/README.md) to inject last version of database schema
+        - Use [alembic](../carbonserver/database/alembic/README.md) to inject last version of database schema
         ```bash
         alembic upgrade head
         ```

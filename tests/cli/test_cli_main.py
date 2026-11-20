@@ -1,13 +1,19 @@
 """Tests for the CodeCarbon CLI main function."""
 
+import inspect
+import io
+import os
+import sys
 from types import SimpleNamespace
 
 import pytest
 import requests
 import typer
+from typer import rich_utils
 from typer.testing import CliRunner
 
 from codecarbon.cli import main as cli_main
+from codecarbon.output_methods.base_output import OutputMethod
 
 
 class FakeApiClient:
@@ -32,6 +38,15 @@ def test_version_flag():
     assert result.exit_code == 0
     assert cli_main.__app_name__ in result.output
     assert str(cli_main.__version__) in result.output
+
+
+def test_monitor_help_explains_running_a_command():
+    """`monitor --help` documents how to wrap a command, not just the machine."""
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--help"])
+    assert result.exit_code == 0
+    assert "To track a single command instead" in result.output
+    assert "codecarbon monitor -- python train.py" in result.output
 
 
 def test_api_get_calls_api_and_prints(monkeypatch):
@@ -115,10 +130,48 @@ def test_monitor_run_and_monitor(monkeypatch):
 
     # Test with a simple command
     result = runner.invoke(
-        cli_main.codecarbon, ["monitor", "--no-api", "--", "echo", "Hello, World!"]
+        cli_main.codecarbon,
+        ["monitor", "--no-api", "--", sys.executable, "-c", "print('Hello, World!')"],
     )
     assert result.exit_code == 0
     assert "Hello, World!" in result.output
+
+
+def test_monitor_accepts_tracker_options(monkeypatch):
+    captured = {}
+
+    class FakeTracker:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+        def start(self):
+            pass
+
+        def stop(self):
+            pass
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.EmissionsTracker",
+        FakeTracker,
+    )
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "test-exp")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--project-name",
+            "test-project",
+            "--no-api",
+            "--",
+            sys.executable,
+            "--version",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["project_name"] == "test-project"
 
 
 def test_show_config_handles_access_token_errors(monkeypatch, tmp_path, capsys):
@@ -386,6 +439,310 @@ def test_monitor_offline_initializes_offline_tracker(monkeypatch):
     assert calls["kwargs"]["region"] == "IDF"
 
 
+def _fake_offline_monitor(monkeypatch, tmp_path):
+    """Patch the offline tracker and run the monitor loop in `tmp_path`."""
+    calls = {}
+
+    class FakeOfflineTracker:
+        def __init__(self, **kwargs):
+            calls["kwargs"] = kwargs
+            self._another_instance_already_running = True
+
+        def start(self):
+            pass
+
+        def stop(self):
+            return None
+
+    monkeypatch.setattr(
+        "codecarbon.emissions_tracker.OfflineEmissionsTracker", FakeOfflineTracker
+    )
+    monkeypatch.setattr(cli_main.signal, "signal", lambda *args, **kwargs: None)
+    # Isolate from the config file *and* the CODECARBON_* variables of the user
+    # running the tests: `get_hierarchical_config()` merges both.
+    monkeypatch.setenv("HOME", str(tmp_path))
+    for name in [n for n in os.environ if n.startswith("CODECARBON_")]:
+        monkeypatch.delenv(name)
+    monkeypatch.chdir(tmp_path)
+    return calls
+
+
+def test_monitor_does_not_override_config_with_cli_defaults(monkeypatch, tmp_path):
+    """Options left at their default must not shadow the config file."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\n"
+        "log_level = DEBUG\n"
+        "measure_power_secs = 30\n"
+        "api_call_interval = 10\n"
+        "country_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 0
+    # Nothing is forwarded: the tracker reads those values from the config itself
+    for name in ("log_level", "measure_power_secs", "api_call_interval"):
+        assert name not in calls["kwargs"]
+
+
+def test_monitor_cli_options_win_over_config(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\nlog_level = DEBUG\nmeasure_power_secs = 30\n"
+        "country_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        ["monitor", "--offline", "--log-level", "warning", "--measure-power-secs", "5"],
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["log_level"] == "warning"
+    assert calls["kwargs"]["measure_power_secs"] == 5
+
+
+def test_monitor_stays_quiet_without_configured_log_level(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--offline", "--country-iso-code", "FRA"]
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["log_level"] == "error"
+
+
+def test_monitor_keeps_documented_defaults_without_config(monkeypatch, tmp_path):
+    """With nothing configured, the defaults advertised by `--help` are used."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon, ["monitor", "--offline", "--country-iso-code", "FRA"]
+    )
+
+    assert result.exit_code == 0
+    assert calls["kwargs"]["measure_power_secs"] == 10
+    assert calls["kwargs"]["api_call_interval"] == 30
+
+
+def test_monitor_offline_rejects_empty_country_iso_code_in_config(
+    monkeypatch, tmp_path
+):
+    """An empty value in the config is not a country: the CLI must still refuse."""
+    _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text("[codecarbon]\ncountry_iso_code =\n")
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 1
+
+
+def test_monitor_offline_accepts_country_iso_code_from_config(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+    (tmp_path / ".codecarbon.config").write_text(
+        "[codecarbon]\ncountry_iso_code = FRA\n"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--offline"])
+
+    assert result.exit_code == 0
+    assert "country_iso_code" not in calls["kwargs"]
+
+
+def _isolate_from_user_config(monkeypatch, tmp_path):
+    """Hide the config files and CODECARBON_* variables of the test runner."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    for name in [n for n in os.environ if n.startswith("CODECARBON_")]:
+        monkeypatch.delenv(name)
+    monkeypatch.chdir(tmp_path)
+
+
+def test_monitor_forwards_explicit_tracker_options(monkeypatch, tmp_path):
+    _isolate_from_user_config(monkeypatch, tmp_path)
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["args"] = list(ctx.args)
+        captured["offline"] = offline
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--offline",
+            "--country-iso-code",
+            "FRA",
+            "--project-name",
+            "cli-project",
+            "--api-endpoint",
+            "https://api.example.com",
+            "--api-key",
+            "secret",
+            "--output-dir",
+            "/tmp/emissions",
+            "--output-file",
+            "custom.csv",
+            "--output-methods",
+            "csv,logger",
+            "--no-save-to-file",
+            "--save-to-logger",
+            "--save-to-prometheus",
+            "--no-save-to-logfire",
+            "--prometheus-url",
+            "http://localhost:9091",
+            "--gpu-ids",
+            "0,2",
+            "--emissions-endpoint",
+            "https://emissions.example.com",
+            "--experiment-id",
+            "exp-123",
+            "--experiment-name",
+            "cli-experiment",
+            "--electricitymaps-api-token",
+            "electricity-token",
+            "--co2-signal-api-token",
+            "legacy-token",
+            "--tracking-mode",
+            "process",
+            "--on-csv-write",
+            "update",
+            "--logger-preamble",
+            "monitor:",
+            "--force-cpu-power",
+            "75",
+            "--force-ram-power",
+            "20",
+            "--pue",
+            "1.25",
+            "--wue",
+            "0.4",
+            "--force-carbon-intensity-g-co2e-kwh",
+            "42.5",
+            "--force-mode-cpu-load",
+            "--force-mode-constant",
+            "--no-allow-multiple-runs",
+            "--rapl-include-dram",
+            "--no-rapl-prefer-psys",
+            "--",
+            "python",
+            "train.py",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["args"] == ["python", "train.py"]
+    assert captured["offline"] is True
+    assert captured["kwargs"] == {
+        "measure_power_secs": 10,
+        "api_call_interval": 30,
+        "log_level": "error",
+        "project_name": "cli-project",
+        "api_endpoint": "https://api.example.com",
+        "api_key": "secret",
+        "output_dir": "/tmp/emissions",
+        "output_file": "custom.csv",
+        "output_methods": "csv,logger",
+        "save_to_file": False,
+        "save_to_logger": True,
+        "save_to_prometheus": True,
+        "save_to_logfire": False,
+        "prometheus_url": "http://localhost:9091",
+        "gpu_ids": "0,2",
+        "emissions_endpoint": "https://emissions.example.com",
+        "experiment_id": "exp-123",
+        "experiment_name": "cli-experiment",
+        "electricitymaps_api_token": "electricity-token",
+        "co2_signal_api_token": "legacy-token",
+        "tracking_mode": "process",
+        "on_csv_write": "update",
+        "logger_preamble": "monitor:",
+        "force_cpu_power": 75,
+        "force_ram_power": 20,
+        "pue": 1.25,
+        "wue": 0.4,
+        "force_carbon_intensity_g_co2e_kwh": 42.5,
+        "force_mode_cpu_load": True,
+        "force_mode_constant": True,
+        "allow_multiple_runs": False,
+        "rapl_include_dram": True,
+        "rapl_prefer_psys": False,
+        "country_iso_code": "FRA",
+    }
+
+
+def test_monitor_omits_unspecified_optional_tracker_options(monkeypatch):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+
+    ctx = SimpleNamespace(args=["python", "train.py"])
+    cli_main.monitor(ctx=ctx, offline=True, country_iso_code="FRA")
+
+    assert "pue" not in captured["kwargs"]
+    assert "allow_multiple_runs" not in captured["kwargs"]
+    assert "output_methods" not in captured["kwargs"]
+
+
+def test_monitor_explicit_experiment_id_satisfies_online_validation(
+    monkeypatch, tmp_path
+):
+    _isolate_from_user_config(monkeypatch, tmp_path)
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--experiment-id",
+            "exp-from-cli",
+            "--",
+            "python",
+            "train.py",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["kwargs"]["experiment_id"] == "exp-from-cli"
+
+
+def test_monitor_help_lists_explicit_tracker_options(monkeypatch):
+    # Typer's rich help reads TERMINAL_WIDTH at import time, so CliRunner's
+    # terminal_width has no effect and a narrow CI console wraps option names.
+    monkeypatch.setattr(rich_utils, "MAX_WIDTH", 200)
+    monkeypatch.setattr(rich_utils, "FORCE_TERMINAL", False)
+    runner = CliRunner()
+    result = runner.invoke(cli_main.codecarbon, ["monitor", "--help"])
+
+    assert result.exit_code == 0
+    assert "--output-methods" in result.output
+    assert "--pue" in result.output
+    assert "--wue" in result.output
+    assert "--force-cpu-power" in result.output
+    assert "--rapl-include-dram" in result.output
+
+
 def test_monitor_delegates_offline_flag_to_run_and_monitor(monkeypatch):
     captured = {}
 
@@ -422,7 +779,8 @@ def test_monitor_delegates_online_mode_to_run_and_monitor(monkeypatch):
     result = cli_main.monitor(ctx=ctx, api=True)
     assert result == "ok"
     assert captured["offline"] is False
-    assert captured["kwargs"]["save_to_api"] is True
+    assert OutputMethod.API in captured["kwargs"]["output_methods"]
+    assert "save_to_api" not in captured["kwargs"]
 
 
 def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
@@ -440,7 +798,7 @@ def test_monitor_delegates_to_run_and_monitor_with_extra_args(monkeypatch):
     result = cli_main.monitor(ctx=ctx, api=False)
     assert result == "ok"
     assert captured["args"] == ["python", "train.py"]
-    assert captured["kwargs"]["save_to_api"] is False
+    assert OutputMethod.API not in captured["kwargs"]["output_methods"]
 
 
 def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
@@ -458,7 +816,7 @@ def test_monitor_no_api_skips_experiment_id_requirement(monkeypatch):
     result = cli_main.monitor(ctx=ctx, api=False)
     assert result == "ok"
     assert captured["offline"] is False
-    assert captured["kwargs"]["save_to_api"] is False
+    assert OutputMethod.API not in captured["kwargs"]["output_methods"]
 
 
 def test_monitor_passes_log_level_to_run_and_monitor(monkeypatch):
@@ -480,6 +838,16 @@ def test_monitor_passes_log_level_to_run_and_monitor(monkeypatch):
     assert captured["kwargs"]["log_level"] == "debug"
 
 
+def test_external_config_returns_empty_dict_on_error(monkeypatch):
+    """A malformed config file must not crash `monitor`: fall back to `{}`."""
+
+    def raise_error():
+        raise ValueError("malformed config file")
+
+    monkeypatch.setattr("codecarbon.core.config.get_hierarchical_config", raise_error)
+    assert cli_main._external_config() == {}
+
+
 def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
     monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: None)
 
@@ -487,3 +855,145 @@ def test_monitor_online_requires_experiment_id_for_wrapped_command(monkeypatch):
     with pytest.raises(typer.Exit) as exc_info:
         cli_main.monitor(ctx=ctx, offline=False, api=True)
     assert exc_info.value.exit_code == 1
+
+
+def test_main_does_not_crash_on_non_utf8_console(monkeypatch):
+    buffer = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(buffer, encoding="cp1252"))
+    monkeypatch.setattr(
+        sys, "stderr", io.TextIOWrapper(io.BytesIO(), encoding="cp1252")
+    )
+
+    def fake_cli():
+        cli_main.print("🌱 CodeCarbon")
+
+    monkeypatch.setattr(cli_main, "codecarbon", fake_cli)
+
+    cli_main.main()
+
+    sys.stdout.flush()
+    assert buffer.getvalue().decode("cp1252").strip() == "? CodeCarbon"
+
+
+@pytest.mark.parametrize(
+    "conf, api, expected",
+    [
+        ({"output_methods": "prometheus"}, True, ["prometheus", "api"]),
+        ({"output_methods": "csv,api"}, False, ["csv"]),
+        ({"save_to_file": "false", "save_to_logger": "true"}, True, ["logger", "api"]),
+        ({"save_to_api": "true"}, False, ["csv"]),
+    ],
+)
+def test_monitor_api_flag_adds_to_configured_output_methods(
+    monkeypatch, conf, api, expected
+):
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+        return "ok"
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "exp-1")
+    monkeypatch.setattr("codecarbon.core.config.get_hierarchical_config", lambda: conf)
+
+    cli_main.monitor(ctx=SimpleNamespace(args=["python", "train.py"]), api=api)
+
+    assert captured["kwargs"]["output_methods"] == [OutputMethod(m) for m in expected]
+
+
+@pytest.mark.parametrize(
+    "cli_args, expected",
+    [
+        (["--output-methods", "csv,logger"], ["csv", "logger", "api"]),
+        (["--output-methods", "csv,logger", "--no-api"], ["csv", "logger"]),
+        (["--output-methods", "logger,api", "--no-api"], ["logger"]),
+        (["--save-to-logger"], ["csv", "logger", "api"]),
+        (["--no-save-to-file", "--save-to-prometheus"], ["prometheus", "api"]),
+    ],
+)
+def test_monitor_online_honours_cli_output_options(
+    monkeypatch, tmp_path, cli_args, expected
+):
+    """Online mode builds `output_methods` itself: it must start from the CLI's."""
+    _isolate_from_user_config(monkeypatch, tmp_path)
+    captured = {}
+
+    def fake_run_and_monitor(ctx, offline=False, **kwargs):
+        captured["kwargs"] = kwargs
+
+    monkeypatch.setattr("codecarbon.cli.monitor.run_and_monitor", fake_run_and_monitor)
+    monkeypatch.setattr(cli_main, "get_existing_exp_id", lambda: "exp-1")
+
+    result = CliRunner().invoke(
+        cli_main.codecarbon, ["monitor", *cli_args, "--", "python", "train.py"]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["kwargs"]["output_methods"] == [OutputMethod(m) for m in expected]
+
+
+def test_monitor_accepts_fractional_forced_power(monkeypatch, tmp_path):
+    """The tracker reads forced powers as floats: the CLI must not reject 7.5 W."""
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    result = CliRunner().invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--offline",
+            "--country-iso-code",
+            "FRA",
+            "--force-cpu-power",
+            "42.5",
+            "--force-ram-power",
+            "7.5",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls["kwargs"]["force_cpu_power"] == 42.5
+    assert calls["kwargs"]["force_ram_power"] == 7.5
+
+
+# Tracker arguments `codecarbon monitor` cannot or need not expose.
+_NOT_CLI_TRACKER_ARGS = {
+    "logging_logger",  # a Python logger object
+    "output_handlers",  # Python output handler objects
+    "save_to_api",  # --api / --no-api
+}
+
+
+def test_monitor_exposes_every_tracker_option():
+    """Adding a tracker argument must add the matching `monitor` option (#1273)."""
+    from codecarbon.emissions_tracker import BaseEmissionsTracker
+
+    tracker_args = set(inspect.signature(BaseEmissionsTracker.__init__).parameters)
+    monitor_options = set(inspect.signature(cli_main.monitor).parameters)
+
+    missing = tracker_args - {"self"} - _NOT_CLI_TRACKER_ARGS - monitor_options
+    assert not missing, f"Add these options to `codecarbon monitor`: {missing}"
+
+
+def test_monitor_forwards_live_output_metadata_and_eso_options(monkeypatch, tmp_path):
+    calls = _fake_offline_monitor(monkeypatch, tmp_path)
+
+    result = CliRunner().invoke(
+        cli_main.codecarbon,
+        [
+            "monitor",
+            "--offline",
+            "--country-iso-code",
+            "GBR",
+            "--live-output-file",
+            "live.csv",
+            "--metadata",
+            "metadata.json",
+            "--use-national-grid-eso-api",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls["kwargs"]["live_output_file"] == "live.csv"
+    assert calls["kwargs"]["metadata"] == "metadata.json"
+    assert calls["kwargs"]["use_national_grid_eso_api"] is True
