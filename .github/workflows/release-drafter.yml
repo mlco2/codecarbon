@@ -17,6 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       # The release number comes from codecarbon/_version.py, kept in sync by bumpver
+        with:
+          persist-credentials: false
       - id: version
         run: echo "version=$(python3 -c "import runpy; print(runpy.run_path('codecarbon/_version.py')['__version__'])")" >> "$GITHUB_OUTPUT"
       # Drafts your next Release notes as Pull Requests are merged into "master"
