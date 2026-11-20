@@ -4,7 +4,7 @@
 version = 1
 
 [defaults]
-# Block on high/critical; medium and below stay advisory.
+# High/critical fails the local pre-push hook; in CI the job is advisory (continue-on-error: true).
 fail_on = "high"
 
 [sources]

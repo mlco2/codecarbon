@@ -19,5 +19,7 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
     - name: PySentry audit
       uses: nyudenkov/pysentry@d351b9969fc6b9287347295245bcf5b13447e634 # v0.5.0
