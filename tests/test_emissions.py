@@ -294,11 +294,14 @@ class TestEmissions(unittest.TestCase):
         # WHEN
         stale = []
         for zone, entry in nordic_data["data"].items():
-            coverage = entry.get("coverage", "")
-            if "uncovered: " not in coverage:
+            # FI has no coverage breakdown.
+            if "coverage" not in entry or entry["coverage"] == "100.00%":
                 continue
+            coverage = entry["coverage"]
+            self.assertIn("uncovered: ", coverage, zone)
             listed = coverage.split("uncovered: ", 1)[1].rstrip(")").split(", ")
             for item in listed:
+                self.assertRegex(item, r"^[A-Za-z ]+ \d+\.\d+%$", f"{zone}: {coverage}")
                 production_type = item.rsplit(" ", 1)[0]
                 if production_type.lower().replace(" ", "_") in factors:
                     stale.append(f"{zone}: {production_type}")
