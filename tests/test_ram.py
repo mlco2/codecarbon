@@ -1,11 +1,17 @@
+import os
 import subprocess
+import tempfile
 import unittest
 from textwrap import dedent
 from unittest import mock
 
 import numpy as np
 
-from codecarbon.external.ram import RAM, RAM_SLOT_POWER_X86
+from codecarbon.external.ram import (
+    RAM,
+    RAM_SLOT_POWER_X86,
+    _cgroup_memory_limit_bytes,
+)
 
 # TODO: need help: test multiprocess case
 
@@ -257,6 +263,110 @@ class TestRAM(unittest.TestCase):
 
         self.assertAlmostEqual(result.W, 18.0, places=6)
         mock_calc.assert_called_once_with(12.0)
+
+    def _machine_power_with_limit(self, total_gb, limit_bytes):
+        ram = RAM(tracking_mode="machine")
+        with (
+            mock.patch("codecarbon.external.ram.SLURM_JOB_ID", ""),
+            mock.patch(
+                "codecarbon.external.ram.psutil.virtual_memory",
+                return_value=mock.Mock(total=total_gb * 1024**3),
+            ),
+            mock.patch(
+                "codecarbon.external.ram._cgroup_memory_limit_bytes",
+                return_value=limit_bytes,
+            ),
+            mock.patch.object(
+                ram, "_calculate_ram_power", return_value=10.0
+            ) as mock_calc,
+        ):
+            ram.total_power()
+            machine_gb = ram.machine_memory_GB
+        return mock_calc, machine_gb
+
+    def test_total_power_uses_a_lower_cgroup_memory_limit(self):
+        mock_calc, machine_gb = self._machine_power_with_limit(1024, 16 * 1024**3)
+
+        mock_calc.assert_called_once_with(16.0)
+        self.assertEqual(machine_gb, 1024.0)
+
+    def test_total_power_ignores_a_cgroup_limit_above_the_total(self):
+        # cgroup v1 reports "no limit" as a very large number
+        mock_calc, _ = self._machine_power_with_limit(8, 9223372036854771712)
+
+        mock_calc.assert_called_once_with(8.0)
+
+    def test_total_power_without_a_cgroup_limit_uses_the_total(self):
+        mock_calc, _ = self._machine_power_with_limit(64, None)
+
+        mock_calc.assert_called_once_with(64.0)
+
+    def test_total_power_on_slurm_ignores_the_cgroup_limit(self):
+        ram = RAM(tracking_mode="machine")
+
+        with (
+            mock.patch("codecarbon.external.ram.SLURM_JOB_ID", "123"),
+            mock.patch.object(
+                type(ram),
+                "slurm_memory_GB",
+                new_callable=mock.PropertyMock,
+                return_value=32.0,
+            ),
+            mock.patch(
+                "codecarbon.external.ram._cgroup_memory_limit_bytes",
+                return_value=4 * 1024**3,
+            ),
+            mock.patch.object(
+                ram, "_calculate_ram_power", return_value=20.0
+            ) as mock_calc,
+        ):
+            ram.total_power()
+
+        mock_calc.assert_called_once_with(32.0)
+
+    def test_cgroup_memory_limit_reads_v2_then_v1(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            v2 = os.path.join(tmp, "memory.max")
+            v1 = os.path.join(tmp, "memory.limit_in_bytes")
+            with mock.patch(
+                "codecarbon.external.ram.CGROUP_MEMORY_LIMIT_FILES", (v2, v1)
+            ):
+                self.assertIsNone(_cgroup_memory_limit_bytes())
+                with open(v1, "w") as f:
+                    f.write("4294967296\n")
+                self.assertEqual(_cgroup_memory_limit_bytes(), 4 * 1024**3)
+                with open(v2, "w") as f:
+                    f.write("max\n")
+                self.assertIsNone(_cgroup_memory_limit_bytes())
+                with open(v2, "w") as f:
+                    f.write("2147483648\n")
+                self.assertEqual(_cgroup_memory_limit_bytes(), 2 * 1024**3)
+                with open(v2, "w") as f:
+                    f.write("not a number\n")
+                self.assertIsNone(_cgroup_memory_limit_bytes())
+
+    def test_cgroup_memory_limit_of_zero_means_no_limit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            v2 = os.path.join(tmp, "memory.max")
+            with open(v2, "w") as f:
+                f.write("0\n")
+            with mock.patch("codecarbon.external.ram.CGROUP_MEMORY_LIMIT_FILES", (v2,)):
+                limit = _cgroup_memory_limit_bytes()
+        self.assertIsNone(limit)
+        mock_calc, _ = self._machine_power_with_limit(64, limit)
+        mock_calc.assert_called_once_with(64.0)
+
+    def test_cgroup_memory_limit_skips_an_unreadable_v2_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            v2 = os.path.join(tmp, "memory.max")
+            os.mkdir(v2)
+            v1 = os.path.join(tmp, "memory.limit_in_bytes")
+            with open(v1, "w") as f:
+                f.write("1073741824\n")
+            with mock.patch(
+                "codecarbon.external.ram.CGROUP_MEMORY_LIMIT_FILES", (v2, v1)
+            ):
+                self.assertEqual(_cgroup_memory_limit_bytes(), 1024**3)
 
     def test_total_power_returns_zero_on_exception(self):
         ram = RAM(tracking_mode="machine")
