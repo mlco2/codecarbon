@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     )
     environment: str = Field("production")
     jwt_key: str = Field("", validation_alias=AliasChoices("JWT_KEY", "jwt_key"))
+    # Used by SessionMiddleware between login steps
+    session_secret_key: str = Field(
+        "session_secret_key",
+        validation_alias=AliasChoices("SESSION_SECRET_KEY", "session_secret_key"),
+    )
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
     server_host: str = Field(
         "0.0.0.0", validation_alias=AliasChoices("SERVER_HOST", "server_host")
