@@ -11,9 +11,10 @@ class EmissionUnit(str, Enum):
 
 def get_emissions_unit(data: pd.DataFrame) -> EmissionUnit:
     unit = EmissionUnit.KILOGRAM
-    if (data.emissions < 1).all():
+    emissions = data.emissions.dropna()
+    if (emissions < 1).all():
         unit = EmissionUnit.GRAM
-    if (data.emissions > 1000).all():
+    if (emissions > 1000).all():
         unit = EmissionUnit.TON
     return unit
 

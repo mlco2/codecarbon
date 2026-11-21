@@ -63,3 +63,9 @@ Write it at the repo root and add it to `.git/info/exclude` so it is never commi
 | A test that passes with and without the fix | Check step 3.2 for every test |
 | `pytest.approx(x)` on energies with a 1000 mJ baseline | `rel=1e-5` |
 | Counting warnings on all GPUs (fakes have 2) | Filter messages on `GPU 0` |
+
+## Message to reviewers
+
+Summary of the review and fixes, and any behaviour changes.
+
+If the PR is from a fork, give the command line to push back to the fork.

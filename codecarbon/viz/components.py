@@ -578,7 +578,7 @@ class Components:
             with open("codecarbon/data/canada_provinces.geojson", "r") as geo:
                 mp = json.load(geo)
             for choropleth in choropleth_data:
-                region_name = choropleth["region_code"]
+                region_name = choropleth["region_name"].lower()
                 choropleth["cartodb_id"] = [
                     m["properties"]["cartodb_id"]
                     for m in mp["features"]
@@ -664,17 +664,22 @@ class Components:
         # Note: necessary to both convert to pandas and replace null values for hover value
         project_data = pd.DataFrame(project_data)
         project_data = extends_emissions_units(project_data)
-        project_data = project_data.replace(np.nan, "", regex=True)
         unit = get_emissions_unit(project_data)
+        y = (
+            f"emissions_in_{unit.value}"
+            if unit != EmissionUnit.KILOGRAM
+            else "emissions"
+        )
+        # A "" in the plotted column would make plotly treat it as categories.
+        hover_columns = project_data.columns.drop(y)
+        project_data[hover_columns] = project_data[hover_columns].replace(
+            np.nan, "", regex=True
+        )
         hover_data = {c: True for c in project_data.columns}
         bar = (
             px.bar(
                 project_data,
-                y=(
-                    f"emissions_in_{unit.value}"
-                    if unit != EmissionUnit.KILOGRAM
-                    else "emissions"
-                ),
+                y=y,
                 hover_data=hover_data,
                 labels={
                     "index": "Entry",

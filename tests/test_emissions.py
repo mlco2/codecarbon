@@ -224,6 +224,42 @@ class TestEmissions(unittest.TestCase):
             emissions, 3 * canada["carbon_intensity"] / 1000, places=6
         )
 
+    def test_regional_emissions_rate_uses_the_file_unit(self):
+        lbs = Emissions._regional_emissions_rate(1000.0, "lbs/MWh")
+        grams = Emissions._regional_emissions_rate(73, "g/kWh")
+
+        self.assertAlmostEqual(lbs.kgs_per_kWh, 0.45359237, places=6)
+        self.assertAlmostEqual(grams.kgs_per_kWh, 0.073, places=9)
+        with self.assertRaises(ValueError):
+            Emissions._regional_emissions_rate(73, "kg/kWh")
+
+    def test_canada_emissions_data_has_every_province_and_territory(self):
+        canada = self._data_source.get_country_emissions_data("can")
+
+        self.assertEqual(canada["_unit"]["emissions"], "g/kWh")
+        self.assertEqual(canada["_source"]["year"], 2024)
+        regions = {k: v for k, v in canada.items() if not k.startswith("_")}
+        self.assertEqual(
+            sorted(v["regionCode"] for v in regions.values()),
+            sorted(
+                ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE"]
+                + ["QC", "SK", "YT"]
+            ),
+        )
+        self.assertTrue(all(0 < v["emissions"] < 1000 for v in regions.values()))
+
+    def test_get_emissions_PRIVATE_INFRA_CANADA_metadata_key_falls_back_to_country(
+        self,
+    ):
+        energy = Energy.from_energy(kWh=3)
+        geo = GeoMetadata(country_iso_code="CAN", country_name="Canada", region="_unit")
+
+        emissions = self._emissions.get_private_infra_emissions(energy, geo)
+
+        self.assertAlmostEqual(
+            emissions, self._emissions.get_country_emissions(energy, geo), places=6
+        )
+
     def test_get_emissions_PRIVATE_INFRA_CANADA_WITH_REGION(self):
         # WHEN
         emissions = self._emissions.get_private_infra_emissions(
@@ -232,13 +268,13 @@ class TestEmissions(unittest.TestCase):
                 country_iso_code="CAN", country_name="Canada", region="ontario"
             ),
         )
-        manually_computed_emissions = (
-            3 * (0.995725971 * 0.0 + 0.8166885263 * 0.1 + 0.7438415916 * 8.6) / 100.1
-        )
+        # ECCC NIR 2026, Table A7-6: Ontario 2024 consumption intensity
+        # is 73 g CO2e/kWh (codecarbon/data/private_infra/2024/canada_emissions.json).
+        manually_computed_emissions = 3 * 73 / 1000
 
         # THEN
         assert isinstance(emissions, float)
-        self.assertAlmostEqual(emissions, manually_computed_emissions, places=2)
+        self.assertAlmostEqual(emissions, manually_computed_emissions, places=6)
 
     def test_get_emissions_PRIVATE_INFRA_unknown_country(self):
         """
@@ -382,9 +418,6 @@ class TestEmissions(unittest.TestCase):
                     patch.object(
                         self._data_source, "get_country_emissions_data"
                     ) as get_regional_emissions_data,
-                    patch.object(
-                        self._data_source, "get_country_energy_mix_data"
-                    ) as get_regional_energy_mix_data,
                     patch("codecarbon.core.emissions.logger.error") as log_error,
                     patch("codecarbon.core.emissions.logger.warning") as log_warning,
                 ):
@@ -393,7 +426,6 @@ class TestEmissions(unittest.TestCase):
                 self.assertAlmostEqual(emissions, expected_emissions, places=6)
                 get_nordic_data.assert_not_called()
                 get_regional_emissions_data.assert_not_called()
-                get_regional_energy_mix_data.assert_not_called()
                 log_error.assert_not_called()
                 log_warning.assert_not_called()
 
@@ -411,15 +443,11 @@ class TestEmissions(unittest.TestCase):
             patch.object(
                 self._data_source, "get_country_emissions_data"
             ) as get_regional_emissions_data,
-            patch.object(
-                self._data_source, "get_country_energy_mix_data"
-            ) as get_regional_energy_mix_data,
         ):
             emissions = self._emissions.get_private_infra_emissions(energy, geo)
 
         self.assertAlmostEqual(emissions, expected_emissions, places=6)
         get_regional_emissions_data.assert_not_called()
-        get_regional_energy_mix_data.assert_not_called()
 
     def test_try_get_nordic_region_emissions_returns_none_if_region_data_missing(self):
         # GIVEN
