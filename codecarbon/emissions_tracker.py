@@ -232,6 +232,7 @@ class BaseEmissionsTracker(ABC):
                 "Please update your config to use 'electricitymaps_api_token' instead."
             )
             self._electricitymaps_api_token = old_token
+            self._conf["electricitymaps_api_token"] = old_token
 
     def _resolve_output_methods(
         self,
@@ -408,13 +409,13 @@ class BaseEmissionsTracker(ABC):
     def _ensure_emissions_engine(self) -> None:
         if self._emissions is not None:
             return
+        from codecarbon.core.carbon_intensity import build_providers
         from codecarbon.core.emissions import Emissions
 
         self._emissions = Emissions(
             self._data_source,
-            self._electricitymaps_api_token,
             force_carbon_intensity_g_co2e_kwh=self.force_carbon_intensity_g_co2e_kwh,
-            use_national_grid_eso_api=self._use_national_grid_eso_api,
+            providers=build_providers(self._conf),
         )
 
     def _ensure_geo_metadata(self) -> None:

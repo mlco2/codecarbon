@@ -3,11 +3,13 @@ import time
 import unittest
 from unittest.mock import patch
 
-import pytest
 import responses
 
-from codecarbon.core import national_grid_eso_api
-from codecarbon.core.national_grid_eso_api import NationalGridESOAPIError
+from codecarbon.core.carbon_intensity import national_grid_eso
+from codecarbon.core.carbon_intensity.national_grid_eso import (
+    NationalGridESOAPIError,
+    NationalGridESOProvider,
+)
 from codecarbon.core.units import Energy
 from codecarbon.external.geography import GeoMetadata
 
@@ -23,17 +25,17 @@ class TestNationalGridESOAPI(unittest.TestCase):
         )
         # Each test expects its own mocked HTTP call; the module-level cache
         # would otherwise serve a stale value from a previous test.
-        national_grid_eso_api.clear_cache()
+        NationalGridESOProvider.reset_cache()
 
     def tearDown(self) -> None:
-        national_grid_eso_api.clear_cache()
+        NationalGridESOProvider.reset_cache()
 
     # ------------------------------------------------------------------
     # is_supported
     # ------------------------------------------------------------------
 
     def test_is_supported_gbr(self):
-        assert national_grid_eso_api.is_supported(self._geo) is True
+        assert NationalGridESOProvider().is_supported(self._geo) is True
 
     def test_is_supported_other_country(self):
         geo = GeoMetadata(
@@ -42,13 +44,13 @@ class TestNationalGridESOAPI(unittest.TestCase):
             region=None,
             country_2letter_iso_code="FR",
         )
-        assert national_grid_eso_api.is_supported(geo) is False
+        assert NationalGridESOProvider().is_supported(geo) is False
 
     def test_is_supported_gb_region(self):
         geo = GeoMetadata(
             country_iso_code="GBR", country_name="United Kingdom", region="Scotland"
         )
-        assert national_grid_eso_api.is_supported(geo) is True
+        assert NationalGridESOProvider().is_supported(geo) is True
 
     def test_is_not_supported_in_northern_ireland(self):
         # Northern Ireland is on the all-island grid, not covered by the API.
@@ -57,7 +59,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
             country_name="United Kingdom",
             region="Northern Ireland",
         )
-        assert national_grid_eso_api.is_supported(geo) is False
+        assert NationalGridESOProvider().is_supported(geo) is False
 
     # ------------------------------------------------------------------
     # get_emissions – happy paths
@@ -67,7 +69,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
     def test_get_emissions_uses_actual(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={
                 "data": [
                     {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
@@ -75,7 +77,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
             },
             status=200,
         )
-        result = national_grid_eso_api.get_emissions(self._energy, self._geo)
+        result = NationalGridESOProvider().get_emissions(self._energy, self._geo)
         # 263 g/kWh * 0.001 kg/g * 10 kWh = 2.63 kg
         assert round(result, 5) == 2.63
 
@@ -84,7 +86,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
         # actual=0 is a valid value and must not fall through to forecast
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={
                 "data": [
                     {"intensity": {"forecast": 266, "actual": 0, "index": "very low"}}
@@ -92,7 +94,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
             },
             status=200,
         )
-        result = national_grid_eso_api.get_emissions(self._energy, self._geo)
+        result = NationalGridESOProvider().get_emissions(self._energy, self._geo)
         # 0 g/kWh * 10 kWh = 0.0 kg
         assert result == 0.0
 
@@ -100,7 +102,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
     def test_get_emissions_falls_back_to_forecast_when_actual_is_none(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={
                 "data": [
                     {
@@ -114,7 +116,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
             },
             status=200,
         )
-        result = national_grid_eso_api.get_emissions(self._energy, self._geo)
+        result = NationalGridESOProvider().get_emissions(self._energy, self._geo)
         # 266 g/kWh * 0.001 * 10 kWh = 2.66 kg
         assert round(result, 5) == 2.66
 
@@ -122,11 +124,11 @@ class TestNationalGridESOAPI(unittest.TestCase):
     def test_get_emissions_falls_back_to_forecast_when_actual_absent(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={"data": [{"intensity": {"forecast": 200, "index": "low"}}]},
             status=200,
         )
-        result = national_grid_eso_api.get_emissions(self._energy, self._geo)
+        result = NationalGridESOProvider().get_emissions(self._energy, self._geo)
         assert round(result, 5) == 2.0
 
     # ------------------------------------------------------------------
@@ -137,18 +139,18 @@ class TestNationalGridESOAPI(unittest.TestCase):
     def test_get_emissions_raises_on_http_error(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={"error": "Service unavailable"},
             status=503,
         )
         with self.assertRaises(NationalGridESOAPIError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
 
     @responses.activate
     def test_get_emissions_raises_when_both_actual_and_forecast_are_none(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={
                 "data": [
                     {
@@ -163,47 +165,41 @@ class TestNationalGridESOAPI(unittest.TestCase):
             status=200,
         )
         with self.assertRaises(NationalGridESOAPIError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
 
     @responses.activate
     def test_get_emissions_raises_on_malformed_response(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={"unexpected": "shape"},
             status=200,
         )
         with self.assertRaises(NationalGridESOAPIError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
 
     @responses.activate
     def test_get_emissions_raises_api_error_on_non_json_body(self):
         # A captive portal or proxy can answer 200 with an HTML page.
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             body="<html>Sign in to the Wi-Fi</html>",
             status=200,
         )
         with self.assertRaises(NationalGridESOAPIError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
 
     @responses.activate
     def test_get_emissions_raises_api_error_on_null_intensity(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={"data": [{"intensity": None}]},
             status=200,
         )
         with self.assertRaises(NationalGridESOAPIError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
-
-    @pytest.mark.integ_test
-    @unittest.skip("Skip real API call in regular test runs")
-    def test_get_emissions_real_api(self):
-        result = national_grid_eso_api.get_emissions(self._energy, self._geo)
-        assert result > 0
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
 
     # ------------------------------------------------------------------
     # caching
@@ -213,7 +209,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
     def test_get_emissions_caches_within_ttl(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={
                 "data": [
                     {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
@@ -221,9 +217,9 @@ class TestNationalGridESOAPI(unittest.TestCase):
             },
             status=200,
         )
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
         # Only the first call should have hit the network; the rest are
         # served from the cache until its TTL expires.
         assert len(responses.calls) == 1
@@ -232,7 +228,7 @@ class TestNationalGridESOAPI(unittest.TestCase):
     def test_get_emissions_refetches_after_cache_cleared(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={
                 "data": [
                     {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
@@ -240,16 +236,16 @@ class TestNationalGridESOAPI(unittest.TestCase):
             },
             status=200,
         )
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
-        national_grid_eso_api.clear_cache()
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
+        NationalGridESOProvider.reset_cache()
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
         assert len(responses.calls) == 2
 
     @responses.activate
     def test_get_emissions_refetches_after_ttl_expires(self):
         responses.add(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={
                 "data": [
                     {"intensity": {"forecast": 266, "actual": 263, "index": "moderate"}}
@@ -257,35 +253,26 @@ class TestNationalGridESOAPI(unittest.TestCase):
             },
             status=200,
         )
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
         # Simulate TTL expiry without sleeping in the test.
-        national_grid_eso_api._cache = (
-            national_grid_eso_api._cache[0],
-            national_grid_eso_api._cache[1]
-            - national_grid_eso_api._CACHE_TTL_SECONDS
-            - 1,
-        )
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
+        self._state().fetched_at -= NationalGridESOProvider.cache_ttl + 1
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
         assert len(responses.calls) == 2
 
     def test_concurrent_callers_with_expired_cache_make_one_request(self):
         calls = []
         barrier = threading.Barrier(2)
 
-        def slow_fetch():
+        def slow_fetch(geo):
             calls.append(1)
             time.sleep(0.2)
             return 263
 
         def measure():
             barrier.wait()
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
 
-        with patch.object(
-            national_grid_eso_api,
-            "_fetch_carbon_intensity_g_per_kWh",
-            side_effect=slow_fetch,
-        ):
+        with patch.object(NationalGridESOProvider, "_fetch", side_effect=slow_fetch):
             threads = [threading.Thread(target=measure) for _ in range(2)]
             for thread in threads:
                 thread.start()
@@ -298,46 +285,49 @@ class TestNationalGridESOAPI(unittest.TestCase):
     # failure cooldown
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _state():
+        # The API describes GB as a whole, so all requests share one key.
+        return NationalGridESOProvider._lock_and_state(None)[1]
+
     def _expire_cooldown(self):
-        national_grid_eso_api._cooldown_until = 0.0
+        self._state().cooldown_until = 0.0
 
     @responses.activate
     def test_failure_skips_requests_during_cooldown(self):
-        responses.add(responses.GET, national_grid_eso_api.URL, status=503)
+        responses.add(responses.GET, national_grid_eso.URL, status=503)
         with self.assertRaises(NationalGridESOAPIError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
 
-        with self.assertRaises(national_grid_eso_api.NationalGridESOAPICooldownError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+        with self.assertRaises(national_grid_eso.NationalGridESOAPICooldownError):
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
         assert len(responses.calls) == 1
 
     @responses.activate
     def test_cooldown_doubles_on_consecutive_failures_and_resets_on_success(self):
-        responses.add(responses.GET, national_grid_eso_api.URL, status=503)
+        responses.add(responses.GET, national_grid_eso.URL, status=503)
         for expected in (30, 60, 120):
             with self.assertRaises(NationalGridESOAPIError):
-                national_grid_eso_api.get_emissions(self._energy, self._geo)
-            assert national_grid_eso_api._cooldown_length == expected
+                NationalGridESOProvider().get_emissions(self._energy, self._geo)
+            assert self._state().cooldown_length == expected
             self._expire_cooldown()
 
         responses.replace(
             responses.GET,
-            national_grid_eso_api.URL,
+            national_grid_eso.URL,
             json={"data": [{"intensity": {"forecast": 266, "actual": 263}}]},
             status=200,
         )
-        national_grid_eso_api.get_emissions(self._energy, self._geo)
-        assert national_grid_eso_api._cooldown_length == 0.0
+        NationalGridESOProvider().get_emissions(self._energy, self._geo)
+        assert self._state().cooldown_length == 0.0
 
     @responses.activate
     def test_cooldown_is_capped(self):
-        responses.add(responses.GET, national_grid_eso_api.URL, status=503)
-        national_grid_eso_api._cooldown_length = (
-            national_grid_eso_api.NATIONAL_GRID_ESO_MAX_COOLDOWN
-        )
+        responses.add(responses.GET, national_grid_eso.URL, status=503)
+        self._state().cooldown_length = national_grid_eso.NATIONAL_GRID_ESO_MAX_COOLDOWN
         with self.assertRaises(NationalGridESOAPIError):
-            national_grid_eso_api.get_emissions(self._energy, self._geo)
+            NationalGridESOProvider().get_emissions(self._energy, self._geo)
         assert (
-            national_grid_eso_api._cooldown_length
-            == national_grid_eso_api.NATIONAL_GRID_ESO_MAX_COOLDOWN
+            self._state().cooldown_length
+            == national_grid_eso.NATIONAL_GRID_ESO_MAX_COOLDOWN
         )
