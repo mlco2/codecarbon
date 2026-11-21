@@ -578,7 +578,7 @@ class Components:
             with open("codecarbon/data/canada_provinces.geojson", "r") as geo:
                 mp = json.load(geo)
             for choropleth in choropleth_data:
-                region_name = choropleth["region_code"]
+                region_name = choropleth["region_name"].lower()
                 choropleth["cartodb_id"] = [
                     m["properties"]["cartodb_id"]
                     for m in mp["features"]

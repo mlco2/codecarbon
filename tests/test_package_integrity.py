@@ -95,11 +95,11 @@ def test_country_specific_data_access():
         # This is acceptable if USA data doesn't exist or has issues
         pass
 
-    # Test Canada energy mix if available
+    # Test Canada emissions if available
     try:
-        canada_data = ds.get_country_energy_mix_data("can")
-        assert isinstance(canada_data, dict), "Canada energy mix data should be a dict"
-        assert len(canada_data) > 0, "Canada energy mix data should not be empty"
+        canada_data = ds.get_country_emissions_data("can")
+        assert isinstance(canada_data, dict), "Canada emissions data should be a dict"
+        assert len(canada_data) > 0, "Canada emissions data should not be empty"
     except Exception:
         # This is acceptable if Canada data doesn't exist or has issues
         pass

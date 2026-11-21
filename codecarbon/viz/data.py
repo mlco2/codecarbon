@@ -5,7 +5,7 @@ import requests
 from dash import dash_table as dt
 
 from codecarbon.core.emissions import Emissions
-from codecarbon.input import DataSource, DataSourceException
+from codecarbon.input import DataSource
 
 
 class Data:
@@ -174,24 +174,14 @@ class Data:
         if country_iso_code.upper() not in ["USA", "CAN"]:
             return [{"region_code": "", "region_name": "", "emissions": ""}]
 
-        try:
-            region_emissions = self._data_source.get_country_emissions_data(
-                country_iso_code.lower()
-            )
-        except (
-            DataSourceException
-        ):  # This country has regional data at the energy mix level, not the emissions level
-            country_energy_mix = self._data_source.get_country_energy_mix_data(
-                country_iso_code.lower()
-            )
-            region_emissions = {
-                region: {"regionCode": region}
-                for region, energy_mix in country_energy_mix.items()
-            }
+        region_emissions = self._data_source.get_country_emissions_data(
+            country_iso_code.lower()
+        )
         choropleth_data = []
         for region_name in region_emissions.keys():
-            region_code = region_emissions[region_name]["regionCode"]
-            if region_name not in ["_unit"]:
+            # Keys starting with "_" hold metadata ("_unit", "_source"), not regions
+            if not region_name.startswith("_"):
+                region_code = region_emissions[region_name]["regionCode"]
                 from codecarbon.core.units import Energy
 
                 energy_consumed = Energy.from_energy(kWh=net_energy_consumed)

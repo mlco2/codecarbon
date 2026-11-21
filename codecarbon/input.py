@@ -86,7 +86,7 @@ class DataSource:
             "geo_js_url": "https://get.geojs.io/v1/ip/geo.json",
             "cloud_emissions_path": "data/cloud/impact.csv",
             "usa_emissions_data_path": "data/private_infra/2023/usa_emissions.json",
-            "can_energy_mix_data_path": "data/private_infra/2023/canada_energy_mix.json",  # noqa: E501
+            "can_emissions_data_path": "data/private_infra/2024/canada_emissions.json",
             "global_energy_mix_data_path": "data/private_infra/global_energy_mix.json",  # noqa: E501
             "carbon_intensity_per_source_path": "data/private_infra/carbon_intensity_per_source.json",
             "cpu_power_path": "data/hardware/cpu_power.csv",
@@ -129,11 +129,6 @@ class DataSource:
             self.module_name, self.config[f"{country}_emissions_data_path"]
         )
 
-    def country_energy_mix_data_path(self, country: str):
-        return self.get_ressource_path(
-            self.module_name, self.config[f"{country}_energy_mix_data_path"]
-        )
-
     @property
     def global_energy_mix_data_path(self):
         return self.get_ressource_path(
@@ -166,7 +161,8 @@ class DataSource:
         Data is cached on first access per country.
 
         :param country_iso_code: ISO code similar to one used in file names
-        :return: emissions in lbs/MWh and region code
+        :return: emissions and region code per region, with the emissions unit
+            in "_unit" (lbs/MWh for the USA, g/kWh for Canada)
         """
         cache_key = f"country_emissions_{country_iso_code}"
         if cache_key not in _CACHE:
@@ -176,20 +172,6 @@ class DataSource:
             except KeyError:
                 # KeyError raised when there is no data path specified for the country
                 raise DataSourceException
-        return _CACHE[cache_key]
-
-    def get_country_energy_mix_data(self, country_iso_code: str) -> Dict:
-        """
-        Returns Energy Mix Across Regions in a country.
-        Data is cached on first access per country.
-
-        :param country_iso_code: ISO code similar to one used in file names
-        :return: energy mix by region code
-        """
-        cache_key = f"country_energy_mix_{country_iso_code}"
-        if cache_key not in _CACHE:
-            with open(self.country_energy_mix_data_path(country_iso_code)) as f:
-                _CACHE[cache_key] = json.load(f)
         return _CACHE[cache_key]
 
     def get_carbon_intensity_per_source_data(self) -> Dict:
