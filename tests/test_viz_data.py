@@ -185,6 +185,8 @@ def test_project_emissions_bar_chart_with_unmeasured_run():
     assert bars.orientation == "v"
     assert pd.isna(bars.y[0])
     assert bars.y[1] == 0.4
+
+
 def test_get_regional_emissions_choropleth_data_skips_metadata_keys():
     viz_data = data.Data()
 
