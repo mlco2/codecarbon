@@ -1,3 +1,4 @@
+import sys
 import tempfile
 import time
 import unittest
@@ -6,7 +7,11 @@ from unittest import mock
 
 import pandas as pd
 
-from codecarbon.emissions_tracker import OfflineEmissionsTracker
+from codecarbon.emissions_tracker import (
+    EmissionsTracker,
+    OfflineEmissionsTracker,
+    track_emissions,
+)
 from tests.testutils import get_custom_mock_open, get_test_data_source
 
 
@@ -67,6 +72,75 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
 
         self.assertGreater(task_emission_data.emissions, 0.0)
         self.assertEqual(task_emission_data.country_name, None)
+
+    def test_offline_tracker_raises_on_invalid_output_dir(self):
+        # Configuration errors must not be swallowed by the constructor,
+        # otherwise the user gets a half-built tracker that silently does
+        # nothing. Same semantics as the online EmissionsTracker.
+        with self.assertRaises(OSError):
+            OfflineEmissionsTracker(
+                country_iso_code="FRA",
+                output_dir=str(self.temp_path / "does_not_exist"),
+            )
+        with self.assertRaises(OSError):
+            EmissionsTracker(output_dir=str(self.temp_path / "does_not_exist"))
+
+    def test_offline_tracker_raises_on_invalid_region(self):
+        # A second, offline-specific constructor path: the region check runs
+        # before `super().__init__`, so it also has to reach the caller.
+        with self.assertRaises(TypeError):
+            OfflineEmissionsTracker(country_iso_code="FRA", region=123)
+
+    def test_offline_tracker_lowercases_valid_region(self):
+        # The isinstance check must not reject the normal, valid case.
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA", region="Ile-de-France", save_to_file=False
+        )
+        self.assertEqual(tracker._region, "ile-de-france")
+
+    def test_offline_tracker_raises_on_invalid_country_2letter_iso_code(self):
+        with self.assertRaises(TypeError):
+            OfflineEmissionsTracker(country_iso_code="FRA", country_2letter_iso_code=42)
+
+    def test_offline_tracker_uppercases_valid_country_2letter_iso_code(self):
+        tracker = OfflineEmissionsTracker(
+            country_iso_code="FRA", country_2letter_iso_code="fr", save_to_file=False
+        )
+        self.assertEqual(tracker._country_2letter_iso_code, "FR")
+
+    def test_track_emissions_runs_function_when_tracker_construction_fails(self):
+        # The decorator must never stop the user's function from running,
+        # even though direct construction raises.
+        @track_emissions(
+            offline=True,
+            country_iso_code="FRA",
+            output_dir=str(self.temp_path / "does_not_exist"),
+        )
+        def fn():
+            return 42
+
+        with self.assertLogs("codecarbon", level="ERROR"):
+            self.assertEqual(fn(), 42)
+
+    def test_untracked_function_errors_are_not_chained_to_construction_error(self):
+        # The construction error is only logged: it must not become the
+        # __context__ of the user's own exception or show in sys.exc_info().
+        seen = {}
+
+        @track_emissions(
+            offline=True,
+            country_iso_code="FRA",
+            output_dir=str(self.temp_path / "does_not_exist"),
+        )
+        def fn():
+            seen["exc_info"] = sys.exc_info()
+            raise KeyError("user error")
+
+        with self.assertLogs("codecarbon", level="ERROR"):
+            with self.assertRaises(KeyError) as raised:
+                fn()
+        self.assertIsNone(raised.exception.__context__)
+        self.assertEqual(seen["exc_info"], (None, None, None))
 
     def test_resolve_offline_country_name_logs_on_invalid_iso(self):
         tracker = OfflineEmissionsTracker(

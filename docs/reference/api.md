@@ -8,6 +8,17 @@ Parameters can be set via `EmissionsTracker()`, `OfflineEmissionsTracker()`, the
     PUE is a multiplication factor provided by the user. Old datacenters have PUE
     up to 2.2, new greener ones as low as 1.1.
 
+!!! warning "Constructor errors (changed in v3.4.0)"
+    `OfflineEmissionsTracker(...)` used to swallow every exception raised while
+    building the tracker, returning a half-initialised object that silently
+    recorded nothing. It now propagates those errors, like `EmissionsTracker`
+    always did — for example an `output_dir` that does not exist raises instead of
+    logging, and a non-string `region` or `country_2letter_iso_code` raises
+    `TypeError`. Code that relied on the constructor never raising needs a
+    `try`/`except`. The `@track_emissions` decorator does not raise: if it cannot
+    build the tracker (offline or online), it logs the error and runs the function
+    untracked.
+
 !!! note "GPU selection"
     If you use `CUDA_VISIBLE_DEVICES` or `ROCR_VISIBLE_DEVICES` to set GPUs, CodeCarbon will automatically
     populate `gpu_ids`. Manual `gpu_ids` overrides this.
