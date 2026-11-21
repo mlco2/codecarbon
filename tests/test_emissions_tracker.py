@@ -55,7 +55,7 @@ else:
     )
 
 
-@mock.patch("codecarbon.core.gpu.pynvml", fake_pynvml)
+@mock.patch("codecarbon.core.gpu_nvidia.pynvml", fake_pynvml)
 @mock.patch("codecarbon.core.gpu.is_nvidia_system", return_value=True)
 @mock.patch("codecarbon.core.gpu.is_gpu_details_available", return_value=True)
 @mock.patch(
