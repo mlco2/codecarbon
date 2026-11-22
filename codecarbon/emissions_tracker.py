@@ -96,7 +96,11 @@ def _release_lock_on_error(init: Callable) -> Callable:
             init(self, *args, **kwargs)
         except Exception:
             if getattr(self, "_lock", None) is not None:
-                self._lock.release()
+                try:
+                    self._lock.release()
+                except Exception as release_error:
+                    # Keep the constructor error as the one the caller sees.
+                    logger.warning(f"Could not release the lock: {release_error}")
             raise
 
     return wrapper

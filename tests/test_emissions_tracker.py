@@ -1,3 +1,4 @@
+import errno
 import json
 import os
 import shutil
@@ -2127,3 +2128,18 @@ class TestConstructorFailureReleasesLock(unittest.TestCase):
         )
         self.addCleanup(tracker._lock.release)
         self.assertTrue(self.lockfile_path.exists())
+
+    def test_lock_release_error_does_not_hide_constructor_error(self):
+        # If the lock file cannot be removed, the caller must still get the
+        # constructor error, not the release error.
+        with mock.patch(
+            "codecarbon.lock.os.remove",
+            side_effect=PermissionError(errno.EACCES, "cannot remove lock"),
+        ):
+            with self.assertRaises(ValueError):
+                EmissionsTracker(
+                    tracking_mode="not-a-real-mode",
+                    allow_multiple_runs=False,
+                    save_to_file=False,
+                )
+        self.lockfile_path.unlink(missing_ok=True)
