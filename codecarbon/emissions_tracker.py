@@ -696,7 +696,11 @@ class BaseEmissionsTracker(ABC):
                 f"Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
             )
 
-        assert self._tracking_mode in ["machine", "process"]
+        if self._tracking_mode not in ["machine", "process"]:
+            raise ValueError(
+                "tracking_mode must be 'machine' or 'process', "
+                f"got {self._tracking_mode!r}"
+            )
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
         warn_on_multi_rank_double_counting(self._tracking_mode)

@@ -2108,7 +2108,7 @@ class TestConstructorFailureReleasesLock(unittest.TestCase):
     def test_constructor_failure_releases_lock(self):
         # A bogus tracking_mode makes __init__ raise after the lock is
         # acquired in _configure_multiple_runs().
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             EmissionsTracker(
                 tracking_mode="not-a-real-mode",
                 allow_multiple_runs=False,
@@ -2125,5 +2125,5 @@ class TestConstructorFailureReleasesLock(unittest.TestCase):
             allow_multiple_runs=False,
             save_to_file=False,
         )
+        self.addCleanup(tracker._lock.release)
         self.assertTrue(self.lockfile_path.exists())
-        tracker._lock.release()
