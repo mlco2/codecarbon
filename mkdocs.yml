@@ -191,6 +191,7 @@ nav:
     - Configure CodeCarbon: how-to/configuration.md
     - Get accurate CPU measurements (Linux/RAPL): how-to/enable-rapl.md
     - Compare Model Efficiency: tutorials/comparing-model-efficiency.md
+    - Estimate Offset Costs: how-to/estimating-offset-costs.md
     - Dashboard & Visualization:
       - Use the Cloud API & Dashboard: how-to/cloud-api.md
       - Visualize Emissions: how-to/visualize.md
