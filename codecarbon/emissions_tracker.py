@@ -86,6 +86,26 @@ def _caller_stacklevel() -> int:
 _sentinel = object()
 
 
+def _release_lock_on_error(init: Callable) -> Callable:
+    """Release the run lock if ``__init__`` fails after acquiring it, so a
+    failed construction does not block the next tracker."""
+
+    @wraps(init)
+    def wrapper(self, *args, **kwargs):
+        try:
+            init(self, *args, **kwargs)
+        except Exception:
+            if getattr(self, "_lock", None) is not None:
+                try:
+                    self._lock.release()
+                except Exception as release_error:
+                    # Keep the constructor error as the one the caller sees.
+                    logger.warning(f"Could not release the lock: {release_error}")
+            raise
+
+    return wrapper
+
+
 class BaseEmissionsTracker(ABC):
     """
     Primary abstraction with Emissions Tracking functionality.
@@ -427,6 +447,7 @@ class BaseEmissionsTracker(ABC):
             self._conf["longitude"] = self._geo.longitude
             self._conf["latitude"] = self._geo.latitude
 
+    @_release_lock_on_error
     def __init__(
         self,
         project_name: Optional[str] = _sentinel,
@@ -679,7 +700,11 @@ class BaseEmissionsTracker(ABC):
                 f"Using forced carbon intensity: {self.force_carbon_intensity_g_co2e_kwh} gCO2e/kWh."
             )
 
-        assert self._tracking_mode in ["machine", "process"]
+        if self._tracking_mode not in ["machine", "process"]:
+            raise ValueError(
+                "tracking_mode must be 'machine' or 'process', "
+                f"got {self._tracking_mode!r}"
+            )
         set_logger_level(self._log_level)
         set_logger_format(self._logger_preamble)
         warn_on_multi_rank_double_counting(self._tracking_mode)
@@ -1627,7 +1652,6 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
     _country_iso_code = None
     _country_name, _region, country_2letter_iso_code = None, None, None
 
-    @suppress(Exception)
     def __init__(
         self,
         *args,
@@ -1668,7 +1692,8 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
         logger.info("offline tracker init")
 
         if self._region is not None:
-            assert isinstance(self._region, str)
+            if not isinstance(self._region, str):
+                raise TypeError(f"region must be a string, got {self._region!r}")
             self._region: str = self._region.lower()
 
         if self._cloud_provider:
@@ -1678,7 +1703,11 @@ class OfflineEmissionsTracker(BaseEmissionsTracker):
                 )
 
         if self._country_2letter_iso_code:
-            assert isinstance(self._country_2letter_iso_code, str)
+            if not isinstance(self._country_2letter_iso_code, str):
+                raise TypeError(
+                    "country_2letter_iso_code must be a string, "
+                    f"got {self._country_2letter_iso_code!r}"
+                )
             self._country_2letter_iso_code: str = self._country_2letter_iso_code.upper()
 
         super().__init__(*args, **kwargs)
@@ -1955,90 +1984,104 @@ def track_emissions(
                 if electricitymaps_api_token is _sentinel:
                     _electricitymaps_token = co2_signal_api_token
 
-            if offline and offline is not _sentinel:
-                if (country_iso_code is None or country_iso_code is _sentinel) and (
-                    cloud_provider is None or cloud_provider is _sentinel
-                ):
-                    raise Exception("Needs ISO Code of the Country for Offline mode")
-                tracker = OfflineEmissionsTracker(
-                    project_name=project_name,
-                    measure_power_secs=measure_power_secs,
-                    output_dir=output_dir,
-                    output_file=output_file,
-                    output_methods=output_methods,
-                    save_to_file=save_to_file,
-                    save_to_logger=save_to_logger,
-                    logging_logger=logging_logger,
-                    save_to_prometheus=save_to_prometheus,
-                    save_to_logfire=save_to_logfire,
-                    prometheus_url=prometheus_url,
-                    output_handlers=output_handlers,
-                    gpu_ids=gpu_ids,
-                    electricitymaps_api_token=_electricitymaps_token,
-                    tracking_mode=tracking_mode,
-                    log_level=log_level,
-                    on_csv_write=on_csv_write,
-                    live_output_file=live_output_file,
-                    logger_preamble=logger_preamble,
-                    country_iso_code=country_iso_code,
-                    region=region,
-                    cloud_provider=cloud_provider,
-                    cloud_region=cloud_region,
-                    country_2letter_iso_code=country_2letter_iso_code,
-                    force_cpu_power=force_cpu_power,
-                    force_ram_power=force_ram_power,
-                    pue=pue,
-                    wue=wue,
-                    force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
-                    force_mode_cpu_load=force_mode_cpu_load,
-                    force_mode_constant=force_mode_constant,
-                    allow_multiple_runs=allow_multiple_runs,
-                    rapl_include_dram=rapl_include_dram,
-                    rapl_prefer_psys=rapl_prefer_psys,
-                    metadata=metadata,
-                    use_national_grid_eso_api=use_national_grid_eso_api,
+            try:
+                if offline and offline is not _sentinel:
+                    if (country_iso_code is None or country_iso_code is _sentinel) and (
+                        cloud_provider is None or cloud_provider is _sentinel
+                    ):
+                        raise ValueError(
+                            "Needs ISO Code of the Country for Offline mode"
+                        )
+                    tracker = OfflineEmissionsTracker(
+                        project_name=project_name,
+                        measure_power_secs=measure_power_secs,
+                        output_dir=output_dir,
+                        output_file=output_file,
+                        output_methods=output_methods,
+                        save_to_file=save_to_file,
+                        save_to_logger=save_to_logger,
+                        logging_logger=logging_logger,
+                        save_to_prometheus=save_to_prometheus,
+                        save_to_logfire=save_to_logfire,
+                        prometheus_url=prometheus_url,
+                        output_handlers=output_handlers,
+                        gpu_ids=gpu_ids,
+                        electricitymaps_api_token=_electricitymaps_token,
+                        tracking_mode=tracking_mode,
+                        log_level=log_level,
+                        on_csv_write=on_csv_write,
+                        live_output_file=live_output_file,
+                        logger_preamble=logger_preamble,
+                        country_iso_code=country_iso_code,
+                        region=region,
+                        cloud_provider=cloud_provider,
+                        cloud_region=cloud_region,
+                        country_2letter_iso_code=country_2letter_iso_code,
+                        force_cpu_power=force_cpu_power,
+                        force_ram_power=force_ram_power,
+                        pue=pue,
+                        wue=wue,
+                        force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                        force_mode_cpu_load=force_mode_cpu_load,
+                        force_mode_constant=force_mode_constant,
+                        allow_multiple_runs=allow_multiple_runs,
+                        rapl_include_dram=rapl_include_dram,
+                        rapl_prefer_psys=rapl_prefer_psys,
+                        metadata=metadata,
+                        use_national_grid_eso_api=use_national_grid_eso_api,
+                    )
+                else:
+                    tracker = EmissionsTracker(
+                        project_name=project_name,
+                        measure_power_secs=measure_power_secs,
+                        api_call_interval=api_call_interval,
+                        api_endpoint=api_endpoint,
+                        api_key=api_key,
+                        output_dir=output_dir,
+                        output_file=output_file,
+                        output_methods=output_methods,
+                        save_to_file=save_to_file,
+                        save_to_api=save_to_api,
+                        save_to_logger=save_to_logger,
+                        logging_logger=logging_logger,
+                        save_to_prometheus=save_to_prometheus,
+                        save_to_logfire=save_to_logfire,
+                        prometheus_url=prometheus_url,
+                        output_handlers=output_handlers,
+                        gpu_ids=gpu_ids,
+                        emissions_endpoint=emissions_endpoint,
+                        experiment_id=experiment_id,
+                        experiment_name=experiment_name,
+                        electricitymaps_api_token=_electricitymaps_token,
+                        tracking_mode=tracking_mode,
+                        log_level=log_level,
+                        on_csv_write=on_csv_write,
+                        live_output_file=live_output_file,
+                        logger_preamble=logger_preamble,
+                        force_cpu_power=force_cpu_power,
+                        force_ram_power=force_ram_power,
+                        pue=pue,
+                        wue=wue,
+                        force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
+                        force_mode_cpu_load=force_mode_cpu_load,
+                        force_mode_constant=force_mode_constant,
+                        allow_multiple_runs=allow_multiple_runs,
+                        rapl_include_dram=rapl_include_dram,
+                        rapl_prefer_psys=rapl_prefer_psys,
+                        metadata=metadata,
+                        use_national_grid_eso_api=use_national_grid_eso_api,
+                    )
+            except Exception:
+                logger.error(
+                    "Tracker not initialized, running the function untracked. "
+                    "Please check the logs.",
+                    exc_info=True,
                 )
-            else:
-                tracker = EmissionsTracker(
-                    project_name=project_name,
-                    measure_power_secs=measure_power_secs,
-                    api_call_interval=api_call_interval,
-                    api_endpoint=api_endpoint,
-                    api_key=api_key,
-                    output_dir=output_dir,
-                    output_file=output_file,
-                    output_methods=output_methods,
-                    save_to_file=save_to_file,
-                    save_to_api=save_to_api,
-                    save_to_logger=save_to_logger,
-                    logging_logger=logging_logger,
-                    save_to_prometheus=save_to_prometheus,
-                    save_to_logfire=save_to_logfire,
-                    prometheus_url=prometheus_url,
-                    output_handlers=output_handlers,
-                    gpu_ids=gpu_ids,
-                    emissions_endpoint=emissions_endpoint,
-                    experiment_id=experiment_id,
-                    experiment_name=experiment_name,
-                    electricitymaps_api_token=_electricitymaps_token,
-                    tracking_mode=tracking_mode,
-                    log_level=log_level,
-                    on_csv_write=on_csv_write,
-                    live_output_file=live_output_file,
-                    logger_preamble=logger_preamble,
-                    force_cpu_power=force_cpu_power,
-                    force_ram_power=force_ram_power,
-                    pue=pue,
-                    wue=wue,
-                    force_carbon_intensity_g_co2e_kwh=force_carbon_intensity_g_co2e_kwh,
-                    force_mode_cpu_load=force_mode_cpu_load,
-                    force_mode_constant=force_mode_constant,
-                    allow_multiple_runs=allow_multiple_runs,
-                    rapl_include_dram=rapl_include_dram,
-                    rapl_prefer_psys=rapl_prefer_psys,
-                    metadata=metadata,
-                    use_national_grid_eso_api=use_national_grid_eso_api,
-                )
+                tracker = None
+            # Called outside the except block so the construction error is not
+            # chained to exceptions raised by fn.
+            if tracker is None:
+                return fn(*args, **kwargs)
             tracker.start()
             try:
                 fn_result = fn(*args, **kwargs)
