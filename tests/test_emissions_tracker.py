@@ -1402,7 +1402,9 @@ class TestCarbonTracker(unittest.TestCase):
         def dummy_train_model():
             return 42
 
-        self.assertRaises(Exception, dummy_train_model)
+        # THEN the missing country is logged and the function runs untracked
+        with self.assertLogs("codecarbon", level="ERROR"):
+            self.assertEqual(dummy_train_model(), 42)
 
     def test_decorator_OFFLINE_WITH_LOC_ARGS(
         self,
