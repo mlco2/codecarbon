@@ -122,6 +122,17 @@ class TestOfflineEmissionsTracker(unittest.TestCase):
         with self.assertLogs("codecarbon", level="ERROR"):
             self.assertEqual(fn(), 42)
 
+    def test_track_emissions_runs_function_when_offline_country_is_missing(self):
+        # A missing country is a construction error too: the decorator logs it
+        # and runs the function untracked instead of raising.
+        @track_emissions(offline=True, output_dir=str(self.temp_path))
+        def fn():
+            return 42
+
+        with self.assertLogs("codecarbon", level="ERROR") as logs:
+            self.assertEqual(fn(), 42)
+        self.assertIn("Needs ISO Code", "\n".join(logs.output))
+
     def test_untracked_function_errors_are_not_chained_to_construction_error(self):
         # The construction error is only logged: it must not become the
         # __context__ of the user's own exception or show in sys.exc_info().

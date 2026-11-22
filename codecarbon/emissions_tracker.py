@@ -1976,13 +1976,14 @@ def track_emissions(
                 if electricitymaps_api_token is _sentinel:
                     _electricitymaps_token = co2_signal_api_token
 
-            if offline and offline is not _sentinel:
-                if (country_iso_code is None or country_iso_code is _sentinel) and (
-                    cloud_provider is None or cloud_provider is _sentinel
-                ):
-                    raise Exception("Needs ISO Code of the Country for Offline mode")
             try:
                 if offline and offline is not _sentinel:
+                    if (country_iso_code is None or country_iso_code is _sentinel) and (
+                        cloud_provider is None or cloud_provider is _sentinel
+                    ):
+                        raise ValueError(
+                            "Needs ISO Code of the Country for Offline mode"
+                        )
                     tracker = OfflineEmissionsTracker(
                         project_name=project_name,
                         measure_power_secs=measure_power_secs,
