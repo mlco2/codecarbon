@@ -33,7 +33,7 @@ For each finding:
 
 1. Write the test, then the fix.
 2. Prove the test catches the bug: `git stash -q -- codecarbon; uv run pytest -q <test> ; git stash pop -q` must show it failing.
-3. Commit with the format hooks run first. Otherwise black rewrites files and the commit aborts:
+3. Commit : If you can't do a commit signature by yourself just commit without it. Use the format hooks run first. Otherwise black rewrites files and the commit aborts:
 
 ```bash
 git add -u; uv run pre-commit run >/dev/null 2>&1; git add -u
