@@ -337,6 +337,11 @@ The exception is the Raspberry Pi 5, where the PMIC measures the DRAM rails
 and that reading replaces the estimate.
 And some RAPL interface could expose RAM energy but they are rare.
 
+In `machine` mode, total RAM comes from `psutil`, which in a container usually
+reports the host's memory. For the power estimate, if `/sys/fs/cgroup` has a
+lower limit (`memory.max` in cgroup v2, `memory/memory.limit_in_bytes` in v1),
+that limit is used instead. `ram_total_size` in the output is unchanged.
+
 **Stage 1 — guess the DIMM count** from total RAM, using a hardcoded step
 function (`RAM._estimate_dimm_count`):
 
