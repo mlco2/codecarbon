@@ -7,9 +7,12 @@ https://github.com/responsibleproblemsolving/energy-usage
 """
 
 import re
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, Sequence
 
-from codecarbon.core import electricitymaps_api, national_grid_eso_api
+from codecarbon.core.carbon_intensity import (
+    CarbonIntensityCooldownError,
+    CarbonIntensityProvider,
+)
 from codecarbon.core.units import EmissionsPerKWh, Energy
 from codecarbon.external.geography import CloudMetadata, GeoMetadata
 from codecarbon.external.logger import logger
@@ -33,30 +36,20 @@ class Emissions:
     def __init__(
         self,
         data_source: DataSource,
-        electricitymaps_api_token: Optional[str] = None,
-        co2_signal_api_token: Optional[
-            str
-        ] = None,  # Deprecated, for backward compatibility
+        *,
         force_carbon_intensity_g_co2e_kwh: Optional[float] = None,
-        use_national_grid_eso_api: bool = False,
+        providers: Sequence[CarbonIntensityProvider] = (),
     ):
+        """
+        :param force_carbon_intensity_g_co2e_kwh: Fixed intensity that overrides
+            every other source.
+        :param providers: Live carbon intensity providers to try, in order, before
+            CodeCarbon's static data. Build them from configuration with
+            ``codecarbon.core.carbon_intensity.build_providers``.
+        """
         self._data_source = data_source
-
-        # Handle backward compatibility
-        if co2_signal_api_token is not None:
-            logger.warning(
-                "Parameter 'co2_signal_api_token' is deprecated and will be removed in a future version. "
-                "Please use 'electricitymaps_api_token' instead."
-            )
-            if electricitymaps_api_token is None:
-                electricitymaps_api_token = co2_signal_api_token
-
-        self._electricitymaps_api_token = electricitymaps_api_token
         self._force_carbon_intensity_g_co2e_kwh = force_carbon_intensity_g_co2e_kwh
-        # Opt-in only: this makes a live network call on every GBR run if left
-        # on. Defaults to False, mirroring how electricitymaps_api_token being
-        # unset keeps the Electricity Maps call off.
-        self._use_national_grid_eso_api = use_national_grid_eso_api
+        self._providers = list(providers)
 
     def get_cloud_emissions(
         self, energy: Energy, cloud: CloudMetadata, geo: GeoMetadata = None
@@ -169,51 +162,9 @@ class Emissions:
             )
             return energy.kWh * (self._force_carbon_intensity_g_co2e_kwh / 1000.0)
 
-        if self._electricitymaps_api_token:
-            try:
-                emissions = electricitymaps_api.get_emissions(
-                    energy, geo, self._electricitymaps_api_token
-                )
-                logger.debug(
-                    "electricitymaps_api.get_emissions: "
-                    + f"Retrieved emissions for {geo.country_name} using Electricity Maps API :{emissions * 1000} g CO2eq"
-                )
-                return emissions
-            except electricitymaps_api.ElectricityMapsAPICooldownError as e:
-                # The failure that started the cooldown was already logged.
-                logger.debug(
-                    "electricitymaps_api.get_emissions: "
-                    + str(e)
-                    + " >>> Using CodeCarbon's data."
-                )
-            except Exception as e:
-                logger.error(
-                    "electricitymaps_api.get_emissions: "
-                    + str(e)
-                    + " >>> Using CodeCarbon's data."
-                )
-
-        if self._use_national_grid_eso_api and national_grid_eso_api.is_supported(geo):
-            try:
-                emissions = national_grid_eso_api.get_emissions(energy, geo)
-                logger.debug(
-                    "national_grid_eso_api.get_emissions: "
-                    + f"Retrieved emissions for {geo.country_name} using National Grid ESO API: {emissions * 1000} g CO2eq"
-                )
-                return emissions
-            except national_grid_eso_api.NationalGridESOAPICooldownError as e:
-                # The failure that started the cooldown was already logged.
-                logger.debug(
-                    "national_grid_eso_api.get_emissions: "
-                    + str(e)
-                    + " >>> Using CodeCarbon's data."
-                )
-            except Exception as e:
-                logger.error(
-                    "national_grid_eso_api.get_emissions: "
-                    + str(e)
-                    + " >>> Using CodeCarbon's data."
-                )
+        emissions = self._try_live_providers(energy, geo)
+        if emissions is not None:
+            return emissions
 
         country_iso_code = (
             geo.country_iso_code.upper() if geo.country_iso_code is not None else None
@@ -233,6 +184,30 @@ class Emissions:
                     + " Falling back on country emissions."
                 )
         return self.get_country_emissions(energy, geo)
+
+    def _try_live_providers(self, energy: Energy, geo: GeoMetadata) -> Optional[float]:
+        """
+        Return the emissions from the first live provider that covers ``geo``
+        and answers, or None so the caller uses CodeCarbon's static data.
+        """
+        for provider in self._providers:
+            if not provider.is_supported(geo):
+                continue
+            try:
+                emissions = provider.get_emissions(energy, geo)
+            except CarbonIntensityCooldownError as e:
+                # The failure that started the cooldown was already logged.
+                logger.debug(f"{provider.name}: {e} >>> Falling back.")
+                continue
+            except Exception as e:
+                logger.error(f"{provider.name}: {e} >>> Falling back.")
+                continue
+            logger.debug(
+                f"{provider.name}: Retrieved emissions for {geo.country_name}: "
+                f"{emissions * 1000} g CO2eq"
+            )
+            return emissions
+        return None
 
     def _try_get_nordic_region_emissions(
         self, energy: Energy, geo: GeoMetadata

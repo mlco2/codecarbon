@@ -3,7 +3,8 @@ import unittest
 import pytest
 import responses
 
-from codecarbon.core import electricitymaps_api
+from codecarbon.core.carbon_intensity import electricitymaps
+from codecarbon.core.carbon_intensity.electricitymaps import ElectricityMapsProvider
 from codecarbon.core.units import Energy
 from codecarbon.external.geography import GeoMetadata
 
@@ -11,7 +12,7 @@ from codecarbon.external.geography import GeoMetadata
 class TestElectricityMapsAPI(unittest.TestCase):
     def setUp(self) -> None:
         # GIVEN
-        electricitymaps_api.reset_cache()
+        ElectricityMapsProvider.reset_cache()
         self._energy = Energy.from_energy(kWh=10)
         self._geo = GeoMetadata(
             country_iso_code="FRA",
@@ -24,7 +25,7 @@ class TestElectricityMapsAPI(unittest.TestCase):
     def test_get_emissions_RUNS(self):
         responses.add(
             responses.GET,
-            electricitymaps_api.URL,
+            electricitymaps.URL,
             json={
                 "zone": "FR",
                 "carbonIntensity": 58.765447504659946,
@@ -33,26 +34,17 @@ class TestElectricityMapsAPI(unittest.TestCase):
             },
             status=200,
         )
-        result = electricitymaps_api.get_emissions(self._energy, self._geo)
+        result = ElectricityMapsProvider().get_emissions(self._energy, self._geo)
         assert round(result, 5) == 0.58765
-
-    @pytest.mark.integ_test
-    @unittest.skip("Skip real API call in regular test runs")
-    def test_get_emissions_with_api_key(self):
-        """Test with real API call using provided API key"""
-        api_key = "YOUR_REAL_API_KEY"
-        result = electricitymaps_api.get_emissions(self._energy, self._geo, api_key)
-        # Should return a positive emissions value
-        assert result > 0
 
     @responses.activate
     def test_non_json_error_body_falls_back_to_text(self):
         responses.add(
             responses.GET,
-            electricitymaps_api.URL,
+            electricitymaps.URL,
             body="<html>502 Bad Gateway</html>",
             status=502,
         )
-        with pytest.raises(electricitymaps_api.ElectricityMapsAPIError) as error:
-            electricitymaps_api.get_carbon_intensity(self._geo)
+        with pytest.raises(electricitymaps.ElectricityMapsAPIError) as error:
+            ElectricityMapsProvider().get_carbon_intensity(self._geo)
         assert "502 Bad Gateway" in str(error.value)

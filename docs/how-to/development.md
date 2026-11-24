@@ -58,6 +58,23 @@ Some tests will fail if you do not set *CODECARBON_ALLOW_MULTIPLE_RUNS* with `ex
 
 To test the API, see [how to run it locally](#api) first.
 
+### Live carbon intensity providers
+
+`tests/test_carbon_intensity_integ.py` calls the real Electricity Maps and
+National Grid ESO APIs. It is excluded from `test-package`, so run it yourself
+after changing anything under `codecarbon/core/carbon_intensity/`:
+
+```sh
+export CODECARBON_ELECTRICITYMAPS_API_TOKEN=your-token   # optional, see below
+uv run task test-carbon-intensity-integ
+```
+
+- National Grid ESO needs no key, so its tests always run (they need internet access).
+- The Electricity Maps tests that need a valid token are skipped unless
+  `CODECARBON_ELECTRICITYMAPS_API_TOKEN` is set, the same variable CodeCarbon
+  reads. A free personal token from the
+  [Electricity Maps portal](https://portal.electricitymaps.com/) is enough.
+
 Core and external classes are unit tested, with one test file per class. Most pull requests are expected to contain either new tests or test updates. If you are unusure what to test / how to test it, please put it in the pull request description and the maintainers will help you.
 
 ## Stress your computer

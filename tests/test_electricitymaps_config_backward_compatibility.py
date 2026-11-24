@@ -6,6 +6,7 @@ import unittest
 from textwrap import dedent
 from unittest.mock import patch
 
+from codecarbon.core.carbon_intensity import ElectricityMapsProvider
 from codecarbon.emissions_tracker import EmissionsTracker
 from tests.testutils import get_custom_mock_open
 
@@ -29,6 +30,11 @@ class TestConfigBackwardCompatibility(unittest.TestCase):
 
             # Should use the token from config
             self.assertEqual(tracker._electricitymaps_api_token, "old-config-token")
+            # ...including for the live provider, which is built from the conf
+            tracker._ensure_emissions_engine()
+            [provider] = tracker._emissions._providers
+            self.assertIsInstance(provider, ElectricityMapsProvider)
+            self.assertEqual(provider.api_token, "old-config-token")
 
             # Should warn about deprecated config parameter
             self.assertTrue(
