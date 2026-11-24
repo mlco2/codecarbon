@@ -40,7 +40,7 @@ Note that RAPL counters do not exist at all in most containers and virtual machi
 
 ## How do I offset my emissions?
 
-There are many offsetting schemes, and it is hard to recommend any single one. For one-shot offsetting, the [Gold Standard](https://www.goldstandard.org/) is often used, and has many offsetting projects to choose from at different prices. There are often local initiatives as well, so try researching what exists in your region/country. For a recurring offset, [Project Wren](https://projectwren.com/) lets you estimate your monthly carbon emissions and offset them via a monthly subscription. Keep in mind that offsetting is a good choice, but **reducing your emissions** should be the priority.
+**Reducing your emissions** should come first. CodeCarbon does not endorse any offset provider: studies show that many offset credits do not deliver the reductions they claim, some projects have harmed local communities, and offsetting does not cancel the emissions you measured. If you still choose to offset, see [Estimating Carbon Offset Costs](../how-to/estimating-offset-costs.md) for an approximate price and the sources behind these concerns.
 
 ## Does CodeCarbon work on Windows/Mac/Linux?
 
