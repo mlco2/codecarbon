@@ -1,0 +1,93 @@
+# Plumber, added to mlco2/codecarbon by the Plumber GitHub App.
+#
+# This workflow is the scanner. It reads this repository's CI configuration
+# against a supply-chain trust policy (how actions are pinned, what a token may
+# do, what a workflow may reach) and pushes the report to the Plumber service,
+# which keeps the findings and the score and opens a pull request when a push
+# adds a finding that was not there before.
+#
+# Nothing here holds a credential of this repository. The report is
+# authenticated with the Actions OIDC token this job mints for itself, which is
+# what `id-token: write` below is for: the service verifies that token and has
+# no secret of yours to lose.
+#
+# Every third-party action is pinned by commit sha, which is one of the controls
+# this scan checks. The comment after each sha is the tag it was published as.
+name: Plumber
+
+on:
+  push:
+    branches:
+      - master
+  # Every pull request, on every branch, so the check this workflow publishes
+  # runs on the pull request that adds it: the pull request Plumber opens is
+  # reviewed with its own check beside it, and so is every pull request that
+  # changes a workflow afterwards. A pull request scan is reported and is never
+  # the branch's history: the service keeps it under the branch it ran on and
+  # compares nothing against it.
+  pull_request:
+  # Once a week, because a finding can appear without anybody pushing: an action
+  # that was trustworthy on Monday is a tag that moved on Thursday.
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  # Plumber reads this repository's workflow run states, and one run's job log,
+  # to resolve what a job's token may really do and whether a job can run at
+  # all. Without this permission those claims stay unknown, which reads as a
+  # lower score than the same repository measured with it.
+  actions: read
+  # The scan's SARIF report goes to this repository's code scanning, which is
+  # the action's own preset (`upload-sarif` defaults to true). That upload step
+  # is the only thing in this job that needs `security-events: write`, so the
+  # permission is here while the upload is on and is absent while it is off: a
+  # job token carrying a write it has no use for is a job token somebody can
+  # write an attack path about.
+  #
+  # Where code scanning is unavailable (a private repository without GitHub
+  # Advanced Security or Code Security) that upload step fails, and it carries
+  # no `continue-on-error`, so the job goes red on it. For a private repository
+  # that Plumber could not see code scanning enabled on, the step below is
+  # installed with `upload-sarif: false` and this block grants no
+  # `security-events` at all. Turning the upload back on once code scanning is
+  # enabled is those two lines: add `security-events: write` here and delete
+  # the `upload-sarif: false` line below.
+  security-events: write
+
+jobs:
+  plumber:
+    name: Plumber
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The scan reads files and never pushes, so the job needs no git
+          # credential left behind in the checkout.
+          persist-credentials: false
+      - name: Scan and push the report
+        uses: getplumber/plumber@7f1e28b3f45b6356895763f2bada391cc46b6537 # v0.7.6
+        with:
+          score-push: true
+          score-endpoint: https://app.getplumber.tech/ingest
+          # Whether a score can fail this check, and the line below is the whole
+          # of it. The scan runs, reports every finding and pushes the score
+          # either way, and a runtime error fails the job either way.
+          #
+          # `soft-fail: true` lets the check pass whatever the score is, and it
+          # is what this file is installed with: it is committed before anything
+          # has scanned this repository, and the default gate is all or nothing
+          # at 100 points, so a gate here would fail a pull request on a number
+          # nobody has measured.
+          #
+          # `min-points: <floor>` fails the check when the score drops below
+          # that floor. The Plumber run that follows the install writes it in
+          # place of the line above, into that same commit, at the floor of the
+          # score it measured on this branch after its repairs: green on the day
+          # it arrives, and red the day the score drops below where it started.
+          # Raise it as the score goes up. Nothing lowers it, and a gate you have
+          # edited yourself is left exactly as you wrote it.
+          min-points: 85

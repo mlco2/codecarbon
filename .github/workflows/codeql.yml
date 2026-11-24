@@ -60,6 +60,8 @@ jobs:
     #   uses: actions/setup-example@v1
 
     # Initializes the CodeQL tools for scanning.
+      with:
+        persist-credentials: false
     - name: Initialize CodeQL
       uses: github/codeql-action/init@181d5eefc20863364f96762470ba6f862bdef56b # v3.29.2
       with:

@@ -1,0 +1,15 @@
+# The Plumber policy for mlco2/codecarbon, added by the Plumber GitHub App.
+#
+# The default policy belongs to the product and is not copied in here, so an
+# improvement to it reaches this repository without a second pull request. A
+# second copy of a default policy is a second policy to keep in step.
+#
+# The file is read by the Plumber CLI in the workflow this pull request also
+# adds, which is the only thing that scans this repository.
+extends: plumber:default
+
+github:
+  controls:
+    githubActionMustComeFromAuthorizedSources:
+      trustedGithubActions:
+        - getplumber/*
