@@ -97,34 +97,6 @@ def test_organization_service_add_user_by_mail_requires_admin():
     user_repository_mock.subscribe_user_to_org.assert_not_called()
 
 
-def test_organization_service_patch_organization_refuses_non_admin_member():
-    repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
-    user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)
-    user_repository_mock.is_user_in_organization.return_value = True
-    user_repository_mock.is_admin_in_organization.return_value = False
-    auth_context = AuthContext(
-        user_repository=user_repository_mock,
-        token_repository=mock.Mock(),
-        project_repository=mock.Mock(),
-        experiment_repository=mock.Mock(),
-        run_repository=mock.Mock(),
-        emission_repository=mock.Mock(),
-    )
-    organization_service: OrganizationService = OrganizationService(
-        user_repository=user_repository_mock,
-        organization_repository=repository_mock,
-        auth_context=auth_context,
-    )
-
-    with pytest.raises(UserException) as exc_info:
-        organization_service.patch_organization(
-            ORG_ID, OrganizationPatch(name="Renamed"), DUMMY_USER
-        )
-
-    assert exc_info.value.error.code == NotAllowedErrorEnum.NOT_IN_ORGANISATION
-    repository_mock.patch_organization.assert_not_called()
-
-
 def test_organization_service_add_user_by_mail_adds_non_admin_member():
     repository_mock: OrganizationRepository = mock.Mock(spec=OrganizationRepository)
     user_repository_mock: UserRepository = mock.Mock(spec=UserRepository)

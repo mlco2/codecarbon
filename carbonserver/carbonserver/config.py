@@ -1,9 +1,6 @@
 from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Environments where the server runs on a developer machine, over plain http.
-DEV_ENVIRONMENTS = ("local", "develop")
-
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="", extra="ignore")
@@ -56,10 +53,6 @@ class Settings(BaseSettings):
         "", validation_alias=AliasChoices("MATOMO_SITE_ID", "matomo_site_id")
     )
     environment: str = Field("production")
-    session_secret_key: str = Field(
-        "",
-        validation_alias=AliasChoices("SESSION_SECRET_KEY", "session_secret_key"),
-    )
     jwt_key: str = Field("", validation_alias=AliasChoices("JWT_KEY", "jwt_key"))
     api_port: int = Field(8080, validation_alias=AliasChoices("API_PORT", "api_port"))
     server_host: str = Field(
