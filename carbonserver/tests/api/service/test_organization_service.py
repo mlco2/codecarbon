@@ -22,6 +22,7 @@ from carbonserver.api.schemas import (
     OrganizationPatch,
     OrganizationUser,
 )
+from carbonserver.api.services.auth_context import AuthContext
 from carbonserver.api.services.organization_service import OrganizationService
 
 USER_ID_1 = "f52fe339-164d-4c2b-a8c0-f562dfce066d"

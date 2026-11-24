@@ -364,8 +364,11 @@ class IntelPowerGadget:
         """
         Logs output from Intel Power Gadget command line to a file
         """
-        returncode = None
-        if self._system.startswith("win"):
+        if not (self._system.startswith("win") or self._system.startswith("darwin")):
+            return None
+
+        # An argument list without a shell: paths are never parsed by a shell
+        try:
             returncode = subprocess.call(
                 [
                     self._cli,
@@ -376,16 +379,12 @@ class IntelPowerGadget:
                     "-file",
                     self._log_file_path,
                 ],
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
-        elif self._system.startswith("darwin"):
-            returncode = subprocess.call(
-                f"'{self._cli}' -duration {self._duration} -resolution {self._resolution} -file {self._log_file_path} > /dev/null",  # noqa: E501
-                shell=True,
-            )
-        else:
+        except OSError as e:
+            # The shell used to turn a missing executable into exit code 127
+            logger.warning("Unable to run Intel Power Gadget %s: %s", self._cli, e)
             return None
 
         if returncode != 0:

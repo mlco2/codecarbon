@@ -46,12 +46,18 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
     )
 
 
+async def user_exception_handler(request: Request, exc: UserException):
+    http_exc = get_http_exception(exc)
+    return JSONResponse({"detail": http_exc.detail}, status_code=http_exc.status_code)
+
+
 def create_app() -> FastAPI:
     container = init_container()
 
     init_db(container)
     server = init_server(container)
     server.add_exception_handler(DBException, db_exception_handler)
+    server.add_exception_handler(UserException, user_exception_handler)
     server.add_exception_handler(ValidationError, validation_exception_handler)
     server.add_exception_handler(Exception, generic_exception_handler)
     server.add_middleware(SessionMiddleware, secret_key="some-random-string")
@@ -89,8 +95,6 @@ def init_server(container):
         servers=[
             {"url": "/api/"},
         ],
-        port=settings.api_port,
-        host=settings.server_host,
     )
 
     server.container = container
@@ -140,8 +144,3 @@ app.mount("/api", app, name="api")
 @app.get("/")
 def default():
     return {"status": "OK"}
-
-
-@app.exception_handler(UserException)
-async def custom_exception_handler(request: Request, exc: UserException):
-    raise get_http_exception(exc)

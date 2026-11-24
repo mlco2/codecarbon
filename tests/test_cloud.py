@@ -19,7 +19,11 @@
 # OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+import json
+
+import requests
 import responses
+from responses import matchers
 
 from codecarbon.core.cloud import CLOUD_METADATA_MAPPING, get_env_cloud_details
 
@@ -77,5 +81,58 @@ def test_get_env_cloud_details_mapping_google_empty_payload():
 def test_get_env_cloud_details_mapping_nothing():
     metadata = {"instance": {"attributes": {"cluster-location": "us-east1-c"}}}
     setup_cloud_details_responses("localhost", metadata)
+
+    assert get_env_cloud_details() is None
+
+
+AWS_URL = CLOUD_METADATA_MAPPING["AWS"]["url"]
+AWS_TOKEN_URL = "http://169.254.169.254/latest/api/token"
+
+
+def setup_imdsv2_only_aws(metadata):
+    """An EC2 instance that answers only requests carrying an IMDSv2 token."""
+
+    def instance_identity(request):
+        if request.headers.get("X-aws-ec2-metadata-token") == "a-token":
+            return 200, {}, json.dumps(metadata)
+        return 401, {}, ""
+
+    responses.add_callback(responses.GET, AWS_URL, callback=instance_identity)
+    for provider in ("Azure", "GCP"):
+        responses.add(
+            responses.GET, CLOUD_METADATA_MAPPING[provider]["url"], status=404
+        )
+
+
+@responses.activate
+def test_get_env_cloud_details_aws_imdsv2_retries_with_a_token():
+    metadata = {"architecture": "x86_64", "availabilityZone": "us-east-1a"}
+    setup_imdsv2_only_aws(metadata)
+    responses.add(
+        responses.PUT,
+        AWS_TOKEN_URL,
+        body="a-token",
+        match=[matchers.header_matcher({"X-aws-ec2-metadata-token-ttl-seconds": "60"})],
+    )
+
+    assert get_env_cloud_details() == {"provider": "AWS", "metadata": metadata}
+
+
+@responses.activate
+def test_get_env_cloud_details_aws_imdsv2_token_failure_is_not_aws():
+    setup_imdsv2_only_aws({})
+    responses.add(
+        responses.PUT,
+        AWS_TOKEN_URL,
+        body=requests.exceptions.ConnectTimeout("hop limit reached"),
+    )
+
+    assert get_env_cloud_details() is None
+
+
+@responses.activate
+def test_get_env_cloud_details_aws_imdsv2_token_refused_is_not_aws():
+    setup_imdsv2_only_aws({})
+    responses.add(responses.PUT, AWS_TOKEN_URL, status=403)
 
     assert get_env_cloud_details() is None
