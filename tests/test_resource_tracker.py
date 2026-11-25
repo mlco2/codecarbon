@@ -844,3 +844,67 @@ def test_platform_cpu_backend_prefers_rapl_over_raspberry():
 
     mock_rapl.assert_called_once_with()
     mock_raspberry.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "mode, force_ram_power, dram_files, tracking_mode, wired",
+    [
+        ("intel_rapl", None, ["dram"], "machine", True),
+        # rapl_include_dram=False: no DRAM domain is read
+        ("intel_rapl", None, [], "machine", False),
+        # The user-provided RAM power wins
+        ("intel_rapl", 12.5, ["dram"], "machine", False),
+        ("windows_emi", None, ["dram"], "machine", False),
+        # The DRAM counter is machine-wide, keep the per-process estimate
+        ("intel_rapl", None, ["dram"], "process", False),
+    ],
+)
+def test_ram_uses_rapl_dram_when_available(
+    mode, force_ram_power, dram_files, tracking_mode, wired
+):
+    # The classes resource_tracker checks against: another test drops
+    # codecarbon.external.hardware from sys.modules, so a fresh import would
+    # give a different CPU class.
+    from codecarbon.core.resource_tracker import CPU, RAM
+
+    ram = RAM(tracking_mode=tracking_mode, force_ram_power=force_ram_power)
+    cpu = CPU.__new__(CPU)
+    cpu._mode = mode
+    cpu._intel_interface = SimpleNamespace(_dram_files=dram_files)
+    tracker = make_tracker(_hardware=[ram, cpu], _force_ram_power=force_ram_power)
+    resource_tracker = ResourceTracker(tracker)
+
+    with patch("codecarbon.core.resource_tracker.get_or_run_setup"):
+        resource_tracker.set_CPU_GPU_ram_tracking()
+
+    assert (getattr(ram, "_dram_source", None) is cpu._intel_interface) == wired
+    assert ("RAPL DRAM" in resource_tracker.ram_tracker) == wired
+
+
+@pytest.mark.parametrize(
+    "force_ram_power, tracking_mode, reason",
+    [
+        (None, "process", "tracking_mode='process'"),
+        (12.5, "machine", "force_ram_power"),
+    ],
+)
+def test_ram_warns_when_the_rapl_dram_counter_is_not_used(
+    caplog, force_ram_power, tracking_mode, reason
+):
+    """rapl_include_dram=True read a DRAM domain that the RAM cannot use:
+    say so instead of logging that DRAM is read as the RAM energy."""
+    from codecarbon.core.resource_tracker import CPU, RAM
+
+    ram = RAM(tracking_mode=tracking_mode, force_ram_power=force_ram_power)
+    cpu = CPU.__new__(CPU)
+    cpu._mode = "intel_rapl"
+    cpu._intel_interface = SimpleNamespace(_dram_files=["dram"])
+    tracker = make_tracker(_hardware=[ram, cpu], _force_ram_power=force_ram_power)
+    resource_tracker = ResourceTracker(tracker)
+
+    with patch("codecarbon.core.resource_tracker.get_or_run_setup"):
+        with caplog.at_level(logging.WARNING, logger="codecarbon"):
+            resource_tracker.set_CPU_GPU_ram_tracking()
+
+    warnings = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
+    assert any("DRAM" in w and reason in w for w in warnings), warnings

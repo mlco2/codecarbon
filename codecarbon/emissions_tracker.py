@@ -587,11 +587,12 @@ class BaseEmissionsTracker(ABC):
                                     `force_mode_cpu_load`. Defaults to False.
         :param allow_multiple_runs: Allow multiple CodeCarbon instances on the same machine.
                                     Defaults to True since v3 (was False in v2).
-        :param rapl_include_dram: Include DRAM (memory) power in the counter-based CPU
-                                  measurements, defaults to False. When True, measures
-                                  CPU package + DRAM. Applies to the Linux RAPL interface
-                                  and to the Windows Energy Meter Interface, on systems
-                                  exposing separate DRAM domains/channels.
+        :param rapl_include_dram: Read the DRAM (memory) energy counters, defaults
+                                  to False. On Linux RAPL, the DRAM domain energy
+                                  is reported as the RAM energy instead of its
+                                  estimate (machine tracking mode, package domains
+                                  only). On the Windows Energy Meter Interface,
+                                  the DRAM channels are added to the CPU energy.
         :param rapl_prefer_psys: Prefer psys (platform) RAPL domain over package domains on
                                  Linux, defaults to False. When True, uses total platform power
                                  (CPU + chipset + PCIe). When False, uses package domains which
@@ -1953,9 +1954,9 @@ def track_emissions(
                                 TDP (or of `force_cpu_power`), skipping RAPL, Power
                                 Gadget, powermetrics and CPU load tracking. Takes
                                 precedence over `force_mode_cpu_load`. Defaults to False.
-    :param rapl_include_dram: Include DRAM in the counter-based CPU measurements
-                              (Linux RAPL and Windows EMI, default: False).
-                              When True, measures CPU package + DRAM.
+    :param rapl_include_dram: Read the DRAM energy counters (default: False).
+                              On Linux RAPL, reported as the RAM energy instead
+                              of its estimate; on Windows EMI, added to the CPU.
     :param rapl_prefer_psys: Prefer psys over package domains for RAPL on Linux
                              (default: False). When True, uses total platform power.
     :param metadata: Free-form metadata bag to enrich outputs. Either a dict or a path

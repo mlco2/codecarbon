@@ -96,8 +96,8 @@ and consistent measurements:
     -   Match CPU TDP specifications
     -   Provide consistent measurements across different Intel
         generations
-    -   Can be supplemented with `dram` domains for complete hardware
-        measurement (package + DRAM)
+    -   `dram` domains are never added to them: with
+        `rapl_include_dram=True` they are reported as the RAM energy
 2.  **Optional psys mode**: Set `rapl_prefer_psys=True` to use `psys`
     (platform/system) domain instead:
     -   Provides total platform power (CPU + chipset + PCIe + some other
@@ -106,6 +106,9 @@ and consistent measurements:
     -   May include non-CPU components affected by the computation
     -   **Note**: On some older Intel systems (e.g., Kaby Lake), psys
         can report unexpectedly high values
+    -   psys usually includes the memory, yet the RAM is still
+        estimated on top of it. Set `force_ram_power=0` to not count
+        the memory twice when your psys domain includes it
 3.  **Interface deduplication**: When the same domain appears in both
     `intel-rapl` and `intel-rapl-mmio`:
     -   Detects duplicate domains by name
@@ -113,9 +116,17 @@ and consistent measurements:
     -   Falls back to MSR if MMIO is unreadable
 4.  **Subdomain filtering**: Excludes `core` and `uncore` subdomains
     when `package` is available to avoid double-counting
-5.  **DRAM exclusion**: By default (`rapl_include_dram=False`), don't add
-    DRAM domain to package. As DRAM is supposed to be in RAM power, not
-    CPU in a future version of CodeCarbon.
+5.  **DRAM as RAM**: By default (`rapl_include_dram=False`), the DRAM
+    domains are not read and the RAM power is estimated. With
+    `rapl_include_dram=True` and `package` domains, the DRAM domains
+    (top-level, or children of their package as on most servers) are
+    reported as the RAM energy, never added to the CPU package. DRAM
+    zones are told apart by zone id, one per socket, so the same DRAM
+    seen through both `intel-rapl` and `intel-rapl-mmio` is caught by
+    the mirror detection below rather than by name. With
+    `psys`, which usually includes the memory, the DRAM domains are not
+    read and the RAM keeps its estimate, so the memory is counted twice
+    unless `force_ram_power=0` is set.
 
 ## Platform-Specific Behavior
 
@@ -131,7 +142,7 @@ and consistent measurements:
 -   `core` reports very low energy values
 -   Unclear if `core` is included in `package` (vendor documentation is
     sparse)
--   On some multi-die CPUs (e.g., Threadripper), separate package domains mirror the same socket-wide counter. CodeCarbon flags counters holding the same value at startup, confirms with the energy deltas of the first measurement interval where both counters were read and accumulated energy that they are true mirrors, and keeps only one, so CPU energy is not multiplied by the number of dies.
+-   On some multi-die CPUs (e.g., Threadripper), separate package domains mirror the same socket-wide counter. CodeCarbon flags counters holding the same value at startup, confirms with the energy deltas of the first measurement interval where both counters were read and accumulated energy that they are true mirrors, and keeps only one, so CPU energy is not multiplied by the number of dies. DRAM counters get the same check among themselves (a DRAM counter is never compared with a package one), so the RAM energy is not multiplied either.
 
 **What RAPL Does NOT Measure**:
 
@@ -180,9 +191,10 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
 5.  **Interface deduplication**: The same domain may appear in both
     `intel-rapl` (MSR) and `intel-rapl-mmio` interfaces. CodeCarbon
     automatically deduplicates, preferring MMIO.
-6.  **DRAM measurement**: CodeCarbon does not include DRAM domains by
-    default (`rapl_include_dram=False`) for CPU hardware measurement. Set
-    `rapl_include_dram=True` to measure CPU package + DRAM domains.
+6.  **DRAM measurement**: CodeCarbon does not read DRAM domains by
+    default (`rapl_include_dram=False`): the RAM power is estimated. Set
+    `rapl_include_dram=True` to report the DRAM domains as the RAM
+    energy. They are never added to the CPU package.
 7.  **Platform-specific behavior**:
     -   Intel modern: package or psys (with rapl_prefer_psys=True)
     -   Intel older: package-0 for CPU only
@@ -193,7 +205,7 @@ Ou, ACM Trans. Model. Perform. Eval. Comput. Syst., vol. 3, no. 2, pp.
     -   Discrete GPUs (use nvidia-smi/rocm-smi)
     -   SSDs, peripherals, fans
     -   Actual DRAM chips — the `dram` domain reports memory-controller
-        power, and CodeCarbon excludes it by default (`rapl_include_dram=False`)
+        power, and CodeCarbon only reads it as the RAM energy with `rapl_include_dram=True`
     -   Complete system power (use wall meter for accuracy)
 
 ## Appendix: raw measurements from three machines
