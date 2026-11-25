@@ -198,6 +198,16 @@ class RunReport(RunBase):
     ram_utilization_percent: Optional[float] = None
 
 
+class RunBucketReport(BaseModel):
+    run_id: Optional[UUID] = None
+    timestamp: datetime
+    bucket_seconds: Optional[int] = None
+    run_count: int
+    emissions: float
+    energy_consumed: float
+    duration: float
+
+
 class ExperimentBase(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
