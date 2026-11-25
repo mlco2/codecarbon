@@ -61,8 +61,16 @@ class TestElectricityMapsCache(unittest.TestCase):
     def test_expired_cache_entry_is_refetched(self):
         self._add_success_response()
 
-        with mock.patch.object(electricitymaps_api, "ELECTRICITYMAPS_CACHE_TTL", 0):
+        # Move the module's clock past the TTL instead of setting the TTL to 0:
+        # time.monotonic() has ~15 ms resolution on Windows, so two calls can
+        # land in the same tick and an entry with TTL 0 still looks fresh.
+        clock = mock.Mock()
+        clock.monotonic.return_value = 1000.0
+        with mock.patch.object(electricitymaps_api, "time", clock):
             electricitymaps_api.get_carbon_intensity(self._geo)
+            clock.monotonic.return_value = (
+                1000.0 + electricitymaps_api.ELECTRICITYMAPS_CACHE_TTL + 1
+            )
             electricitymaps_api.get_carbon_intensity(self._geo)
 
         assert len(responses.calls) == 2
